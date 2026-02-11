@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "JPMC Analyst Jobs",
+  title: "Pete's Postings",
   description: "JPMorgan Chase analyst-level job listings",
 };
 

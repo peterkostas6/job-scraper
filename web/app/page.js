@@ -27,7 +27,7 @@ export default function Home() {
     <>
       <nav>
         <div className="nav-inner">
-          <span className="logo">Pete's Jobs</span>
+          <span className="logo">Pete's Postings</span>
           <span className="nav-tag">Analyst Positions</span>
         </div>
       </nav>

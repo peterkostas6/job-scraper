@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 const BANKS = {
   jpmc: { name: "JPMorgan Chase", endpoint: "/api/jobs", loadingText: "Fetching live data from JPMC..." },
   gs: { name: "Goldman Sachs", endpoint: "/api/jobs-gs", loadingText: "Fetching live data from Goldman Sachs..." },
+  ms: { name: "Morgan Stanley", endpoint: "/api/jobs-ms", loadingText: "Fetching live data from Morgan Stanley..." },
 };
 
 export default function Home() {

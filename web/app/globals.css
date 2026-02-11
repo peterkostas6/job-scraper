@@ -102,6 +102,42 @@ nav {
   letter-spacing: 1px;
 }
 
+/* ---- TABS ---- */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.tab {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #aaa;
+}
+
+.tab-active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.tab-active:hover {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
 /* ---- ERROR ---- */
 .error-banner {
   max-width: 1100px;

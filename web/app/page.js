@@ -2,13 +2,23 @@
 
 import { useState, useEffect } from "react";
 
+const BANKS = {
+  jpmc: { name: "JPMorgan Chase", endpoint: "/api/jobs", loadingText: "Fetching live data from JPMC..." },
+  gs: { name: "Goldman Sachs", endpoint: "/api/jobs-gs", loadingText: "Fetching live data from Goldman Sachs..." },
+};
+
 export default function Home() {
+  const [activeTab, setActiveTab] = useState("jpmc");
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/api/jobs")
+    setLoading(true);
+    setError(null);
+    setJobs([]);
+
+    fetch(BANKS[activeTab].endpoint)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch jobs");
         return res.json();
@@ -21,7 +31,7 @@ export default function Home() {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [activeTab]);
 
   return (
     <>
@@ -36,8 +46,21 @@ export default function Home() {
         <section className="hero">
           <h1>Analyst Openings</h1>
           <p className="hero-sub">
-            Live listings from JPMorgan Chase careers — United States
+            Live listings from top banks — United States
           </p>
+
+          <div className="tabs">
+            {Object.entries(BANKS).map(([key, bank]) => (
+              <button
+                key={key}
+                className={`tab ${activeTab === key ? "tab-active" : ""}`}
+                onClick={() => setActiveTab(key)}
+              >
+                {bank.name}
+              </button>
+            ))}
+          </div>
+
           {!loading && !error && (
             <div className="stat-row">
               <div className="stat">
@@ -53,7 +76,7 @@ export default function Home() {
         {loading && (
           <div className="loading-state">
             <div className="spinner" />
-            <p>Fetching live data from JPMC...</p>
+            <p>{BANKS[activeTab].loadingText}</p>
           </div>
         )}
 
@@ -70,7 +93,7 @@ export default function Home() {
                 >
                   <div className="job-card-top">
                     <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
-                    <span className="job-badge">Analyst</span>
+                    <span className="job-badge">{BANKS[activeTab].name}</span>
                   </div>
                   <h3 className="job-title">{job.title}</h3>
                   <div className="job-card-bottom">
@@ -89,7 +112,7 @@ export default function Home() {
       </main>
 
       <footer>
-        <p>Data sourced from JPMorgan Chase public careers API. Not affiliated with JPMC.</p>
+        <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
       </footer>
     </>
   );

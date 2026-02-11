@@ -33,8 +33,7 @@ function Landing({ onEnter }) {
         <span className="landing-tag">Live data from top banks</span>
         <h1 className="landing-title">Pete's Postings</h1>
         <p className="landing-desc">
-          Analyst job listings from JPMorgan Chase, Goldman Sachs, and Morgan
-          Stanley — updated every time you visit.
+          Internships linked directly to bank career sites, all in one place.
         </p>
         <button className="landing-cta" onClick={onEnter}>
           Explore Positions

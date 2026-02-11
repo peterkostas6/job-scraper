@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 
 const BANKS = {
   jpmc: { name: "JPMorgan Chase", endpoint: "/api/jobs", loadingText: "Fetching live data from JPMC..." },
@@ -26,7 +27,7 @@ function isInternship(title) {
   );
 }
 
-function Landing({ onEnter }) {
+function Landing() {
   return (
     <div className="landing">
       <div className="landing-content">
@@ -35,12 +36,14 @@ function Landing({ onEnter }) {
         <p className="landing-desc">
           Internships linked directly to bank career sites, all in one place.
         </p>
-        <button className="landing-cta" onClick={onEnter}>
-          Explore Positions
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </button>
+        <SignInButton mode="modal">
+          <button className="landing-cta">
+            Get Started
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </SignInButton>
         <div className="landing-banks">
           <span>JPMorgan Chase</span>
           <span className="landing-dot" />
@@ -54,7 +57,7 @@ function Landing({ onEnter }) {
 }
 
 export default function Home() {
-  const [showLanding, setShowLanding] = useState(true);
+  const { isSignedIn, isLoaded } = useUser();
   const [activeBank, setActiveBank] = useState("jpmc");
   const [jobType, setJobType] = useState("all");
   const [jobs, setJobs] = useState([]);
@@ -62,7 +65,7 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (showLanding) return;
+    if (!isSignedIn) return;
 
     setLoading(true);
     setError(null);
@@ -81,7 +84,7 @@ export default function Home() {
         setError(err.message);
         setLoading(false);
       });
-  }, [activeBank, showLanding]);
+  }, [activeBank, isSignedIn]);
 
   const filteredJobs = jobs.filter((job) => {
     if (jobType === "all") return true;
@@ -90,18 +93,27 @@ export default function Home() {
     return true;
   });
 
-  if (showLanding) {
-    return <Landing onEnter={() => setShowLanding(false)} />;
+  // Show spinner while Clerk loads
+  if (!isLoaded) {
+    return (
+      <div className="loading-state">
+        <div className="spinner" />
+      </div>
+    );
   }
 
+  // Not signed in — show landing page
+  if (!isSignedIn) {
+    return <Landing />;
+  }
+
+  // Signed in — show jobs
   return (
     <>
       <nav>
         <div className="nav-inner">
-          <span className="logo" onClick={() => setShowLanding(true)} style={{ cursor: "pointer" }}>
-            Pete's Postings
-          </span>
-          <span className="nav-tag">Analyst Positions</span>
+          <span className="logo">Pete's Postings</span>
+          <UserButton />
         </div>
       </nav>
 

@@ -4,3 +4,4 @@ __pycache__/
 *.csv
 node_modules/
 web/.next/
+.env.local

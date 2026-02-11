@@ -68,6 +68,39 @@ nav {
   -webkit-text-fill-color: transparent;
 }
 
+.sentence-filter {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.6;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: #888;
+}
+
+.filter-select {
+  font-family: inherit;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid #3b82f6;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  padding: 0 0.15rem;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.filter-select option {
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 1rem;
+}
+
 .hero-sub {
   margin-top: 0.75rem;
   font-size: 1.05rem;
@@ -100,42 +133,6 @@ nav {
   color: #555;
   text-transform: uppercase;
   letter-spacing: 1px;
-}
-
-/* ---- TABS ---- */
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 2rem;
-}
-
-.tab {
-  padding: 0.6rem 1.25rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #aaa;
-}
-
-.tab-active {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #3b82f6;
-}
-
-.tab-active:hover {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
 }
 
 /* ---- ERROR ---- */
@@ -225,6 +222,11 @@ nav {
   font-variant-numeric: tabular-nums;
 }
 
+.job-badges {
+  display: flex;
+  gap: 0.4rem;
+}
+
 .job-badge {
   font-size: 0.65rem;
   font-weight: 600;
@@ -235,6 +237,18 @@ nav {
   border: 1px solid rgba(59, 130, 246, 0.15);
   padding: 0.2rem 0.6rem;
   border-radius: 100px;
+}
+
+.badge-fulltime {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.badge-intern {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 
 .job-title {
@@ -294,6 +308,14 @@ footer p {
 @media (max-width: 640px) {
   .hero h1 {
     font-size: 2rem;
+  }
+
+  .sentence-filter {
+    font-size: 1.4rem;
+  }
+
+  .filter-select {
+    font-size: 1.4rem;
   }
 
   .hero {

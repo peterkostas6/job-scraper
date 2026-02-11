@@ -8,8 +8,8 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0a0a0a;
-  color: #fafafa;
+  background: #faf8f5;
+  color: #1a1a1a;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -18,9 +18,9 @@ nav {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(10, 10, 10, 0.8);
+  background: rgba(250, 248, 245, 0.85);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .nav-inner {
@@ -36,17 +36,15 @@ nav {
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #fff 0%, #888 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1a1a1a;
 }
 
 .nav-tag {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #2a9d6e;
+  background: rgba(42, 157, 110, 0.08);
+  border: 1px solid rgba(42, 157, 110, 0.15);
   padding: 0.3rem 0.75rem;
   border-radius: 100px;
 }
@@ -63,9 +61,7 @@ nav {
   font-weight: 800;
   letter-spacing: -1.5px;
   line-height: 1.1;
-  background: linear-gradient(135deg, #fff 0%, #666 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1a1a1a;
 }
 
 .sentence-filter {
@@ -73,9 +69,7 @@ nav {
   font-weight: 700;
   letter-spacing: -0.5px;
   line-height: 1.6;
-  background: none;
-  -webkit-background-clip: unset;
-  -webkit-text-fill-color: #888;
+  color: #999;
 }
 
 .filter-select {
@@ -85,9 +79,8 @@ nav {
   letter-spacing: -0.5px;
   background: none;
   border: none;
-  border-bottom: 2px solid #3b82f6;
-  color: #fff;
-  -webkit-text-fill-color: #fff;
+  border-bottom: 2px solid #2a9d6e;
+  color: #1a1a1a;
   padding: 0 0.15rem;
   cursor: pointer;
   outline: none;
@@ -96,15 +89,15 @@ nav {
 }
 
 .filter-select option {
-  background: #1a1a1a;
-  color: #fff;
+  background: #fff;
+  color: #1a1a1a;
   font-size: 1rem;
 }
 
 .hero-sub {
   margin-top: 0.75rem;
   font-size: 1.05rem;
-  color: #666;
+  color: #999;
   font-weight: 400;
 }
 
@@ -124,13 +117,13 @@ nav {
   font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: -1px;
-  color: #fff;
+  color: #1a1a1a;
 }
 
 .stat-label {
   font-size: 0.8rem;
   font-weight: 500;
-  color: #555;
+  color: #aaa;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -140,10 +133,10 @@ nav {
   max-width: 1100px;
   margin: 1rem auto;
   padding: 1rem 1.5rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 10px;
-  color: #ef4444;
+  background: rgba(220, 53, 53, 0.06);
+  border: 1px solid rgba(220, 53, 53, 0.12);
+  border-radius: 12px;
+  color: #dc3535;
   font-size: 0.9rem;
 }
 
@@ -158,15 +151,15 @@ nav {
 }
 
 .loading-state p {
-  color: #555;
+  color: #aaa;
   font-size: 0.95rem;
 }
 
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #fff;
+  border: 3px solid rgba(0, 0, 0, 0.06);
+  border-top-color: #2a9d6e;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -182,113 +175,178 @@ nav {
   padding: 0 2rem 4rem;
 }
 
-.jobs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1rem;
+/* ---- JOB LIST ---- */
+.jobs-list {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
-/* ---- JOB CARD ---- */
-.job-card {
-  display: flex;
-  flex-direction: column;
-  padding: 1.25rem 1.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.job-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-}
-
-.job-card-top {
+.job-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.job-row:last-child {
+  border-bottom: none;
+}
+
+.job-row:hover {
+  background: rgba(42, 157, 110, 0.04);
 }
 
 .job-index {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #444;
+  color: #ccc;
   font-variant-numeric: tabular-nums;
+  min-width: 1.5rem;
+}
+
+.job-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #333;
+  flex: 1;
+}
+
+.job-row:hover .job-title {
+  color: #1a1a1a;
 }
 
 .job-badges {
   display: flex;
   gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .job-badge {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  color: #6b7280;
+  background: #f3f4f6;
+  border: none;
   padding: 0.2rem 0.6rem;
   border-radius: 100px;
+  white-space: nowrap;
 }
 
 .badge-fulltime {
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.2);
+  color: #2a9d6e;
+  background: rgba(42, 157, 110, 0.08);
 }
 
 .badge-intern {
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.08);
 }
 
-.job-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.4;
-  color: #e5e5e5;
-  flex: 1;
+.job-arrow {
+  color: #ccc;
+  flex-shrink: 0;
+  transition: transform 0.2s, color 0.2s;
 }
 
-.job-card:hover .job-title {
-  color: #fff;
+.job-row:hover .job-arrow {
+  color: #2a9d6e;
+  transform: translateX(3px);
 }
 
-.job-card-bottom {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+/* ---- LANDING PAGE ---- */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
-.apply-text {
+.landing-content {
+  text-align: center;
+  max-width: 540px;
+}
+
+.landing-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #2a9d6e;
+  background: rgba(42, 157, 110, 0.08);
+  border: 1px solid rgba(42, 157, 110, 0.15);
+  padding: 0.35rem 0.9rem;
+  border-radius: 100px;
+  margin-bottom: 1.5rem;
+}
+
+.landing-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.landing-desc {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #999;
+  margin-bottom: 2.5rem;
+}
+
+.landing-cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #1a1a1a;
+  border: none;
+  padding: 0.8rem 1.6rem;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.landing-cta:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+.landing-cta:active {
+  transform: translateY(0);
+}
+
+.landing-banks {
+  margin-top: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   font-size: 0.8rem;
+  color: #ccc;
   font-weight: 500;
-  color: #555;
-  transition: color 0.2s;
 }
 
-.apply-text svg {
-  transition: transform 0.2s;
-}
-
-.job-card:hover .apply-text {
-  color: #3b82f6;
-}
-
-.job-card:hover .apply-text svg {
-  transform: translateX(3px);
+.landing-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ddd;
 }
 
 /* ---- FOOTER ---- */
@@ -296,12 +354,12 @@ footer {
   max-width: 1100px;
   margin: 0 auto;
   padding: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 footer p {
   font-size: 0.75rem;
-  color: #333;
+  color: #ccc;
 }
 
 /* ---- RESPONSIVE ---- */
@@ -326,8 +384,13 @@ footer p {
     padding: 0 1.25rem 3rem;
   }
 
-  .jobs-grid {
-    grid-template-columns: 1fr;
+  .job-row {
+    padding: 0.75rem 1rem;
+    gap: 0.6rem;
+  }
+
+  .job-badges {
+    display: none;
   }
 
   .stat-number {
@@ -336,5 +399,19 @@ footer p {
 
   .nav-inner {
     padding: 1rem 1.25rem;
+  }
+
+  .landing-title {
+    font-size: 2.5rem;
+    letter-spacing: -1.5px;
+  }
+
+  .landing-desc {
+    font-size: 0.95rem;
+  }
+
+  .landing-banks {
+    gap: 0.5rem;
+    font-size: 0.7rem;
   }
 }

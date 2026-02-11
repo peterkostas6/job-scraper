@@ -89,10 +89,14 @@ function parseJobs(data) {
         (loc) => loc.country === "United States" || loc.country === "US"
       );
     })
-    .map((item) => ({
-      title: item.jobTitle || item.corporateTitle || "N/A",
-      link: `${GS_SITE_URL}/${item.roleId}`,
-    }));
+    .map((item) => {
+      // The roleId has a suffix like "_GS_MID_CAREER" — strip it to get just the number
+      const numericId = item.roleId?.split("_")[0] || item.roleId;
+      return {
+        title: item.jobTitle || item.corporateTitle || "N/A",
+        link: `${GS_SITE_URL}/${numericId}`,
+      };
+    });
 
   return { jobs: usJobs, totalCount: results.totalCount };
 }

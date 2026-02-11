@@ -26,7 +26,36 @@ function isInternship(title) {
   );
 }
 
+function Landing({ onEnter }) {
+  return (
+    <div className="landing">
+      <div className="landing-content">
+        <span className="landing-tag">Live data from top banks</span>
+        <h1 className="landing-title">Pete's Postings</h1>
+        <p className="landing-desc">
+          Analyst job listings from JPMorgan Chase, Goldman Sachs, and Morgan
+          Stanley — updated every time you visit.
+        </p>
+        <button className="landing-cta" onClick={onEnter}>
+          Explore Positions
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <div className="landing-banks">
+          <span>JPMorgan Chase</span>
+          <span className="landing-dot" />
+          <span>Goldman Sachs</span>
+          <span className="landing-dot" />
+          <span>Morgan Stanley</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
+  const [showLanding, setShowLanding] = useState(true);
   const [activeBank, setActiveBank] = useState("jpmc");
   const [jobType, setJobType] = useState("all");
   const [jobs, setJobs] = useState([]);
@@ -34,6 +63,8 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (showLanding) return;
+
     setLoading(true);
     setError(null);
     setJobs([]);
@@ -51,7 +82,7 @@ export default function Home() {
         setError(err.message);
         setLoading(false);
       });
-  }, [activeBank]);
+  }, [activeBank, showLanding]);
 
   const filteredJobs = jobs.filter((job) => {
     if (jobType === "all") return true;
@@ -60,11 +91,17 @@ export default function Home() {
     return true;
   });
 
+  if (showLanding) {
+    return <Landing onEnter={() => setShowLanding(false)} />;
+  }
+
   return (
     <>
       <nav>
         <div className="nav-inner">
-          <span className="logo">Pete's Postings</span>
+          <span className="logo" onClick={() => setShowLanding(true)} style={{ cursor: "pointer" }}>
+            Pete's Postings
+          </span>
           <span className="nav-tag">Analyst Positions</span>
         </div>
       </nav>
@@ -115,33 +152,25 @@ export default function Home() {
 
         {!loading && !error && (
           <section className="jobs-section">
-            <div className="jobs-grid">
+            <div className="jobs-list">
               {filteredJobs.map((job, index) => (
                 <a
                   href={job.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="job-card"
+                  className="job-row"
                   key={index}
                 >
-                  <div className="job-card-top">
-                    <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
-                    <div className="job-badges">
-                      <span className="job-badge">{BANKS[activeBank].name}</span>
-                      <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-fulltime"}`}>
-                        {isInternship(job.title) ? "Internship" : "Full-Time"}
-                      </span>
-                    </div>
-                  </div>
-                  <h3 className="job-title">{job.title}</h3>
-                  <div className="job-card-bottom">
-                    <span className="apply-text">
-                      View Position
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
+                  <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="job-title">{job.title}</span>
+                  <div className="job-badges">
+                    <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-fulltime"}`}>
+                      {isInternship(job.title) ? "Internship" : "Full-Time"}
                     </span>
                   </div>
+                  <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
                 </a>
               ))}
             </div>

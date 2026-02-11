@@ -18,12 +18,11 @@ const JOB_TYPES = {
 function isInternship(title) {
   const t = title.toLowerCase();
   return (
-    t.includes("intern") ||
+    /\bintern\b/.test(t) ||
     t.includes("internship") ||
     t.includes("summer") ||
     t.includes("co-op") ||
-    t.includes("coop") ||
-    /\b20\d{2}\b/.test(t)
+    t.includes("coop")
   );
 }
 

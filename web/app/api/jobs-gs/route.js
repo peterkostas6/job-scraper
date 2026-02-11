@@ -92,9 +92,17 @@ function parseJobs(data) {
     .map((item) => {
       // The roleId has a suffix like "_GS_MID_CAREER" — strip it to get just the number
       const numericId = item.roleId?.split("_")[0] || item.roleId;
+
+      const usLocations = (item.locations || [])
+        .filter((loc) => loc.country === "United States" || loc.country === "US");
+      const location = usLocations
+        .map((loc) => [loc.city, loc.state].filter(Boolean).join(", "))
+        .join("; ");
+
       return {
         title: item.jobTitle || item.corporateTitle || "N/A",
         link: `${GS_SITE_URL}/${numericId}`,
+        location,
       };
     });
 

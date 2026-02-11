@@ -70,6 +70,7 @@ function parseJobs(data) {
     .map((job) => ({
       title: job.title || "N/A",
       link: `${MS_SITE_URL}${job.externalPath}`,
+      location: job.locationsText || "",
     }));
 }
 

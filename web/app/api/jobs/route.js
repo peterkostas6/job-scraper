@@ -53,10 +53,19 @@ function parseJobs(data) {
 
   const requisitions = items[0].requisitionList || [];
 
-  return requisitions.map((req) => ({
-    title: req.Title || "N/A",
-    link: `${SITE_URL}/${req.Id}`,
-  }));
+  return requisitions.map((req) => {
+    const locations = req.secondaryLocations || [];
+    const locationNames = locations.map((loc) => loc.Name).filter(Boolean);
+    const location = locationNames.length > 0
+      ? locationNames.join("; ")
+      : req.PrimaryLocation || "";
+
+    return {
+      title: req.Title || "N/A",
+      link: `${SITE_URL}/${req.Id}`,
+      location,
+    };
+  });
 }
 
 // GET /api/jobs — returns all analyst jobs as JSON

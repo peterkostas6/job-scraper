@@ -94,20 +94,26 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [bankCounts, setBankCounts] = useState({});
   const [bookmarks, setBookmarks] = useState(new Set());
+  const [savedJobs, setSavedJobs] = useState([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [viewingSaved, setViewingSaved] = useState(false);
 
   // Load bookmarks and welcome state from localStorage
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("pp-bookmarks") || "[]");
-    setBookmarks(new Set(saved));
+    const savedLinks = JSON.parse(localStorage.getItem("pp-bookmarks") || "[]");
+    setBookmarks(new Set(savedLinks));
+    const savedData = JSON.parse(localStorage.getItem("pp-saved-jobs") || "[]");
+    setSavedJobs(savedData);
     const welcomed = localStorage.getItem("pp-welcomed");
     if (!welcomed) setShowWelcome(true);
   }, []);
 
   // Fetch jobs when bank changes
   useEffect(() => {
+    setViewingSaved(false);
+
     // JPMC is free; GS and MS require sign-in
     if (activeBank !== "jpmc" && !isSignedIn) {
       setJobs([]);
@@ -149,14 +155,25 @@ export default function Home() {
       });
   }, [activeBank, isSignedIn, isLoaded]);
 
-  function toggleBookmark(e, link) {
+  function toggleBookmark(e, job) {
     e.preventDefault();
     e.stopPropagation();
+    const link = job.link;
     setBookmarks((prev) => {
       const next = new Set(prev);
       if (next.has(link)) next.delete(link);
       else next.add(link);
       localStorage.setItem("pp-bookmarks", JSON.stringify([...next]));
+      return next;
+    });
+    setSavedJobs((prev) => {
+      let next;
+      if (prev.some((j) => j.link === link)) {
+        next = prev.filter((j) => j.link !== link);
+      } else {
+        next = [...prev, { title: job.title, link: job.link, location: job.location || "", bank: BANKS[activeBank]?.name || "" }];
+      }
+      localStorage.setItem("pp-saved-jobs", JSON.stringify(next));
       return next;
     });
   }
@@ -225,8 +242,8 @@ export default function Home() {
             return (
               <button
                 key={key}
-                className={`sidebar-item ${activeBank === key ? "sidebar-item-active" : ""}`}
-                onClick={() => setActiveBank(key)}
+                className={`sidebar-item ${activeBank === key && !viewingSaved ? "sidebar-item-active" : ""}`}
+                onClick={() => { setViewingSaved(false); setActiveBank(key); }}
               >
                 <span>{bank.name}</span>
                 {needsAuth ? (
@@ -242,6 +259,23 @@ export default function Home() {
               </button>
             );
           })}
+
+          <div className="sidebar-divider" />
+          <div className="sidebar-header">My Jobs</div>
+          <button
+            className={`sidebar-item ${viewingSaved ? "sidebar-item-active" : ""}`}
+            onClick={() => { setViewingSaved(true); setSearchQuery(""); setLocationFilter(""); setJobType("all"); }}
+          >
+            <span className="sidebar-saved-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+              Saved Jobs
+            </span>
+            {savedJobs.length > 0 && (
+              <span className="sidebar-count">{savedJobs.length}</span>
+            )}
+          </button>
         </aside>
 
         {/* MAIN CONTENT */}
@@ -251,133 +285,205 @@ export default function Home() {
             <WelcomeBanner onDismiss={dismissWelcome} />
           )}
 
-          {/* Filters */}
-          {!isGatedBank && (
-            <div className="filters">
-              <div className="search-wrapper">
-                <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.3-4.3"/>
-                </svg>
-                <input
-                  className="search-bar"
-                  type="text"
-                  placeholder="Search job titles..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button className="search-clear" onClick={() => setSearchQuery("")}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6 6 18M6 6l12 12"/>
-                    </svg>
-                  </button>
-                )}
+          {/* === SAVED JOBS VIEW === */}
+          {viewingSaved && (
+            <>
+              <div className="results-bar">
+                <span className="results-text">
+                  {savedJobs.length} saved {savedJobs.length === 1 ? "job" : "jobs"}
+                </span>
               </div>
 
-              <select
-                className="filter-dropdown"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-              >
-                <option value="">All Locations</option>
-                {availableLocations.map((loc) => (
-                  <option key={loc} value={loc}>{loc}</option>
-                ))}
-              </select>
+              {savedJobs.length === 0 && (
+                <div className="empty-state">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <p className="empty-title">No saved jobs yet</p>
+                  <p className="empty-desc">Bookmark jobs from any bank to see them here.</p>
+                </div>
+              )}
 
-              <select
-                className="filter-dropdown"
-                value={jobType}
-                onChange={(e) => setJobType(e.target.value)}
-              >
-                {Object.entries(JOB_TYPES).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Results bar */}
-          {!isGatedBank && !loading && !error && (
-            <div className="results-bar">
-              <span className="results-text">
-                {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} at {BANKS[activeBank].name}
-              </span>
-              <button
-                className={`saved-toggle ${showSavedOnly ? "saved-toggle-active" : ""}`}
-                onClick={() => setShowSavedOnly(!showSavedOnly)}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill={showSavedOnly ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                </svg>
-                Saved{savedCount > 0 ? ` (${savedCount})` : ""}
-              </button>
-            </div>
-          )}
-
-          {/* Gate overlay for locked banks */}
-          {isGatedBank && <SignUpOverlay bankName={BANKS[activeBank].name} />}
-
-          {/* Error */}
-          {error && <div className="error-banner">Something went wrong: {error}</div>}
-
-          {/* Loading skeleton */}
-          {!isGatedBank && loading && <SkeletonRows />}
-
-          {/* Empty state */}
-          {!isGatedBank && !loading && !error && displayJobs.length === 0 && (
-            <div className="empty-state">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.3-4.3"/>
-              </svg>
-              <p className="empty-title">No matching positions</p>
-              <p className="empty-desc">Try adjusting your filters or search terms.</p>
-            </div>
-          )}
-
-          {/* Job table */}
-          {!isGatedBank && !loading && !error && displayJobs.length > 0 && (
-            <div className="jobs-list fade-in">
-              <div className="job-row-header">
-                <span className="job-index">#</span>
-                <span className="job-title">Title</span>
-                <span className="job-location">Location</span>
-                <span className="job-badges">Type</span>
-                <span style={{ width: 14 }} />
-                <span style={{ width: 14 }} />
-              </div>
-              {displayJobs.map((job, index) => (
-                <a
-                  href={job.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="job-row"
-                  key={index}
-                >
-                  <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="job-title">{job.title}</span>
-                  <span className="job-location">{job.location || "—"}</span>
-                  <div className="job-badges">
-                    <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-fulltime"}`}>
-                      {isInternship(job.title) ? "Internship" : "Full-Time"}
-                    </span>
+              {savedJobs.length > 0 && (
+                <div className="jobs-list fade-in">
+                  <div className="job-row-header">
+                    <span className="job-index">#</span>
+                    <span className="job-title">Title</span>
+                    <span className="job-location">Bank</span>
+                    <span className="job-badges">Location</span>
+                    <span style={{ width: 14 }} />
+                    <span style={{ width: 14 }} />
                   </div>
-                  <button
-                    className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}`}
-                    onClick={(e) => toggleBookmark(e, job.link)}
+                  {savedJobs.map((job, index) => (
+                    <a
+                      href={job.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="job-row"
+                      key={job.link}
+                    >
+                      <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="job-title">{job.title}</span>
+                      <span className="job-location">
+                        <span className="saved-bank-badge">{job.bank}</span>
+                      </span>
+                      <div className="job-badges">
+                        <span className="job-badge" title={job.location}>{job.location || "—"}</span>
+                      </div>
+                      <button
+                        className="job-bookmark job-bookmark-active"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleBookmark(e, job);
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                        </svg>
+                      </button>
+                      <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* === BANK JOBS VIEW === */}
+          {!viewingSaved && (
+            <>
+              {/* Filters */}
+              {!isGatedBank && (
+                <div className="filters">
+                  <div className="search-wrapper">
+                    <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input
+                      className="search-bar"
+                      type="text"
+                      placeholder="Search job titles..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button className="search-clear" onClick={() => setSearchQuery("")}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 6 6 18M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  <select
+                    className="filter-dropdown"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <option value="">All Locations</option>
+                    {availableLocations.map((loc) => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="filter-dropdown"
+                    value={jobType}
+                    onChange={(e) => setJobType(e.target.value)}
+                  >
+                    {Object.entries(JOB_TYPES).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Results bar */}
+              {!isGatedBank && !loading && !error && (
+                <div className="results-bar">
+                  <span className="results-text">
+                    {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} at {BANKS[activeBank].name}
+                  </span>
+                  <button
+                    className={`saved-toggle ${showSavedOnly ? "saved-toggle-active" : ""}`}
+                    onClick={() => setShowSavedOnly(!showSavedOnly)}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill={showSavedOnly ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                     </svg>
+                    Saved{savedCount > 0 ? ` (${savedCount})` : ""}
                   </button>
-                  <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </div>
+              )}
+
+              {/* Gate overlay for locked banks */}
+              {isGatedBank && <SignUpOverlay bankName={BANKS[activeBank].name} />}
+
+              {/* Error */}
+              {error && <div className="error-banner">Something went wrong: {error}</div>}
+
+              {/* Loading skeleton */}
+              {!isGatedBank && loading && <SkeletonRows />}
+
+              {/* Empty state */}
+              {!isGatedBank && !loading && !error && displayJobs.length === 0 && (
+                <div className="empty-state">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.3-4.3"/>
                   </svg>
-                </a>
-              ))}
-            </div>
+                  <p className="empty-title">No matching positions</p>
+                  <p className="empty-desc">Try adjusting your filters or search terms.</p>
+                </div>
+              )}
+
+              {/* Job table */}
+              {!isGatedBank && !loading && !error && displayJobs.length > 0 && (
+                <div className="jobs-list fade-in">
+                  <div className="job-row-header">
+                    <span className="job-index">#</span>
+                    <span className="job-title">Title</span>
+                    <span className="job-location">Location</span>
+                    <span className="job-badges">Type</span>
+                    <span style={{ width: 14 }} />
+                    <span style={{ width: 14 }} />
+                  </div>
+                  {displayJobs.map((job, index) => (
+                    <a
+                      href={job.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="job-row"
+                      key={index}
+                    >
+                      <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="job-title">{job.title}</span>
+                      <span className="job-location">{job.location || "—"}</span>
+                      <div className="job-badges">
+                        <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-fulltime"}`}>
+                          {isInternship(job.title) ? "Internship" : "Full-Time"}
+                        </span>
+                      </div>
+                      <button
+                        className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}`}
+                        onClick={(e) => toggleBookmark(e, job)}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                        </svg>
+                      </button>
+                      <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>

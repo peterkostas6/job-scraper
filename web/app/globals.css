@@ -147,6 +147,18 @@ nav {
   flex-shrink: 0;
 }
 
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.75rem 0;
+}
+
+.sidebar-saved-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* ---- CONTENT ---- */
 .content {
   flex: 1;
@@ -588,6 +600,12 @@ nav {
   background: rgba(217, 119, 6, 0.08);
 }
 
+.saved-bank-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--forest-blue);
+}
+
 /* ---- BOOKMARK ---- */
 .job-bookmark {
   background: none;
@@ -680,7 +698,8 @@ footer {
     -webkit-overflow-scrolling: touch;
   }
 
-  .sidebar-header {
+  .sidebar-header,
+  .sidebar-divider {
     display: none;
   }
 

@@ -44,10 +44,12 @@ nav {
 }
 
 .logo {
-  font-weight: 800;
-  font-size: 1.1rem;
-  letter-spacing: -0.5px;
-  color: var(--navy);
+  display: flex;
+  align-items: center;
+}
+
+.logo-icon {
+  display: block;
 }
 
 .nav-right {
@@ -1050,8 +1052,9 @@ footer {
     padding: 0.75rem 1rem;
   }
 
-  .logo {
-    font-size: 1rem;
+  .logo-icon {
+    width: 26px;
+    height: 26px;
   }
 
   /* ---- SIDEBAR: horizontal pill strip ---- */

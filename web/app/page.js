@@ -377,7 +377,12 @@ export default function Home() {
     <>
       <nav>
         <div className="nav-inner">
-          <span className="logo logo-link" onClick={() => setViewHome(true)}>Pete's Postings</span>
+          <span className="logo logo-link" onClick={() => setViewHome(true)}>
+            <svg className="logo-icon" width="30" height="30" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="8" fill="var(--navy)"/>
+              <text x="16" y="23" textAnchor="middle" fontFamily="inherit" fontWeight="800" fontSize="20" fill="#fff">P</text>
+            </svg>
+          </span>
           <div className="nav-right">
             {isSignedIn ? (
               <UserButton />

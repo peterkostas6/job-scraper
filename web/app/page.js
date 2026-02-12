@@ -8,6 +8,7 @@ const BANKS = {
   gs: { name: "Goldman Sachs", endpoint: "/api/jobs-gs" },
   ms: { name: "Morgan Stanley", endpoint: "/api/jobs-ms" },
   bofa: { name: "Bank of America", endpoint: "/api/jobs-bofa" },
+  citi: { name: "Citi", endpoint: "/api/jobs-citi" },
 };
 
 const JOB_TYPES = {
@@ -634,7 +635,7 @@ export default function Home() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA</p>
+            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA &middot; Citi</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

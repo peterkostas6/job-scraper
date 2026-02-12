@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 
 const BANKS = {
   jpmc: { name: "JPMorgan Chase", endpoint: "/api/jobs" },
@@ -97,47 +97,63 @@ function HomePage({ onBrowse, isSignedIn }) {
   );
 }
 
-function SignUpOverlay({ bankName, isSignedIn }) {
+function PaywallOverlay({ isSignedIn }) {
+  const [loading, setLoading] = useState(false);
+
   function handleSubscribe() {
+    setLoading(true);
     fetch("/api/checkout", { method: "POST" })
       .then((res) => res.json())
       .then((data) => {
         if (data.url) window.location.href = data.url;
-      });
+      })
+      .catch(() => setLoading(false));
   }
 
   return (
-    <div className="gate-overlay">
-      <div className="gate-content">
-        <svg className="gate-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
+    <div className="paywall">
+      <div className="paywall-card">
+        <div className="paywall-badge">Pro</div>
+        <h2 className="paywall-title">Unlock All Banks</h2>
+        <p className="paywall-desc">
+          Get full access to live job listings from Goldman Sachs, Morgan Stanley, and Bank of America.
+        </p>
+
+        <div className="paywall-features">
+          {["Goldman Sachs listings", "Morgan Stanley listings", "Bank of America listings", "Save & bookmark jobs"].map((item) => (
+            <div className="paywall-feature" key={item}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="paywall-price">
+          <span className="paywall-amount">$4.99</span>
+          <span className="paywall-period">/month</span>
+        </div>
+
         {isSignedIn ? (
-          <>
-            <h3 className="gate-title">Unlock {bankName} and more</h3>
-            <p className="gate-desc">
-              Subscribe to access jobs from {bankName}, Goldman Sachs, Morgan Stanley, and Bank of America.
-            </p>
-            <button className="gate-cta" onClick={handleSubscribe}>Subscribe — $4.99/mo</button>
-          </>
+          <button className="paywall-cta" onClick={handleSubscribe} disabled={loading}>
+            {loading ? "Redirecting to checkout..." : "Subscribe Now"}
+          </button>
         ) : (
           <>
-            <h3 className="gate-title">{bankName} requires an account</h3>
-            <p className="gate-desc">
-              Sign up to unlock jobs from {bankName} and more.
-            </p>
             <SignUpButton mode="modal">
-              <button className="gate-cta">Sign Up</button>
+              <button className="paywall-cta">Get Started</button>
             </SignUpButton>
-            <p className="gate-signin">
-              Already have an account?{" "}
+            <p className="paywall-signin">
+              Already subscribed?{" "}
               <SignInButton mode="modal">
-                <button className="gate-link">Sign in</button>
+                <button className="paywall-link">Sign in</button>
               </SignInButton>
             </p>
           </>
         )}
+
+        <p className="paywall-fine">Cancel anytime &middot; JPMorgan Chase is always free</p>
       </div>
     </div>
   );
@@ -160,6 +176,7 @@ function SkeletonRows() {
 
 export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
+  const clerk = useClerk();
   const isSubscribed = user?.publicMetadata?.subscribed === true;
   const [activeBank, setActiveBank] = useState("jpmc");
   const [jobType, setJobType] = useState("all");
@@ -240,6 +257,10 @@ export default function Home() {
   function toggleBookmark(e, job) {
     e.preventDefault();
     e.stopPropagation();
+    if (!isSignedIn) {
+      clerk.openSignUp();
+      return;
+    }
     const link = job.link;
     setBookmarks((prev) => {
       const next = new Set(prev);
@@ -503,7 +524,7 @@ export default function Home() {
               )}
 
               {/* Gate overlay for locked banks */}
-              {isGatedBank && <SignUpOverlay bankName={BANKS[activeBank].name} isSignedIn={isSignedIn} />}
+              {isGatedBank && <PaywallOverlay isSignedIn={isSignedIn} />}
 
               {/* Error */}
               {error && <div className="error-banner">Something went wrong: {error}</div>}

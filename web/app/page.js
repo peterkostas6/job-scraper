@@ -404,7 +404,7 @@ export default function Home() {
             return (
               <button
                 key={key}
-                className={`sidebar-item ${activeBank === key && !viewingSaved ? "sidebar-item-active" : ""}`}
+                className={`sidebar-item ${activeBank === key && !viewingSaved ? "sidebar-item-active" : ""} ${needsAuth ? "sidebar-item-locked" : ""}`}
                 onClick={() => { setViewingSaved(false); setActiveBank(key); }}
               >
                 <span>{bank.name}</span>
@@ -439,6 +439,20 @@ export default function Home() {
             )}
           </button>
         </aside>
+
+        {/* Mobile upgrade banner — only shown when not subscribed */}
+        {!isSubscribed && (
+          <div className="mobile-upgrade" onClick={() => { setViewingSaved(false); setActiveBank("gs"); }}>
+            <span className="mobile-upgrade-text">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Unlock 6 more banks
+            </span>
+            <span className="mobile-upgrade-cta">See plans</span>
+          </div>
+        )}
 
         {/* MAIN CONTENT */}
         <main className="content">

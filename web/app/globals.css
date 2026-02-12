@@ -329,6 +329,11 @@ nav {
   gap: 0.5rem;
 }
 
+/* ---- MOBILE UPGRADE BANNER ---- */
+.mobile-upgrade {
+  display: none;
+}
+
 /* ---- CONTENT ---- */
 .content {
   flex: 1;
@@ -1084,12 +1089,46 @@ footer {
   }
 
   .sidebar-lock {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
   }
 
   .sidebar-count {
     font-size: 0.62rem;
+  }
+
+  .sidebar-item-locked {
+    opacity: 0.5;
+    border-style: dashed;
+  }
+
+  /* ---- MOBILE UPGRADE BANNER ---- */
+  .mobile-upgrade {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: rgba(37, 99, 235, 0.04);
+    border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+    cursor: pointer;
+  }
+
+  .mobile-upgrade-text {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--forest-blue);
+  }
+
+  .mobile-upgrade-cta {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--forest-blue);
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.25rem 0.65rem;
+    border-radius: 100px;
   }
 
   /* ---- CONTENT ---- */

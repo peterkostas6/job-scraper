@@ -31,17 +31,17 @@ function HomePage({ onBrowse, isSignedIn }) {
   return (
     <div className="homepage">
       <section className="hero">
-        <span className="hero-tag">Free job aggregator</span>
-        <h1 className="hero-title">Find your next analyst role at a top bank</h1>
+        <span className="hero-tag">Bank job aggregator</span>
+        <h1 className="hero-title">Stop jumping between career sites</h1>
         <p className="hero-desc">
-          Internships and full-time positions from JPMorgan Chase, Goldman Sachs,
-          Morgan Stanley, and Bank of America — all in one place, updated live.
+          View all active internship and analyst postings from bulge bracket banks.
+          All in one place. No fake third-party listings.
         </p>
         <div className="hero-actions">
           <button className="hero-cta-primary" onClick={onBrowse}>Browse Jobs</button>
           {!isSignedIn && (
             <SignUpButton mode="modal">
-              <button className="hero-cta-secondary">Sign Up Free</button>
+              <button className="hero-cta-secondary">Sign Up</button>
             </SignUpButton>
           )}
         </div>

@@ -16,7 +16,7 @@ const BANKS = {
 const JOB_TYPES = {
   all: "All Types",
   internship: "Internship",
-  fulltime: "Full-Time",
+  fulltime: "Analyst",
 };
 
 function isInternship(title) {
@@ -635,8 +635,8 @@ export default function Home() {
                       <span className="job-title">{job.title}</span>
                       <span className="job-location">{job.location || "—"}</span>
                       <div className="job-badges">
-                        <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-fulltime"}`}>
-                          {isInternship(job.title) ? "Internship" : "Full-Time"}
+                        <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>
+                          {isInternship(job.title) ? "Internship" : "Analyst"}
                         </span>
                       </div>
                       <button

@@ -507,20 +507,16 @@ nav {
 /* ---- PAYWALL ---- */
 .paywall {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 3rem 2rem;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 2rem;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
-.paywall-card {
+.paywall-header {
   text-align: center;
-  max-width: 380px;
-  width: 100%;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 32px rgba(0, 0, 0, 0.06);
+  margin-bottom: 2rem;
 }
 
 .paywall-badge {
@@ -533,7 +529,7 @@ nav {
   background: rgba(37, 99, 235, 0.08);
   padding: 0.3rem 0.85rem;
   border-radius: 100px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .paywall-title {
@@ -548,84 +544,166 @@ nav {
   font-size: 0.88rem;
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+/* Plan cards */
+.paywall-plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
   margin-bottom: 1.75rem;
 }
 
-.paywall-features {
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  margin-bottom: 1.75rem;
+.paywall-plan {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.paywall-feature {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--text-primary);
+.paywall-plan:hover {
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
-.paywall-feature svg {
-  color: var(--forest-blue);
-  flex-shrink: 0;
+.paywall-plan-popular {
+  border-color: var(--forest-blue);
+  box-shadow: 0 0 0 1px var(--forest-blue), 0 4px 20px rgba(37, 99, 235, 0.1);
 }
 
-.paywall-price {
+.paywall-plan-popular:hover {
+  border-color: var(--forest-blue);
+}
+
+.paywall-plan-tag {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fff;
+  background: var(--forest-blue);
+  padding: 0.2rem 0.65rem;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.paywall-plan-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.paywall-plan-price {
   display: flex;
   align-items: baseline;
   justify-content: center;
   gap: 0.1rem;
-  margin-bottom: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
 }
 
-.paywall-amount {
-  font-size: 2.5rem;
+.paywall-plan-amount {
+  font-size: 2.25rem;
   font-weight: 800;
   color: var(--navy);
   letter-spacing: -1px;
 }
 
-.paywall-period {
-  font-size: 0.9rem;
+.paywall-plan-period {
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-muted);
 }
 
-.paywall-cta {
+.paywall-plan-billing {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.paywall-plan-cta {
   display: block;
   width: 100%;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #fff;
-  background: var(--forest-blue);
-  border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text-primary);
 }
 
-.paywall-cta:hover {
+.paywall-plan-cta:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: #fafafa;
+}
+
+.paywall-plan-cta-primary {
+  background: var(--forest-blue);
+  color: #fff;
+  border: none;
+}
+
+.paywall-plan-cta-primary:hover {
   background: #1d4ed8;
 }
 
-.paywall-cta:active {
+.paywall-plan-cta:active {
   transform: scale(0.98);
 }
 
-.paywall-cta:disabled {
+.paywall-plan-cta:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
+/* Includes strip */
+.paywall-includes {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.paywall-includes-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.paywall-includes-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem 1rem;
+}
+
+.paywall-includes-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.paywall-includes-item svg {
+  color: var(--forest-blue);
+}
+
 .paywall-signin {
-  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
   font-size: 0.8rem;
   color: var(--text-muted);
 }
@@ -642,7 +720,6 @@ nav {
 }
 
 .paywall-fine {
-  margin-top: 1rem;
   font-size: 0.72rem;
   color: var(--text-muted);
 }
@@ -1050,6 +1127,13 @@ footer {
     flex-direction: column;
     gap: 1rem;
     padding: 1.5rem 1.25rem;
+  }
+
+  .paywall-plans {
+    grid-template-columns: 1fr;
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .footer-right {

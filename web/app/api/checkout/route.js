@@ -5,12 +5,24 @@ import { clerkClient } from "@clerk/nextjs/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export async function POST() {
+export async function POST(req) {
   const { userId } = await auth();
 
   if (!userId) {
     return Response.json({ error: "Not signed in" }, { status: 401 });
   }
+
+  // Determine which plan the user selected
+  let plan = "monthly";
+  try {
+    const body = await req.json();
+    if (body.plan === "yearly") plan = "yearly";
+  } catch {}
+
+  const priceId =
+    plan === "yearly" && process.env.STRIPE_PRICE_ID_YEARLY
+      ? process.env.STRIPE_PRICE_ID_YEARLY
+      : process.env.STRIPE_PRICE_ID;
 
   // Get the user's email from Clerk
   const user = await (await clerkClient()).users.getUser(userId);
@@ -22,7 +34,7 @@ export async function POST() {
     customer_email: email,
     line_items: [
       {
-        price: process.env.STRIPE_PRICE_ID,
+        price: priceId,
         quantity: 1,
       },
     ],

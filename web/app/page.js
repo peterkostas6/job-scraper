@@ -99,62 +99,97 @@ function HomePage({ onBrowse, isSignedIn }) {
 
 function PaywallOverlay({ isSignedIn }) {
   const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
-  function handleSubscribe() {
+  function handleSubscribe(plan) {
     setLoading(true);
-    fetch("/api/checkout", { method: "POST" })
+    setSelectedPlan(plan);
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.url) window.location.href = data.url;
       })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoading(false); setSelectedPlan(null); });
   }
+
+  const ctaBtn = (plan, label, primary) =>
+    isSignedIn ? (
+      <button
+        className={`paywall-plan-cta${primary ? " paywall-plan-cta-primary" : ""}`}
+        onClick={() => handleSubscribe(plan)}
+        disabled={loading}
+      >
+        {loading && selectedPlan === plan ? "Redirecting..." : label}
+      </button>
+    ) : (
+      <SignUpButton mode="modal">
+        <button className={`paywall-plan-cta${primary ? " paywall-plan-cta-primary" : ""}`}>
+          {label}
+        </button>
+      </SignUpButton>
+    );
 
   return (
     <div className="paywall">
-      <div className="paywall-card">
+      <div className="paywall-header">
         <div className="paywall-badge">Pro</div>
         <h2 className="paywall-title">Unlock All Banks</h2>
         <p className="paywall-desc">
           Get full access to live job listings from Goldman Sachs, Morgan Stanley, and Bank of America.
         </p>
+      </div>
 
-        <div className="paywall-features">
-          {["Goldman Sachs listings", "Morgan Stanley listings", "Bank of America listings", "Save & bookmark jobs"].map((item) => (
-            <div className="paywall-feature" key={item}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <div className="paywall-plans">
+        <div className="paywall-plan">
+          <h3 className="paywall-plan-name">Monthly</h3>
+          <div className="paywall-plan-price">
+            <span className="paywall-plan-amount">$4.99</span>
+            <span className="paywall-plan-period">/mo</span>
+          </div>
+          <p className="paywall-plan-billing">Billed monthly</p>
+          {ctaBtn("monthly", "Get Monthly", false)}
+        </div>
+
+        <div className="paywall-plan paywall-plan-popular">
+          <div className="paywall-plan-tag">Best Value</div>
+          <h3 className="paywall-plan-name">Yearly</h3>
+          <div className="paywall-plan-price">
+            <span className="paywall-plan-amount">$3.33</span>
+            <span className="paywall-plan-period">/mo</span>
+          </div>
+          <p className="paywall-plan-billing">Billed $39.99/year</p>
+          {ctaBtn("yearly", "Get Yearly", true)}
+        </div>
+      </div>
+
+      <div className="paywall-includes">
+        <p className="paywall-includes-label">Both plans include</p>
+        <div className="paywall-includes-list">
+          {["Goldman Sachs", "Morgan Stanley", "Bank of America", "Save & bookmark"].map((item) => (
+            <span className="paywall-includes-item" key={item}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              <span>{item}</span>
-            </div>
+              {item}
+            </span>
           ))}
         </div>
-
-        <div className="paywall-price">
-          <span className="paywall-amount">$4.99</span>
-          <span className="paywall-period">/month</span>
-        </div>
-
-        {isSignedIn ? (
-          <button className="paywall-cta" onClick={handleSubscribe} disabled={loading}>
-            {loading ? "Redirecting to checkout..." : "Subscribe Now"}
-          </button>
-        ) : (
-          <>
-            <SignUpButton mode="modal">
-              <button className="paywall-cta">Get Started</button>
-            </SignUpButton>
-            <p className="paywall-signin">
-              Already subscribed?{" "}
-              <SignInButton mode="modal">
-                <button className="paywall-link">Sign in</button>
-              </SignInButton>
-            </p>
-          </>
-        )}
-
-        <p className="paywall-fine">Cancel anytime &middot; JPMorgan Chase is always free</p>
       </div>
+
+      {!isSignedIn && (
+        <p className="paywall-signin">
+          Already subscribed?{" "}
+          <SignInButton mode="modal">
+            <button className="paywall-link">Sign in</button>
+          </SignInButton>
+        </p>
+      )}
+
+      <p className="paywall-fine">Cancel anytime &middot; JPMorgan Chase is always free</p>
     </div>
   );
 }

@@ -97,7 +97,15 @@ function HomePage({ onBrowse, isSignedIn }) {
   );
 }
 
-function SignUpOverlay({ bankName }) {
+function SignUpOverlay({ bankName, isSignedIn }) {
+  function handleSubscribe() {
+    fetch("/api/checkout", { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.url) window.location.href = data.url;
+      });
+  }
+
   return (
     <div className="gate-overlay">
       <div className="gate-content">
@@ -105,19 +113,31 @@ function SignUpOverlay({ bankName }) {
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
-        <h3 className="gate-title">{bankName} requires a free account</h3>
-        <p className="gate-desc">
-          Sign up in seconds to unlock jobs from {bankName} and more.
-        </p>
-        <SignUpButton mode="modal">
-          <button className="gate-cta">Sign Up Free</button>
-        </SignUpButton>
-        <p className="gate-signin">
-          Already have an account?{" "}
-          <SignInButton mode="modal">
-            <button className="gate-link">Sign in</button>
-          </SignInButton>
-        </p>
+        {isSignedIn ? (
+          <>
+            <h3 className="gate-title">Unlock {bankName} and more</h3>
+            <p className="gate-desc">
+              Subscribe to access jobs from {bankName}, Goldman Sachs, Morgan Stanley, and Bank of America.
+            </p>
+            <button className="gate-cta" onClick={handleSubscribe}>Subscribe — $4.99/mo</button>
+          </>
+        ) : (
+          <>
+            <h3 className="gate-title">{bankName} requires an account</h3>
+            <p className="gate-desc">
+              Sign up to unlock jobs from {bankName} and more.
+            </p>
+            <SignUpButton mode="modal">
+              <button className="gate-cta">Sign Up</button>
+            </SignUpButton>
+            <p className="gate-signin">
+              Already have an account?{" "}
+              <SignInButton mode="modal">
+                <button className="gate-link">Sign in</button>
+              </SignInButton>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -139,7 +159,8 @@ function SkeletonRows() {
 }
 
 export default function Home() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
+  const isSubscribed = user?.publicMetadata?.subscribed === true;
   const [activeBank, setActiveBank] = useState("jpmc");
   const [jobType, setJobType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,8 +196,8 @@ export default function Home() {
   useEffect(() => {
     setViewingSaved(false);
 
-    // JPMC is free; GS and MS require sign-in
-    if (activeBank !== "jpmc" && !isSignedIn) {
+    // JPMC is free; other banks require subscription
+    if (activeBank !== "jpmc" && (!isSignedIn || !isSubscribed)) {
       setJobs([]);
       setLoading(false);
       return;
@@ -214,7 +235,7 @@ export default function Home() {
         setError(err.message);
         setLoading(false);
       });
-  }, [activeBank, isSignedIn, isLoaded]);
+  }, [activeBank, isSignedIn, isSubscribed, isLoaded]);
 
   function toggleBookmark(e, job) {
     e.preventDefault();
@@ -266,7 +287,7 @@ export default function Home() {
     filteredJobs.some((job) => job.link === link)
   ).length;
 
-  const isGatedBank = activeBank !== "jpmc" && !isSignedIn;
+  const isGatedBank = activeBank !== "jpmc" && (!isSignedIn || !isSubscribed);
 
   // Spinner while Clerk loads
   if (!isLoaded) {
@@ -304,7 +325,7 @@ export default function Home() {
         <aside className="sidebar">
           <div className="sidebar-header">Banks</div>
           {Object.entries(BANKS).map(([key, bank]) => {
-            const needsAuth = key !== "jpmc" && !isSignedIn;
+            const needsAuth = key !== "jpmc" && (!isSignedIn || !isSubscribed);
             return (
               <button
                 key={key}
@@ -482,7 +503,7 @@ export default function Home() {
               )}
 
               {/* Gate overlay for locked banks */}
-              {isGatedBank && <SignUpOverlay bankName={BANKS[activeBank].name} />}
+              {isGatedBank && <SignUpOverlay bankName={BANKS[activeBank].name} isSignedIn={isSignedIn} />}
 
               {/* Error */}
               {error && <div className="error-banner">Something went wrong: {error}</div>}

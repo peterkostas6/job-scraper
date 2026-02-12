@@ -1,10 +1,17 @@
-// GET /api/jobs-citi — fetches Citi student & grad program jobs from TalentBrew API
+// GET /api/jobs-citi — fetches Citi analyst & intern jobs from TalentBrew API
+// Two sources: Student/Grad Programs (internships) + Entry Level filtered to analyst titles
 const BASE_URL = "https://jobs.citi.com";
 const API_URL = `${BASE_URL}/search-jobs/resultspost`;
 
 const US_FILTER = { ID: "6252001", FacetType: 2, IsApplied: true, FieldName: "" };
 const STUDENT_FILTER = {
   ID: "Student and Grad Programs",
+  FacetType: 5,
+  IsApplied: true,
+  FieldName: "custom_fields.CFCareerLevel",
+};
+const ENTRY_FILTER = {
+  ID: "Entry Level",
   FacetType: 5,
   IsApplied: true,
   FieldName: "custom_fields.CFCareerLevel",
@@ -42,6 +49,7 @@ function decodeEntities(str) {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
     .replace(/&nbsp;/g, " ");
 }
 
@@ -77,33 +85,58 @@ function parseJobs(html) {
   return jobs;
 }
 
+async function fetchAllPages(filters) {
+  const allJobs = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(buildBody(filters, page)),
+    });
+
+    const data = await res.json();
+    const html = data.results || "";
+
+    const pagesMatch = html.match(/data-total-pages="(\d+)"/);
+    if (pagesMatch) totalPages = parseInt(pagesMatch[1]);
+
+    allJobs.push(...parseJobs(html));
+    page++;
+  } while (page <= totalPages);
+
+  return allJobs;
+}
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    // Fetch both sources in parallel
+    const [studentJobs, entryJobs] = await Promise.all([
+      fetchAllPages([STUDENT_FILTER, US_FILTER]),
+      fetchAllPages([ENTRY_FILTER, US_FILTER]),
+    ]);
+
+    // Entry Level is broad — only keep jobs with "analyst" in the title
+    const filteredEntry = entryJobs.filter((job) =>
+      /analyst/i.test(job.title)
+    );
+
+    // Deduplicate by link
+    const seen = new Set();
     const allJobs = [];
-    let page = 1;
-    let totalPages = 1;
-
-    do {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        body: JSON.stringify(buildBody([STUDENT_FILTER, US_FILTER], page)),
-      });
-
-      const data = await res.json();
-      const html = data.results || "";
-
-      const pagesMatch = html.match(/data-total-pages="(\d+)"/);
-      if (pagesMatch) totalPages = parseInt(pagesMatch[1]);
-
-      allJobs.push(...parseJobs(html));
-      page++;
-    } while (page <= totalPages);
+    for (const job of [...studentJobs, ...filteredEntry]) {
+      if (!seen.has(job.link)) {
+        seen.add(job.link);
+        allJobs.push(job);
+      }
+    }
 
     return Response.json({ jobs: allJobs, count: allJobs.length });
   } catch (err) {

@@ -32,7 +32,7 @@ function HomePage({ onBrowse, isSignedIn }) {
     <div className="homepage">
       <section className="hero">
         <span className="hero-tag">Bank job aggregator</span>
-        <h1 className="hero-title">Stop jumping between career sites</h1>
+        <h1 className="hero-title">Every Bulge Bracket Internship & Analyst Application — In One Place.</h1>
         <p className="hero-desc">
           View all active internship and analyst postings from bulge bracket banks.
           All in one place. No fake third-party listings.

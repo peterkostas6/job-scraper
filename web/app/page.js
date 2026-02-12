@@ -34,8 +34,8 @@ function HomePage({ onBrowse, isSignedIn }) {
         <span className="hero-tag">Bank job aggregator</span>
         <h1 className="hero-title">Every Bulge Bracket Internship & Analyst Application — In One Place.</h1>
         <p className="hero-desc">
-          View all active internship and analyst postings from bulge bracket banks.
-          All in one place. No fake third-party listings.
+          Live BB internship & analyst postings — pulled directly from bank career sites.
+          No third-party listings or outdated spreadsheets.
         </p>
         <div className="hero-actions">
           <button className="hero-cta-primary" onClick={onBrowse}>Browse Jobs</button>

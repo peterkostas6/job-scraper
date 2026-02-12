@@ -27,17 +27,72 @@ function isInternship(title) {
   );
 }
 
-function WelcomeBanner({ onDismiss }) {
+function HomePage({ onBrowse, isSignedIn }) {
   return (
-    <div className="welcome-banner">
-      <div>
-        <h2 className="welcome-title">Welcome to Pete's Postings</h2>
-        <p className="welcome-desc">
-          Browse analyst internships and jobs from top banks.
-          JPMorgan Chase is free — sign up to unlock Goldman Sachs and Morgan Stanley.
+    <div className="homepage">
+      <section className="hero">
+        <span className="hero-tag">Free job aggregator</span>
+        <h1 className="hero-title">Find your next analyst role at a top bank</h1>
+        <p className="hero-desc">
+          Internships and full-time positions from JPMorgan Chase, Goldman Sachs,
+          Morgan Stanley, and Bank of America — all in one place, updated live.
         </p>
-      </div>
-      <button className="welcome-dismiss" onClick={onDismiss}>Got it</button>
+        <div className="hero-actions">
+          <button className="hero-cta-primary" onClick={onBrowse}>Browse Jobs</button>
+          {!isSignedIn && (
+            <SignUpButton mode="modal">
+              <button className="hero-cta-secondary">Sign Up Free</button>
+            </SignUpButton>
+          )}
+        </div>
+      </section>
+
+      <section className="banks-strip">
+        <p className="banks-strip-label">Sourced directly from</p>
+        <div className="banks-strip-row">
+          {Object.values(BANKS).map((bank) => (
+            <span className="banks-strip-item" key={bank.name}>{bank.name}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="features-grid">
+        <div className="feature-card">
+          <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <h3 className="feature-title">Live Data</h3>
+          <p className="feature-desc">
+            Jobs pulled directly from bank career sites every time you visit. Never miss a new posting.
+          </p>
+        </div>
+        <div className="feature-card">
+          <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          <h3 className="feature-title">Save & Track</h3>
+          <p className="feature-desc">
+            Bookmark positions across all four banks and track them in one place.
+          </p>
+        </div>
+        <div className="feature-card">
+          <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+          </svg>
+          <h3 className="feature-title">Filter & Search</h3>
+          <p className="feature-desc">
+            Search by title, filter by location and job type to find exactly what you're looking for.
+          </p>
+        </div>
+      </section>
+
+      <section className="bottom-cta">
+        <h2 className="bottom-cta-title">Ready to start?</h2>
+        <p className="bottom-cta-desc">JPMorgan Chase is free to browse — no account needed.</p>
+        <button className="hero-cta-primary" onClick={onBrowse}>Browse Jobs Free</button>
+      </section>
     </div>
   );
 }
@@ -99,6 +154,7 @@ export default function Home() {
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [viewingSaved, setViewingSaved] = useState(false);
+  const [viewHome, setViewHome] = useState(true);
 
   // Load bookmarks and welcome state from localStorage
   useEffect(() => {
@@ -109,6 +165,11 @@ export default function Home() {
     const welcomed = localStorage.getItem("pp-welcomed");
     if (!welcomed) setShowWelcome(true);
   }, []);
+
+  // Signed-in users skip homepage and go straight to dashboard
+  useEffect(() => {
+    if (isLoaded && isSignedIn) setViewHome(false);
+  }, [isLoaded, isSignedIn]);
 
   // Fetch jobs when bank changes
   useEffect(() => {
@@ -220,7 +281,7 @@ export default function Home() {
     <>
       <nav>
         <div className="nav-inner">
-          <span className="logo">Pete's Postings</span>
+          <span className="logo logo-link" onClick={() => setViewHome(true)}>Pete's Postings</span>
           <div className="nav-right">
             {isSignedIn ? (
               <UserButton />
@@ -233,6 +294,11 @@ export default function Home() {
         </div>
       </nav>
 
+      {viewHome && (
+        <HomePage onBrowse={() => setViewHome(false)} isSignedIn={isSignedIn} />
+      )}
+
+      {!viewHome && (
       <div className="app-layout">
         {/* SIDEBAR */}
         <aside className="sidebar">
@@ -280,11 +346,6 @@ export default function Home() {
 
         {/* MAIN CONTENT */}
         <main className="content">
-          {/* Welcome banner for first-time visitors */}
-          {showWelcome && !isSignedIn && (
-            <WelcomeBanner onDismiss={dismissWelcome} />
-          )}
-
           {/* === SAVED JOBS VIEW === */}
           {viewingSaved && (
             <>
@@ -487,6 +548,7 @@ export default function Home() {
           )}
         </main>
       </div>
+      )}
 
       <footer>
         <div className="footer-inner">

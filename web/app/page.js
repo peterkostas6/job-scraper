@@ -232,15 +232,31 @@ export default function Home() {
   const [viewingSaved, setViewingSaved] = useState(false);
   const [viewHome, setViewHome] = useState(true);
 
-  // Load bookmarks and welcome state from localStorage
+  // Load welcome state from localStorage
   useEffect(() => {
-    const savedLinks = JSON.parse(localStorage.getItem("pp-bookmarks") || "[]");
-    setBookmarks(new Set(savedLinks));
-    const savedData = JSON.parse(localStorage.getItem("pp-saved-jobs") || "[]");
-    setSavedJobs(savedData);
     const welcomed = localStorage.getItem("pp-welcomed");
     if (!welcomed) setShowWelcome(true);
   }, []);
+
+  // Load saved jobs from Clerk unsafeMetadata (with one-time localStorage migration)
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user) return;
+    const clerkSaved = user.unsafeMetadata?.savedJobs;
+    if (Array.isArray(clerkSaved) && clerkSaved.length > 0) {
+      setSavedJobs(clerkSaved);
+      setBookmarks(new Set(clerkSaved.map((j) => j.link)));
+    } else {
+      // Migrate any existing localStorage bookmarks to Clerk
+      const localData = JSON.parse(localStorage.getItem("pp-saved-jobs") || "[]");
+      if (localData.length > 0) {
+        setSavedJobs(localData);
+        setBookmarks(new Set(localData.map((j) => j.link)));
+        user.update({ unsafeMetadata: { ...user.unsafeMetadata, savedJobs: localData } });
+        localStorage.removeItem("pp-saved-jobs");
+        localStorage.removeItem("pp-bookmarks");
+      }
+    }
+  }, [isLoaded, isSignedIn, user]);
 
   // Signed-in users skip homepage and go straight to dashboard
   useEffect(() => {
@@ -304,7 +320,6 @@ export default function Home() {
       const next = new Set(prev);
       if (next.has(link)) next.delete(link);
       else next.add(link);
-      localStorage.setItem("pp-bookmarks", JSON.stringify([...next]));
       return next;
     });
     setSavedJobs((prev) => {
@@ -314,7 +329,8 @@ export default function Home() {
       } else {
         next = [...prev, { title: job.title, link: job.link, location: job.location || "", bank: BANKS[activeBank]?.name || "" }];
       }
-      localStorage.setItem("pp-saved-jobs", JSON.stringify(next));
+      // Persist to Clerk
+      user.update({ unsafeMetadata: { ...user.unsafeMetadata, savedJobs: next } });
       return next;
     });
   }

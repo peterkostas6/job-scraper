@@ -13,6 +13,8 @@ const BANKS = {
   barclays: { name: "Barclays", endpoint: "/api/jobs-barclays" },
 };
 
+const FREE_BANKS = new Set(["jpmc", "gs", "ms"]);
+
 const JOB_TYPES = {
   all: "All Types",
   internship: "Internship",
@@ -93,7 +95,7 @@ function HomePage({ onBrowse, isSignedIn }) {
 
       <section className="bottom-cta">
         <h2 className="bottom-cta-title">Ready to start?</h2>
-        <p className="bottom-cta-desc">JPMorgan Chase is free to browse — no account needed.</p>
+        <p className="bottom-cta-desc">JPMorgan Chase, Goldman Sachs, and Morgan Stanley are free to browse — no account needed.</p>
         <button className="hero-cta-primary" onClick={onBrowse}>Browse Jobs Free</button>
       </section>
     </div>
@@ -142,7 +144,7 @@ function PaywallOverlay({ isSignedIn }) {
         <div className="paywall-badge">Pro</div>
         <h2 className="paywall-title">Unlock All Banks</h2>
         <p className="paywall-desc">
-          Get full access to live job listings from Goldman Sachs, Morgan Stanley, and Bank of America.
+          Get full access to live job listings from Bank of America, Citi, Deutsche Bank, and Barclays.
         </p>
       </div>
 
@@ -172,7 +174,7 @@ function PaywallOverlay({ isSignedIn }) {
       <div className="paywall-includes">
         <p className="paywall-includes-label">Both plans include</p>
         <div className="paywall-includes-list">
-          {["Goldman Sachs", "Morgan Stanley", "Bank of America", "Save & bookmark"].map((item) => (
+          {["Bank of America", "Citi", "Deutsche Bank", "Barclays"].map((item) => (
             <span className="paywall-includes-item" key={item}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -192,7 +194,7 @@ function PaywallOverlay({ isSignedIn }) {
         </p>
       )}
 
-      <p className="paywall-fine">Cancel anytime &middot; JPMorgan Chase is always free</p>
+      <p className="paywall-fine">Cancel anytime &middot; JPMC, GS &amp; MS are always free</p>
     </div>
   );
 }
@@ -268,7 +270,7 @@ export default function Home() {
     setViewingSaved(false);
 
     // JPMC is free; other banks require subscription
-    if (activeBank !== "jpmc" && (!isSignedIn || !isSubscribed)) {
+    if (!FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed)) {
       setJobs([]);
       setLoading(false);
       return;
@@ -362,7 +364,7 @@ export default function Home() {
     filteredJobs.some((job) => job.link === link)
   ).length;
 
-  const isGatedBank = activeBank !== "jpmc" && (!isSignedIn || !isSubscribed);
+  const isGatedBank = !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed);
 
   // Spinner while Clerk loads
   if (!isLoaded) {
@@ -405,7 +407,7 @@ export default function Home() {
         <aside className="sidebar">
           <div className="sidebar-header">Banks</div>
           {Object.entries(BANKS).map(([key, bank]) => {
-            const needsAuth = key !== "jpmc" && (!isSignedIn || !isSubscribed);
+            const needsAuth = !FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed);
             return (
               <button
                 key={key}
@@ -453,7 +455,7 @@ export default function Home() {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              Unlock 6 more banks
+              Unlock 4 more banks
             </span>
             <span className="mobile-upgrade-cta">See plans</span>
           </div>

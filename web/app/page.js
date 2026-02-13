@@ -596,6 +596,19 @@ export default function Home() {
           {/* === BANK JOBS VIEW === */}
           {!viewingSaved && (
             <>
+              {/* Tip box */}
+              {showWelcome && !isGatedBank && !isSubscribed && (
+                <div className="welcome-banner">
+                  <div>
+                    <p className="welcome-title">Welcome to Pete's Postings</p>
+                    <p className="welcome-desc">
+                      Browse live analyst and internship postings from top banks. JPMorgan, Goldman Sachs, and Morgan Stanley are free — use the sidebar to switch banks. Search, filter by location or type, and bookmark jobs you like.
+                    </p>
+                  </div>
+                  <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>
+                </div>
+              )}
+
               {/* Filters */}
               {!isGatedBank && (
                 <div className="filters">

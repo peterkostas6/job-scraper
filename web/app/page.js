@@ -11,6 +11,7 @@ const BANKS = {
   citi: { name: "Citi", endpoint: "/api/jobs-citi" },
   db: { name: "Deutsche Bank", endpoint: "/api/jobs-db" },
   barclays: { name: "Barclays", endpoint: "/api/jobs-barclays" },
+  ubs: { name: "UBS", endpoint: "/api/jobs-ubs" },
 };
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms"]);
@@ -144,7 +145,7 @@ function PaywallOverlay({ isSignedIn }) {
         <div className="paywall-badge">Pro</div>
         <h2 className="paywall-title">Unlock All Banks</h2>
         <p className="paywall-desc">
-          Get full access to live job listings from Bank of America, Citi, Deutsche Bank, and Barclays.
+          Get full access to live job listings from all 8 banks — including BofA, Citi, Deutsche Bank, Barclays, and UBS.
         </p>
       </div>
 
@@ -174,7 +175,7 @@ function PaywallOverlay({ isSignedIn }) {
       <div className="paywall-includes">
         <p className="paywall-includes-label">Both plans include</p>
         <div className="paywall-includes-list">
-          {["Bank of America", "Citi", "Deutsche Bank", "Barclays"].map((item) => (
+          {["All 8 banks", "BofA, Citi, DB, Barclays, UBS", "Save & bookmark", "Search & filter"].map((item) => (
             <span className="paywall-includes-item" key={item}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -455,7 +456,7 @@ export default function Home() {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              Unlock 4 more banks
+              Unlock 5 more banks
             </span>
             <span className="mobile-upgrade-cta">See plans</span>
           </div>
@@ -674,7 +675,7 @@ export default function Home() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA &middot; Citi &middot; DB &middot; Barclays</p>
+            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA &middot; Citi &middot; DB &middot; Barclays &middot; UBS</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

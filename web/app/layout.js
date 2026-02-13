@@ -3,7 +3,7 @@ import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata = {
-  title: "Pete's Postings — Analyst & Intern Jobs at Top Banks",
+  title: "Petes Postings - Analyst and Intern Jobs at Top Banks",
   description:
     "Browse live analyst and internship postings from JPMorgan Chase, Goldman Sachs, Morgan Stanley, Bank of America, Citi, Deutsche Bank, and Barclays. Updated directly from bank career sites.",
   keywords: [
@@ -23,19 +23,19 @@ export const metadata = {
     "finance internship",
   ],
   openGraph: {
-    title: "Pete's Postings — Every BB Analyst & Intern Application in One Place",
+    title: "Petes Postings - Every BB Analyst and Intern Application in One Place",
     description:
-      "Live analyst and internship postings from 7 bulge bracket banks. Pulled directly from career sites — never outdated.",
+      "Live analyst and internship postings from 8 bulge bracket banks. Pulled directly from career sites, never outdated.",
     url: "https://petespostings.com",
-    siteName: "Pete's Postings",
+    siteName: "Petes Postings",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pete's Postings — BB Analyst & Intern Jobs",
+    title: "Petes Postings - BB Analyst and Intern Jobs",
     description:
-      "Live analyst and internship postings from JPMorgan, Goldman Sachs, Morgan Stanley, BofA, Citi, Deutsche Bank & Barclays.",
+      "Live analyst and internship postings from JPMorgan, Goldman Sachs, Morgan Stanley, BofA, Citi, Deutsche Bank, Barclays, and UBS.",
   },
   metadataBase: new URL("https://petespostings.com"),
   alternates: {

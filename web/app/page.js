@@ -200,6 +200,62 @@ function PaywallOverlay({ isSignedIn }) {
   );
 }
 
+function AboutPage({ onBrowse }) {
+  return (
+    <div className="about-page">
+      <section className="about-hero">
+        <span className="hero-tag">About</span>
+        <h1 className="about-title">Applying to banking internships sucks.</h1>
+      </section>
+
+      <section className="about-section about-section-first">
+        <p className="about-text">
+          Tracking when postings go live, constantly checking 20+ different career sites, updating spreadsheets to keep track of what's open and what's closed... it's inefficient and hard to follow.
+        </p>
+        <p className="about-text">
+          That's why I made this.
+        </p>
+      </section>
+
+      <section className="about-section">
+        <h2 className="about-heading">What you get</h2>
+        <p className="about-text">
+          Here, you're able to view every bank's active internship and analyst postings in one place. Filter for what you want — by bank, location, or job type.
+        </p>
+        <p className="about-text">
+          No more fake postings on LinkedIn or Google. Every listing here is <strong>live and pulled directly from each bank's career site API</strong>, so what you see is exactly what's on their site right now.
+        </p>
+        <div className="about-banks-grid">
+          {Object.values(BANKS).map((bank) => (
+            <div className="about-bank-card" key={bank.name}>
+              <span className="about-bank-name">{bank.name}</span>
+              <span className="about-bank-status">Live</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="about-section">
+        <h2 className="about-heading">Save what you like</h2>
+        <p className="about-text">
+          Make a free account and you can bookmark jobs across all banks. They'll be waiting for you in your Saved Jobs tab whenever you come back.
+        </p>
+      </section>
+
+      <section className="about-section">
+        <h2 className="about-heading">Pricing</h2>
+        <p className="about-text">
+          JPMorgan Chase, Goldman Sachs, and Morgan Stanley are <strong>completely free</strong> — no account needed. Want all 8 banks? Pro starts at $3.33/mo.
+        </p>
+      </section>
+
+      <section className="about-section about-section-last" style={{ textAlign: "center", borderTop: "none", paddingTop: "0.5rem" }}>
+        <button className="hero-cta-primary" onClick={onBrowse}>Browse Active Postings</button>
+      </section>
+    </div>
+  );
+}
+
 function SkeletonRows() {
   return (
     <div className="jobs-list">
@@ -234,6 +290,7 @@ export default function Home() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [viewingSaved, setViewingSaved] = useState(false);
   const [viewHome, setViewHome] = useState(true);
+  const [viewAbout, setViewAbout] = useState(false);
 
   // Load welcome state from localStorage
   useEffect(() => {
@@ -380,13 +437,14 @@ export default function Home() {
     <>
       <nav>
         <div className="nav-inner">
-          <span className="logo logo-link" onClick={() => setViewHome(true)}>
+          <span className="logo logo-link" onClick={() => { setViewHome(true); setViewAbout(false); }}>
             <svg className="logo-icon" width="30" height="30" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="8" fill="var(--navy)"/>
               <text x="16" y="23" textAnchor="middle" fontFamily="inherit" fontWeight="800" fontSize="20" fill="#fff">P</text>
             </svg>
           </span>
           <div className="nav-right">
+            <button className="nav-link" onClick={() => { setViewHome(false); setViewAbout(true); }}>About</button>
             {isSignedIn ? (
               <UserButton />
             ) : (
@@ -398,11 +456,15 @@ export default function Home() {
         </div>
       </nav>
 
-      {viewHome && (
+      {viewHome && !viewAbout && (
         <HomePage onBrowse={() => setViewHome(false)} isSignedIn={isSignedIn} />
       )}
 
-      {!viewHome && (
+      {viewAbout && (
+        <AboutPage onBrowse={() => { setViewAbout(false); setViewHome(false); }} />
+      )}
+
+      {!viewHome && !viewAbout && (
       <div className="app-layout">
         {/* SIDEBAR */}
         <aside className="sidebar">

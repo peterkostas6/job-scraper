@@ -20,6 +20,23 @@ const US_MARKERS = [
   "pennington", "palo alto", "washington", "jacksonville",
 ];
 
+function categorizeJob(title) {
+  const t = title.toLowerCase();
+  if (/investment\s*bank/.test(t) || t.includes("ibd") || t.includes("m&a") || t.includes("leveraged finance") || t.includes("ecm") || t.includes("dcm")) return "Investment Banking";
+  if (t.includes("sales & trading") || t.includes("sales and trading") || t.includes("trading") || t.includes("markets") || t.includes("fixed income") || t.includes("equities") || t.includes("securities") || t.includes("commodit")) return "Sales & Trading";
+  if (t.includes("risk") || t.includes("compliance") || t.includes("audit") || t.includes("regulatory")) return "Risk & Compliance";
+  if (t.includes("technolog") || t.includes("engineer") || t.includes("developer") || t.includes("software") || t.includes("data sci") || t.includes("cyber") || t.includes("cloud")) return "Technology";
+  if (t.includes("wealth") || t.includes("asset manage") || t.includes("private bank") || t.includes("private client") || t.includes("portfolio")) return "Wealth Management";
+  if (t.includes("research") || t.includes("economist")) return "Research";
+  if (t.includes("operations") || /\bops\b/.test(t) || t.includes("middle office") || t.includes("back office")) return "Operations";
+  if (t.includes("corporate bank") || t.includes("commercial bank") || t.includes("lending") || t.includes("loan") || t.includes("credit")) return "Corporate Banking";
+  if (t.includes("finance") || t.includes("accounting") || t.includes("controller") || t.includes("treasury") || t.includes("tax")) return "Finance";
+  if (t.includes("human resources") || t.includes("talent") || t.includes("recruiting")) return "Human Resources";
+  if (t.includes("legal") || t.includes("counsel")) return "Legal";
+  if (t.includes("quantitative") || t.includes("quant ") || t.includes("strats")) return "Quantitative";
+  return "Other";
+}
+
 // Helper: pause for a given number of milliseconds
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,7 +66,7 @@ async function fetchCampusJobs() {
     const title = match[2].trim().replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
     const location = match[3].trim();
 
-    jobs.push({ title, link, location });
+    jobs.push({ title, link, location, category: categorizeJob(title) });
   }
 
   // Filter to US only
@@ -91,11 +108,15 @@ function parseWorkdayJobs(data) {
       const title = (job.title || "").toLowerCase();
       return title.includes("analyst");
     })
-    .map((job) => ({
-      title: job.title || "N/A",
-      link: `${WORKDAY_SITE}${job.externalPath}`,
-      location: job.locationsText || "",
-    }));
+    .map((job) => {
+      const title = job.title || "N/A";
+      return {
+        title,
+        link: `${WORKDAY_SITE}${job.externalPath}`,
+        location: job.locationsText || "",
+        category: categorizeJob(title),
+      };
+    });
 }
 
 async function fetchFullTimeJobs() {

@@ -38,6 +38,36 @@ const GS_QUERY = `query GetRoles($searchQueryInput: RoleSearchQueryInput!) {
   }
 }`;
 
+function categorizeJob(title, division, jobFunction) {
+  // Use GS division/jobFunction fields first if available
+  const d = (division || "").toLowerCase();
+  const f = (jobFunction || "").toLowerCase();
+  if (d.includes("investment banking") || f.includes("investment banking")) return "Investment Banking";
+  if (d.includes("global markets") || d.includes("trading") || f.includes("trading") || f.includes("markets")) return "Sales & Trading";
+  if (d.includes("risk") || f.includes("risk") || f.includes("compliance") || f.includes("audit")) return "Risk & Compliance";
+  if (d.includes("engineering") || d.includes("technology") || f.includes("engineer") || f.includes("technology")) return "Technology";
+  if (d.includes("asset management") || d.includes("wealth") || f.includes("asset management") || f.includes("wealth") || f.includes("portfolio")) return "Wealth Management";
+  if (d.includes("research") || f.includes("research")) return "Research";
+  if (d.includes("operations") || f.includes("operations")) return "Operations";
+  if (f.includes("finance") || f.includes("controller") || f.includes("treasury") || f.includes("tax")) return "Finance";
+  if (f.includes("legal") || f.includes("counsel")) return "Legal";
+  if (f.includes("human") || f.includes("talent") || f.includes("recruiting")) return "Human Resources";
+  if (d.includes("quantitative") || f.includes("quant") || f.includes("strats")) return "Quantitative";
+
+  // Fallback to title keywords
+  const t = title.toLowerCase();
+  if (/investment\s*bank/.test(t) || t.includes("ibd") || t.includes("m&a")) return "Investment Banking";
+  if (t.includes("trading") || t.includes("markets") || t.includes("fixed income") || t.includes("equities") || t.includes("securities")) return "Sales & Trading";
+  if (t.includes("risk") || t.includes("compliance") || t.includes("audit")) return "Risk & Compliance";
+  if (t.includes("technolog") || t.includes("engineer") || t.includes("software") || t.includes("data sci") || t.includes("cyber")) return "Technology";
+  if (t.includes("wealth") || t.includes("asset manage") || t.includes("private bank")) return "Wealth Management";
+  if (t.includes("research") || t.includes("economist")) return "Research";
+  if (t.includes("operations") || /\bops\b/.test(t)) return "Operations";
+  if (t.includes("finance") || t.includes("accounting") || t.includes("controller") || t.includes("treasury")) return "Finance";
+  if (t.includes("quantitative") || t.includes("quant ") || t.includes("strats")) return "Quantitative";
+  return "Other";
+}
+
 // Helper: pause for a given number of milliseconds
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -99,10 +129,12 @@ function parseJobs(data) {
         .map((loc) => [loc.city, loc.state].filter(Boolean).join(", "))
         .join("; ");
 
+      const title = item.jobTitle || item.corporateTitle || "N/A";
       return {
-        title: item.jobTitle || item.corporateTitle || "N/A",
+        title,
         link: `${GS_SITE_URL}/${numericId}`,
         location,
+        category: categorizeJob(title, item.division, item.jobFunction),
       };
     });
 

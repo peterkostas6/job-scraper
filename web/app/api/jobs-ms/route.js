@@ -7,6 +7,23 @@ const MS_API_URL =
 const MS_SITE_URL =
   "https://ms.wd5.myworkdayjobs.com/en-US/External";
 
+function categorizeJob(title) {
+  const t = title.toLowerCase();
+  if (/investment\s*bank/.test(t) || t.includes("ibd") || t.includes("m&a") || t.includes("leveraged finance") || t.includes("ecm") || t.includes("dcm")) return "Investment Banking";
+  if (t.includes("sales & trading") || t.includes("sales and trading") || t.includes("trading") || t.includes("markets") || t.includes("fixed income") || t.includes("equities") || t.includes("securities") || t.includes("commodit")) return "Sales & Trading";
+  if (t.includes("risk") || t.includes("compliance") || t.includes("audit") || t.includes("regulatory")) return "Risk & Compliance";
+  if (t.includes("technolog") || t.includes("engineer") || t.includes("developer") || t.includes("software") || t.includes("data sci") || t.includes("cyber") || t.includes("cloud")) return "Technology";
+  if (t.includes("wealth") || t.includes("asset manage") || t.includes("private bank") || t.includes("private client") || t.includes("portfolio")) return "Wealth Management";
+  if (t.includes("research") || t.includes("economist")) return "Research";
+  if (t.includes("operations") || /\bops\b/.test(t) || t.includes("middle office") || t.includes("back office")) return "Operations";
+  if (t.includes("corporate bank") || t.includes("commercial bank") || t.includes("lending") || t.includes("loan") || t.includes("credit")) return "Corporate Banking";
+  if (t.includes("finance") || t.includes("accounting") || t.includes("controller") || t.includes("treasury") || t.includes("tax")) return "Finance";
+  if (t.includes("human resources") || t.includes("talent") || t.includes("recruiting")) return "Human Resources";
+  if (t.includes("legal") || t.includes("counsel")) return "Legal";
+  if (t.includes("quantitative") || t.includes("quant ") || t.includes("strats")) return "Quantitative";
+  return "Other";
+}
+
 // Helper: pause for a given number of milliseconds
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,11 +84,15 @@ function parseJobs(data) {
 
       return isAnalyst && isUS;
     })
-    .map((job) => ({
-      title: job.title || "N/A",
-      link: `${MS_SITE_URL}${job.externalPath}`,
-      location: job.locationsText || "",
-    }));
+    .map((job) => {
+      const title = job.title || "N/A";
+      return {
+        title,
+        link: `${MS_SITE_URL}${job.externalPath}`,
+        location: job.locationsText || "",
+        category: categorizeJob(title),
+      };
+    });
 }
 
 // GET /api/jobs-ms — returns all MS analyst jobs in the US as JSON

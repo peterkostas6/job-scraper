@@ -287,6 +287,8 @@ export default function Home() {
   const [savedJobs, setSavedJobs] = useState([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [availableLocations, setAvailableLocations] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [availableCategories, setAvailableCategories] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [viewingSaved, setViewingSaved] = useState(false);
   const [viewHome, setViewHome] = useState(true);
@@ -341,6 +343,7 @@ export default function Home() {
     setJobs([]);
     setSearchQuery("");
     setLocationFilter("");
+    setCategoryFilter("");
     setShowSavedOnly(false);
 
     fetch(BANKS[activeBank].endpoint)
@@ -359,6 +362,12 @@ export default function Home() {
             .filter(Boolean)
         )].sort();
         setAvailableLocations(locs);
+
+        // Extract unique categories for filter
+        const cats = [...new Set(
+          data.jobs.map((job) => job.category).filter(Boolean)
+        )].sort();
+        setAvailableCategories(cats);
 
         setLoading(false);
       })
@@ -411,7 +420,10 @@ export default function Home() {
     const matchesLocation =
       locationFilter === "" ||
       (job.location || "").toLowerCase().includes(locationFilter.toLowerCase());
-    return matchesType && matchesSearch && matchesLocation;
+    const matchesCategory =
+      categoryFilter === "" ||
+      (job.category || "") === categoryFilter;
+    return matchesType && matchesSearch && matchesLocation && matchesCategory;
   });
 
   const displayJobs = showSavedOnly
@@ -651,6 +663,17 @@ export default function Home() {
                   >
                     {Object.entries(JOB_TYPES).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="filter-dropdown"
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                  >
+                    <option value="">All Categories</option>
+                    {availableCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>

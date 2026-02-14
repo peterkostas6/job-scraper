@@ -291,6 +291,11 @@ export default function Home() {
   const [availableCategories, setAvailableCategories] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [viewingSaved, setViewingSaved] = useState(false);
+  const [viewNotifications, setViewNotifications] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all" });
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifSaved, setNotifSaved] = useState(false);
   const [viewHome, setViewHome] = useState(true);
   const [viewAbout, setViewAbout] = useState(false);
 
@@ -320,6 +325,19 @@ export default function Home() {
     }
   }, [isLoaded, isSignedIn, user]);
 
+  // Load notification preferences from API
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !isSubscribed) return;
+    setNotifLoading(true);
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.notifications) setNotifPrefs(data.notifications);
+      })
+      .catch(() => {})
+      .finally(() => setNotifLoading(false));
+  }, [isLoaded, isSignedIn, isSubscribed]);
+
   // Signed-in users skip homepage and go straight to dashboard
   useEffect(() => {
     if (isLoaded && isSignedIn) setViewHome(false);
@@ -328,6 +346,7 @@ export default function Home() {
   // Fetch jobs when bank changes
   useEffect(() => {
     setViewingSaved(false);
+    setViewNotifications(false);
 
     // JPMC is free; other banks require subscription
     if (!FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed)) {
@@ -409,6 +428,42 @@ export default function Home() {
     localStorage.setItem("pp-welcomed", "true");
   }
 
+  function toggleNotifBank(bankKey) {
+    setNotifPrefs((prev) => {
+      const banks = prev.banks.includes(bankKey)
+        ? prev.banks.filter((b) => b !== bankKey)
+        : [...prev.banks, bankKey];
+      return { ...prev, banks };
+    });
+    setNotifSaved(false);
+  }
+
+  function toggleNotifCategory(cat) {
+    setNotifPrefs((prev) => {
+      const categories = prev.categories.includes(cat)
+        ? prev.categories.filter((c) => c !== cat)
+        : [...prev.categories, cat];
+      return { ...prev, categories };
+    });
+    setNotifSaved(false);
+  }
+
+  function saveNotifPrefs() {
+    setNotifSaving(true);
+    setNotifSaved(false);
+    fetch("/api/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(notifPrefs),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setNotifSaved(true);
+      })
+      .catch(() => {})
+      .finally(() => setNotifSaving(false));
+  }
+
   const filteredJobs = jobs.filter((job) => {
     const matchesType =
       jobType === "all" ? true :
@@ -487,7 +542,7 @@ export default function Home() {
               <button
                 key={key}
                 className={`sidebar-item ${activeBank === key && !viewingSaved ? "sidebar-item-active" : ""} ${needsAuth ? "sidebar-item-locked" : ""}`}
-                onClick={() => { setViewingSaved(false); setActiveBank(key); }}
+                onClick={() => { setViewingSaved(false); setViewNotifications(false); setActiveBank(key); }}
               >
                 <span>{bank.name}</span>
                 {needsAuth ? (
@@ -507,11 +562,11 @@ export default function Home() {
           <div className="sidebar-divider" />
           <div className="sidebar-header">My Jobs</div>
           <button
-            className={`sidebar-item ${viewingSaved ? "sidebar-item-active" : ""}`}
-            onClick={() => { setViewingSaved(true); setSearchQuery(""); setLocationFilter(""); setJobType("all"); }}
+            className={`sidebar-item ${viewingSaved && !viewNotifications ? "sidebar-item-active" : ""}`}
+            onClick={() => { setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all"); }}
           >
             <span className="sidebar-saved-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved && !viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
               Saved Jobs
@@ -520,6 +575,24 @@ export default function Home() {
               <span className="sidebar-count">{savedJobs.length}</span>
             )}
           </button>
+
+          {isSubscribed && (
+            <button
+              className={`sidebar-item ${viewNotifications ? "sidebar-item-active" : ""}`}
+              onClick={() => { setViewNotifications(true); setViewingSaved(true); }}
+            >
+              <span className="sidebar-saved-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                Notifications
+              </span>
+              {notifPrefs.enabled && (
+                <span className="sidebar-notif-dot" />
+              )}
+            </button>
+          )}
         </aside>
 
         {/* Mobile upgrade banner — only shown when not subscribed */}
@@ -538,8 +611,102 @@ export default function Home() {
 
         {/* MAIN CONTENT */}
         <main className="content">
+          {/* === NOTIFICATIONS VIEW === */}
+          {viewNotifications && isSubscribed && (
+            <>
+              <div className="notif-panel">
+                <div className="notif-header">
+                  <h2 className="notif-title">Manage Notifications</h2>
+                  <p className="notif-desc">Get emailed when new jobs matching your preferences are posted. We check every 6 hours.</p>
+                </div>
+
+                {notifLoading ? (
+                  <div className="loading-state" style={{ padding: "3rem" }}>
+                    <div className="spinner" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="notif-section">
+                      <div className="notif-toggle-row">
+                        <span className="notif-toggle-label">Email notifications</span>
+                        <button
+                          className={`notif-toggle ${notifPrefs.enabled ? "notif-toggle-on" : ""}`}
+                          onClick={() => { setNotifPrefs((p) => ({ ...p, enabled: !p.enabled })); setNotifSaved(false); }}
+                        >
+                          <span className="notif-toggle-knob" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {notifPrefs.enabled && (
+                      <>
+                        <div className="notif-section">
+                          <h3 className="notif-section-title">Banks</h3>
+                          <p className="notif-section-desc">Select which banks to get alerts for. Leave empty for all banks.</p>
+                          <div className="notif-checkboxes">
+                            {Object.entries(BANKS).map(([key, bank]) => (
+                              <label className="notif-checkbox" key={key}>
+                                <input
+                                  type="checkbox"
+                                  checked={notifPrefs.banks.includes(key)}
+                                  onChange={() => toggleNotifBank(key)}
+                                />
+                                <span>{bank.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="notif-section">
+                          <h3 className="notif-section-title">Categories</h3>
+                          <p className="notif-section-desc">Select which categories to get alerts for. Leave empty for all categories.</p>
+                          <div className="notif-checkboxes">
+                            {["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"].map((cat) => (
+                              <label className="notif-checkbox" key={cat}>
+                                <input
+                                  type="checkbox"
+                                  checked={notifPrefs.categories.includes(cat)}
+                                  onChange={() => toggleNotifCategory(cat)}
+                                />
+                                <span>{cat}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="notif-section">
+                          <h3 className="notif-section-title">Job Type</h3>
+                          <div className="notif-radio-group">
+                            {[["all", "All Types"], ["internship", "Internship Only"], ["fulltime", "Analyst Only"]].map(([val, label]) => (
+                              <label className="notif-radio" key={val}>
+                                <input
+                                  type="radio"
+                                  name="notifJobType"
+                                  value={val}
+                                  checked={notifPrefs.jobType === val}
+                                  onChange={() => { setNotifPrefs((p) => ({ ...p, jobType: val })); setNotifSaved(false); }}
+                                />
+                                <span>{label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="notif-actions">
+                      <button className="notif-save" onClick={saveNotifPrefs} disabled={notifSaving}>
+                        {notifSaving ? "Saving..." : notifSaved ? "Saved" : "Save Preferences"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+
           {/* === SAVED JOBS VIEW === */}
-          {viewingSaved && (
+          {viewingSaved && !viewNotifications && (
             <>
               <div className="results-bar">
                 <span className="results-text">
@@ -606,7 +773,7 @@ export default function Home() {
           )}
 
           {/* === BANK JOBS VIEW === */}
-          {!viewingSaved && (
+          {!viewingSaved && !viewNotifications && (
             <>
               {/* Tip box */}
               {showWelcome && !isGatedBank && !isSubscribed && (

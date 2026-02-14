@@ -1109,6 +1109,204 @@ nav {
   transform: translateX(3px);
 }
 
+/* ---- NOTIFICATION PANEL ---- */
+.notif-panel {
+  max-width: 560px;
+}
+
+.notif-header {
+  margin-bottom: 1.75rem;
+}
+
+.notif-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.3rem;
+}
+
+.notif-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.notif-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.notif-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0;
+}
+
+.notif-section-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+
+.notif-section-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.notif-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notif-toggle-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.notif-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 100px;
+  border: none;
+  background: #d1d5db;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.notif-toggle-on {
+  background: var(--forest-blue);
+}
+
+.notif-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.notif-toggle-on .notif-toggle-knob {
+  transform: translateX(20px);
+}
+
+.notif-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.notif-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  transition: all 0.15s;
+}
+
+.notif-checkbox:hover {
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.notif-checkbox:has(input:checked) {
+  background: rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.25);
+  color: var(--text-primary);
+}
+
+.notif-checkbox input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--forest-blue);
+  cursor: pointer;
+}
+
+.notif-radio-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.notif-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  transition: all 0.15s;
+}
+
+.notif-radio:hover {
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.notif-radio:has(input:checked) {
+  background: rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.25);
+  color: var(--text-primary);
+}
+
+.notif-radio input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--forest-blue);
+  cursor: pointer;
+}
+
+.notif-actions {
+  padding-top: 0.5rem;
+}
+
+.notif-save {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--forest-blue);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notif-save:hover {
+  background: #1d4ed8;
+}
+
+.notif-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sidebar-notif-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  flex-shrink: 0;
+}
+
 /* ---- FOOTER ---- */
 footer {
   border-top: 1px solid var(--border);
@@ -1412,6 +1610,15 @@ footer {
 
   .about-banks-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* ---- NOTIFICATIONS ---- */
+  .notif-checkboxes {
+    gap: 0.4rem;
+  }
+
+  .notif-radio-group {
+    flex-wrap: wrap;
   }
 
   /* ---- FOOTER ---- */

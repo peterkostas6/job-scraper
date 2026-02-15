@@ -69,13 +69,19 @@ export async function GET() {
     const seen = new Set();
 
     // Professional jobs — link to careers.db.com SPA
-    // Only include analyst/intern level, exclude associate and above
-    const EXCLUDE_LEVELS = new Set(["associate", "avp", "vp", "vice president", "director", "managing director", "md"]);
+    // Only include analyst/intern level, exclude senior roles by title
     function isJuniorRole(item) {
-      const level = (item.MatchedObjectDescriptor?.CareerLevel?.Name || "").toLowerCase();
-      const title = (item.MatchedObjectDescriptor?.PositionTitle || "").toLowerCase();
-      if (EXCLUDE_LEVELS.has(level)) return false;
-      if (/\bassociate\b/.test(title) && !/\banalyst\b/.test(title) && !/\bintern\b/.test(title)) return false;
+      const t = (item.MatchedObjectDescriptor?.PositionTitle || "").toLowerCase();
+      if (t.includes("vice president")) return false;
+      if (/\bavp\b/.test(t)) return false;
+      if (/\bvp\b/.test(t)) return false;
+      if (/\bdirector\b/.test(t)) return false;
+      if (/\bmanaging director\b/.test(t)) return false;
+      if (/\bmd\b/.test(t)) return false;
+      if (/\bprincipal\b/.test(t)) return false;
+      if (/\bsenior\b/.test(t)) return false;
+      if (/\bassociate\b/.test(t) && !/\banalyst\b/.test(t) && !/\bintern\b/.test(t)) return false;
+      if (/\bmanager\b/.test(t) && !/\bintern\b/.test(t)) return false;
       return true;
     }
 

@@ -33,6 +33,11 @@ function isInternship(title) {
   );
 }
 
+function isGraduateProgram(title) {
+  const t = title.toLowerCase();
+  return /\bgraduate\b/.test(t) || /\bgrad\s+program/.test(t) || /\bgrad\s+programme/.test(t);
+}
+
 function HomePage({ onBrowse, isSignedIn }) {
   return (
     <div className="homepage">
@@ -351,7 +356,10 @@ export default function Home() {
       fetch(bank.endpoint)
         .then((res) => res.ok ? res.json() : null)
         .then((data) => {
-          if (data?.jobs) setBankCounts((prev) => ({ ...prev, [key]: data.jobs.length }));
+          if (data?.jobs) {
+            const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title));
+            setBankCounts((prev) => ({ ...prev, [key]: filtered.length }));
+          }
         })
         .catch(() => {});
     });
@@ -385,8 +393,9 @@ export default function Home() {
         return res.json();
       })
       .then((data) => {
-        setJobs(data.jobs);
-        setBankCounts((prev) => ({ ...prev, [activeBank]: data.jobs.length }));
+        const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title));
+        setJobs(filtered);
+        setBankCounts((prev) => ({ ...prev, [activeBank]: filtered.length }));
 
         // Extract unique locations for filter
         const locs = [...new Set(

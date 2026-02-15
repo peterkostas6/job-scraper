@@ -34,6 +34,11 @@ function isInternship(title) {
   return /\bintern\b/.test(t) || t.includes("internship") || t.includes("summer") || t.includes("co-op") || t.includes("coop");
 }
 
+function isGraduateProgram(title) {
+  const t = title.toLowerCase();
+  return /\bgraduate\b/.test(t) || /\bgrad\s+program/.test(t) || /\bgrad\s+programme/.test(t);
+}
+
 function buildEmailHtml(newJobs, userName) {
   const grouped = {};
   for (const job of newJobs) {
@@ -122,6 +127,7 @@ export async function GET(request) {
       if (result.status === "fulfilled") {
         const { bankKey, jobs } = result.value;
         for (const job of jobs) {
+          if (isGraduateProgram(job.title)) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
         }
       }

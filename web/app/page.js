@@ -343,6 +343,20 @@ export default function Home() {
     if (isLoaded && isSignedIn) setViewHome(false);
   }, [isLoaded, isSignedIn]);
 
+  // Fetch all bank counts on load
+  useEffect(() => {
+    if (!isLoaded) return;
+    Object.entries(BANKS).forEach(([key, bank]) => {
+      if (!FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed)) return;
+      fetch(bank.endpoint)
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data?.jobs) setBankCounts((prev) => ({ ...prev, [key]: data.jobs.length }));
+        })
+        .catch(() => {});
+    });
+  }, [isLoaded, isSignedIn, isSubscribed]);
+
   // Fetch jobs when bank changes
   useEffect(() => {
     setViewingSaved(false);
@@ -401,6 +415,11 @@ export default function Home() {
     e.stopPropagation();
     if (!isSignedIn) {
       clerk.openSignUp();
+      return;
+    }
+    if (!isSubscribed) {
+      setViewingSaved(true);
+      setViewNotifications(false);
       return;
     }
     const link = job.link;
@@ -562,8 +581,12 @@ export default function Home() {
           <div className="sidebar-divider" />
           <div className="sidebar-header">My Jobs</div>
           <button
-            className={`sidebar-item ${viewingSaved && !viewNotifications ? "sidebar-item-active" : ""}`}
-            onClick={() => { setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all"); }}
+            className={`sidebar-item ${viewingSaved && !viewNotifications ? "sidebar-item-active" : ""} ${!isSubscribed ? "sidebar-item-locked" : ""}`}
+            onClick={() => {
+              if (!isSignedIn) { clerk.openSignUp(); return; }
+              if (!isSubscribed) { setViewingSaved(true); setViewNotifications(false); return; }
+              setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+            }}
           >
             <span className="sidebar-saved-label">
               <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved && !viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -571,7 +594,12 @@ export default function Home() {
               </svg>
               Saved Jobs
             </span>
-            {savedJobs.length > 0 && (
+            {!isSubscribed ? (
+              <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            ) : savedJobs.length > 0 && (
               <span className="sidebar-count">{savedJobs.length}</span>
             )}
           </button>
@@ -628,7 +656,7 @@ export default function Home() {
               <div className="notif-panel">
                 <div className="notif-header">
                   <h2 className="notif-title">Manage Notifications</h2>
-                  <p className="notif-desc">Get emailed when new jobs matching your preferences are posted. We check every hour.</p>
+                  <p className="notif-desc">Get emailed when new jobs matching your preferences are posted. We check daily.</p>
                 </div>
 
                 {notifLoading ? (
@@ -717,7 +745,11 @@ export default function Home() {
           )}
 
           {/* === SAVED JOBS VIEW === */}
-          {viewingSaved && !viewNotifications && (
+          {viewingSaved && !viewNotifications && !isSubscribed && (
+            <PaywallOverlay isSignedIn={isSignedIn} />
+          )}
+
+          {viewingSaved && !viewNotifications && isSubscribed && (
             <>
               <div className="results-bar">
                 <span className="results-text">

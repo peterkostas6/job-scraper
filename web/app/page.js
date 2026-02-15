@@ -11,10 +11,9 @@ const BANKS = {
   citi: { name: "Citi", endpoint: "/api/jobs-citi" },
   db: { name: "Deutsche Bank", endpoint: "/api/jobs-db" },
   barclays: { name: "Barclays", endpoint: "/api/jobs-barclays" },
-  ubs: { name: "UBS", endpoint: "/api/jobs-ubs" },
 };
 
-const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "ubs"]);
+const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays"]);
 
 const JOB_TYPES = {
   all: "All Types",
@@ -150,7 +149,7 @@ function PaywallOverlay({ isSignedIn }) {
         <div className="paywall-badge">Pro</div>
         <h2 className="paywall-title">Unlock All Banks</h2>
         <p className="paywall-desc">
-          Get full access to live job listings from all 8 banks — including BofA, Citi, Deutsche Bank, Barclays, and UBS.
+          Get full access to live job listings from all 7 banks — including BofA, Citi, Deutsche Bank, and Barclays.
         </p>
       </div>
 
@@ -180,7 +179,7 @@ function PaywallOverlay({ isSignedIn }) {
       <div className="paywall-includes">
         <p className="paywall-includes-label">Both plans include</p>
         <div className="paywall-includes-list">
-          {["All 8 banks", "BofA, Citi, DB, Barclays, UBS", "Save & bookmark", "Search & filter"].map((item) => (
+          {["All 7 banks", "BofA, Citi, DB, Barclays", "Save & bookmark", "Search & filter"].map((item) => (
             <span className="paywall-includes-item" key={item}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -238,6 +237,9 @@ function AboutPage({ onBrowse }) {
             </div>
           ))}
         </div>
+        <p className="about-text" style={{ marginTop: "1rem", fontSize: "0.85rem", color: "#94a3b8" }}>
+          UBS is not currently available. Their careers system blocks external access to job data, so we're unable to pull their listings at this time.
+        </p>
       </section>
 
       <section className="about-section">
@@ -250,7 +252,7 @@ function AboutPage({ onBrowse }) {
       <section className="about-section">
         <h2 className="about-heading">Pricing</h2>
         <p className="about-text">
-          JPMorgan Chase, Goldman Sachs, and Morgan Stanley are <strong>completely free</strong> — no account needed. Want all 8 banks? Pro starts at $3.33/mo.
+          JPMorgan Chase, Goldman Sachs, and Morgan Stanley are <strong>completely free</strong> — no account needed. Want all 7 banks? Pro starts at $3.33/mo.
         </p>
       </section>
 
@@ -833,7 +835,7 @@ export default function Home() {
                   <div>
                     <p className="welcome-title">Welcome to Pete's Postings</p>
                     <p className="welcome-desc">
-                      Browse live analyst and internship postings from all 8 bulge bracket banks. Use the sidebar to switch banks, and search or filter by location, type, or category.
+                      Browse live analyst and internship postings from 7 bulge bracket banks. Use the sidebar to switch banks, and search or filter by location, type, or category.
                     </p>
                   </div>
                   <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>
@@ -992,7 +994,7 @@ export default function Home() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA &middot; Citi &middot; DB &middot; Barclays &middot; UBS</p>
+            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA &middot; Citi &middot; DB &middot; Barclays</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

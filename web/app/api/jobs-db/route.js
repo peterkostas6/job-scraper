@@ -82,6 +82,7 @@ export async function GET() {
       if (/\bsenior\b/.test(t)) return false;
       if (/\bassociate\b/.test(t) && !/\banalyst\b/.test(t) && !/\bintern\b/.test(t)) return false;
       if (/\bmanager\b/.test(t) && !/\bintern\b/.test(t)) return false;
+      if (/\bassistant\b/.test(t) && !/\banalyst\b/.test(t) && !/\bintern\b/.test(t)) return false;
       return true;
     }
 

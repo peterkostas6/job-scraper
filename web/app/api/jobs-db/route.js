@@ -69,7 +69,18 @@ export async function GET() {
     const seen = new Set();
 
     // Professional jobs — link to careers.db.com SPA
+    // Only include analyst/intern level, exclude associate and above
+    const EXCLUDE_LEVELS = new Set(["associate", "avp", "vp", "vice president", "director", "managing director", "md"]);
+    function isJuniorRole(item) {
+      const level = (item.MatchedObjectDescriptor?.CareerLevel?.Name || "").toLowerCase();
+      const title = (item.MatchedObjectDescriptor?.PositionTitle || "").toLowerCase();
+      if (EXCLUDE_LEVELS.has(level)) return false;
+      if (/\bassociate\b/.test(title) && !/\banalyst\b/.test(title) && !/\bintern\b/.test(title)) return false;
+      return true;
+    }
+
     for (const item of prof.SearchResultItems || []) {
+      if (!isJuniorRole(item)) continue;
       const d = item.MatchedObjectDescriptor;
       const id = d.PositionID;
       const link = PROF_BASE + id;

@@ -833,7 +833,7 @@ export default function Home() {
                   <div>
                     <p className="welcome-title">Welcome to Pete's Postings</p>
                     <p className="welcome-desc">
-                      Browse live analyst and internship postings from top banks. JPMorgan, Goldman Sachs, and Morgan Stanley are free — use the sidebar to switch banks. Search, filter by location or type, and bookmark jobs you like.
+                      Browse live analyst and internship postings from all 8 bulge bracket banks. Use the sidebar to switch banks, and search or filter by location, type, or category.
                     </p>
                   </div>
                   <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>

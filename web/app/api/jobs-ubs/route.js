@@ -1,40 +1,49 @@
 // GET /api/jobs-ubs — fetches UBS US analyst & intern jobs from BrassRing API
-// Two sites: Experienced professionals (5012) + Graduate/Intern programs (5131)
 const BASE = "https://jobs.ubs.com";
 const PARTNER_ID = "25008";
+const SITE_ID = "5012"; // Professional roles only
 
-async function getSession(siteId) {
+async function getSession() {
   const res = await fetch(
-    `${BASE}/TGnewUI/Search/Home/Home?partnerid=${PARTNER_ID}&siteid=${siteId}`,
-    { headers: { "User-Agent": "Mozilla/5.0" } }
+    `${BASE}/TGnewUI/Search/Home/Home?partnerid=${PARTNER_ID}&siteid=${SITE_ID}`,
+    { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } }
   );
+  if (!res.ok) throw new Error(`Session page returned ${res.status}`);
+
   const html = await res.text();
   const rft = html.match(/__RequestVerificationToken"[^>]*value="([^"]*)"/)?.[1];
   const cookie = html.match(/CookieValue"[^>]*value="([^"]*)"/)?.[1];
-  const cookies = res.headers
-    .getSetCookie?.()
-    ?.map((c) => c.split(";")[0])
-    .join("; ");
+
+  if (!rft || !cookie) throw new Error("Failed to extract session tokens");
+
+  // Extract cookies — try getSetCookie first, fall back to raw header
+  let cookies = "";
+  if (typeof res.headers.getSetCookie === "function") {
+    cookies = res.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+  } else {
+    const raw = res.headers.get("set-cookie") || "";
+    cookies = raw.split(",").map((c) => c.trim().split(";")[0]).filter(Boolean).join("; ");
+  }
+
   return { rft, cookie, cookies };
 }
 
-async function searchJobs(siteId, session, keyword) {
+async function searchJobs(session) {
   const headers = {
     "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest",
     RFT: session.rft,
-    "User-Agent": "Mozilla/5.0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     ...(session.cookies ? { Cookie: session.cookies } : {}),
   };
 
-  // Initial search
   const searchRes = await fetch(`${BASE}/TgNewUI/Search/Ajax/PowerSearchJobs`, {
     method: "POST",
     headers,
     body: JSON.stringify({
       partnerId: PARTNER_ID,
-      siteId: String(siteId),
-      keyword: keyword || "",
+      siteId: SITE_ID,
+      keyword: "",
       location: "",
       Latitude: 0,
       Longitude: 0,
@@ -45,39 +54,46 @@ async function searchJobs(siteId, session, keyword) {
     }),
   });
 
+  if (!searchRes.ok) throw new Error(`Search returned ${searchRes.status}`);
   const data = await searchRes.json();
   const allJobs = data.Jobs?.Job || [];
   const total = data.JobsCount || 0;
   const totalPages = Math.ceil(total / 50);
 
-  // Fetch remaining pages
-  for (let page = 2; page <= totalPages; page++) {
+  // Fetch remaining pages (cap at 5 to avoid timeouts)
+  for (let page = 2; page <= Math.min(totalPages, 5); page++) {
     await new Promise((r) => setTimeout(r, 500));
-    const pageRes = await fetch(
-      `${BASE}/TgNewUI/Search/Ajax/ProcessSortAndShowMoreJobs`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          partnerId: PARTNER_ID,
-          siteId: String(siteId),
-          keyword: keyword || "",
-          location: "",
-          keywordCustomSolrFields: "",
-          locationCustomSolrFields: "",
-          linkId: "",
-          Latitude: 0,
-          Longitude: 0,
-          facetfilterfields: { Facet: [] },
-          powersearchoptions: { PowerSearchOption: [] },
-          SortType: "LastUpdated",
-          pageNumber: page,
-          encryptedSessionValue: session.cookie,
-        }),
+    try {
+      const pageRes = await fetch(
+        `${BASE}/TgNewUI/Search/Ajax/ProcessSortAndShowMoreJobs`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            partnerId: PARTNER_ID,
+            siteId: SITE_ID,
+            keyword: "",
+            location: "",
+            keywordCustomSolrFields: "",
+            locationCustomSolrFields: "",
+            linkId: "",
+            Latitude: 0,
+            Longitude: 0,
+            facetfilterfields: { Facet: [] },
+            powersearchoptions: { PowerSearchOption: [] },
+            SortType: "LastUpdated",
+            pageNumber: page,
+            encryptedSessionValue: session.cookie,
+          }),
+        }
+      );
+      if (pageRes.ok) {
+        const pageData = await pageRes.json();
+        allJobs.push(...(pageData.Jobs?.Job || []));
       }
-    );
-    const pageData = await pageRes.json();
-    allJobs.push(...(pageData.Jobs?.Job || []));
+    } catch {
+      break; // Stop paginating on error
+    }
   }
 
   return allJobs;
@@ -104,51 +120,53 @@ function getField(job, name) {
   return job.Questions?.find((q) => q.QuestionName === name)?.Value || "";
 }
 
-function parseJob(job) {
-  const title = getField(job, "jobtitle");
-  const location = getField(job, "formtext23");
-  const link = job.Link || "";
-  return { title, link, location, category: categorizeJob(title) };
+// Filter out senior roles by title
+function isJuniorRole(title) {
+  const t = title.toLowerCase();
+  if (t.includes("vice president")) return false;
+  if (/\bavp\b/.test(t)) return false;
+  if (/\bvp\b/.test(t)) return false;
+  if (/\bdirector\b/.test(t)) return false;
+  if (/\bmanaging director\b/.test(t)) return false;
+  if (/\bsenior\b/.test(t)) return false;
+  if (/\bprincipal\b/.test(t)) return false;
+  if (/\bassociate\b/.test(t) && !/\banalyst\b/.test(t) && !/\bintern\b/.test(t)) return false;
+  if (/\bmanager\b/.test(t) && !/\bintern\b/.test(t)) return false;
+  if (/\bassistant\b/.test(t) && !/\banalyst\b/.test(t) && !/\bintern\b/.test(t)) return false;
+  return true;
 }
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function GET() {
   try {
-    // Get sessions for both sites in parallel
-    const [profSession, gradSession] = await Promise.all([
-      getSession("5012"),
-      getSession("5131"),
-    ]);
+    const session = await getSession();
+    const rawJobs = await searchJobs(session);
 
-    // Search both sites — professionals with no keyword, grads with no keyword
-    const [profJobs, gradJobs] = await Promise.all([
-      searchJobs("5012", profSession, ""),
-      searchJobs("5131", gradSession, ""),
-    ]);
-
-    // Filter to US jobs and parse
     const seen = new Set();
     const jobs = [];
 
-    for (const raw of [...profJobs, ...gradJobs]) {
+    for (const raw of rawJobs) {
       const loc = getField(raw, "formtext23");
       if (!loc.includes("United States")) continue;
 
-      const job = parseJob(raw);
-      if (seen.has(job.link)) continue;
-      seen.add(job.link);
+      const title = getField(raw, "jobtitle");
+      if (!isJuniorRole(title)) continue;
 
-      // Clean location: "United States - New York" → "New York"
-      job.location = loc.replace("United States - ", "").replace("United States", "").trim();
-      jobs.push(job);
+      const link = raw.Link || "";
+      if (seen.has(link)) continue;
+      seen.add(link);
+
+      const location = loc.replace("United States - ", "").replace("United States", "").trim();
+      jobs.push({ title, link, location, category: categorizeJob(title) });
     }
 
     return Response.json({ jobs, count: jobs.length });
   } catch (err) {
     console.error("UBS API error:", err);
     return Response.json(
-      { error: "Failed to fetch UBS jobs" },
+      { error: "Failed to fetch UBS jobs", details: err.message },
       { status: 500 }
     );
   }

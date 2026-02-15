@@ -59,4 +59,40 @@ Both the Python scraper and the Next.js API route implement the same logic: pagi
 
 ## Deployment
 
-The web app is designed to deploy on Vercel. Push to GitHub and connect the `web/` directory as the root in Vercel's project settings.
+The web app is deployed on Vercel and connected to GitHub for automatic deploys.
+
+- **Live site:** thisisforbenseyesonly.vercel.app
+- **GitHub repo:** github.com/peterkostas6/job-scraper
+- **Vercel project name:** thisisforbenseyesonly
+- **Vercel root directory:** `web` (set in Settings > Build and Deployment)
+- **Framework preset:** Next.js
+- Pushing to the `main` branch on GitHub automatically triggers a Vercel deploy.
+
+### Workflow for making changes
+
+1. Pete asks for a change
+2. Claude makes the change locally
+3. Pete previews at http://localhost:3000 (dev server must be running)
+4. Pete approves and asks Claude to push
+5. Claude commits and pushes to GitHub — Vercel auto-deploys
+
+### Running the dev server
+
+The dev server needs to be started each session:
+```bash
+export PATH="$HOME/local/node/bin:$PATH"
+cd web && npm run dev    # starts at http://localhost:3000
+```
+
+### Pushing changes live
+
+```bash
+git add <files> && git commit -m "message" && git push
+```
+Vercel picks up the push and deploys automatically. No manual redeploy needed.
+
+## Branding
+
+- The site is called **Pete's Postings**
+- Nav logo says "Pete's Postings"
+- Browser tab title says "Pete's Postings"

@@ -1,5 +1,5 @@
 // GET /api/cron/notify — checks for new jobs and emails subscribers
-// Secured with CRON_SECRET header. Triggered every 6 hours.
+// Secured with CRON_SECRET header. Triggered every hour.
 import { Resend } from "resend";
 import { Redis } from "@upstash/redis";
 import { clerkClient } from "@clerk/nextjs/server";

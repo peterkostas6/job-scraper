@@ -14,7 +14,7 @@ const BANKS = {
   ubs: { name: "UBS", endpoint: "/api/jobs-ubs" },
 };
 
-const FREE_BANKS = new Set(["jpmc", "gs", "ms"]);
+const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "ubs"]);
 
 const JOB_TYPES = {
   all: "All Types",
@@ -576,23 +576,30 @@ export default function Home() {
             )}
           </button>
 
-          {isSubscribed && (
-            <button
-              className={`sidebar-item ${viewNotifications ? "sidebar-item-active" : ""}`}
-              onClick={() => { setViewNotifications(true); setViewingSaved(true); }}
-            >
-              <span className="sidebar-saved-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill={viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                Notifications
-              </span>
-              {notifPrefs.enabled && (
-                <span className="sidebar-notif-dot" />
-              )}
-            </button>
-          )}
+          <button
+            className={`sidebar-item ${viewNotifications ? "sidebar-item-active" : ""} ${!isSubscribed ? "sidebar-item-locked" : ""}`}
+            onClick={() => {
+              if (!isSignedIn) { clerk.openSignUp(); return; }
+              if (!isSubscribed) { setViewNotifications(true); setViewingSaved(true); return; }
+              setViewNotifications(true); setViewingSaved(true);
+            }}
+          >
+            <span className="sidebar-saved-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              Notifications
+            </span>
+            {!isSubscribed ? (
+              <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            ) : notifPrefs.enabled ? (
+              <span className="sidebar-notif-dot" />
+            ) : null}
+          </button>
         </aside>
 
         {/* Mobile upgrade banner — only shown when not subscribed */}
@@ -612,12 +619,16 @@ export default function Home() {
         {/* MAIN CONTENT */}
         <main className="content">
           {/* === NOTIFICATIONS VIEW === */}
+          {viewNotifications && !isSubscribed && (
+            <PaywallOverlay isSignedIn={isSignedIn} />
+          )}
+
           {viewNotifications && isSubscribed && (
             <>
               <div className="notif-panel">
                 <div className="notif-header">
                   <h2 className="notif-title">Manage Notifications</h2>
-                  <p className="notif-desc">Get emailed when new jobs matching your preferences are posted. We check every 6 hours.</p>
+                  <p className="notif-desc">Get emailed when new jobs matching your preferences are posted. We check every hour.</p>
                 </div>
 
                 {notifLoading ? (

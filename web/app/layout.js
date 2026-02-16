@@ -1,6 +1,7 @@
 import "./globals.css";
 import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
+import { PostHogProvider } from "./providers";
 
 export const metadata = {
   title: "Petes Postings - Analyst and Intern Jobs at Top Banks",
@@ -65,7 +66,9 @@ export default function RootLayout({ children }) {
             `}
           </Script>
         </head>
-        <body>{children}</body>
+        <body>
+          <PostHogProvider>{children}</PostHogProvider>
+        </body>
       </html>
     </ClerkProvider>
   );

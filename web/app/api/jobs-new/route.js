@@ -38,7 +38,8 @@ export async function GET() {
     const allJobs = [];
     for (const [link, raw] of Object.entries(allEntries)) {
       try {
-        const data = JSON.parse(raw);
+        // @upstash/redis auto-deserializes JSON values, so raw may already be an object
+        const data = typeof raw === "string" ? JSON.parse(raw) : raw;
         let effectiveTime;
         if (data.postedDate) {
           effectiveTime = new Date(data.postedDate).getTime();

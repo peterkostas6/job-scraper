@@ -130,7 +130,7 @@ nav {
   color: var(--text-secondary);
   line-height: 1.7;
   max-width: 560px;
-  margin: 0 auto 2rem;
+  margin: 0 auto 1.5rem;
 }
 
 .hero-actions {
@@ -455,6 +455,15 @@ nav {
   opacity: 0.5;
 }
 
+.sidebar-count-teaser {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 20px;
+}
+
 .sidebar-lock {
   color: var(--text-muted);
   flex-shrink: 0;
@@ -485,6 +494,59 @@ nav {
 }
 
 /* ---- WELCOME BANNER ---- */
+/* ---- 48H TEASER STRIP ---- */
+.recent-teaser-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1.1rem;
+  background: rgba(217, 119, 6, 0.07);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+}
+
+.recent-teaser-content {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #92400e;
+}
+
+.recent-teaser-cta {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #92400e;
+  background: rgba(217, 119, 6, 0.12);
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.recent-teaser-cta:hover {
+  background: rgba(217, 119, 6, 0.2);
+}
+
+/* ---- HERO 48H TEASER ---- */
+.hero-48h-teaser {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #92400e;
+  background: rgba(217, 119, 6, 0.08);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: 20px;
+  padding: 0.35rem 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
 .welcome-banner {
   display: flex;
   align-items: center;

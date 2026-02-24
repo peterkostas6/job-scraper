@@ -97,7 +97,7 @@ function AccountPromptModal({ onClose }) {
 }
 
 // ---- HOMEPAGE ----
-function HomePage({ onBrowse, isSignedIn }) {
+function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   return (
     <div className="homepage">
       <section className="hero">
@@ -105,15 +105,23 @@ function HomePage({ onBrowse, isSignedIn }) {
         <h1 className="hero-title">Be First to Every Banking Job Posting.</h1>
         <p className="hero-desc">
           Get a text the moment new internship and analyst positions go live at JPMC, Goldman, Morgan Stanley, and more.
-          See everything posted in the last 7 days — free, no account needed.
+          Create a free account to browse all 7 banks.
         </p>
+        {last48hCount > 0 && (
+          <div className="hero-48h-teaser">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            <strong>{last48hCount}</strong> {last48hCount === 1 ? "job" : "jobs"} posted in the last 48 hours — Pro subscribers see them first
+          </div>
+        )}
         <div className="hero-actions">
-          <button className="hero-cta-primary" onClick={onBrowse}>See New Postings</button>
-          {!isSignedIn && (
-            <SignUpButton mode="modal">
-              <button className="hero-cta-secondary">Get Alerts Free</button>
-            </SignUpButton>
-          )}
+          <SignUpButton mode="modal">
+            <button className="hero-cta-primary">Create Free Account</button>
+          </SignUpButton>
+          <Link href="/pricing" style={{ textDecoration: "none" }}>
+            <button className="hero-cta-secondary">Get Alerts — Pro</button>
+          </Link>
         </div>
       </section>
 
@@ -158,11 +166,13 @@ function HomePage({ onBrowse, isSignedIn }) {
 
       <section className="bottom-cta">
         <h2 className="bottom-cta-title">Stop checking manually.</h2>
-        <p className="bottom-cta-desc">Let the alerts come to you. SMS and email notifications the moment a new role posts.</p>
+        <p className="bottom-cta-desc">Free account to browse. Upgrade to Pro for SMS &amp; email alerts the moment a role posts.</p>
         <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-          <button className="hero-cta-primary" onClick={onBrowse}>See New Postings</button>
+          <SignUpButton mode="modal">
+            <button className="hero-cta-primary">Create Free Account</button>
+          </SignUpButton>
           <Link href="/pricing" style={{ textDecoration: "none" }}>
-            <button className="hero-cta-secondary">Get Alerts</button>
+            <button className="hero-cta-secondary">See Pricing</button>
           </Link>
         </div>
       </section>
@@ -345,22 +355,10 @@ function SkeletonRows() {
 }
 
 // ---- RECENT POSTINGS VIEW ----
-function NewPostingsView({ isSignedIn, data, loading }) {
+function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
   if (loading) return <SkeletonRows />;
 
-  const { recent = [], total = 0 } = data || {};
-
-  if (total === 0) {
-    return (
-      <div className="empty-state">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-        <p className="empty-title">No recent postings yet</p>
-        <p className="empty-desc">This feed tracks jobs posted across all 7 banks. New listings appear here within 24 hours of going live.</p>
-      </div>
-    );
-  }
+  const { last48h = [], thisWeek = [], last48hCount = 0, total = 0 } = data || {};
 
   function JobCard({ job, index }) {
     const effectiveTime = job.effectiveTime || job.detectedAt || 0;
@@ -385,8 +383,20 @@ function NewPostingsView({ isSignedIn, data, loading }) {
     );
   }
 
+  const tableHeader = (
+    <div className="job-row-header">
+      <span className="job-index">#</span>
+      <span className="job-title">Title</span>
+      <span className="job-location">Location</span>
+      <span className="job-badges">Type / Posted</span>
+      <span className="new-bank-label" style={{ fontSize: "0.62rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)" }}>Bank</span>
+      <span style={{ width: 14 }} />
+    </div>
+  );
+
   return (
     <div className="new-postings-view">
+      {/* Last 48 Hours — Pro only */}
       <div className="new-section">
         <div className="new-section-header">
           <div className="new-section-title-row">
@@ -394,23 +404,83 @@ function NewPostingsView({ isSignedIn, data, loading }) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
-              Recent Postings
+              Last 48 Hours
             </h2>
-            <span className="new-section-count">{total} {total === 1 ? "job" : "jobs"}</span>
+            {last48hCount > 0 && (
+              <span className="new-section-count">{last48hCount} {last48hCount === 1 ? "job" : "jobs"}</span>
+            )}
           </div>
-          <p className="new-section-desc">Sorted by most recent. Time shown is when the posting went live.</p>
+          <p className="new-section-desc">Apply now — the sooner the better.</p>
         </div>
-        <div className="jobs-list fade-in">
-          <div className="job-row-header">
-            <span className="job-index">#</span>
-            <span className="job-title">Title</span>
-            <span className="job-location">Location</span>
-            <span className="job-badges">Type / Posted</span>
-            <span className="new-bank-label" style={{ fontSize: "0.62rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)" }}>Bank</span>
-            <span style={{ width: 14 }} />
+
+        {!isSubscribed ? (
+          <div className="new-paywall">
+            <div className="new-paywall-blur">
+              {[1,2,3].map(i => (
+                <div className="job-row new-paywall-fake" key={i}>
+                  <div className="skeleton skeleton-index" />
+                  <div className="skeleton skeleton-title" />
+                  <div className="skeleton skeleton-location" />
+                  <div className="skeleton skeleton-badge" />
+                </div>
+              ))}
+            </div>
+            <div className="new-paywall-overlay">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <p className="new-paywall-title">
+                {last48hCount > 0 ? `${last48hCount} jobs posted in the last 48 hours` : "See the freshest postings"}
+              </p>
+              <p className="new-paywall-desc">Upgrade to Pro to see jobs posted in the last 48 hours.</p>
+              <PaywallOverlay isSignedIn={isSignedIn} />
+            </div>
           </div>
-          {recent.map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
+        ) : last48h.length === 0 ? (
+          <div className="empty-state" style={{ padding: "2rem" }}>
+            <p className="empty-title">No new postings in the last 48 hours</p>
+            <p className="empty-desc">Banks post most heavily Monday–Wednesday. Check back soon.</p>
+          </div>
+        ) : (
+          <div className="jobs-list fade-in">
+            {tableHeader}
+            {last48h.map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
+          </div>
+        )}
+      </div>
+
+      {/* Earlier This Week — free for signed-in users */}
+      <div className="new-section" style={{ marginTop: "2rem" }}>
+        <div className="new-section-header">
+          <div className="new-section-title-row">
+            <h2 className="new-section-title new-section-title-week">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Earlier This Week
+            </h2>
+            {thisWeek.length > 0 && (
+              <span className="new-section-count">{thisWeek.length} {thisWeek.length === 1 ? "job" : "jobs"}</span>
+            )}
+          </div>
+          <p className="new-section-desc">Posted 2–7 days ago. Still worth applying.</p>
         </div>
+
+        {thisWeek.length === 0 ? (
+          <div className="empty-state" style={{ padding: "2rem" }}>
+            <p className="empty-title">No postings from earlier this week yet</p>
+            <p className="empty-desc">This feed is updated daily. Check back soon.</p>
+          </div>
+        ) : (
+          <div className="jobs-list fade-in">
+            {tableHeader}
+            {thisWeek.map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -447,7 +517,8 @@ export default function Home() {
   const [viewAbout, setViewAbout] = useState(false);
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [viewNewPostings, setViewNewPostings] = useState(false);
-  const [newPostingsData, setNewPostingsData] = useState({ recent: [], total: 0 });
+  const [newPostingsData, setNewPostingsData] = useState({ last48h: [], thisWeek: [], last48hCount: 0, total: 0 });
+  const [last48hCount, setLast48hCount] = useState(0);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -498,6 +569,15 @@ export default function Home() {
       .finally(() => setNotifLoading(false));
   }, [isLoaded, isSignedIn, isSubscribed]);
 
+  // Fetch 48h count on load for persistent banner
+  useEffect(() => {
+    if (!isLoaded) return;
+    fetch("/api/jobs-new")
+      .then((res) => res.json())
+      .then((data) => setLast48hCount(data.last48hCount || 0))
+      .catch(() => {});
+  }, [isLoaded]);
+
   // Signed-in users skip homepage
   useEffect(() => {
     if (isLoaded && isSignedIn) setViewHome(false);
@@ -519,13 +599,16 @@ export default function Home() {
     });
   }, [isLoaded]);
 
-  // Fetch new postings data when New Postings view is opened
+  // Fetch recent postings data when that view is opened
   useEffect(() => {
     if (!viewNewPostings) return;
     setNewPostingsLoading(true);
     fetch("/api/jobs-new")
       .then((res) => res.json())
-      .then((data) => setNewPostingsData(data))
+      .then((data) => {
+        setNewPostingsData(data);
+        setLast48hCount(data.last48hCount || 0);
+      })
       .catch(() => {})
       .finally(() => setNewPostingsLoading(false));
   }, [viewNewPostings]);
@@ -673,7 +756,7 @@ export default function Home() {
           <div className="nav-right">
             <button
               className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
-              onClick={() => { setViewHome(false); setViewAbout(false); setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); }}
+              onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setViewHome(false); setViewAbout(false); setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -707,14 +790,18 @@ export default function Home() {
       </nav>
 
       {viewHome && !viewAbout && !viewNewPostings && (
-        <HomePage onBrowse={() => setViewHome(false)} isSignedIn={isSignedIn} />
+        <HomePage
+          onBrowse={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setViewHome(false); }}
+          isSignedIn={isSignedIn}
+          last48hCount={last48hCount}
+        />
       )}
 
       {viewAbout && !viewNewPostings && (
         <AboutPage onBrowse={() => { setViewAbout(false); setViewHome(false); }} />
       )}
 
-      {viewNewPostings && (
+      {isSignedIn && viewNewPostings && (
         <div className="app-layout">
           {/* Sidebar — same as normal view */}
           <aside className="sidebar">
@@ -807,6 +894,7 @@ export default function Home() {
               </p>
             </div>
             <NewPostingsView
+              isSubscribed={isSubscribed}
               isSignedIn={isSignedIn}
               data={newPostingsData}
               loading={newPostingsLoading}
@@ -815,7 +903,7 @@ export default function Home() {
         </div>
       )}
 
-      {!viewHome && !viewAbout && !viewNewPostings && (
+      {isSignedIn && !viewHome && !viewAbout && !viewNewPostings && (
         <div className="app-layout">
           {/* SIDEBAR */}
           <aside className="sidebar">
@@ -840,6 +928,30 @@ export default function Home() {
                 </button>
               );
             })}
+
+            <div className="sidebar-divider" />
+            <div className="sidebar-header">Recent</div>
+            <button
+              className={`sidebar-item ${!isSubscribed ? "sidebar-item-locked" : ""}`}
+              onClick={() => {
+                if (!isSubscribed) { setViewingSaved(true); setViewNotifications(false); return; }
+                setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
+              }}
+            >
+              <span className="sidebar-saved-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+                Last 48 Hours
+              </span>
+              {!isSubscribed ? (
+                last48hCount > 0 ? <span className="sidebar-count sidebar-count-teaser">{last48hCount}</span> : (
+                  <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                )
+              ) : last48hCount > 0 ? <span className="sidebar-count">{last48hCount}</span> : null}
+            </button>
 
             <div className="sidebar-divider" />
             <div className="sidebar-header">My Jobs</div>
@@ -1041,6 +1153,19 @@ export default function Home() {
             {/* Bank jobs view */}
             {!viewingSaved && !viewNotifications && (
               <>
+                {!isSubscribed && last48hCount > 0 && (
+                  <div className="recent-teaser-strip">
+                    <span className="recent-teaser-content">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                      </svg>
+                      <strong>{last48hCount}</strong> {last48hCount === 1 ? "job" : "jobs"} posted in the last 48 hours
+                    </span>
+                    <button className="recent-teaser-cta" onClick={() => { setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false); }}>
+                      See them →
+                    </button>
+                  </div>
+                )}
                 {showWelcome && !isGatedBank && !isSubscribed && (
                   <div className="welcome-banner">
                     <div>

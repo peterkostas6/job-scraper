@@ -913,7 +913,7 @@ export default function Home() {
         </div>
       )}
 
-      {isSignedIn && !viewHome && !viewAbout && !viewNewPostings && (
+      {!viewHome && !viewAbout && !viewNewPostings && (
         <div className="app-layout">
           {/* SIDEBAR */}
           <aside className="sidebar">

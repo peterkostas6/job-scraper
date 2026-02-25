@@ -525,16 +525,16 @@ export default function Home() {
     if (!welcomed) setShowWelcome(true);
   }, []);
 
-  // 20-second account prompt for anonymous users browsing the app
+  // 8-second account prompt for anonymous users browsing outside the landing page
   useEffect(() => {
-    if (!isLoaded || isSignedIn) return;
+    if (!isLoaded || isSignedIn || viewHome) return;
     const dismissed = sessionStorage.getItem("pp-prompt-dismissed");
     if (dismissed) return;
     const timer = setTimeout(() => {
       if (!isSignedIn) setShowAccountPrompt(true);
-    }, 20000);
+    }, 8000);
     return () => clearTimeout(timer);
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, viewHome]);
 
   // Load saved jobs from Clerk unsafeMetadata
   useEffect(() => {

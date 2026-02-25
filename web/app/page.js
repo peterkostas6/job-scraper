@@ -889,6 +889,11 @@ export default function Home() {
                 </svg>
               ) : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
             </button>
+            <span className="sidebar-scroll-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </span>
           </aside>
 
           <main className="content">
@@ -1016,6 +1021,11 @@ export default function Home() {
                 </svg>
               ) : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
             </button>
+            <span className="sidebar-scroll-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </span>
           </aside>
 
           {/* MAIN CONTENT */}

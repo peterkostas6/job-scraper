@@ -397,6 +397,9 @@ nav {
 .bank-name-short { display: none; }
 .bank-name-full { display: inline; }
 
+/* ---- SIDEBAR SCROLL ARROW (mobile only) ---- */
+.sidebar-scroll-arrow { display: none; }
+
 /* ---- SIDEBAR ---- */
 .sidebar {
   width: 240px;
@@ -2371,16 +2374,13 @@ footer {
     position: static;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 0.5rem 1rem;
-    padding-right: 2.5rem;
+    padding: 0.5rem 0 0.5rem 1rem;
     display: flex;
     flex-wrap: nowrap;
     gap: 0.4rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-    mask-image: linear-gradient(to right, black 85%, transparent 100%);
   }
 
   .sidebar::-webkit-scrollbar {
@@ -2426,6 +2426,19 @@ footer {
 
   .bank-name-short {
     display: inline;
+  }
+
+  .sidebar-scroll-arrow {
+    display: flex;
+    align-items: center;
+    position: sticky;
+    right: 0;
+    flex-shrink: 0;
+    background: linear-gradient(to right, transparent, var(--white) 40%);
+    padding: 0.25rem 0.5rem 0.25rem 1.5rem;
+    color: var(--text-secondary);
+    pointer-events: none;
+    z-index: 2;
   }
 
   /* ---- MOBILE UPGRADE BANNER ---- */

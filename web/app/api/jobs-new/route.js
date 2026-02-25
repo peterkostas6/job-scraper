@@ -1,6 +1,6 @@
 // GET /api/jobs-new — returns recent jobs from Redis job-first-seen hash
 // last48h: Pro subscribers only
-// thisWeek (2-7 days): signed-in free users
+// thisWeek (2-7 days): Pro subscribers only
 // last48hCount: always returned (for teaser banners)
 import { Redis } from "@upstash/redis";
 import { auth } from "@clerk/nextjs/server";
@@ -89,7 +89,7 @@ export async function GET() {
 
     return Response.json({
       last48h: isSubscribed ? last48h : [],       // Pro only
-      thisWeek: isSignedIn ? thisWeek : [],        // signed-in (free+) only
+      thisWeek: isSubscribed ? thisWeek : [],        // Pro only
       last48hCount: last48h.length,               // always returned for banners/teasers
       total: allJobs.length,
     });

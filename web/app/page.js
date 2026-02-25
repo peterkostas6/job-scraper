@@ -446,7 +446,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
         )}
       </div>
 
-      {/* Earlier This Week — free for signed-in users */}
+      {/* Earlier This Week — Pro only */}
       <div className="new-section" style={{ marginTop: "2rem" }}>
         <div className="new-section-header">
           <div className="new-section-title-row">
@@ -466,7 +466,29 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
           <p className="new-section-desc">Posted 2–7 days ago. Still worth applying.</p>
         </div>
 
-        {thisWeek.length === 0 ? (
+        {!isSubscribed ? (
+          <div className="new-paywall">
+            <div className="new-paywall-blur">
+              {[1,2,3].map(i => (
+                <div className="job-row new-paywall-fake" key={i}>
+                  <div className="skeleton skeleton-index" />
+                  <div className="skeleton skeleton-title" />
+                  <div className="skeleton skeleton-location" />
+                  <div className="skeleton skeleton-badge" />
+                </div>
+              ))}
+            </div>
+            <div className="new-paywall-overlay">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <p className="new-paywall-title">See jobs posted earlier this week</p>
+              <p className="new-paywall-desc">Upgrade to Pro to see jobs posted in the last 7 days.</p>
+              <PaywallOverlay isSignedIn={isSignedIn} />
+            </div>
+          </div>
+        ) : thisWeek.length === 0 ? (
           <div className="empty-state" style={{ padding: "2rem" }}>
             <p className="empty-title">No postings from earlier this week yet</p>
             <p className="empty-desc">This feed is updated daily. Check back soon.</p>

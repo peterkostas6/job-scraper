@@ -221,8 +221,14 @@ export async function GET(request) {
       return sub && notif?.enabled === true;
     });
 
-    // 4. For each user, filter new jobs by their preferences and send email
+    // 4. For each user, filter new jobs by their preferences and send email + SMS
     let emailsSent = 0;
+    let smsSent = 0;
+
+    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+    const twilioEnabled = twilioSid && twilioToken && twilioFrom;
 
     for (const user of notifyUsers) {
       const prefs = user.unsafeMetadata.notifications;
@@ -247,20 +253,44 @@ export async function GET(request) {
       if (matchingJobs.length === 0) continue;
 
       const email = user.emailAddresses[0]?.emailAddress;
-      if (!email) continue;
-
       const firstName = user.firstName || "";
 
-      try {
-        await resend.emails.send({
-          from: "Pete's Postings <notifications@petespostings.com>",
-          to: email,
-          subject: `${matchingJobs.length} new ${matchingJobs.length === 1 ? "job" : "jobs"} on Pete's Postings`,
-          html: buildEmailHtml(matchingJobs, firstName),
-        });
-        emailsSent++;
-      } catch (emailErr) {
-        console.error(`Failed to email ${email}:`, emailErr);
+      // Send email
+      if (email) {
+        try {
+          await resend.emails.send({
+            from: "Pete's Postings <notifications@petespostings.com>",
+            to: email,
+            subject: `${matchingJobs.length} new ${matchingJobs.length === 1 ? "job" : "jobs"} on Pete's Postings`,
+            html: buildEmailHtml(matchingJobs, firstName),
+          });
+          emailsSent++;
+        } catch (emailErr) {
+          console.error(`Failed to email ${email}:`, emailErr);
+        }
+      }
+
+      // Send SMS if user has it enabled and provided a phone number
+      if (twilioEnabled && prefs.smsEnabled && prefs.phoneNumber) {
+        try {
+          const jobLines = matchingJobs.slice(0, 3).map((j) => `• ${j.title} @ ${j.bank}`).join("\n");
+          const more = matchingJobs.length > 3 ? `\n+ ${matchingJobs.length - 3} more` : "";
+          const body = `Pete's Postings: ${matchingJobs.length} new ${matchingJobs.length === 1 ? "job" : "jobs"} just posted:\n${jobLines}${more}\n\npetespostings.com`;
+
+          const encoded = new URLSearchParams({ To: prefs.phoneNumber, From: twilioFrom, Body: body });
+          const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization: `Basic ${Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64")}`,
+            },
+            body: encoded.toString(),
+          });
+          if (resp.ok) smsSent++;
+          else console.error(`SMS failed for ${prefs.phoneNumber}:`, await resp.text());
+        } catch (smsErr) {
+          console.error(`Failed to SMS ${prefs.phoneNumber}:`, smsErr);
+        }
       }
     }
 
@@ -277,6 +307,7 @@ export async function GET(request) {
       message: "Notifications sent",
       newJobs: newJobs.length,
       totalJobs: allJobs.length,
+      smsSent,
       usersNotified: emailsSent,
     });
   } catch (err) {

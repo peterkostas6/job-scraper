@@ -53,11 +53,36 @@ function decodeEntities(str) {
     .replace(/&nbsp;/g, " ");
 }
 
+// Convert "23 Feb" or "5 Jan" style dates (no year) to ISO date string
+function parseBarclaysDate(dateStr) {
+  if (!dateStr) return null;
+  const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  const m = dateStr.trim().match(/^(\d{1,2})\s+([A-Za-z]+)$/);
+  if (!m) return null;
+  const day = parseInt(m[1]);
+  const month = months[m[2].toLowerCase().slice(0, 3)];
+  if (month === undefined) return null;
+  const now = new Date();
+  const d = new Date(now.getFullYear(), month, day);
+  if (d > now) d.setFullYear(now.getFullYear() - 1);
+  return d.toISOString().split("T")[0];
+}
+
 function parseJobs(html) {
   const jobs = [];
   const regex =
     /<a[^>]*href="([^"]*)"[^>]*class="[^"]*job-title[^"]*"[^>]*>[\s\S]*?<strong>([\s\S]*?)<\/strong>[\s\S]*?<\/a>[\s\S]*?<div[^>]*class="job-location"[^>]*>\s*([\s\S]*?)\s*<\/div>/g;
+
+  // Extract posting dates in order from job-date divs
+  const dateRegex = /class="[^"]*job-date[^"]*"[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/g;
+  const dates = [];
+  let dm;
+  while ((dm = dateRegex.exec(html)) !== null) {
+    dates.push(dm[1].trim());
+  }
+
   let m;
+  let i = 0;
   while ((m = regex.exec(html)) !== null) {
     const title = decodeEntities(m[2].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
     jobs.push({
@@ -65,7 +90,9 @@ function parseJobs(html) {
       link: BASE_URL + m[1].trim(),
       location: decodeEntities(m[3].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()),
       category: categorizeJob(title),
+      postedDate: parseBarclaysDate(dates[i]) || null,
     });
+    i++;
   }
   return jobs;
 }

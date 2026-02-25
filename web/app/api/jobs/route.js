@@ -83,6 +83,7 @@ function parseJobs(data) {
       link: `${SITE_URL}/${req.Id}`,
       location,
       category: categorizeJob(title),
+      postedDate: req.PostedDate || null,
     };
   });
 }

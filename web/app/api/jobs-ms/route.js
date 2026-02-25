@@ -24,6 +24,26 @@ function categorizeJob(title) {
   return "Other";
 }
 
+// Convert Workday relative date strings ("Posted Today", "Posted 7 Days Ago") to ISO date
+function parseWorkdayDate(postedOn) {
+  if (!postedOn) return null;
+  const s = postedOn.toLowerCase().trim();
+  const now = new Date();
+  if (s === "posted today") return now.toISOString().split("T")[0];
+  if (s === "posted yesterday") {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split("T")[0];
+  }
+  const m = s.match(/posted (\d+)\+? days? ago/);
+  if (m) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - parseInt(m[1]));
+    return d.toISOString().split("T")[0];
+  }
+  return null;
+}
+
 // Helper: pause for a given number of milliseconds
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -91,6 +111,7 @@ function parseJobs(data) {
         link: `${MS_SITE_URL}${job.externalPath}`,
         location: job.locationsText || "",
         category: categorizeJob(title),
+        postedDate: parseWorkdayDate(job.postedOn),
       };
     });
 }

@@ -140,6 +140,53 @@ export async function GET(request) {
 
     const newJobs = allJobs.filter((j) => !seenSet.has(j.link));
 
+    // Store new job data in Redis for the "New Postings" feature
+    // Uses actual postedDate from the bank API where available, otherwise first-detected timestamp
+    // Only store jobs posted within the last 7 days (skip stale jobs that somehow appear new)
+    if (newJobs.length > 0) {
+      const detectedAt = Date.now();
+      const sevenDaysAgo = detectedAt - 7 * 24 * 60 * 60 * 1000;
+      const jobInfoPairs = {};
+      for (const job of newJobs) {
+        // Skip if the bank says this job was posted more than 7 days ago
+        if (job.postedDate) {
+          const ts = new Date(job.postedDate).getTime();
+          if (!isNaN(ts) && ts < sevenDaysAgo) continue;
+        }
+        jobInfoPairs[job.link] = JSON.stringify({
+          title: job.title,
+          location: job.location || "",
+          bank: job.bank,
+          bankKey: job.bankKey,
+          category: job.category || "",
+          postedDate: job.postedDate || null,
+          detectedAt,
+        });
+      }
+      // Store in batches of 100 to avoid oversized requests
+      const pairs = Object.entries(jobInfoPairs);
+      for (let i = 0; i < pairs.length; i += 100) {
+        const batch = Object.fromEntries(pairs.slice(i, i + 100));
+        await redis.hset("job-first-seen", batch);
+      }
+      // Clean up entries older than 30 days
+      const thirtyDaysAgo = detectedAt - 30 * 24 * 60 * 60 * 1000;
+      const allEntries = await redis.hgetall("job-first-seen");
+      if (allEntries) {
+        const toDelete = Object.entries(allEntries)
+          .filter(([, val]) => {
+            try {
+              const d = JSON.parse(val);
+              return (d.postedDate ? new Date(d.postedDate).getTime() : d.detectedAt) < thirtyDaysAgo;
+            } catch { return false; }
+          })
+          .map(([key]) => key);
+        if (toDelete.length > 0) {
+          await redis.hdel("job-first-seen", ...toDelete);
+        }
+      }
+    }
+
     // If no new jobs, update seen set and exit
     if (newJobs.length === 0) {
       // Still update the seen set (remove expired links, add any missing)

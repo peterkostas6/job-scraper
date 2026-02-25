@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
@@ -116,12 +117,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </div>
         )}
         <div className="hero-actions">
-          <SignUpButton mode="modal">
-            <button className="hero-cta-primary">Create Free Account</button>
-          </SignUpButton>
-          <Link href="/pricing" style={{ textDecoration: "none" }}>
-            <button className="hero-cta-secondary">Get Alerts — Pro</button>
-          </Link>
+          <button className="hero-cta-primary" onClick={onBrowse}>Browse Jobs</button>
         </div>
       </section>
 
@@ -490,6 +486,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
 export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
   const clerk = useClerk();
+  const router = useRouter();
   const isSubscribed = user?.publicMetadata?.subscribed === true;
 
   const [activeBank, setActiveBank] = useState("jpmc");
@@ -755,6 +752,12 @@ export default function Home() {
           </span>
           <div className="nav-right">
             <button
+              className="nav-link"
+              onClick={() => { setViewHome(false); setViewAbout(false); setViewNewPostings(false); setViewingSaved(false); setViewNotifications(false); }}
+            >
+              Dashboard
+            </button>
+            <button
               className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
               onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setViewHome(false); setViewAbout(false); setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); }}
             >
@@ -791,7 +794,7 @@ export default function Home() {
 
       {viewHome && !viewAbout && !viewNewPostings && (
         <HomePage
-          onBrowse={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setViewHome(false); }}
+          onBrowse={() => setViewHome(false)}
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
         />
@@ -805,7 +808,14 @@ export default function Home() {
         <div className="app-layout">
           {/* Sidebar — same as normal view */}
           <aside className="sidebar">
-            <div className="sidebar-header">Banks</div>
+            <div className="sidebar-header">
+              Banks
+              {Object.keys(bankCounts).length > 0 && (
+                <span style={{ color: "#94a3b8", fontSize: "0.7rem", fontWeight: 400, marginLeft: "0.375rem" }}>
+                  {Object.values(bankCounts).reduce((sum, c) => sum + c, 0)}
+                </span>
+              )}
+            </div>
             {Object.entries(BANKS).map(([key, bank]) => (
               <button
                 key={key}
@@ -907,7 +917,14 @@ export default function Home() {
         <div className="app-layout">
           {/* SIDEBAR */}
           <aside className="sidebar">
-            <div className="sidebar-header">Banks</div>
+            <div className="sidebar-header">
+              Banks
+              {Object.keys(bankCounts).length > 0 && (
+                <span style={{ color: "#94a3b8", fontSize: "0.7rem", fontWeight: 400, marginLeft: "0.375rem" }}>
+                  {Object.values(bankCounts).reduce((sum, c) => sum + c, 0)}
+                </span>
+              )}
+            </div>
             {Object.entries(BANKS).map(([key, bank]) => {
               const needsAuth = !FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed);
               return (
@@ -1161,7 +1178,7 @@ export default function Home() {
                       </svg>
                       <strong>{last48hCount}</strong> {last48hCount === 1 ? "job" : "jobs"} posted in the last 48 hours
                     </span>
-                    <button className="recent-teaser-cta" onClick={() => { setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false); }}>
+                    <button className="recent-teaser-cta" onClick={() => router.push("/pricing")}>
                       See them →
                     </button>
                   </div>
@@ -1304,7 +1321,7 @@ export default function Home() {
         </div>
       </footer>
 
-      {showAccountPrompt && !isSignedIn && (
+      {showAccountPrompt && !isSignedIn && !viewHome && (
         <AccountPromptModal onClose={dismissAccountPrompt} />
       )}
     </>

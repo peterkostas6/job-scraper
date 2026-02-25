@@ -393,6 +393,10 @@ nav {
   margin: 0 auto;
 }
 
+/* ---- BANK NAME DISPLAY ---- */
+.bank-name-short { display: none; }
+.bank-name-full { display: inline; }
+
 /* ---- SIDEBAR ---- */
 .sidebar {
   width: 240px;
@@ -2405,12 +2409,20 @@ footer {
   }
 
   .sidebar-count {
-    font-size: 0.62rem;
+    display: none;
   }
 
   .sidebar-item-locked {
     opacity: 0.5;
     border-style: dashed;
+  }
+
+  .bank-name-full {
+    display: none;
+  }
+
+  .bank-name-short {
+    display: inline;
   }
 
   /* ---- MOBILE UPGRADE BANNER ---- */

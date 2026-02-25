@@ -6,13 +6,13 @@ import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@cler
 import Link from "next/link";
 
 const BANKS = {
-  jpmc: { name: "JPMorgan Chase", endpoint: "/api/jobs" },
-  gs: { name: "Goldman Sachs", endpoint: "/api/jobs-gs" },
-  ms: { name: "Morgan Stanley", endpoint: "/api/jobs-ms" },
-  bofa: { name: "Bank of America", endpoint: "/api/jobs-bofa" },
-  citi: { name: "Citi", endpoint: "/api/jobs-citi" },
-  db: { name: "Deutsche Bank", endpoint: "/api/jobs-db" },
-  barclays: { name: "Barclays", endpoint: "/api/jobs-barclays" },
+  jpmc: { name: "JPMorgan Chase", shortName: "JPMC", endpoint: "/api/jobs" },
+  gs: { name: "Goldman Sachs", shortName: "Goldman", endpoint: "/api/jobs-gs" },
+  ms: { name: "Morgan Stanley", shortName: "Morgan", endpoint: "/api/jobs-ms" },
+  bofa: { name: "Bank of America", shortName: "BofA", endpoint: "/api/jobs-bofa" },
+  citi: { name: "Citi", shortName: "Citi", endpoint: "/api/jobs-citi" },
+  db: { name: "Deutsche Bank", shortName: "Deutsche", endpoint: "/api/jobs-db" },
+  barclays: { name: "Barclays", shortName: "Barclays", endpoint: "/api/jobs-barclays" },
 };
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays"]);
@@ -828,7 +828,7 @@ export default function Home() {
                   setViewHome(false);
                 }}
               >
-                <span>{bank.name}</span>
+                <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
                 {bankCounts[key] !== undefined && <span className="sidebar-count">{bankCounts[key]}</span>}
               </button>
             ))}
@@ -933,7 +933,7 @@ export default function Home() {
                   className={`sidebar-item ${activeBank === key && !viewingSaved && !viewNewPostings ? "sidebar-item-active" : ""} ${needsAuth ? "sidebar-item-locked" : ""}`}
                   onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}
                 >
-                  <span>{bank.name}</span>
+                  <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
                   {needsAuth ? (
                     <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>

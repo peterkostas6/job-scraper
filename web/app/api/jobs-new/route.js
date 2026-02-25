@@ -40,37 +40,45 @@ export async function GET() {
       try {
         // @upstash/redis auto-deserializes JSON values, so raw may already be an object
         const data = typeof raw === "string" ? JSON.parse(raw) : raw;
-        let effectiveTime;
+        const detectedAt = data.detectedAt || 0;
+
+        // Only include jobs detected in the last 7 days
+        if (detectedAt < sevenDaysAgo) continue;
+
+        // Display time: use bank's postedDate if available, otherwise detectedAt
+        let displayTime;
         if (data.postedDate) {
-          effectiveTime = new Date(data.postedDate).getTime();
-          if (isNaN(effectiveTime)) effectiveTime = data.detectedAt || 0;
+          const ts = new Date(data.postedDate).getTime();
+          displayTime = isNaN(ts) ? detectedAt : ts;
         } else {
-          effectiveTime = data.detectedAt || 0;
+          displayTime = detectedAt;
         }
 
-        if (effectiveTime >= sevenDaysAgo) {
-          allJobs.push({
-            link,
-            title: data.title,
-            location: data.location,
-            bank: data.bank,
-            bankKey: data.bankKey,
-            category: data.category,
-            postedDate: data.postedDate || null,
-            detectedAt: data.detectedAt,
-            effectiveTime,
-            hasActualDate: !!data.postedDate,
-          });
-        }
+        allJobs.push({
+          link,
+          title: data.title,
+          location: data.location,
+          bank: data.bank,
+          bankKey: data.bankKey,
+          category: data.category,
+          postedDate: data.postedDate || null,
+          detectedAt,
+          effectiveTime: displayTime,
+          hasActualDate: !!data.postedDate,
+        });
       } catch {
         // Skip malformed entries
       }
     }
 
-    allJobs.sort((a, b) => b.effectiveTime - a.effectiveTime);
+    // Sort by detection time (newest first)
+    allJobs.sort((a, b) => b.detectedAt - a.detectedAt);
 
-    const last48h = allJobs.filter((j) => j.effectiveTime >= fortyEightHoursAgo);
-    const thisWeek = allJobs.filter((j) => j.effectiveTime < fortyEightHoursAgo);
+    // Filter sections by detectedAt — this is always accurate since the cron
+    // only stores a job once (when it first appears on the bank's site).
+    // Bank-provided postedDate is used for display only, not for section placement.
+    const last48h = allJobs.filter((j) => j.detectedAt >= fortyEightHoursAgo);
+    const thisWeek = allJobs.filter((j) => j.detectedAt < fortyEightHoursAgo);
 
     return Response.json({
       last48h: isSubscribed ? last48h : [],       // Pro only

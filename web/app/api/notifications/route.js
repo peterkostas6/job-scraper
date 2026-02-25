@@ -35,10 +35,11 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { enabled, banks, categories, jobType } = body;
+    const { enabled, banks, categories, jobType, smsEnabled, phoneNumber } = body;
 
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
+    const oldPhone = user.unsafeMetadata?.notifications?.phoneNumber || "";
 
     await client.users.updateUser(userId, {
       unsafeMetadata: {
@@ -48,9 +49,34 @@ export async function POST(request) {
           banks: Array.isArray(banks) ? banks : [],
           categories: Array.isArray(categories) ? categories : [],
           jobType: jobType || "all",
+          smsEnabled: Boolean(smsEnabled),
+          phoneNumber: phoneNumber || "",
         },
       },
     });
+
+    // Send welcome SMS if a new phone number was just added
+    const newPhone = phoneNumber?.trim();
+    if (smsEnabled && newPhone && newPhone !== oldPhone) {
+      const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+      const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+      const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+
+      if (twilioSid && twilioToken && twilioFrom) {
+        const firstName = user.firstName ? ` ${user.firstName}` : "";
+        const welcomeMsg = `Hey${firstName}! This is Pete from Pete's Postings. I'll send you a text based on your preferences when new jobs get posted. Good luck!`;
+
+        const encoded = new URLSearchParams({ To: newPhone, From: twilioFrom, Body: welcomeMsg });
+        await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64")}`,
+          },
+          body: encoded.toString(),
+        }).catch((e) => console.error("Welcome SMS failed:", e));
+      }
+    }
 
     return Response.json({ success: true });
   } catch (err) {

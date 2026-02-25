@@ -35,7 +35,13 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { enabled, banks, categories, jobType, smsEnabled, phoneNumber } = body;
+    const { enabled, banks, categories, jobType, smsEnabled } = body;
+
+    // Normalize phone number to E.164 format (+1XXXXXXXXXX)
+    let phoneNumber = (body.phoneNumber || "").replace(/\D/g, "");
+    if (phoneNumber.length === 10) phoneNumber = "1" + phoneNumber;
+    if (phoneNumber.length === 11 && phoneNumber.startsWith("1")) phoneNumber = "+" + phoneNumber;
+    else if (phoneNumber.length > 0 && !phoneNumber.startsWith("+")) phoneNumber = "+" + phoneNumber;
 
     const client = await clerkClient();
     const user = await client.users.getUser(userId);

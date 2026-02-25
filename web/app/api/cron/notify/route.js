@@ -153,6 +153,13 @@ export async function GET(request) {
           const ts = new Date(job.postedDate).getTime();
           if (!isNaN(ts) && ts < sevenDaysAgo) continue;
         }
+        // If the bank provides a postedDate, use it as detectedAt so that
+        // old jobs re-appearing (e.g. after a Redis wipe) age out correctly.
+        let jobDetectedAt = detectedAt;
+        if (job.postedDate) {
+          const postedTs = new Date(job.postedDate).getTime();
+          if (!isNaN(postedTs)) jobDetectedAt = Math.min(detectedAt, postedTs);
+        }
         jobInfoPairs[job.link] = JSON.stringify({
           title: job.title,
           location: job.location || "",
@@ -160,7 +167,7 @@ export async function GET(request) {
           bankKey: job.bankKey,
           category: job.category || "",
           postedDate: job.postedDate || null,
-          detectedAt,
+          detectedAt: jobDetectedAt,
         });
       }
       // Store in batches of 100 to avoid oversized requests

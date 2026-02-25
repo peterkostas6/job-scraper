@@ -42,16 +42,23 @@ export async function GET() {
         const data = typeof raw === "string" ? JSON.parse(raw) : raw;
         const detectedAt = data.detectedAt || 0;
 
-        // Only include jobs detected in the last 7 days
-        if (detectedAt < sevenDaysAgo) continue;
+        // filterTime = the earlier of detectedAt and postedDate.
+        // If a job was seeded with detectedAt=now but postedDate=5 days ago,
+        // filterTime becomes 5 days ago and it won't appear in Last 48 Hours.
+        let filterTime = detectedAt;
+        if (data.postedDate) {
+          const postedTs = new Date(data.postedDate).getTime();
+          if (!isNaN(postedTs)) filterTime = Math.min(detectedAt, postedTs);
+        }
+
+        // Only include jobs whose effective age is within 7 days
+        if (filterTime < sevenDaysAgo) continue;
 
         // Display time: use bank's postedDate if available, otherwise detectedAt
-        let displayTime;
+        let displayTime = detectedAt;
         if (data.postedDate) {
           const ts = new Date(data.postedDate).getTime();
-          displayTime = isNaN(ts) ? detectedAt : ts;
-        } else {
-          displayTime = detectedAt;
+          if (!isNaN(ts)) displayTime = ts;
         }
 
         allJobs.push({
@@ -63,6 +70,7 @@ export async function GET() {
           category: data.category,
           postedDate: data.postedDate || null,
           detectedAt,
+          filterTime,
           effectiveTime: displayTime,
           hasActualDate: !!data.postedDate,
         });
@@ -71,14 +79,13 @@ export async function GET() {
       }
     }
 
-    // Sort by detection time (newest first)
-    allJobs.sort((a, b) => b.detectedAt - a.detectedAt);
+    // Sort by filterTime (newest first)
+    allJobs.sort((a, b) => b.filterTime - a.filterTime);
 
-    // Filter sections by detectedAt — this is always accurate since the cron
-    // only stores a job once (when it first appears on the bank's site).
-    // Bank-provided postedDate is used for display only, not for section placement.
-    const last48h = allJobs.filter((j) => j.detectedAt >= fortyEightHoursAgo);
-    const thisWeek = allJobs.filter((j) => j.detectedAt < fortyEightHoursAgo);
+    // Use filterTime for section placement — min(detectedAt, postedDate).
+    // This prevents old-posted jobs from appearing as new even if seeded recently.
+    const last48h = allJobs.filter((j) => j.filterTime >= fortyEightHoursAgo);
+    const thisWeek = allJobs.filter((j) => j.filterTime < fortyEightHoursAgo);
 
     return Response.json({
       last48h: isSubscribed ? last48h : [],       // Pro only

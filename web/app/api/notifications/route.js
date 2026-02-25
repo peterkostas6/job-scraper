@@ -45,7 +45,7 @@ export async function POST(request) {
 
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const oldPhone = user.unsafeMetadata?.notifications?.phoneNumber || "";
+    const oldSmsEnabled = user.unsafeMetadata?.notifications?.smsEnabled || false;
 
     await client.users.updateUser(userId, {
       unsafeMetadata: {
@@ -61,9 +61,9 @@ export async function POST(request) {
       },
     });
 
-    // Send welcome SMS if a new phone number was just added
+    // Send welcome SMS when SMS is first enabled with a phone number
     const newPhone = phoneNumber?.trim();
-    if (smsEnabled && newPhone && newPhone !== oldPhone) {
+    if (smsEnabled && newPhone && !oldSmsEnabled) {
       const twilioSid = process.env.TWILIO_ACCOUNT_SID;
       const twilioToken = process.env.TWILIO_AUTH_TOKEN;
       const twilioFrom = process.env.TWILIO_PHONE_NUMBER;

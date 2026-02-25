@@ -1257,11 +1257,14 @@ export default function Home() {
                     <span className="results-text">
                       {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} at {BANKS[activeBank].name}
                     </span>
-                    <button className={`saved-toggle ${showSavedOnly ? "saved-toggle-active" : ""}`} onClick={() => setShowSavedOnly(!showSavedOnly)}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill={showSavedOnly ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <button className={`saved-toggle ${viewingSaved ? "saved-toggle-active" : ""}`} onClick={() => {
+                      if (!isSignedIn) { clerk.openSignUp(); return; }
+                      setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+                    }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill={viewingSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                       </svg>
-                      Saved{savedCount > 0 ? ` (${savedCount})` : ""}
+                      Saved{savedJobs.length > 0 ? ` (${savedJobs.length})` : ""}
                     </button>
                   </div>
                 )}

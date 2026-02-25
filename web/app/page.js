@@ -532,7 +532,7 @@ export default function Home() {
     if (dismissed) return;
     const timer = setTimeout(() => {
       if (!isSignedIn) setShowAccountPrompt(true);
-    }, 8000);
+    }, 5000);
     return () => clearTimeout(timer);
   }, [isLoaded, isSignedIn, viewHome]);
 

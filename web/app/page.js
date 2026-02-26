@@ -446,60 +446,6 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
         )}
       </div>
 
-      {/* Earlier This Week — Pro only */}
-      <div className="new-section" style={{ marginTop: "2rem" }}>
-        <div className="new-section-header">
-          <div className="new-section-title-row">
-            <h2 className="new-section-title new-section-title-week">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              Earlier This Week
-            </h2>
-            {thisWeek.length > 0 && (
-              <span className="new-section-count">{thisWeek.length} {thisWeek.length === 1 ? "job" : "jobs"}</span>
-            )}
-          </div>
-          <p className="new-section-desc">Posted 2–7 days ago. Still worth applying.</p>
-        </div>
-
-        {!isSubscribed ? (
-          <div className="new-paywall">
-            <div className="new-paywall-blur">
-              {[1,2,3].map(i => (
-                <div className="job-row new-paywall-fake" key={i}>
-                  <div className="skeleton skeleton-index" />
-                  <div className="skeleton skeleton-title" />
-                  <div className="skeleton skeleton-location" />
-                  <div className="skeleton skeleton-badge" />
-                </div>
-              ))}
-            </div>
-            <div className="new-paywall-overlay">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <p className="new-paywall-title">See jobs posted earlier this week</p>
-              <p className="new-paywall-desc">Upgrade to Pro to see jobs posted in the last 7 days.</p>
-              <PaywallOverlay isSignedIn={isSignedIn} />
-            </div>
-          </div>
-        ) : thisWeek.length === 0 ? (
-          <div className="empty-state" style={{ padding: "2rem" }}>
-            <p className="empty-title">No postings from earlier this week yet</p>
-            <p className="empty-desc">This feed is updated daily. Check back soon.</p>
-          </div>
-        ) : (
-          <div className="jobs-list fade-in">
-            {tableHeader}
-            {thisWeek.map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

@@ -30,7 +30,7 @@ export async function GET() {
         posted_date,
         EXTRACT(EPOCH FROM detected_at)::bigint * 1000 AS detected_at_ms
       FROM jobs
-      WHERE detected_at > NOW() - INTERVAL '7 days'
+      WHERE detected_at > NOW() - INTERVAL '48 hours'
       ORDER BY detected_at DESC
     `;
 
@@ -38,58 +38,25 @@ export async function GET() {
       return Response.json({ last48h: [], thisWeek: [], last48hCount: 0, total: 0 });
     }
 
-    const now = Date.now();
-    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-    const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
+    const jobs = rows.map((row) => ({
+      link: row.link,
+      title: row.title,
+      location: row.location,
+      bank: row.bank,
+      bankKey: row.bank_key,
+      category: row.category,
+      postedDate: row.posted_date ? new Date(row.posted_date).toISOString() : null,
+      detectedAt: Number(row.detected_at_ms),
+      hasActualDate: !!row.posted_date,
+    }));
 
-    const allJobs = [];
-    for (const row of rows) {
-      const detectedAt = Number(row.detected_at_ms);
-
-      // filterTime = min(detectedAt, postedDate)
-      // Prevents old-posted jobs from appearing as new even if seeded recently
-      let filterTime = detectedAt;
-      if (row.posted_date) {
-        const postedTs = new Date(row.posted_date).getTime();
-        if (!isNaN(postedTs)) filterTime = Math.min(detectedAt, postedTs);
-      }
-
-      // Only include jobs whose effective age is within 7 days
-      if (filterTime < sevenDaysAgo) continue;
-
-      // Display time: use bank's postedDate if available, otherwise detectedAt
-      let displayTime = detectedAt;
-      if (row.posted_date) {
-        const ts = new Date(row.posted_date).getTime();
-        if (!isNaN(ts)) displayTime = ts;
-      }
-
-      allJobs.push({
-        link: row.link,
-        title: row.title,
-        location: row.location,
-        bank: row.bank,
-        bankKey: row.bank_key,
-        category: row.category,
-        postedDate: row.posted_date ? new Date(row.posted_date).toISOString() : null,
-        detectedAt,
-        filterTime,
-        effectiveTime: displayTime,
-        hasActualDate: !!row.posted_date,
-      });
-    }
-
-    // Sort by filterTime (newest first)
-    allJobs.sort((a, b) => b.filterTime - a.filterTime);
-
-    const last48h = allJobs.filter((j) => j.filterTime >= fortyEightHoursAgo);
-    const thisWeek = allJobs.filter((j) => j.filterTime < fortyEightHoursAgo);
+    // Sort newest first
+    jobs.sort((a, b) => b.detectedAt - a.detectedAt);
 
     return Response.json({
-      last48h: isSubscribed ? last48h : [],
-      thisWeek: isSubscribed ? thisWeek : [],
-      last48hCount: last48h.length,
-      total: allJobs.length,
+      last48h: isSubscribed ? jobs : [],
+      last48hCount: jobs.length,
+      total: jobs.length,
     });
   } catch (err) {
     console.error("jobs-new error:", err);

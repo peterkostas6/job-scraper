@@ -2,6 +2,8 @@
 // We can't call JPMC's API directly from the browser (CORS blocks it),
 // so the browser calls OUR API, and our API calls JPMC's API.
 
+export const dynamic = "force-dynamic";
+
 const API_URL =
   "https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions";
 

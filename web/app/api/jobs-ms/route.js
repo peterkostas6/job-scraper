@@ -1,6 +1,8 @@
 // This API route calls the Morgan Stanley careers API (Workday) from the server.
 // Morgan Stanley uses Workday for their job listings at ms.wd5.myworkdayjobs.com.
 
+export const dynamic = "force-dynamic";
+
 const MS_API_URL =
   "https://ms.wd5.myworkdayjobs.com/wday/cxs/ms/External/jobs";
 

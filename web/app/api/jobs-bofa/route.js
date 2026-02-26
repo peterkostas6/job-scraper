@@ -3,6 +3,8 @@
 // 2. Workday (lateral-us) — full-time analyst roles
 // Both are combined and filtered to US-only positions.
 
+export const dynamic = "force-dynamic";
+
 const CAMPUS_URL =
   "https://bankcampuscareers.tal.net/vx/lang-en-GB/mobile-0/brand-4/xf-3d2c04c04723/candidate/jobboard/vacancy/1/adv/?ftq=analyst&fc=2&fl=6&offset=0&num_items=100&f_Item_Coverage=2";
 

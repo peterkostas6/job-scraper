@@ -280,50 +280,29 @@ function AboutPage({ onBrowse }) {
     <div className="about-page">
       <section className="about-hero">
         <span className="hero-tag">About</span>
-        <h1 className="about-title">Applying to banking internships sucks.</h1>
+        <h1 className="about-title">Stop missing roles because you checked a day too late.</h1>
       </section>
 
       <section className="about-section about-section-first">
         <p className="about-text">
-          Tracking when postings go live, constantly checking 20+ different career sites, updating spreadsheets to keep track of what's open and what's closed... it's inefficient and hard to follow.
-        </p>
-        <p className="about-text">
-          That's why I made this.
+          Banks fill analyst and internship roles fast — sometimes within 48 hours of posting. Pete's Postings pulls live listings directly from each bank's career site and texts you the moment something new goes live, so you're always first to apply.
         </p>
       </section>
 
       <section className="about-section">
         <h2 className="about-heading">What you get</h2>
         <p className="about-text">
-          Here, you're able to view every bank's active internship and analyst postings in one place. Filter for what you want — by bank, location, or job type.
+          Every active analyst and internship posting across all major banks — live, in one place, pulled straight from their career APIs. No LinkedIn noise, no outdated listings. Filter by bank, location, or job type.
         </p>
         <p className="about-text">
-          No more fake postings on LinkedIn or Google. Every listing here is <strong>live and pulled directly from each bank's career site API</strong>, so what you see is exactly what's on their site right now.
-        </p>
-        <div className="about-banks-grid">
-          {Object.values(BANKS).map((bank) => (
-            <div className="about-bank-card" key={bank.name}>
-              <span className="about-bank-name">{bank.name}</span>
-              <span className="about-bank-status">Live</span>
-            </div>
-          ))}
-        </div>
-        <p className="about-text" style={{ marginTop: "1rem", fontSize: "0.85rem", color: "#94a3b8" }}>
-          UBS is not currently available. Their careers system blocks external access to job data, so we're unable to pull their listings at this time.
+          Upgrade to Pro and we'll text you the moment a new role matching your preferences goes live. Set it once, never miss a posting again.
         </p>
       </section>
 
       <section className="about-section">
-        <h2 className="about-heading">Speed matters</h2>
+        <h2 className="about-heading">Why it matters</h2>
         <p className="about-text">
-          Banks fill roles within days of posting — sometimes hours. The <strong>Recent Postings</strong> section shows every job posted in the last 48 hours across all banks, free for everyone. Upgrade to Pro and you'll get an <strong>SMS or email alert</strong> the moment a new role goes live.
-        </p>
-      </section>
-
-      <section className="about-section">
-        <h2 className="about-heading">Pricing</h2>
-        <p className="about-text">
-          All 7 banks and the 48-hour feed are <strong>free to browse</strong> — no account needed. Upgrade to Pro for SMS alerts, email alerts, and saved jobs. <Link href="/pricing" style={{ color: "var(--forest-blue)" }}>See full pricing →</Link>
+          Most applicants find out about new postings days late — through word of mouth or a LinkedIn post from someone else. By then, hundreds have already applied. <strong>Pro subscribers see new roles within the hour they post</strong>, before most people even know they exist.
         </p>
       </section>
 

@@ -30,7 +30,7 @@ export async function GET() {
         posted_date,
         EXTRACT(EPOCH FROM detected_at)::bigint * 1000 AS detected_at_ms
       FROM jobs
-      WHERE detected_at > NOW() - INTERVAL '30 days'
+      WHERE detected_at > NOW() - INTERVAL '7 days'
       ORDER BY detected_at DESC
     `;
 

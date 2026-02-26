@@ -120,9 +120,6 @@ export async function GET(request) {
           ON CONFLICT (link) DO NOTHING
         `;
       }
-      // Clean up jobs older than 30 days from Postgres
-      await sql`DELETE FROM jobs WHERE detected_at < NOW() - INTERVAL '30 days'`;
-
       const pairs = Object.entries(jobInfoPairs);
       for (let i = 0; i < pairs.length; i += 100) {
         const batch = Object.fromEntries(pairs.slice(i, i + 100));

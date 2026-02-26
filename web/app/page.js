@@ -285,6 +285,9 @@ function AboutPage({ onBrowse }) {
 
       <section className="about-section about-section-first">
         <p className="about-text">
+          I made this tool for me, but realized how many students/recent grads this could help.
+        </p>
+        <p className="about-text">
           After applying to 300+ internships, I was sick of tracking new banking roles in an outdated spreadsheet.
         </p>
       </section>
@@ -295,14 +298,14 @@ function AboutPage({ onBrowse }) {
           This site lets you look at each bank in one place, sourced directly from their API — so no fake listings.
         </p>
         <p className="about-text">
-          Upgrade to Pro and we'll text you the moment a new role matching your preferences goes live. Set it once, never miss a posting again.
+          For me, what was most valuable was the text alerts. I set what jobs I wanted alerts for, and took the stress and hassle out of checking 20+ different career sites.
         </p>
       </section>
 
       <section className="about-section">
         <h2 className="about-heading">Why it matters</h2>
         <p className="about-text">
-          Most applicants find out about new postings days late — through word of mouth or a LinkedIn post from someone else. By then, hundreds have already applied. <strong>Pro subscribers see new roles within the hour they post</strong>, before most people even know they exist.
+          Most applicants find out about new postings days late — through word of mouth or a LinkedIn post from someone else. Your odds of getting an interview drop massively if you don't apply within the first few hours or days. <strong>Pro subscribers see new roles within the hour they post</strong>, before most people even know they exist.
         </p>
       </section>
 

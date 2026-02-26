@@ -280,7 +280,7 @@ function AboutPage({ onBrowse }) {
     <div className="about-page">
       <section className="about-hero">
         <span className="hero-tag">About</span>
-        <h1 className="about-title">Stop missing roles because you checked a day too late.</h1>
+        <h1 className="about-title">Applying to banking internships and analyst positions sucks.</h1>
       </section>
 
       <section className="about-section about-section-first">

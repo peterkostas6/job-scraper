@@ -288,7 +288,7 @@ function AboutPage({ onBrowse }) {
           I built this for myself, but after heavy demand decided to make it open to the public.
         </p>
         <p className="about-text">
-          After applying to 300+ internships, I was sick of tracking new banking roles in an outdated spreadsheet.
+          After applying to 300+ internships, I was sick of tracking new banking roles in an outdated spreadsheet and applying to roles too late.
         </p>
       </section>
 

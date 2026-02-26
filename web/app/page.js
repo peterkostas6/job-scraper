@@ -105,7 +105,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         <span className="hero-tag">Text alerts for job postings</span>
         <h1 className="hero-title">Be First to Every Banking Job Posting.</h1>
         <p className="hero-desc">
-          Get a text the moment new internship and analyst positions go live at JPMC, Goldman, Morgan Stanley, and more.
+          Get a text the moment new internship and analyst positions go live at the largest banks.
           Create a free account to browse all 7 banks.
         </p>
         {last48hCount > 0 && (

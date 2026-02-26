@@ -395,17 +395,6 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
       {/* Last 48 Hours — Pro only */}
       <div className="new-section">
         <div className="new-section-header">
-          <div className="new-section-title-row">
-            <h2 className="new-section-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
-              Last 48 Hours
-            </h2>
-            {last48hCount > 0 && (
-              <span className="new-section-count">{last48hCount} {last48hCount === 1 ? "job" : "jobs"}</span>
-            )}
-          </div>
         </div>
 
         {!isSubscribed ? (

@@ -42,8 +42,11 @@ export async function POST(request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 4pm ET = 21 UTC (EST) — end-of-day run
-  const isEndOfDay = new Date().getUTCHours() === 21;
+  // 4pm ET = 21 UTC (EST) — end-of-day run, weekdays only
+  const now = new Date();
+  const utcDay = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  const isWeekday = utcDay >= 1 && utcDay <= 5;
+  const isEndOfDay = now.getUTCHours() === 21 && isWeekday;
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);

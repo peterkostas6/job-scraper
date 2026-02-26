@@ -744,6 +744,57 @@ export default function Home() {
 
       {isSignedIn && viewNewPostings && (
         <div className="app-layout">
+          {/* Mobile top bar — replaces sidebar on mobile */}
+          <div className="mobile-top-bar">
+            <div className="mobile-top-bar-bank-row">
+              <select
+                className="mobile-bank-select"
+                value={activeBank}
+                onChange={(e) => {
+                  setViewNewPostings(false);
+                  setViewingSaved(false);
+                  setViewNotifications(false);
+                  setViewHome(false);
+                  setActiveBank(e.target.value);
+                }}
+              >
+                {Object.entries(BANKS).map(([key, bank]) => (
+                  <option key={key} value={key}>{bank.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mobile-top-bar-pro-row">
+              <button
+                className="mobile-pro-pill mobile-pro-pill-active"
+                onClick={() => {
+                  if (!isSubscribed) { router.push("/pricing"); return; }
+                  setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
+                }}
+              >
+                ⚡ Last 48h
+              </button>
+              <button
+                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => {
+                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSubscribed) { router.push("/pricing"); return; }
+                  setViewNewPostings(false); setViewingSaved(true); setViewNotifications(false); setViewHome(false);
+                }}
+              >
+                Saved
+              </button>
+              <button
+                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => {
+                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSubscribed) { router.push("/pricing"); return; }
+                  setViewNewPostings(false); setViewingSaved(true); setViewNotifications(true); setViewHome(false);
+                }}
+              >
+                Alerts
+              </button>
+            </div>
+          </div>
           {/* Sidebar — same as normal view */}
           <aside className="sidebar">
             <div className="sidebar-header">
@@ -856,6 +907,56 @@ export default function Home() {
 
       {!viewHome && !viewAbout && !viewNewPostings && (
         <div className="app-layout">
+          {/* Mobile top bar — replaces sidebar on mobile */}
+          <div className="mobile-top-bar">
+            <div className="mobile-top-bar-bank-row">
+              <select
+                className="mobile-bank-select"
+                value={activeBank}
+                onChange={(e) => {
+                  setViewingSaved(false);
+                  setViewNotifications(false);
+                  setViewNewPostings(false);
+                  setActiveBank(e.target.value);
+                }}
+              >
+                {Object.entries(BANKS).map(([key, bank]) => (
+                  <option key={key} value={key}>{bank.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mobile-top-bar-pro-row">
+              <button
+                className={`mobile-pro-pill${viewNewPostings ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => {
+                  if (!isSubscribed) { router.push("/pricing"); return; }
+                  setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
+                }}
+              >
+                ⚡ Last 48h
+              </button>
+              <button
+                className={`mobile-pro-pill${viewingSaved && !viewNotifications ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => {
+                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSubscribed) { router.push("/pricing"); return; }
+                  setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+                }}
+              >
+                Saved
+              </button>
+              <button
+                className={`mobile-pro-pill${viewNotifications ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => {
+                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSubscribed) { router.push("/pricing"); return; }
+                  setViewingSaved(true); setViewNotifications(true);
+                }}
+              >
+                Alerts
+              </button>
+            </div>
+          </div>
           {/* SIDEBAR */}
           <aside className="sidebar">
             <div className="sidebar-header">

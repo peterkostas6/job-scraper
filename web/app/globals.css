@@ -493,6 +493,11 @@ nav {
   display: none;
 }
 
+/* ---- MOBILE TOP BAR (hidden on desktop) ---- */
+.mobile-top-bar {
+  display: none;
+}
+
 /* ---- CONTENT ---- */
 .content {
   flex: 1;
@@ -2367,78 +2372,89 @@ footer {
     height: 26px;
   }
 
-  /* ---- SIDEBAR: horizontal pill strip — single scrollable row ---- */
+  /* ---- SIDEBAR: hidden on mobile (replaced by .mobile-top-bar) ---- */
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    border-right: none;
+    display: none;
+  }
+
+  /* ---- MOBILE TOP BAR ---- */
+  .mobile-top-bar {
+    display: block;
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+    background: var(--white);
     border-bottom: 1px solid var(--border);
-    padding: 0.5rem 0 0.5rem 1rem;
+    padding: 0.6rem 1rem;
+    width: 100%;
+  }
+
+  .mobile-top-bar-bank-row {
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-bank-select {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.55rem 2rem 0.55rem 0.75rem;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .mobile-top-bar-pro-row {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 0.4rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    gap: 0.5rem;
   }
 
-  .sidebar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .sidebar-header,
-  .sidebar-divider {
-    display: none;
-  }
-
-  .sidebar-item {
-    white-space: nowrap;
-    flex-shrink: 0;
-    padding: 0.45rem 0.85rem;
-    font-size: 0.75rem;
+  .mobile-pro-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.45rem 0.4rem;
     border-radius: 100px;
     border: 1px solid var(--border);
-    margin-bottom: 0;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
   }
 
-  .sidebar-item-active {
+  .mobile-pro-pill:hover {
+    background: rgba(37, 99, 235, 0.04);
+    color: var(--text-primary);
+  }
+
+  .mobile-pro-pill-active {
+    background: var(--navy);
+    color: #fff;
     border-color: var(--navy);
   }
 
-  .sidebar-lock {
-    width: 10px;
-    height: 10px;
+  .mobile-pro-pill-active:hover {
+    background: var(--navy);
+    color: #fff;
   }
 
-  .sidebar-count {
-    display: none;
-  }
-
-  .sidebar-item-locked {
+  .mobile-pro-pill-locked {
     opacity: 0.5;
     border-style: dashed;
-  }
-
-  .bank-name-full {
-    display: none;
-  }
-
-  .bank-name-short {
-    display: inline;
-  }
-
-  .sidebar-scroll-arrow {
-    display: flex;
-    align-items: center;
-    position: sticky;
-    right: 0;
-    flex-shrink: 0;
-    background: linear-gradient(to right, transparent, var(--white) 40%);
-    padding: 0.25rem 0.5rem 0.25rem 1.5rem;
-    color: var(--text-secondary);
-    pointer-events: none;
-    z-index: 2;
   }
 
   /* ---- MOBILE UPGRADE BANNER ---- */

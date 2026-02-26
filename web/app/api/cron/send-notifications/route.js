@@ -22,7 +22,7 @@ function buildNothingFoundEmail(firstName) {
       No new postings matching your preferences today — I checked all morning and afternoon.
     </p>
     <p style="font-size:15px;color:#334155;line-height:1.7;margin:0 0 28px;">
-      I'll keep searching on your behalf and will text and email you the moment something goes live.
+      I'll keep searching on your behalf and will let you know the moment something goes live.
     </p>
     <div style="text-align:center;margin-bottom:32px;">
       <a href="https://petespostings.com" style="display:inline-block;padding:12px 32px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Browse All Active Postings</a>

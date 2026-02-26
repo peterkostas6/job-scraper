@@ -292,7 +292,7 @@ function AboutPage({ onBrowse }) {
       <section className="about-section">
         <h2 className="about-heading">What you get</h2>
         <p className="about-text">
-          Every active analyst and internship posting across all major banks — live, in one place, pulled straight from their career APIs. No LinkedIn noise, no outdated listings. Filter by bank, location, or job type.
+          This site lets you look at each bank in one place, sourced directly from their API — so no fake listings.
         </p>
         <p className="about-text">
           Upgrade to Pro and we'll text you the moment a new role matching your preferences goes live. Set it once, never miss a posting again.

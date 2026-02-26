@@ -298,7 +298,7 @@ function AboutPage({ onBrowse }) {
           This site lets you look at each bank in one place, sourced directly from their API — so no fake listings.
         </p>
         <p className="about-text">
-          For me, what was most valuable was the text alerts. I set what jobs I wanted alerts for, and took the stress and hassle out of checking 20+ different career sites.
+          For me, what was most valuable was the text alerts. You set what jobs you want text alerts for, and get a message as soon as they go live. No more stress of checking 20+ different sites.
         </p>
       </section>
 

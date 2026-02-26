@@ -146,7 +146,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </svg>
           <h3 className="feature-title">48-Hour Feed</h3>
           <p className="feature-desc">
-            See every posting from the last 7 days across all 7 banks in one place — sorted by recency, free, no account needed.
+            See every posting from the last 48 hours across all 8 banks in one place — sorted by recency, free, no account needed.
           </p>
         </div>
         <div className="feature-card">
@@ -316,7 +316,7 @@ function AboutPage({ onBrowse }) {
       <section className="about-section">
         <h2 className="about-heading">Speed matters</h2>
         <p className="about-text">
-          Banks fill roles within days of posting — sometimes hours. The <strong>Recent Postings</strong> section shows every job posted in the last 7 days across all 7 banks, free for everyone. Upgrade to Pro and you'll get an <strong>SMS or email alert</strong> the moment a new role goes live.
+          Banks fill roles within days of posting — sometimes hours. The <strong>Recent Postings</strong> section shows every job posted in the last 48 hours across all 8 banks, free for everyone. Upgrade to Pro and you'll get an <strong>SMS or email alert</strong> the moment a new role goes live.
         </p>
       </section>
 
@@ -873,7 +873,7 @@ export default function Home() {
                 Recent Postings
               </h1>
               <p className="new-postings-page-desc">
-                Jobs posted in the last 7 days across all 7 banks. Apply early — roles fill fast.
+                Jobs posted in the last 48 hours across all 8 banks. Apply early — roles fill fast.
               </p>
             </div>
             <NewPostingsView

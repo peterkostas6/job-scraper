@@ -771,7 +771,7 @@ export default function Home() {
               </button>
             ))}
             <div className="sidebar-divider" />
-            <div className="sidebar-header">Recent</div>
+            <div className="sidebar-header">Pro Features</div>
             <button className="sidebar-item sidebar-item-active">
               <span className="sidebar-saved-label">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -781,8 +781,6 @@ export default function Home() {
               </span>
               {newPostingsData.total > 0 && <span className="sidebar-count">{newPostingsData.total}</span>}
             </button>
-            <div className="sidebar-divider" />
-            <div className="sidebar-header">My Jobs</div>
             <button
               className={`sidebar-item ${!isSubscribed ? "sidebar-item-locked" : ""}`}
               onClick={() => {
@@ -890,7 +888,7 @@ export default function Home() {
             })}
 
             <div className="sidebar-divider" />
-            <div className="sidebar-header">Recent</div>
+            <div className="sidebar-header">Pro Features</div>
             <button
               className={`sidebar-item ${!isSubscribed ? "sidebar-item-locked" : ""}`}
               onClick={() => {
@@ -912,9 +910,6 @@ export default function Home() {
                 )
               ) : last48hCount > 0 ? <span className="sidebar-count">{last48hCount}</span> : null}
             </button>
-
-            <div className="sidebar-divider" />
-            <div className="sidebar-header">My Jobs</div>
             <button
               className={`sidebar-item ${viewingSaved && !viewNotifications ? "sidebar-item-active" : ""} ${!isSubscribed ? "sidebar-item-locked" : ""}`}
               onClick={() => {

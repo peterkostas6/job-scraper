@@ -912,7 +912,7 @@ export default function Home() {
             <button
               className={`sidebar-item ${!isSubscribed ? "sidebar-item-locked" : ""}`}
               onClick={() => {
-                if (!isSubscribed) { setViewingSaved(true); setViewNotifications(false); return; }
+                if (!isSubscribed) { router.push("/pricing"); return; }
                 setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
               }}
             >

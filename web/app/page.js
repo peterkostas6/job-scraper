@@ -285,7 +285,7 @@ function AboutPage({ onBrowse }) {
 
       <section className="about-section about-section-first">
         <p className="about-text">
-          Banks fill analyst and internship roles fast — sometimes within 48 hours of posting. Pete's Postings pulls live listings directly from each bank's career site and texts you the moment something new goes live, so you're always first to apply.
+          After applying to 300+ internships, I was sick of tracking new banking roles in an outdated spreadsheet.
         </p>
       </section>
 

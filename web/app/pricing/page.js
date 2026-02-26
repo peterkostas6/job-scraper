@@ -207,7 +207,7 @@ export default function PricingPage() {
           <span className="hero-tag">Pricing</span>
           <h1 className="pricing-hero-title">Simple, transparent pricing</h1>
           <p className="pricing-hero-desc">
-            Recent postings feed is free. Upgrade to Pro for SMS &amp; email alerts the moment new roles post.
+            Upgrade to Pro to see new postings the moment they go live — plus SMS &amp; email alerts.
           </p>
         </section>
 
@@ -222,9 +222,12 @@ export default function PricingPage() {
               <p className="pricing-card-tagline">No account needed</p>
             </div>
             <ul className="pricing-card-features">
-              <li className="pricing-feature">{check} All 7 banks — browse free</li>
+              <li className="pricing-feature">{check} All banks — browse free</li>
               <li className="pricing-feature">{check} Search &amp; filter by location, type</li>
-              <li className="pricing-feature pricing-feature-highlight">{check} <strong>Recent postings feed (7 days)</strong></li>
+              <li className="pricing-feature pricing-feature-muted">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                Recent postings feed
+              </li>
               <li className="pricing-feature pricing-feature-muted">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 SMS text alerts
@@ -259,6 +262,7 @@ export default function PricingPage() {
             <ul className="pricing-card-features">
               <li className="pricing-feature">{check} Everything in Free</li>
               <li className="pricing-feature">{check} Save &amp; bookmark jobs</li>
+              <li className="pricing-feature pricing-feature-highlight">{check} <strong>Recent postings feed (last 48 hours)</strong></li>
               <li className="pricing-feature">{check} Email notifications for new postings</li>
               <li className="pricing-feature pricing-feature-highlight">{check} <strong>SMS text alerts</strong></li>
             </ul>
@@ -336,8 +340,8 @@ export default function PricingPage() {
               <p className="pricing-faq-a">Pro users can add a phone number in their notification settings. When our daily check finds a new posting matching your preferences, you'll get a text with the role title, bank, and a direct link to apply.</p>
             </div>
             <div className="pricing-faq-item">
-              <h3 className="pricing-faq-q">Is the recent postings feed really free?</h3>
-              <p className="pricing-faq-a">Yes — everyone can see jobs posted in the last 7 days, no account needed. Pro is about getting those postings pushed to you automatically via SMS or email, so you don't have to check manually.</p>
+              <h3 className="pricing-faq-q">What does the recent postings feed include?</h3>
+              <p className="pricing-faq-a">Pro subscribers see every job posted in the last 48 hours across all banks, updated hourly. You'll also get SMS or email alerts so you don't have to check manually.</p>
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">How do club memberships work?</h3>

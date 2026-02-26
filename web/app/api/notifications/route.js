@@ -65,6 +65,10 @@ function buildPrefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phoneNu
       You can update your preferences anytime from your dashboard.
     </p>
 
+    <div style="text-align:center;margin-bottom:28px;">
+      <a href="https://petespostings.com" style="display:inline-block;padding:12px 32px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Browse Active Postings</a>
+    </div>
+
     <p style="font-size:15px;color:#334155;">— Pete</p>
     <p style="font-size:11px;color:#94a3b8;margin-top:32px;">Pete's Postings · Not affiliated with any listed bank</p>
   </div>
@@ -171,7 +175,7 @@ export async function POST(request) {
       const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
 
       if (twilioSid && twilioToken && twilioFrom) {
-        const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. I'll send you a text based on your preferences when new jobs get posted. Good luck!`;
+        const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. I'll send you a text based on your preferences when new jobs get posted. Good luck! petespostings.com`;
 
         const encoded = new URLSearchParams({ To: newPhone, From: twilioFrom, Body: welcomeMsg });
         await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {

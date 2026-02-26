@@ -69,6 +69,9 @@ export async function POST(req) {
         <li>Member verification via student email</li>
       </ul>
     </div>
+    <div style="text-align:center;margin-bottom:28px;">
+      <a href="https://petespostings.com" style="display:inline-block;padding:12px 32px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Browse Active Postings</a>
+    </div>
     <p style="font-size:15px;color:#334155;">— Pete</p>
     <p style="font-size:11px;color:#94a3b8;margin-top:32px;">Pete's Postings &middot; Not affiliated with any listed bank</p>
   </div>

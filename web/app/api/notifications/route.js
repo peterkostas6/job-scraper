@@ -19,11 +19,14 @@ const JOB_TYPE_LABELS = {
   fulltime: "Analyst only",
 };
 
-function buildPrefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phoneNumber, banks, jobType }) {
+function buildPrefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phoneNumber, banks, categories, jobType }) {
   const name = firstName || "there";
   const bankList = banks && banks.length > 0
     ? banks.map((k) => BANK_NAMES[k] || k).join(", ")
     : "All banks";
+  const categoryList = categories && categories.length > 0
+    ? categories.join(", ")
+    : "All categories";
   const jobTypeLabel = JOB_TYPE_LABELS[jobType] || "All types";
   const subject = isFirstSetup ? "Your notification preferences are set up" : "Your notification preferences were updated";
   const intro = isFirstSetup
@@ -52,6 +55,10 @@ function buildPrefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phoneNu
         <tr>
           <td style="padding:8px 0;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Banks</td>
           <td style="padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid #f1f5f9;">${bankList}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Categories</td>
+          <td style="padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid #f1f5f9;">${categoryList}</td>
         </tr>
         <tr>
           <td style="padding:8px 0;color:#64748b;font-size:13px;">Job type</td>
@@ -154,6 +161,7 @@ export async function POST(request) {
           smsEnabled: Boolean(smsEnabled),
           phoneNumber: phoneNumber || "",
           banks: Array.isArray(banks) ? banks : [],
+          categories: Array.isArray(categories) ? categories : [],
           jobType: jobType || "all",
         });
         await resend.emails.send({

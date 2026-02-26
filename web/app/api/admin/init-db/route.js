@@ -34,7 +34,24 @@ export async function POST(request) {
       CREATE INDEX IF NOT EXISTS idx_nq_queued_at ON notification_queue(queued_at)
     `;
 
-    return Response.json({ ok: true, message: "notification_queue table ready" });
+    await sql`
+      CREATE TABLE IF NOT EXISTS jobs (
+        link TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        bank TEXT NOT NULL,
+        bank_key TEXT DEFAULT '',
+        location TEXT DEFAULT '',
+        category TEXT DEFAULT '',
+        posted_date TIMESTAMPTZ,
+        detected_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_jobs_detected_at ON jobs(detected_at)
+    `;
+
+    return Response.json({ ok: true, message: "notification_queue and jobs tables ready" });
   } catch (err) {
     console.error("init-db error:", err);
     return Response.json({ error: "DB init failed", details: err.message }, { status: 500 });

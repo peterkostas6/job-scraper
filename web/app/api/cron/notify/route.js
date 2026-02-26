@@ -103,7 +103,26 @@ export async function GET(request) {
           postedDate: job.postedDate || null,
           detectedAt: jobDetectedAt,
         });
+
+        // Write to Postgres jobs table
+        await sql`
+          INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at)
+          VALUES (
+            ${job.link},
+            ${job.title},
+            ${job.bank},
+            ${job.bankKey || ''},
+            ${job.location || ''},
+            ${job.category || ''},
+            ${job.postedDate ? new Date(job.postedDate) : null},
+            ${new Date(jobDetectedAt)}
+          )
+          ON CONFLICT (link) DO NOTHING
+        `;
       }
+      // Clean up jobs older than 30 days from Postgres
+      await sql`DELETE FROM jobs WHERE detected_at < NOW() - INTERVAL '30 days'`;
+
       const pairs = Object.entries(jobInfoPairs);
       for (let i = 0; i < pairs.length; i += 100) {
         const batch = Object.fromEntries(pairs.slice(i, i + 100));

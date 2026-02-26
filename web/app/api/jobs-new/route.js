@@ -1,8 +1,8 @@
-// GET /api/jobs-new — returns recent jobs from Redis job-first-seen hash
+// GET /api/jobs-new — returns recent jobs from Postgres jobs table
 // last48h: Pro subscribers only
 // thisWeek (2-7 days): Pro subscribers only
 // last48hCount: always returned (for teaser banners)
-import { Redis } from "@upstash/redis";
+import { sql } from "@vercel/postgres";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
 
@@ -12,7 +12,6 @@ export async function GET() {
   try {
     const { userId } = await auth();
     let isSubscribed = false;
-    const isSignedIn = !!userId;
 
     if (userId) {
       const client = await clerkClient();
@@ -20,14 +19,22 @@ export async function GET() {
       isSubscribed = user.publicMetadata?.subscribed === true;
     }
 
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
+    const { rows } = await sql`
+      SELECT
+        link,
+        title,
+        bank,
+        bank_key,
+        location,
+        category,
+        posted_date,
+        EXTRACT(EPOCH FROM detected_at)::bigint * 1000 AS detected_at_ms
+      FROM jobs
+      WHERE detected_at > NOW() - INTERVAL '30 days'
+      ORDER BY detected_at DESC
+    `;
 
-    const allEntries = await redis.hgetall("job-first-seen");
-
-    if (!allEntries || Object.keys(allEntries).length === 0) {
+    if (rows.length === 0) {
       return Response.json({ last48h: [], thisWeek: [], last48hCount: 0, total: 0 });
     }
 
@@ -36,61 +43,52 @@ export async function GET() {
     const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
 
     const allJobs = [];
-    for (const [link, raw] of Object.entries(allEntries)) {
-      try {
-        // @upstash/redis auto-deserializes JSON values, so raw may already be an object
-        const data = typeof raw === "string" ? JSON.parse(raw) : raw;
-        const detectedAt = data.detectedAt || 0;
+    for (const row of rows) {
+      const detectedAt = Number(row.detected_at_ms);
 
-        // filterTime = the earlier of detectedAt and postedDate.
-        // If a job was seeded with detectedAt=now but postedDate=5 days ago,
-        // filterTime becomes 5 days ago and it won't appear in Last 48 Hours.
-        let filterTime = detectedAt;
-        if (data.postedDate) {
-          const postedTs = new Date(data.postedDate).getTime();
-          if (!isNaN(postedTs)) filterTime = Math.min(detectedAt, postedTs);
-        }
-
-        // Only include jobs whose effective age is within 7 days
-        if (filterTime < sevenDaysAgo) continue;
-
-        // Display time: use bank's postedDate if available, otherwise detectedAt
-        let displayTime = detectedAt;
-        if (data.postedDate) {
-          const ts = new Date(data.postedDate).getTime();
-          if (!isNaN(ts)) displayTime = ts;
-        }
-
-        allJobs.push({
-          link,
-          title: data.title,
-          location: data.location,
-          bank: data.bank,
-          bankKey: data.bankKey,
-          category: data.category,
-          postedDate: data.postedDate || null,
-          detectedAt,
-          filterTime,
-          effectiveTime: displayTime,
-          hasActualDate: !!data.postedDate,
-        });
-      } catch {
-        // Skip malformed entries
+      // filterTime = min(detectedAt, postedDate)
+      // Prevents old-posted jobs from appearing as new even if seeded recently
+      let filterTime = detectedAt;
+      if (row.posted_date) {
+        const postedTs = new Date(row.posted_date).getTime();
+        if (!isNaN(postedTs)) filterTime = Math.min(detectedAt, postedTs);
       }
+
+      // Only include jobs whose effective age is within 7 days
+      if (filterTime < sevenDaysAgo) continue;
+
+      // Display time: use bank's postedDate if available, otherwise detectedAt
+      let displayTime = detectedAt;
+      if (row.posted_date) {
+        const ts = new Date(row.posted_date).getTime();
+        if (!isNaN(ts)) displayTime = ts;
+      }
+
+      allJobs.push({
+        link: row.link,
+        title: row.title,
+        location: row.location,
+        bank: row.bank,
+        bankKey: row.bank_key,
+        category: row.category,
+        postedDate: row.posted_date ? new Date(row.posted_date).toISOString() : null,
+        detectedAt,
+        filterTime,
+        effectiveTime: displayTime,
+        hasActualDate: !!row.posted_date,
+      });
     }
 
     // Sort by filterTime (newest first)
     allJobs.sort((a, b) => b.filterTime - a.filterTime);
 
-    // Use filterTime for section placement — min(detectedAt, postedDate).
-    // This prevents old-posted jobs from appearing as new even if seeded recently.
     const last48h = allJobs.filter((j) => j.filterTime >= fortyEightHoursAgo);
     const thisWeek = allJobs.filter((j) => j.filterTime < fortyEightHoursAgo);
 
     return Response.json({
-      last48h: isSubscribed ? last48h : [],       // Pro only
-      thisWeek: isSubscribed ? thisWeek : [],        // Pro only
-      last48hCount: last48h.length,               // always returned for banners/teasers
+      last48h: isSubscribed ? last48h : [],
+      thisWeek: isSubscribed ? thisWeek : [],
+      last48hCount: last48h.length,
       total: allJobs.length,
     });
   } catch (err) {

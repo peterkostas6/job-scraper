@@ -17,6 +17,9 @@ const BANK_ENDPOINTS = {
   db: "/api/jobs-db",
   barclays: "/api/jobs-barclays",
   wells: "/api/jobs-wells",
+  mufg: "/api/jobs-mufg",
+  td: "/api/jobs-td",
+  mizuho: "/api/jobs-mizuho",
 };
 
 const BANK_NAMES = {
@@ -28,6 +31,9 @@ const BANK_NAMES = {
   db: "Deutsche Bank",
   barclays: "Barclays",
   wells: "Wells Fargo",
+  mufg: "MUFG",
+  td: "TD Securities",
+  mizuho: "Mizuho",
 };
 
 export async function GET(request) {

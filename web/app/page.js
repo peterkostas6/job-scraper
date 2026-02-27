@@ -457,6 +457,7 @@ export default function Home() {
   const [last48hCount, setLast48hCount] = useState(0);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [bankSearch, setBankSearch] = useState("");
 
   // Load welcome state from localStorage
   useEffect(() => {
@@ -806,22 +807,38 @@ export default function Home() {
                 </span>
               )}
             </div>
-            {Object.entries(BANKS).map(([key, bank]) => (
-              <button
-                key={key}
-                className="sidebar-item"
-                onClick={() => {
-                  setViewNewPostings(false);
-                  setViewingSaved(false);
-                  setViewNotifications(false);
-                  setActiveBank(key);
-                  setViewHome(false);
-                }}
-              >
-                <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
-                {bankCounts[key] !== undefined && <span className="sidebar-count">{bankCounts[key]}</span>}
-              </button>
-            ))}
+            <div className="bank-search-wrap">
+              <svg className="bank-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                className="bank-search-input"
+                type="text"
+                placeholder="Filter banks..."
+                value={bankSearch}
+                onChange={(e) => setBankSearch(e.target.value)}
+              />
+            </div>
+            <div className="banks-scroll">
+              {Object.entries(BANKS)
+                .filter(([, bank]) => bank.name.toLowerCase().includes(bankSearch.toLowerCase()))
+                .map(([key, bank]) => (
+                  <button
+                    key={key}
+                    className="sidebar-item"
+                    onClick={() => {
+                      setViewNewPostings(false);
+                      setViewingSaved(false);
+                      setViewNotifications(false);
+                      setActiveBank(key);
+                      setViewHome(false);
+                    }}
+                  >
+                    <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
+                    {bankCounts[key] !== undefined && <span className="sidebar-count">{bankCounts[key]}</span>}
+                  </button>
+                ))}
+            </div>
             <div className="sidebar-divider" />
             <div className="sidebar-header">Pro Features</div>
             <button className="sidebar-item sidebar-item-active">
@@ -968,26 +985,42 @@ export default function Home() {
                 </span>
               )}
             </div>
-            {Object.entries(BANKS).map(([key, bank]) => {
-              const needsAuth = !FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed);
-              return (
-                <button
-                  key={key}
-                  className={`sidebar-item ${activeBank === key && !viewingSaved && !viewNewPostings ? "sidebar-item-active" : ""} ${needsAuth ? "sidebar-item-locked" : ""}`}
-                  onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}
-                >
-                  <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
-                  {needsAuth ? (
-                    <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  ) : (
-                    bankCounts[key] !== undefined && <span className="sidebar-count">{bankCounts[key]}</span>
-                  )}
-                </button>
-              );
-            })}
+            <div className="bank-search-wrap">
+              <svg className="bank-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                className="bank-search-input"
+                type="text"
+                placeholder="Filter banks..."
+                value={bankSearch}
+                onChange={(e) => setBankSearch(e.target.value)}
+              />
+            </div>
+            <div className="banks-scroll">
+              {Object.entries(BANKS)
+                .filter(([, bank]) => bank.name.toLowerCase().includes(bankSearch.toLowerCase()))
+                .map(([key, bank]) => {
+                  const needsAuth = !FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed);
+                  return (
+                    <button
+                      key={key}
+                      className={`sidebar-item ${activeBank === key && !viewingSaved && !viewNewPostings ? "sidebar-item-active" : ""} ${needsAuth ? "sidebar-item-locked" : ""}`}
+                      onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}
+                    >
+                      <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
+                      {needsAuth ? (
+                        <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                      ) : (
+                        bankCounts[key] !== undefined && <span className="sidebar-count">{bankCounts[key]}</span>
+                      )}
+                    </button>
+                  );
+                })}
+            </div>
 
             <div className="sidebar-divider" />
             <div className="sidebar-header">Pro Features</div>

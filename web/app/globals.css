@@ -476,6 +476,62 @@ nav {
   flex-shrink: 0;
 }
 
+.banks-scroll {
+  max-height: 218px;
+  overflow-y: auto;
+  margin-bottom: 0.25rem;
+}
+
+.banks-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.banks-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.banks-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.bank-search-wrap {
+  position: relative;
+  padding: 0 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.bank-search-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.bank-search-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem 0.35rem 1.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  color: #334155;
+  background: #f8fafc;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.bank-search-input:focus {
+  border-color: #93c5fd;
+  background: #fff;
+}
+
+.bank-search-input::placeholder {
+  color: #94a3b8;
+}
+
 .sidebar-divider {
   height: 1px;
   background: var(--border);

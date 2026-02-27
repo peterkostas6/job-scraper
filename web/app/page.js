@@ -1225,6 +1225,9 @@ export default function Home() {
                             value={notifPrefs.phoneNumber || ""}
                             onChange={(e) => { setNotifPrefs((p) => ({ ...p, phoneNumber: e.target.value })); setNotifSaved(false); }}
                           />
+                          <p style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.5rem", lineHeight: 1.5 }}>
+                            By enabling SMS, you agree to receive transactional job alert messages from Pete's Postings. Reply <strong>STOP</strong> to unsubscribe at any time. Reply <strong>HELP</strong> for help. Message and data rates may apply.
+                          </p>
                         </div>
                       )}
                     </div>

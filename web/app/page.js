@@ -17,9 +17,15 @@ const BANKS = {
   mufg: { name: "MUFG", shortName: "MUFG", endpoint: "/api/jobs-mufg" },
   td: { name: "TD Securities", shortName: "TD", endpoint: "/api/jobs-td" },
   mizuho: { name: "Mizuho", shortName: "Mizuho", endpoint: "/api/jobs-mizuho" },
+  bmo: { name: "BMO", shortName: "BMO", endpoint: "/api/jobs-bmo" },
+  hl: { name: "Houlihan Lokey", shortName: "HL", endpoint: "/api/jobs-hl" },
+  guggenheim: { name: "Guggenheim", shortName: "Guggenheim", endpoint: "/api/jobs-guggenheim" },
+  macquarie: { name: "Macquarie", shortName: "Macquarie", endpoint: "/api/jobs-macquarie" },
+  piper: { name: "Piper Sandler", shortName: "Piper", endpoint: "/api/jobs-piper" },
+  stifel: { name: "Stifel", shortName: "Stifel", endpoint: "/api/jobs-stifel" },
 };
 
-const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho"]);
+const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel"]);
 
 const JOB_TYPES = {
   all: "All Types",

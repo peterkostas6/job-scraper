@@ -20,6 +20,12 @@ const BANK_ENDPOINTS = {
   mufg: "/api/jobs-mufg",
   td: "/api/jobs-td",
   mizuho: "/api/jobs-mizuho",
+  bmo: "/api/jobs-bmo",
+  hl: "/api/jobs-hl",
+  guggenheim: "/api/jobs-guggenheim",
+  macquarie: "/api/jobs-macquarie",
+  piper: "/api/jobs-piper",
+  stifel: "/api/jobs-stifel",
 };
 
 const BANK_NAMES = {
@@ -34,6 +40,12 @@ const BANK_NAMES = {
   mufg: "MUFG",
   td: "TD Securities",
   mizuho: "Mizuho",
+  bmo: "BMO",
+  hl: "Houlihan Lokey",
+  guggenheim: "Guggenheim",
+  macquarie: "Macquarie",
+  piper: "Piper Sandler",
+  stifel: "Stifel",
 };
 
 export async function GET(request) {

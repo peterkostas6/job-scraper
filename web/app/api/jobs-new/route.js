@@ -56,6 +56,17 @@ export async function GET() {
       // Only include jobs whose effective age is within 48 hours
       if (filterTime < fortyEightHoursAgo) continue;
 
+      // Only show analyst and intern roles — filter out ops, admin, etc.
+      const t = row.title.toLowerCase();
+      const isAnalystOrIntern =
+        t.includes("analyst") ||
+        /\bintern\b/.test(t) ||
+        t.includes("internship") ||
+        t.includes("summer") ||
+        t.includes("co-op") ||
+        t.includes("coop");
+      if (!isAnalystOrIntern) continue;
+
       jobs.push({
         link: row.link,
         title: row.title,

@@ -16,7 +16,6 @@ const BANK_ENDPOINTS = {
   citi: "/api/jobs-citi",
   db: "/api/jobs-db",
   barclays: "/api/jobs-barclays",
-  ubs: "/api/jobs-ubs",
 };
 
 const BANK_NAMES = {
@@ -27,7 +26,6 @@ const BANK_NAMES = {
   citi: "Citi",
   db: "Deutsche Bank",
   barclays: "Barclays",
-  ubs: "UBS",
 };
 
 export async function GET(request) {
@@ -67,6 +65,11 @@ export async function GET(request) {
         const { bankKey, jobs } = result.value;
         for (const job of jobs) {
           if (isGraduateProgram(job.title)) continue;
+          // Only store analyst and intern roles — skip operations, admin, etc.
+          const t = job.title.toLowerCase();
+          const isAnalystOrIntern =
+            t.includes("analyst") || isInternship(job.title);
+          if (!isAnalystOrIntern) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
         }
       }

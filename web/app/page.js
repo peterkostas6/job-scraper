@@ -344,9 +344,28 @@ function SkeletonRows() {
 
 // ---- RECENT POSTINGS VIEW ----
 function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
+  const [rpSearch, setRpSearch] = useState("");
+  const [rpJobType, setRpJobType] = useState("all");
+  const [rpBank, setRpBank] = useState("");
+  const [rpCategory, setRpCategory] = useState("");
+
   if (loading) return <SkeletonRows />;
 
-  const { last48h = [], thisWeek = [], last48hCount = 0, total = 0 } = data || {};
+  const { last48h = [], last48hCount = 0 } = data || {};
+
+  const availableBanks = [...new Set(last48h.map((j) => j.bank).filter(Boolean))].sort();
+  const availableCategories = [...new Set(last48h.map((j) => j.category).filter(Boolean))].sort();
+
+  const displayJobs = last48h.filter((job) => {
+    if (rpSearch && !job.title.toLowerCase().includes(rpSearch.toLowerCase())) return false;
+    if (rpJobType === "internship" && !isInternship(job.title)) return false;
+    if (rpJobType === "fulltime" && isInternship(job.title)) return false;
+    if (rpBank && job.bank !== rpBank) return false;
+    if (rpCategory && job.category !== rpCategory) return false;
+    return true;
+  });
+
+  const hasActiveFilter = rpSearch || rpJobType !== "all" || rpBank || rpCategory;
 
   function JobCard({ job, index }) {
     const effectiveTime = job.effectiveTime || job.detectedAt || 0;
@@ -384,11 +403,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
 
   return (
     <div className="new-postings-view">
-      {/* Last 48 Hours — Pro only */}
       <div className="new-section">
-        <div className="new-section-header">
-        </div>
-
         {!isSubscribed ? (
           <div className="new-paywall">
             <div className="new-paywall-blur">
@@ -413,19 +428,75 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
               <PaywallOverlay isSignedIn={isSignedIn} />
             </div>
           </div>
-        ) : last48h.length === 0 ? (
-          <div className="empty-state" style={{ padding: "2rem" }}>
-            <p className="empty-title">No new postings in the last 48 hours</p>
-            <p className="empty-desc">Banks post most heavily Monday–Wednesday. Check back soon.</p>
-          </div>
         ) : (
-          <div className="jobs-list fade-in">
-            {tableHeader}
-            {last48h.map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
-          </div>
+          <>
+            {/* Filters */}
+            <div className="filters-container">
+              <div className="filters">
+                <div className="search-wrapper">
+                  <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                  </svg>
+                  <input
+                    className="search-bar"
+                    type="text"
+                    placeholder="Search job titles..."
+                    value={rpSearch}
+                    onChange={(e) => setRpSearch(e.target.value)}
+                  />
+                  {rpSearch && (
+                    <button className="search-clear" onClick={() => setRpSearch("")}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 6 6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <select className="filter-dropdown" value={rpBank} onChange={(e) => setRpBank(e.target.value)}>
+                  <option value="">All Banks</option>
+                  {availableBanks.map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <select className="filter-dropdown" value={rpJobType} onChange={(e) => setRpJobType(e.target.value)}>
+                  {Object.entries(JOB_TYPES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+                <select className="filter-dropdown" value={rpCategory} onChange={(e) => setRpCategory(e.target.value)}>
+                  <option value="">All Categories</option>
+                  {availableCategories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="results-bar">
+              <span className="results-text">
+                {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} in the last 48 hours
+              </span>
+              {hasActiveFilter && (
+                <button className="search-clear" style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.78rem", color: "#64748b", background: "none", border: "none", cursor: "pointer" }}
+                  onClick={() => { setRpSearch(""); setRpJobType("all"); setRpBank(""); setRpCategory(""); }}>
+                  Clear filters
+                </button>
+              )}
+            </div>
+
+            {last48h.length === 0 ? (
+              <div className="empty-state" style={{ padding: "2rem" }}>
+                <p className="empty-title">No new postings in the last 48 hours</p>
+                <p className="empty-desc">Banks post most heavily Monday–Wednesday. Check back soon.</p>
+              </div>
+            ) : displayJobs.length === 0 ? (
+              <div className="empty-state" style={{ padding: "2rem" }}>
+                <p className="empty-title">No results match your filters</p>
+                <p className="empty-desc">Try adjusting or clearing your filters.</p>
+              </div>
+            ) : (
+              <div className="jobs-list fade-in">
+                {tableHeader}
+                {displayJobs.map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
+              </div>
+            )}
+          </>
         )}
       </div>
-
     </div>
   );
 }

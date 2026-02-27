@@ -3,7 +3,7 @@
 import { Redis } from "@upstash/redis";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
-import { isGraduateProgram, isInternship } from "@/lib/notif-helpers";
+import { isGraduateProgram, isInternship, isBankingEntryLevel } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 min max for Vercel
@@ -65,11 +65,8 @@ export async function GET(request) {
         const { bankKey, jobs } = result.value;
         for (const job of jobs) {
           if (isGraduateProgram(job.title)) continue;
-          // Only store analyst and intern roles — skip operations, admin, etc.
-          const t = job.title.toLowerCase();
-          const isAnalystOrIntern =
-            t.includes("analyst") || isInternship(job.title);
-          if (!isAnalystOrIntern) continue;
+          // Only store banking entry-level roles — skip operations, admin, etc.
+          if (!isBankingEntryLevel(job.title)) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
         }
       }

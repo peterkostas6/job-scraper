@@ -3,6 +3,7 @@
 import { sql } from "@vercel/postgres";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
+import { isBankingEntryLevel } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -56,16 +57,8 @@ export async function GET() {
       // Only include jobs whose effective age is within 48 hours
       if (filterTime < fortyEightHoursAgo) continue;
 
-      // Only show analyst and intern roles — filter out ops, admin, etc.
-      const t = row.title.toLowerCase();
-      const isAnalystOrIntern =
-        t.includes("analyst") ||
-        /\bintern\b/.test(t) ||
-        t.includes("internship") ||
-        t.includes("summer") ||
-        t.includes("co-op") ||
-        t.includes("coop");
-      if (!isAnalystOrIntern) continue;
+      // Only show banking entry-level roles — filter out ops, admin, etc.
+      if (!isBankingEntryLevel(row.title)) continue;
 
       jobs.push({
         link: row.link,

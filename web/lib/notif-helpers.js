@@ -10,6 +10,28 @@ export function isGraduateProgram(title) {
   return /\bgraduate\b/.test(t) || /\bgrad\s+program/.test(t) || /\bgrad\s+programme/.test(t);
 }
 
+// Returns true for entry-level banking roles worth showing.
+// Catches analyst/intern titles as well as common variations that don't use those exact words.
+export function isBankingEntryLevel(title) {
+  const t = title.toLowerCase();
+  return (
+    t.includes("analyst") ||
+    /\bintern\b/.test(t) ||
+    t.includes("internship") ||
+    t.includes("summer") ||       // Summer Program, Summer Associate, etc.
+    t.includes("co-op") ||
+    t.includes("coop") ||
+    t.includes("trainee") ||      // Graduate Trainee, Trading Trainee
+    t.includes("placement") ||    // Industrial Placement, Placement Year
+    /\bjunior\b/.test(t) ||       // Junior Trader, Junior Associate
+    t.includes("early career") ||
+    t.includes("campus") ||       // Campus Hire, Campus Recruit
+    t.includes("new grad") ||
+    t.includes("entry level") ||
+    t.includes("entry-level")
+  );
+}
+
 export function buildEmailHtml(newJobs, userName) {
   const grouped = {};
   for (const job of newJobs) {

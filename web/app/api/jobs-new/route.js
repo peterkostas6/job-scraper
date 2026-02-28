@@ -5,6 +5,16 @@ import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { isBankingEntryLevel } from "@/lib/notif-helpers";
 
+function isUSLocation(loc) {
+  if (!loc) return true;
+  const l = loc.toLowerCase();
+  if (l.includes("united states")) return true;
+  if (/[,\-]\s*(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy|dc)\b/i.test(l)) return true;
+  if (l.includes("new york") || l.includes("chicago") || l.includes("san francisco") || l.includes("los angeles") || l.includes("boston") || l.includes("houston") || l.includes("dallas") || l.includes("miami") || l.includes("atlanta") || l.includes("seattle") || l.includes("charlotte") || l.includes("whippany") || l.includes("wilmington")) return true;
+  if (l.includes("multiple")) return true;
+  return false;
+}
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -59,6 +69,9 @@ export async function GET() {
 
       // Only show banking entry-level roles — filter out ops, admin, etc.
       if (!isBankingEntryLevel(row.title)) continue;
+
+      // Only show US jobs
+      if (!isUSLocation(row.location || "")) continue;
 
       jobs.push({
         link: row.link,

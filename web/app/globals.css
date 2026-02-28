@@ -1168,6 +1168,7 @@ nav {
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 0;
+  text-align: center;
 }
 
 .job-badges {

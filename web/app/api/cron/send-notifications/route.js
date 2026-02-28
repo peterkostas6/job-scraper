@@ -51,10 +51,9 @@ export async function POST(request) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-    const twilioEnabled = twilioSid && twilioToken && twilioFrom;
+    const telnyxApiKey = process.env.TELNYX_API_KEY;
+    const telnyxFrom = process.env.TELNYX_PHONE_NUMBER;
+    const telnyxEnabled = telnyxApiKey && telnyxFrom;
 
     // 1. Fetch all queued rows
     const { rows } = await sql`
@@ -115,20 +114,19 @@ export async function POST(request) {
         }
 
         // Send SMS if enabled
-        if (twilioEnabled && prefs.smsEnabled && prefs.phoneNumber) {
+        if (telnyxEnabled && prefs.smsEnabled && prefs.phoneNumber) {
           try {
             const jobLines = jobs.slice(0, 3).map((j) => `• ${j.title} @ ${j.bank}`).join("\n");
             const more = jobs.length > 3 ? `\n+ ${jobs.length - 3} more` : "";
-            const body = `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}\n\npetespostings.com`;
+            const text = `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}\n\npetespostings.com\nReply STOP to unsubscribe`;
 
-            const encoded = new URLSearchParams({ To: prefs.phoneNumber, From: twilioFrom, Body: body });
-            const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+            const resp = await fetch("https://api.telnyx.com/v2/messages", {
               method: "POST",
               headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64")}`,
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${telnyxApiKey}`,
               },
-              body: encoded.toString(),
+              body: JSON.stringify({ from: telnyxFrom, to: prefs.phoneNumber, text }),
             });
             if (resp.ok) smsSent++;
             else console.error(`SMS failed for ${prefs.phoneNumber}:`, await resp.text());

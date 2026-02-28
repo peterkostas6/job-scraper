@@ -34,7 +34,7 @@ function buildNothingFoundEmail(firstName) {
 </html>`;
 }
 
-export async function POST(request) {
+export async function GET(request) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
 

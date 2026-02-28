@@ -652,7 +652,9 @@ export default function Home() {
     setCategoryFilter("");
     setShowSavedOnly(false);
 
-    fetch(BANKS[activeBank].endpoint)
+    const controller = new AbortController();
+
+    fetch(BANKS[activeBank].endpoint, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch jobs");
         return res.json();
@@ -672,9 +674,12 @@ export default function Home() {
         setLoading(false);
       })
       .catch((err) => {
+        if (err.name === "AbortError") return;
         setError(err.message);
         setLoading(false);
       });
+
+    return () => controller.abort();
   }, [activeBank, isSignedIn, isSubscribed, isLoaded]);
 
   function toggleBookmark(e, job) {

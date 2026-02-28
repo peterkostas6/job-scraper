@@ -79,6 +79,24 @@ export async function POST(req) {
 </html>`,
     });
 
+    // Send SMS alert to Pete
+    const telnyxApiKey = process.env.TELNYX_API_KEY;
+    const telnyxFrom = process.env.TELNYX_PHONE_NUMBER;
+    if (telnyxApiKey && telnyxFrom) {
+      await fetch("https://api.telnyx.com/v2/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${telnyxApiKey}`,
+        },
+        body: JSON.stringify({
+          from: telnyxFrom,
+          to: "+14014878091",
+          text: `Club inquiry: ${clubName} @ ${schoolName}\n${memberCount ? memberCount + " members\n" : ""}${contactName} — ${contactEmail}`,
+        }),
+      });
+    }
+
     return Response.json({ success: true });
   } catch (err) {
     console.error("Club inquiry email error:", err);

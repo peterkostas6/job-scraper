@@ -5,6 +5,16 @@ export const dynamic = "force-dynamic";
 const WORKDAY_URL = "https://mq.wd3.myworkdayjobs.com/wday/cxs/mq/CareersatMQ/jobs";
 const WORKDAY_SITE = "https://mq.wd3.myworkdayjobs.com/en-US/CareersatMQ";
 
+function isUSLocation(loc) {
+  if (!loc) return true;
+  const l = loc.toLowerCase();
+  if (l.includes("united states")) return true;
+  if (/[,\-]\s*(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy|dc)\b/i.test(l)) return true;
+  if (l.includes("new york") || l.includes("chicago") || l.includes("san francisco") || l.includes("los angeles") || l.includes("boston") || l.includes("houston") || l.includes("dallas") || l.includes("miami") || l.includes("atlanta") || l.includes("seattle") || l.includes("charlotte") || l.includes("whippany") || l.includes("wilmington")) return true;
+  if (l.includes("multiple")) return true;
+  return false;
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -77,6 +87,7 @@ export async function GET() {
         const title = job.title || "N/A";
         const t = title.toLowerCase();
         if (!t.includes("analyst") && !t.includes("intern") && !t.includes("summer") && !t.includes("trainee") && !t.includes("placement")) continue;
+        if (!isUSLocation(job.locationsText || "")) continue;
         allJobs.push({
           title,
           link: `${WORKDAY_SITE}${job.externalPath}`,

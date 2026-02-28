@@ -22,6 +22,16 @@ function categorizeJob(title) {
   return "Other";
 }
 
+function isUSLocation(loc) {
+  if (!loc) return true;
+  const l = loc.toLowerCase();
+  if (l.includes("united states")) return true;
+  if (/[,\-]\s*(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy|dc)\b/i.test(l)) return true;
+  if (l.includes("new york") || l.includes("chicago") || l.includes("san francisco") || l.includes("los angeles") || l.includes("boston") || l.includes("houston") || l.includes("dallas") || l.includes("miami") || l.includes("atlanta") || l.includes("seattle") || l.includes("charlotte") || l.includes("st. louis") || l.includes("kansas city")) return true;
+  if (l.includes("multiple")) return true;
+  return false;
+}
+
 function decodeEntities(str) {
   return str
     .replace(/&amp;/g, "&")
@@ -55,6 +65,8 @@ function parseJobs(html) {
     const title = decodeEntities(links[i].title);
     const t = title.toLowerCase();
     if (!t.includes("analyst") && !t.includes("intern") && !t.includes("summer") && !t.includes("trainee") && !t.includes("placement")) continue;
+    const loc = locs[i] ? decodeEntities(locs[i]) : "";
+    if (!isUSLocation(loc)) continue;
     jobs.push({
       title,
       link: links[i].href.startsWith("http") ? links[i].href : BASE_URL + links[i].href,

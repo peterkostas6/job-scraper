@@ -343,7 +343,7 @@ function SkeletonRows() {
 }
 
 // ---- RECENT POSTINGS VIEW ----
-function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
+function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlerts }) {
   const [rpSearch, setRpSearch] = useState("");
   const [rpJobType, setRpJobType] = useState("all");
   const [rpBank, setRpBank] = useState("");
@@ -484,7 +484,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
                 <p className="empty-desc">Banks post most heavily Monday–Wednesday. Check back soon.</p>
                 <button
                   style={{ marginTop: "1.25rem", padding: "0.6rem 1.5rem", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
-                  onClick={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
+                  onClick={onSetupAlerts}
                 >
                   Set up alerts
                 </button>
@@ -1009,6 +1009,7 @@ export default function Home() {
               isSignedIn={isSignedIn}
               data={newPostingsData}
               loading={newPostingsLoading}
+              onSetupAlerts={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
             />
           </main>
         </div>

@@ -257,7 +257,7 @@ export default function PricingPage() {
                 <span className="pricing-card-amount">$4.99</span>
                 <span className="pricing-card-period">/mo</span>
               </div>
-              <p className="pricing-card-tagline">or $39.99/year — SMS + email alerts</p>
+              <p className="pricing-card-tagline">14-day free trial · then $4.99/mo or $39.99/yr</p>
             </div>
             <ul className="pricing-card-features">
               <li className="pricing-feature">{check} Everything in Free</li>
@@ -282,12 +282,12 @@ export default function PricingPage() {
                     disabled={checkoutLoading !== null}
                     style={{ marginTop: "0.5rem" }}
                   >
-                    {checkoutLoading === "monthly" ? "Redirecting..." : "Monthly — $4.99/mo"}
+                    {checkoutLoading === "monthly" ? "Redirecting..." : "Start Free Trial — $4.99/mo"}
                   </button>
                 </>
               ) : (
                 <SignUpButton mode="modal">
-                  <button className="pricing-card-cta pricing-cta-primary">Get Started</button>
+                  <button className="pricing-card-cta pricing-cta-primary">Start Free Trial</button>
                 </SignUpButton>
               )}
             </div>
@@ -331,6 +331,10 @@ export default function PricingPage() {
         <section className="pricing-faq">
           <h2 className="pricing-faq-title">Common questions</h2>
           <div className="pricing-faq-list">
+            <div className="pricing-faq-item">
+              <h3 className="pricing-faq-q">How does the free trial work?</h3>
+              <p className="pricing-faq-a">The monthly plan includes a 14-day free trial. You'll need a card on file to start — you won't be charged anything today. After 14 days, your card is automatically charged $4.99. Cancel anytime before the trial ends and you won't pay a thing.</p>
+            </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">Can I cancel anytime?</h3>
               <p className="pricing-faq-a">Yes. You can cancel your Pro subscription at any time from your account settings. You'll keep access until the end of your billing period.</p>

@@ -531,7 +531,7 @@ export default function Home() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [viewingSaved, setViewingSaved] = useState(false);
   const [viewNotifications, setViewNotifications] = useState(false);
-  const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "" });
+  const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", location: "" });
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
@@ -1280,6 +1280,17 @@ export default function Home() {
                               </label>
                             ))}
                           </div>
+                        </div>
+                        <div className="notif-section">
+                          <h3 className="notif-section-title">Location</h3>
+                          <p className="notif-section-desc">Only get alerts for jobs in a specific city. Leave blank for all locations.</p>
+                          <input
+                            className="notif-phone-input"
+                            type="text"
+                            placeholder="e.g. New York, Chicago, Houston..."
+                            value={notifPrefs.location || ""}
+                            onChange={(e) => { setNotifPrefs((p) => ({ ...p, location: e.target.value })); setNotifSaved(false); }}
+                          />
                         </div>
                       </>
                     )}

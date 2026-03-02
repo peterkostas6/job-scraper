@@ -203,11 +203,13 @@ export async function GET(request) {
       const prefCategories = prefs.categories || [];
       const prefJobType = prefs.jobType || "all";
 
+      const prefLocation = (prefs.location || "").trim().toLowerCase();
       const matchingJobs = newJobs.filter((job) => {
         if (prefBanks.length > 0 && !prefBanks.includes(job.bankKey)) return false;
         if (prefCategories.length > 0 && !prefCategories.includes(job.category)) return false;
         if (prefJobType === "internship" && !isInternship(job.title)) return false;
         if (prefJobType === "fulltime" && isInternship(job.title)) return false;
+        if (prefLocation && !(job.location || "").toLowerCase().includes(prefLocation)) return false;
         return true;
       });
 

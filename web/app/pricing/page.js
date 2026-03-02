@@ -158,8 +158,10 @@ export default function PricingPage() {
   const { isSignedIn, isLoaded } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
+  const [billing, setBilling] = useState("monthly");
 
-  function handleSubscribe(plan) {
+  function handleSubscribe() {
+    const plan = billing;
     setCheckoutLoading(plan);
     fetch("/api/checkout", {
       method: "POST",
@@ -209,6 +211,33 @@ export default function PricingPage() {
           <p className="pricing-hero-desc">
             Upgrade to Pro to see new postings the moment they go live — plus SMS &amp; email alerts.
           </p>
+
+          {/* Billing toggle */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6rem", marginTop: "2rem" }}>
+            <div style={{ display: "inline-flex", background: "#fff", border: "1px solid rgba(0,0,0,0.1)", borderRadius: "999px", padding: "4px", gap: "2px" }}>
+              <button
+                onClick={() => setBilling("monthly")}
+                style={{
+                  padding: "0.45rem 1.4rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s",
+                  background: billing === "monthly" ? "var(--navy)" : "transparent",
+                  color: billing === "monthly" ? "#fff" : "var(--text-secondary)",
+                }}
+              >Monthly</button>
+              <button
+                onClick={() => setBilling("yearly")}
+                style={{
+                  padding: "0.45rem 1.4rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s",
+                  background: billing === "yearly" ? "var(--navy)" : "transparent",
+                  color: billing === "yearly" ? "#fff" : "var(--text-secondary)",
+                }}
+              >Annual</button>
+            </div>
+            {billing === "yearly" ? (
+              <span style={{ fontSize: "0.85rem", color: "var(--forest-blue)", fontWeight: 600 }}>Save $20/yr with annual billing</span>
+            ) : (
+              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>14-day free trial included</span>
+            )}
+          </div>
         </section>
 
         <section className="pricing-cards">
@@ -254,10 +283,26 @@ export default function PricingPage() {
             <div className="pricing-card-header">
               <h3 className="pricing-card-name">Pro</h3>
               <div className="pricing-card-price">
-                <span className="pricing-card-amount">$4.99</span>
-                <span className="pricing-card-period">/mo</span>
+                {billing === "yearly" ? (
+                  <>
+                    <span className="pricing-card-amount">$3.33</span>
+                    <span className="pricing-card-period">/mo</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="pricing-card-amount">$4.99</span>
+                    <span className="pricing-card-period">/mo</span>
+                  </>
+                )}
               </div>
-              <p className="pricing-card-tagline">14-day free trial · then $4.99/mo or $39.99/yr</p>
+              {billing === "yearly" ? (
+                <p className="pricing-card-tagline">
+                  <span style={{ textDecoration: "line-through", color: "var(--text-muted)", marginRight: "0.35rem" }}>$59.88</span>
+                  <span style={{ color: "var(--forest-blue)", fontWeight: 600 }}>$39.99/yr — save $20</span>
+                </p>
+              ) : (
+                <p className="pricing-card-tagline">14-day free trial · then $4.99/mo</p>
+              )}
             </div>
             <ul className="pricing-card-features">
               <li className="pricing-feature">{check} Everything in Free</li>
@@ -268,28 +313,24 @@ export default function PricingPage() {
             </ul>
             <div className="pricing-cta-group">
               {isSignedIn ? (
-                <>
-                  <button
-                    className="pricing-card-cta pricing-cta-primary"
-                    onClick={() => handleSubscribe("yearly")}
-                    disabled={checkoutLoading !== null}
-                  >
-                    {checkoutLoading === "yearly" ? "Redirecting..." : "Get Pro — $39.99/yr"}
-                  </button>
-                  <button
-                    className="pricing-card-cta pricing-cta-outline"
-                    onClick={() => handleSubscribe("monthly")}
-                    disabled={checkoutLoading !== null}
-                    style={{ marginTop: "0.5rem" }}
-                  >
-                    {checkoutLoading === "monthly" ? "Redirecting..." : "Start Free Trial — $4.99/mo"}
-                  </button>
-                </>
+                <button
+                  className="pricing-card-cta pricing-cta-primary"
+                  onClick={handleSubscribe}
+                  disabled={checkoutLoading !== null}
+                  style={{ width: "100%" }}
+                >
+                  {checkoutLoading ? "Redirecting..." : billing === "yearly" ? "Get Pro — $39.99/yr" : "Start Free Trial"}
+                </button>
               ) : (
                 <SignUpButton mode="modal">
-                  <button className="pricing-card-cta pricing-cta-primary">Start Free Trial</button>
+                  <button className="pricing-card-cta pricing-cta-primary" style={{ width: "100%" }}>
+                    {billing === "yearly" ? "Get Pro — $39.99/yr" : "Start Free Trial"}
+                  </button>
                 </SignUpButton>
               )}
+              <p style={{ textAlign: "center", fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.6rem" }}>
+                {billing === "yearly" ? "Billed annually · cancel anytime" : "No charge for 14 days · cancel anytime"}
+              </p>
             </div>
           </div>
 

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1584" height="396" viewBox="0 0 1584 396">
+  <!-- Background -->
+  <rect width="1584" height="396" fill="#0f172a"/>
+
+  <!-- Subtle grid pattern -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1584" height="396" fill="url(#grid)"/>
+
+  <!-- Blue accent bar on left -->
+  <rect x="0" y="0" width="6" height="396" fill="#2563eb"/>
+
+  <!-- P mark -->
+  <text
+    x="120"
+    y="260"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="200"
+    font-weight="800"
+    fill="white"
+    text-anchor="middle"
+    letter-spacing="-6"
+  >P</text>
+
+  <!-- Divider line -->
+  <rect x="220" y="100" width="2" height="196" fill="#334155"/>
+
+  <!-- Main title -->
+  <text
+    x="270"
+    y="190"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="72"
+    font-weight="800"
+    fill="white"
+    letter-spacing="-2"
+  >Pete's Postings</text>
+
+  <!-- Tagline -->
+  <text
+    x="270"
+    y="255"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="32"
+    font-weight="400"
+    fill="#94a3b8"
+    letter-spacing="0"
+  >Banking analyst &amp; intern job alerts — before anyone else.</text>
+
+  <!-- URL -->
+  <text
+    x="270"
+    y="316"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="24"
+    font-weight="500"
+    fill="#2563eb"
+    letter-spacing="0"
+  >petespostings.com</text>
+</svg>

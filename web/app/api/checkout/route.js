@@ -38,6 +38,10 @@ export async function POST(req) {
         quantity: 1,
       },
     ],
+    // 14-day free trial on monthly plan only — card required upfront, auto-charges after trial
+    ...(plan === "monthly" && {
+      subscription_data: { trial_period_days: 14 },
+    }),
     metadata: {
       clerkUserId: userId,
     },

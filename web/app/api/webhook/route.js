@@ -38,6 +38,24 @@ export async function POST(req) {
     }
   }
 
+  // Trial ended and card was declined / subscription went past_due or unpaid
+  if (event.type === "customer.subscription.updated") {
+    const subscription = event.data.object;
+    const status = subscription.status;
+    if (status === "past_due" || status === "unpaid" || status === "canceled") {
+      const customerId = subscription.customer;
+      const users = await clerk.users.getUserList({ limit: 100 });
+      const user = users.data.find(
+        (u) => u.publicMetadata?.stripeCustomerId === customerId
+      );
+      if (user) {
+        await clerk.users.updateUserMetadata(user.id, {
+          publicMetadata: { subscribed: false },
+        });
+      }
+    }
+  }
+
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
     const customerId = subscription.customer;

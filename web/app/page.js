@@ -482,6 +482,12 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading }) {
               <div className="empty-state" style={{ padding: "2rem" }}>
                 <p className="empty-title">No new postings in the last 48 hours</p>
                 <p className="empty-desc">Banks post most heavily Monday–Wednesday. Check back soon.</p>
+                <button
+                  style={{ marginTop: "1.25rem", padding: "0.6rem 1.5rem", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
+                  onClick={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
+                >
+                  Set up alerts
+                </button>
               </div>
             ) : displayJobs.length === 0 ? (
               <div className="empty-state" style={{ padding: "2rem" }}>

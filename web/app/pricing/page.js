@@ -308,7 +308,7 @@ export default function PricingPage() {
               <li className="pricing-feature">{check} Everything in Free</li>
               <li className="pricing-feature">{check} Save &amp; bookmark jobs</li>
               <li className="pricing-feature pricing-feature-highlight">{check} <strong>Recent postings feed (last 48 hours)</strong></li>
-              <li className="pricing-feature">{check} Email notifications for new postings</li>
+              <li className="pricing-feature pricing-feature-highlight">{check} <strong>Email notifications for new postings</strong></li>
               <li className="pricing-feature pricing-feature-highlight">{check} <strong>SMS text alerts</strong></li>
             </ul>
             <div className="pricing-cta-group">

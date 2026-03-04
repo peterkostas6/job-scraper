@@ -1,14 +1,14 @@
-// GET /api/admin/users?secret=YOUR_CRON_SECRET
-// Returns all Clerk users with subscription status and notification preferences
-import { clerkClient } from "@clerk/nextjs/server";
+// GET /api/admin/users — Pete only, must be logged in via Clerk
+import { clerkClient, auth } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const secret = searchParams.get("secret");
+const ADMIN_USER_ID = "user_39bPOyYQAsr7t2Cki8GNEql1mY1";
 
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+export async function GET() {
+  const { userId } = await auth();
+
+  if (userId !== ADMIN_USER_ID) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

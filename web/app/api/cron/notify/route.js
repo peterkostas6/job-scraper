@@ -109,11 +109,6 @@ export async function GET(request) {
           const ts = new Date(job.postedDate).getTime();
           if (!isNaN(ts) && ts < sevenDaysAgo) continue;
         }
-        let jobDetectedAt = detectedAt;
-        if (job.postedDate) {
-          const postedTs = new Date(job.postedDate).getTime();
-          if (!isNaN(postedTs)) jobDetectedAt = Math.min(detectedAt, postedTs);
-        }
         jobInfoPairs[job.link] = JSON.stringify({
           title: job.title,
           location: job.location || "",
@@ -121,10 +116,10 @@ export async function GET(request) {
           bankKey: job.bankKey,
           category: job.category || "",
           postedDate: job.postedDate || null,
-          detectedAt: jobDetectedAt,
+          detectedAt: detectedAt,
         });
 
-        // Write to Postgres jobs table
+        // Write to Postgres jobs table — detected_at is always when WE first saw it
         await sql`
           INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at)
           VALUES (
@@ -135,7 +130,7 @@ export async function GET(request) {
             ${job.location || ''},
             ${job.category || ''},
             ${job.postedDate ? new Date(job.postedDate) : null},
-            ${new Date(jobDetectedAt)}
+            ${new Date(detectedAt)}
           )
           ON CONFLICT (link) DO NOTHING
         `;

@@ -55,17 +55,8 @@ export async function GET() {
     for (const row of rows) {
       const detectedAt = Number(row.detected_at_ms);
 
-      // filterTime = the earlier of detectedAt and posted_date.
-      // If the bank says a job was posted 3 days ago, don't show it in the 48h tab
-      // even if our cron only just detected it.
-      let filterTime = detectedAt;
-      if (row.posted_date) {
-        const postedTs = new Date(row.posted_date).getTime();
-        if (!isNaN(postedTs)) filterTime = Math.min(detectedAt, postedTs);
-      }
-
-      // Only include jobs whose effective age is within 48 hours
-      if (filterTime < fortyEightHoursAgo) continue;
+      // Show job if cron detected it within the last 48 hours
+      if (detectedAt < fortyEightHoursAgo) continue;
 
       // Only show banking entry-level roles — filter out ops, admin, etc.
       if (!isBankingEntryLevel(row.title)) continue;
@@ -82,13 +73,11 @@ export async function GET() {
         category: row.category,
         postedDate: row.posted_date ? new Date(row.posted_date).toISOString() : null,
         detectedAt,
-        filterTime,
-        hasActualDate: !!row.posted_date,
       });
     }
 
     // Sort newest first
-    jobs.sort((a, b) => b.filterTime - a.filterTime);
+    jobs.sort((a, b) => b.detectedAt - a.detectedAt);
 
     return Response.json({
       last48h: isSubscribed ? jobs : [],

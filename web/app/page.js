@@ -1445,7 +1445,14 @@ export default function Home() {
 
                 {isGatedBank && <PaywallOverlay isSignedIn={isSignedIn} />}
                 {error && <div className="error-banner">Something went wrong: {error}</div>}
-                {!isGatedBank && loading && <SkeletonRows />}
+                {!isGatedBank && loading && (
+                  <>
+                    <div style={{ padding: "12px 16px 4px", fontSize: "13px", color: "#94a3b8" }}>
+                      Calling {BANKS[activeBank].name} API to pull accurate jobs...
+                    </div>
+                    <SkeletonRows />
+                  </>
+                )}
 
                 {!isGatedBank && !loading && !error && displayJobs.length === 0 && (
                   <div className="empty-state">

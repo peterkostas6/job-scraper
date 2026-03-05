@@ -97,18 +97,21 @@ export async function GET(request) {
     const seenLinks = await redis.smembers("seen-job-links");
     const seenSet = new Set(seenLinks);
 
-    const newJobs = allJobs.filter((j) => !seenSet.has(j.link));
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const newJobs = allJobs.filter((j) => {
+      if (seenSet.has(j.link)) return false;
+      if (j.postedDate) {
+        const ts = new Date(j.postedDate).getTime();
+        if (!isNaN(ts) && ts < sevenDaysAgo) return false;
+      }
+      return true;
+    });
 
     // Store new job data in Redis for the "New Postings" feature
     if (newJobs.length > 0) {
       const detectedAt = Date.now();
-      const sevenDaysAgo = detectedAt - 7 * 24 * 60 * 60 * 1000;
       const jobInfoPairs = {};
       for (const job of newJobs) {
-        if (job.postedDate) {
-          const ts = new Date(job.postedDate).getTime();
-          if (!isNaN(ts) && ts < sevenDaysAgo) continue;
-        }
         jobInfoPairs[job.link] = JSON.stringify({
           title: job.title,
           location: job.location || "",

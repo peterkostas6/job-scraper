@@ -94,7 +94,7 @@ export async function GET() {
       if (seen.has(id)) continue;
       seen.add(id);
       const city = d.PositionLocation?.[0]?.CityName || "";
-      jobs.push({ title: d.PositionTitle, link, location: city, category: categorizeJob(d.PositionTitle) });
+      jobs.push({ title: d.PositionTitle, link, location: city, category: categorizeJob(d.PositionTitle), postedDate: d.PublicationStartDate || null });
     }
 
     // Graduate/intern programmes — use full external URL from API
@@ -107,7 +107,7 @@ export async function GET() {
         ? d.PositionURI
         : PROF_BASE + id;
       const city = d.PositionLocation?.[0]?.CityName || "";
-      jobs.push({ title: d.PositionTitle, link, location: city, category: categorizeJob(d.PositionTitle) });
+      jobs.push({ title: d.PositionTitle, link, location: city, category: categorizeJob(d.PositionTitle), postedDate: d.PublicationStartDate || null });
     }
 
     return Response.json({ jobs, count: jobs.length });

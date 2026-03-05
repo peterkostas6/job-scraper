@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="60%" stop-color="#0d1f3c"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="40%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#0a1628" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+  <rect width="1080" height="1080" fill="url(#glow)"/>
+
+  <!-- Left accent bar -->
+  <rect x="0" y="0" width="6" height="1080" fill="url(#accent)"/>
+
+  <!-- NOW LIVE badge -->
+  <rect x="72" y="80" width="130" height="36" rx="18" fill="#1e3a5f"/>
+  <text x="137" y="103" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle" letter-spacing="2">NOW LIVE</text>
+
+  <!-- Main title -->
+  <text x="72" y="208" font-family="Inter, sans-serif" font-size="80" font-weight="800" fill="#ffffff" letter-spacing="-3">We&#39;re Live!</text>
+  <text x="72" y="288" font-family="Inter, sans-serif" font-size="48" font-weight="700" fill="#3b82f6" letter-spacing="-1">(V1.0)</text>
+
+  <!-- Subtitle -->
+  <text x="72" y="338" font-family="Inter, sans-serif" font-size="24" font-weight="400" fill="#94a3b8">The fastest way to find analyst &amp; intern openings.</text>
+
+  <!-- Divider -->
+  <rect x="72" y="366" width="420" height="2" fill="#2563eb" opacity="0.7"/>
+
+  <!-- Feature 1 -->
+  <rect x="72" y="350" width="24" height="24" rx="12" fill="#1e3a5f"/>
+  <text x="84" y="367" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">✓</text>
+  <text x="110" y="368" font-family="Inter, sans-serif" font-size="22" font-weight="600" fill="#f1f5f9">Aggregates openings from 17 banks</text>
+
+  <!-- Feature 2 -->
+  <rect x="72" y="402" width="24" height="24" rx="12" fill="#1e3a5f"/>
+  <text x="84" y="419" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">✓</text>
+  <text x="110" y="420" font-family="Inter, sans-serif" font-size="22" font-weight="600" fill="#f1f5f9">Instant email alerts for new postings</text>
+
+  <!-- Feature 3 -->
+  <rect x="72" y="454" width="24" height="24" rx="12" fill="#1e3a5f"/>
+  <text x="84" y="471" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">✓</text>
+  <text x="110" y="472" font-family="Inter, sans-serif" font-size="22" font-weight="600" fill="#f1f5f9">SMS text alerts the minute roles go live</text>
+
+  <!-- Feature 4 -->
+  <rect x="72" y="506" width="24" height="24" rx="12" fill="#1e3a5f"/>
+  <text x="84" y="523" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">✓</text>
+  <text x="110" y="524" font-family="Inter, sans-serif" font-size="22" font-weight="600" fill="#f1f5f9">48-hour recent postings feed</text>
+
+  <!-- Feature 5 -->
+  <rect x="72" y="558" width="24" height="24" rx="12" fill="#1e3a5f"/>
+  <text x="84" y="575" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">✓</text>
+  <text x="110" y="576" font-family="Inter, sans-serif" font-size="22" font-weight="600" fill="#f1f5f9">Filter by bank, type, location &amp; category</text>
+
+  <!-- Feature 6 -->
+  <rect x="72" y="610" width="24" height="24" rx="12" fill="#1e3a5f"/>
+  <text x="84" y="627" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">✓</text>
+  <text x="110" y="628" font-family="Inter, sans-serif" font-size="22" font-weight="600" fill="#f1f5f9">Free to browse — no account required</text>
+
+  <!-- Divider bottom -->
+  <rect x="72" y="690" width="936" height="1" fill="#1e293b"/>
+
+  <!-- Banks label -->
+  <text x="72" y="730" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#475569" letter-spacing="2">BANKS COVERED</text>
+
+  <!-- Bank name pills - row 1 -->
+  <rect x="72" y="748" width="116" height="28" rx="14" fill="#0f2547"/>
+  <text x="130" y="767" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">JPMorgan</text>
+
+  <rect x="200" y="748" width="130" height="28" rx="14" fill="#0f2547"/>
+  <text x="265" y="767" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Goldman Sachs</text>
+
+  <rect x="342" y="748" width="138" height="28" rx="14" fill="#0f2547"/>
+  <text x="411" y="767" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Morgan Stanley</text>
+
+  <rect x="492" y="748" width="130" height="28" rx="14" fill="#0f2547"/>
+  <text x="557" y="767" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bank of America</text>
+
+  <rect x="634" y="748" width="60" height="28" rx="14" fill="#0f2547"/>
+  <text x="664" y="767" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Citi</text>
+
+  <rect x="706" y="748" width="126" height="28" rx="14" fill="#0f2547"/>
+  <text x="769" y="767" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Deutsche Bank</text>
+
+  <rect x="844" y="748" width="86" height="28" rx="14" fill="#0f2547"/>
+  <text x="887" y="767" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Barclays</text>
+
+  <!-- Bank name pills - row 2 -->
+  <rect x="72" y="788" width="106" height="28" rx="14" fill="#0f2547"/>
+  <text x="125" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Wells Fargo</text>
+
+  <rect x="190" y="788" width="62" height="28" rx="14" fill="#0f2547"/>
+  <text x="221" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">MUFG</text>
+
+  <rect x="264" y="788" width="108" height="28" rx="14" fill="#0f2547"/>
+  <text x="318" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Houlihan Lokey</text>
+
+  <rect x="384" y="788" width="80" height="28" rx="14" fill="#0f2547"/>
+  <text x="424" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Mizuho</text>
+
+  <rect x="476" y="788" width="54" height="28" rx="14" fill="#0f2547"/>
+  <text x="503" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">BMO</text>
+
+  <rect x="542" y="788" width="106" height="28" rx="14" fill="#0f2547"/>
+  <text x="595" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Guggenheim</text>
+
+  <rect x="660" y="788" width="98" height="28" rx="14" fill="#0f2547"/>
+  <text x="709" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Macquarie</text>
+
+  <rect x="770" y="788" width="104" height="28" rx="14" fill="#0f2547"/>
+  <text x="822" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Piper Sandler</text>
+
+  <rect x="886" y="788" width="60" height="28" rx="14" fill="#0f2547"/>
+  <text x="916" y="807" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Stifel</text>
+
+  <!-- Bottom URL + CTA -->
+  <rect x="72" y="886" width="280" height="52" rx="26" fill="#2563eb"/>
+  <text x="212" y="918" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#ffffff" text-anchor="middle">petespostings.com</text>
+
+  <text x="72" y="992" font-family="Inter, sans-serif" font-size="14" font-weight="400" fill="#475569">Free to browse · Pro plan from $4.99/mo · 14-day free trial</text>
+</svg>

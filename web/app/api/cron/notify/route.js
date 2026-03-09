@@ -1,12 +1,15 @@
-// GET /api/cron/notify — checks for new jobs and queues notifications in Postgres
-// Secured with CRON_SECRET header. Triggered every hour.
-import { Redis } from "@upstash/redis";
+// GET /api/cron/notify — polls all bank APIs every 30 mins, detects new jobs, queues notifications
+// Uses Postgres jobs table as the dedup source of truth (no Redis dependency).
+// Sends an owner summary email to pete@petespostings.com after every run.
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
+import { Resend } from "resend";
 import { isGraduateProgram, isInternship, isBankingEntryLevel } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // 5 min max for Vercel
+export const maxDuration = 300;
+
+const OWNER_EMAIL = "pete@petespostings.com";
 
 const BANK_ENDPOINTS = {
   jpmc: "/api/jobs",
@@ -48,198 +51,290 @@ const BANK_NAMES = {
   stifel: "Stifel",
 };
 
+function formatTimestamp(d) {
+  return d.toUTCString();
+}
+
+function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, bankStats, queued, notifiedUsers }) {
+  // New jobs table
+  let newJobsSection = "";
+  if (newJobs.length === 0) {
+    newJobsSection = `
+      <tr>
+        <td colspan="4" style="padding:20px;text-align:center;color:#94a3b8;font-size:14px;background:#f8fafc;border-radius:6px;">
+          No new jobs found this run
+        </td>
+      </tr>`;
+  } else {
+    newJobsSection = newJobs.map((job) => {
+      const type = isInternship(job.title) ? "Internship" : "Analyst";
+      const typeColor = type === "Internship" ? "#d97706" : "#2563eb";
+      return `
+        <tr>
+          <td style="padding:8px 12px 8px 0;font-size:13px;border-bottom:1px solid #f1f5f9;">
+            <a href="${job.link}" style="color:#1e293b;text-decoration:none;font-weight:500;">${job.title}</a>
+          </td>
+          <td style="padding:8px 12px;font-size:12px;color:#475569;border-bottom:1px solid #f1f5f9;white-space:nowrap;">${job.bank}</td>
+          <td style="padding:8px 12px;font-size:12px;color:#64748b;border-bottom:1px solid #f1f5f9;">${job.location || "—"}</td>
+          <td style="padding:8px 0;font-size:11px;font-weight:700;color:${typeColor};border-bottom:1px solid #f1f5f9;white-space:nowrap;">${type.toUpperCase()}</td>
+        </tr>`;
+    }).join("");
+  }
+
+  // Bank breakdown table
+  const bankRows = Object.entries(bankStats).map(([bankKey, stats]) => {
+    const name = BANK_NAMES[bankKey] || bankKey;
+    const statusHtml = stats.error
+      ? `<span style="color:#ef4444;">&#10007; Error: ${stats.error}</span>`
+      : `<span style="color:#16a34a;">&#10003; ${stats.total} fetched &nbsp;&#183;&nbsp; ${stats.kept} entry-level</span>`;
+    return `
+      <tr>
+        <td style="padding:7px 12px 7px 0;font-size:13px;border-bottom:1px solid #f1f5f9;color:#334155;">${name}</td>
+        <td style="padding:7px 0;font-size:12px;border-bottom:1px solid #f1f5f9;">${statusHtml}</td>
+      </tr>`;
+  }).join("");
+
+  const errorCount = Object.values(bankStats).filter((s) => s.error).length;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:680px;margin:0 auto;padding:32px 24px;">
+
+    <table style="width:100%;margin-bottom:24px;"><tr>
+      <td><span style="font-size:17px;font-weight:800;color:#1e293b;">Pete's Postings</span></td>
+      <td style="text-align:right;font-size:12px;color:#94a3b8;">Cron Summary</td>
+    </tr></table>
+
+    <p style="margin:0 0 24px;font-size:13px;color:#64748b;">
+      Run at: <strong style="color:#334155;">${formatTimestamp(runAt)}</strong>
+    </p>
+
+    <!-- Stats row -->
+    <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;text-align:center;border-right:1px solid #e2e8f0;">
+          <div style="font-size:32px;font-weight:800;color:#1e293b;">${allJobs.length}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:4px;">Total jobs live</div>
+        </td>
+        <td style="padding:20px 24px;text-align:center;border-right:1px solid #e2e8f0;">
+          <div style="font-size:32px;font-weight:800;color:${newJobs.length > 0 ? "#16a34a" : "#94a3b8"};">${newJobs.length}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:4px;">New this run</div>
+        </td>
+        <td style="padding:20px 24px;text-align:center;border-right:1px solid #e2e8f0;">
+          <div style="font-size:32px;font-weight:800;color:#1e293b;">${queued}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:4px;">Notifications queued</div>
+        </td>
+        <td style="padding:20px 24px;text-align:center;">
+          <div style="font-size:32px;font-weight:800;color:${errorCount > 0 ? "#ef4444" : "#94a3b8"};">${errorCount}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:4px;">Bank errors</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- New jobs -->
+    <h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">
+      New Jobs Detected (${newJobs.length})
+    </h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+      <tr>
+        <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 12px 8px 0;font-weight:600;">TITLE</th>
+        <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 12px 8px;font-weight:600;">BANK</th>
+        <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 12px 8px;font-weight:600;">LOCATION</th>
+        <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 0 8px;font-weight:600;">TYPE</th>
+      </tr>
+      ${newJobsSection}
+    </table>
+
+    <!-- Bank breakdown -->
+    <h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">
+      Bank Breakdown
+    </h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
+      <tr>
+        <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 0 8px;font-weight:600;">BANK</th>
+        <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 0 8px;font-weight:600;">STATUS</th>
+      </tr>
+      ${bankRows}
+    </table>
+
+    <p style="font-size:11px;color:#cbd5e1;margin:0;">
+      Pete's Postings owner alert — sent automatically every 30 minutes
+    </p>
+  </div>
+</body>
+</html>`;
+}
+
 export async function GET(request) {
-  // Verify cron secret
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
-
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
+  const runAt = new Date();
 
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com";
 
     // 1. Fetch jobs from all banks in parallel
     const bankEntries = Object.entries(BANK_ENDPOINTS);
-    const results = await Promise.allSettled(
+    const rawResults = await Promise.allSettled(
       bankEntries.map(async ([bankKey, endpoint]) => {
         const res = await fetch(`${baseUrl}${endpoint}`, {
           headers: { "User-Agent": "PetesPostings-Cron/1.0" },
         });
-        if (!res.ok) throw new Error(`${bankKey}: ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         return { bankKey, jobs: data.jobs || [] };
       })
     );
 
-    // Collect all current jobs
+    // Collect all current entry-level jobs + per-bank stats
     const allJobs = [];
-    for (const result of results) {
+    const bankStats = {};
+    for (let i = 0; i < rawResults.length; i++) {
+      const bankKey = bankEntries[i][0];
+      const result = rawResults[i];
       if (result.status === "fulfilled") {
-        const { bankKey, jobs } = result.value;
+        const { jobs } = result.value;
+        let kept = 0;
         for (const job of jobs) {
           if (isGraduateProgram(job.title)) continue;
-          // Only store banking entry-level roles — skip operations, admin, etc.
           if (!isBankingEntryLevel(job.title)) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
+          kept++;
         }
+        bankStats[bankKey] = { total: jobs.length, kept, error: null };
+      } else {
+        bankStats[bankKey] = { total: 0, kept: 0, error: result.reason.message };
       }
     }
 
-    // 2. Compare against Redis to find new jobs
-    const currentLinks = allJobs.map((j) => j.link);
-    const seenLinks = await redis.smembers("seen-job-links");
-    const seenSet = new Set(seenLinks);
-
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const newJobs = allJobs.filter((j) => {
-      if (seenSet.has(j.link)) return false;
-      if (j.postedDate) {
-        const ts = new Date(j.postedDate).getTime();
-        if (!isNaN(ts) && ts < sevenDaysAgo) return false;
+    // 2. Find new jobs by checking Postgres — any link not in the jobs table is new
+    const newJobs = [];
+    if (allJobs.length > 0) {
+      const currentLinks = allJobs.map((j) => j.link);
+      const { rows: existingRows } = await sql`
+        SELECT link FROM jobs WHERE link = ANY(${currentLinks})
+      `;
+      const existingLinks = new Set(existingRows.map((r) => r.link));
+      for (const job of allJobs) {
+        if (!existingLinks.has(job.link)) newJobs.push(job);
       }
-      return true;
-    });
+    }
 
-    // Store new job data in Redis for the "New Postings" feature
+    // 3. Insert new jobs into Postgres with detected_at = now
+    const detectedAt = new Date();
+    for (const job of newJobs) {
+      await sql`
+        INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at)
+        VALUES (
+          ${job.link},
+          ${job.title},
+          ${job.bank},
+          ${job.bankKey || ""},
+          ${job.location || ""},
+          ${job.category || ""},
+          ${job.postedDate ? new Date(job.postedDate) : null},
+          ${detectedAt}
+        )
+        ON CONFLICT (link) DO NOTHING
+      `;
+    }
+
+    // 4. Queue notifications for subscribed users (only when new jobs exist)
+    let queued = 0;
+    let notifiedUsers = 0;
+
     if (newJobs.length > 0) {
-      const detectedAt = Date.now();
-      const jobInfoPairs = {};
-      for (const job of newJobs) {
-        jobInfoPairs[job.link] = JSON.stringify({
-          title: job.title,
-          location: job.location || "",
-          bank: job.bank,
-          bankKey: job.bankKey,
-          category: job.category || "",
-          postedDate: job.postedDate || null,
-          detectedAt: detectedAt,
+      const client = await clerkClient();
+      let allUsers = [];
+      let offset = 0;
+      while (true) {
+        const userList = await client.users.getUserList({ limit: 100, offset });
+        allUsers.push(...userList.data);
+        if (userList.data.length < 100) break;
+        offset += 100;
+      }
+
+      const notifyUsers = allUsers.filter(
+        (u) =>
+          u.publicMetadata?.subscribed === true &&
+          u.unsafeMetadata?.notifications?.enabled === true
+      );
+
+      for (const user of notifyUsers) {
+        const prefs = user.unsafeMetadata.notifications;
+        const prefBanks = prefs.banks || [];
+        const prefCategories = prefs.categories || [];
+        const prefJobType = prefs.jobType || "all";
+        const prefLocation = (prefs.location || "").trim().toLowerCase();
+
+        const matchingJobs = newJobs.filter((job) => {
+          if (prefBanks.length > 0 && !prefBanks.includes(job.bankKey)) return false;
+          if (prefCategories.length > 0 && !prefCategories.includes(job.category)) return false;
+          if (prefJobType === "internship" && !isInternship(job.title)) return false;
+          if (prefJobType === "fulltime" && isInternship(job.title)) return false;
+          if (prefLocation && !(job.location || "").toLowerCase().includes(prefLocation)) return false;
+          return true;
         });
 
-        // Write to Postgres jobs table — detected_at is always when WE first saw it
-        await sql`
-          INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at)
-          VALUES (
-            ${job.link},
-            ${job.title},
-            ${job.bank},
-            ${job.bankKey || ''},
-            ${job.location || ''},
-            ${job.category || ''},
-            ${job.postedDate ? new Date(job.postedDate) : null},
-            ${new Date(detectedAt)}
-          )
-          ON CONFLICT (link) DO NOTHING
-        `;
-      }
-      const pairs = Object.entries(jobInfoPairs);
-      for (let i = 0; i < pairs.length; i += 100) {
-        const batch = Object.fromEntries(pairs.slice(i, i + 100));
-        await redis.hset("job-first-seen", batch);
-      }
-      // Clean up entries older than 30 days
-      const thirtyDaysAgo = detectedAt - 30 * 24 * 60 * 60 * 1000;
-      const allEntries = await redis.hgetall("job-first-seen");
-      if (allEntries) {
-        const toDelete = Object.entries(allEntries)
-          .filter(([, val]) => {
-            try {
-              const d = JSON.parse(val);
-              return (d.postedDate ? new Date(d.postedDate).getTime() : d.detectedAt) < thirtyDaysAgo;
-            } catch { return false; }
-          })
-          .map(([key]) => key);
-        if (toDelete.length > 0) {
-          await redis.hdel("job-first-seen", ...toDelete);
+        if (matchingJobs.length === 0) continue;
+
+        for (const job of matchingJobs) {
+          await sql`
+            INSERT INTO notification_queue (user_id, job_link, job_title, job_bank, job_location, job_category)
+            VALUES (${user.id}, ${job.link}, ${job.title}, ${job.bank}, ${job.location || ""}, ${job.category || ""})
+          `;
+          queued++;
         }
+        notifiedUsers++;
       }
     }
 
-    // If no new jobs, update seen set and exit
-    if (newJobs.length === 0) {
-      if (currentLinks.length > 0) {
-        await redis.del("seen-job-links");
-        for (let i = 0; i < currentLinks.length; i += 100) {
-          const batch = currentLinks.slice(i, i + 100);
-          await redis.sadd("seen-job-links", ...batch);
-        }
-      }
-      return Response.json({ message: "No new jobs", totalJobs: allJobs.length });
-    }
-
-    // 3. Fetch all subscribed users with notifications enabled
-    const client = await clerkClient();
-    let allUsers = [];
-    let offset = 0;
-    const limit = 100;
-
-    while (true) {
-      const userList = await client.users.getUserList({ limit, offset });
-      allUsers.push(...userList.data);
-      if (userList.data.length < limit) break;
-      offset += limit;
-    }
-
-    const notifyUsers = allUsers.filter((u) => {
-      const sub = u.publicMetadata?.subscribed === true;
-      const notif = u.unsafeMetadata?.notifications;
-      return sub && notif?.enabled === true;
-    });
-
-    // 4. For each user, filter new jobs by their preferences and INSERT into notification_queue
-    let queued = 0;
-
-    for (const user of notifyUsers) {
-      const prefs = user.unsafeMetadata.notifications;
-      const prefBanks = prefs.banks || [];
-      const prefCategories = prefs.categories || [];
-      const prefJobType = prefs.jobType || "all";
-
-      const prefLocation = (prefs.location || "").trim().toLowerCase();
-      const matchingJobs = newJobs.filter((job) => {
-        if (prefBanks.length > 0 && !prefBanks.includes(job.bankKey)) return false;
-        if (prefCategories.length > 0 && !prefCategories.includes(job.category)) return false;
-        if (prefJobType === "internship" && !isInternship(job.title)) return false;
-        if (prefJobType === "fulltime" && isInternship(job.title)) return false;
-        if (prefLocation && !(job.location || "").toLowerCase().includes(prefLocation)) return false;
-        return true;
+    // 5. Send owner summary email (always — so you can verify the cron is running)
+    try {
+      await resend.emails.send({
+        from: "Pete's Postings <notifications@petespostings.com>",
+        to: OWNER_EMAIL,
+        subject:
+          newJobs.length > 0
+            ? `[Cron] ${newJobs.length} new ${newJobs.length === 1 ? "job" : "jobs"} — ${formatTimestamp(runAt)}`
+            : `[Cron] No new jobs — ${formatTimestamp(runAt)}`,
+        html: buildOwnerSummaryHtml({ runAt, allJobs, newJobs, bankStats, queued, notifiedUsers }),
       });
-
-      if (matchingJobs.length === 0) continue;
-
-      // Batch insert all matching jobs for this user
-      for (const job of matchingJobs) {
-        await sql`
-          INSERT INTO notification_queue (user_id, job_link, job_title, job_bank, job_location, job_category)
-          VALUES (${user.id}, ${job.link}, ${job.title}, ${job.bank}, ${job.location || ''}, ${job.category || ''})
-        `;
-        queued++;
-      }
-    }
-
-    // 5. Update Redis seen set with current links
-    if (currentLinks.length > 0) {
-      await redis.del("seen-job-links");
-      for (let i = 0; i < currentLinks.length; i += 100) {
-        const batch = currentLinks.slice(i, i + 100);
-        await redis.sadd("seen-job-links", ...batch);
-      }
+    } catch (emailErr) {
+      // Non-fatal — log but don't fail the cron
+      console.error("Owner summary email failed:", emailErr.message);
     }
 
     return Response.json({
-      message: "Jobs queued for notification",
-      newJobs: newJobs.length,
+      message: "Done",
       totalJobs: allJobs.length,
+      newJobs: newJobs.length,
       queued,
     });
   } catch (err) {
     console.error("Cron notify error:", err);
+    // Try to notify Pete of the failure
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: "Pete's Postings <notifications@petespostings.com>",
+        to: OWNER_EMAIL,
+        subject: `[Cron ERROR] ${formatTimestamp(runAt)}`,
+        html: `<div style="font-family:sans-serif;padding:32px;max-width:600px;">
+          <h2 style="color:#ef4444;margin:0 0 16px;">Cron Job Failed</h2>
+          <p style="color:#334155;"><strong>Run time:</strong> ${formatTimestamp(runAt)}</p>
+          <p style="color:#334155;"><strong>Error:</strong> ${err.message}</p>
+          <pre style="background:#f1f5f9;padding:16px;border-radius:8px;font-size:12px;color:#475569;overflow:auto;">${err.stack || ""}</pre>
+        </div>`,
+      });
+    } catch {}
     return Response.json({ error: "Cron failed", details: err.message }, { status: 500 });
   }
 }

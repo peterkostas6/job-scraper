@@ -28,7 +28,8 @@ export async function GET() {
       isSubscribed = user.publicMetadata?.subscribed === true;
     }
 
-    // Fetch a wider window so we can apply the filterTime check in JS
+    // Only fetch jobs that are currently live on the bank's website (is_live = true)
+    // The cron updates this flag every 30 mins — expired/removed jobs are filtered out automatically
     const { rows } = await sql`
       SELECT
         link,
@@ -41,6 +42,7 @@ export async function GET() {
         EXTRACT(EPOCH FROM detected_at)::bigint * 1000 AS detected_at_ms
       FROM jobs
       WHERE detected_at > NOW() - INTERVAL '7 days'
+        AND is_live = true
       ORDER BY detected_at DESC
     `;
 

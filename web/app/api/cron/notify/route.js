@@ -231,7 +231,7 @@ export async function GET(request) {
     const detectedAt = new Date();
     for (const job of newJobs) {
       await sql`
-        INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at)
+        INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at, is_live)
         VALUES (
           ${job.link},
           ${job.title},
@@ -240,10 +240,19 @@ export async function GET(request) {
           ${job.location || ""},
           ${job.category || ""},
           ${job.postedDate ? new Date(job.postedDate) : null},
-          ${detectedAt}
+          ${detectedAt},
+          true
         )
         ON CONFLICT (link) DO NOTHING
       `;
+    }
+
+    // Update is_live for all tracked jobs — marks expired/removed jobs as not live
+    // so they disappear from the Recent tab automatically.
+    const allCurrentLinks = allJobs.map((j) => j.link);
+    await sql`UPDATE jobs SET is_live = false WHERE is_live = true`;
+    if (allCurrentLinks.length > 0) {
+      await sql`UPDATE jobs SET is_live = true WHERE link = ANY(${allCurrentLinks})`;
     }
 
     // 4. Queue notifications for subscribed users (only when new jobs exist)

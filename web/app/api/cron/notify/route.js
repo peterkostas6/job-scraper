@@ -55,7 +55,7 @@ function formatTimestamp(d) {
   return d.toUTCString();
 }
 
-function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, bankStats, queued, notifiedUsers }) {
+function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, bankStats, queued, notifiedUsers }) {
   // New jobs table
   let newJobsSection = "";
   if (newJobs.length === 0) {
@@ -126,9 +126,13 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, bankStats, queued, not
           <div style="font-size:32px;font-weight:800;color:#1e293b;">${queued}</div>
           <div style="font-size:12px;color:#64748b;margin-top:4px;">Notifications queued</div>
         </td>
-        <td style="padding:20px 24px;text-align:center;">
+        <td style="padding:20px 24px;text-align:center;border-right:1px solid #e2e8f0;">
           <div style="font-size:32px;font-weight:800;color:${errorCount > 0 ? "#ef4444" : "#94a3b8"};">${errorCount}</div>
           <div style="font-size:12px;color:#64748b;margin-top:4px;">Bank errors</div>
+        </td>
+        <td style="padding:20px 24px;text-align:center;">
+          <div style="font-size:32px;font-weight:800;color:${skippedBrokenLinks > 0 ? "#f59e0b" : "#94a3b8"};">${skippedBrokenLinks}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:4px;">Broken links skipped</div>
         </td>
       </tr>
     </table>
@@ -227,9 +231,40 @@ export async function GET(request) {
       }
     }
 
-    // 3. Insert new jobs into Postgres with detected_at = now
+    // 2b. Verify new job links — skip any that return 404 (broken/taken down on bank site)
+    // Runs in parallel with an 8-second timeout per link.
+    // Only drops jobs with a definitive 404/410 — everything else gets benefit of the doubt.
+    const verifiedNewJobs = [];
+    let skippedBrokenLinks = 0;
+    if (newJobs.length > 0) {
+      await Promise.all(
+        newJobs.map(async (job) => {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(job.link, {
+              method: "GET",
+              signal: controller.signal,
+              headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
+              redirect: "follow",
+            });
+            clearTimeout(timeoutId);
+            if (res.status === 404 || res.status === 410) {
+              skippedBrokenLinks++;
+            } else {
+              verifiedNewJobs.push(job);
+            }
+          } catch {
+            // Timeout or network error — include the job (benefit of the doubt)
+            verifiedNewJobs.push(job);
+          }
+        })
+      );
+    }
+
+    // 3. Insert verified new jobs into Postgres with detected_at = now
     const detectedAt = new Date();
-    for (const job of newJobs) {
+    for (const job of verifiedNewJobs) {
       await sql`
         INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at, is_live)
         VALUES (
@@ -259,7 +294,7 @@ export async function GET(request) {
     let queued = 0;
     let notifiedUsers = 0;
 
-    if (newJobs.length > 0) {
+    if (verifiedNewJobs.length > 0) {
       const client = await clerkClient();
       let allUsers = [];
       let offset = 0;
@@ -283,7 +318,7 @@ export async function GET(request) {
         const prefJobType = prefs.jobType || "all";
         const prefLocation = (prefs.location || "").trim().toLowerCase();
 
-        const matchingJobs = newJobs.filter((job) => {
+        const matchingJobs = verifiedNewJobs.filter((job) => {
           if (prefBanks.length > 0 && !prefBanks.includes(job.bankKey)) return false;
           if (prefCategories.length > 0 && !prefCategories.includes(job.category)) return false;
           if (prefJobType === "internship" && !isInternship(job.title)) return false;
@@ -314,7 +349,7 @@ export async function GET(request) {
           newJobs.length > 0
             ? `[Cron] ${newJobs.length} new ${newJobs.length === 1 ? "job" : "jobs"} — ${formatTimestamp(runAt)}`
             : `[Cron] No new jobs — ${formatTimestamp(runAt)}`,
-        html: buildOwnerSummaryHtml({ runAt, allJobs, newJobs, bankStats, queued, notifiedUsers }),
+        html: buildOwnerSummaryHtml({ runAt, allJobs, newJobs: verifiedNewJobs, skippedBrokenLinks, bankStats, queued, notifiedUsers }),
       });
     } catch (emailErr) {
       // Non-fatal — log but don't fail the cron
@@ -324,7 +359,8 @@ export async function GET(request) {
     return Response.json({
       message: "Done",
       totalJobs: allJobs.length,
-      newJobs: newJobs.length,
+      newJobs: verifiedNewJobs.length,
+      skippedBrokenLinks,
       queued,
     });
   } catch (err) {

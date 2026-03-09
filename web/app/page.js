@@ -51,6 +51,19 @@ function isGraduateProgram(title) {
   return /\bgraduate\b/.test(t) || /\bgrad\s+program/.test(t) || /\bgrad\s+programme/.test(t);
 }
 
+function isFinanceRole(title) {
+  const t = title.toLowerCase();
+  if (t.includes("software engineer") || t.includes("software developer")) return false;
+  if (t.includes("application developer") || t.includes("web developer") || t.includes("full stack") || t.includes("fullstack")) return false;
+  if (/\btechnology analyst\b/.test(t) || /\btech analyst\b/.test(t)) return false;
+  if (t.includes("cybersecurity") || t.includes("cyber security") || t.includes("information security") || t.includes("infosec")) return false;
+  if (t.includes("cloud engineer") || t.includes("cloud architect") || t.includes("devops") || t.includes("site reliability")) return false;
+  if (t.includes("infrastructure engineer") || t.includes("network engineer") || t.includes("network administrator")) return false;
+  if (t.includes("data engineer") || t.includes("machine learning engineer") || t.includes("ai engineer")) return false;
+  if (/\bit\s+(analyst|support|intern|associate)\b/.test(t) || t.includes("it helpdesk") || t.includes("help desk")) return false;
+  return true;
+}
+
 function formatRelativeDate(effectiveTime, hasActualDate) {
   const now = Date.now();
   const diffMs = now - effectiveTime;
@@ -616,7 +629,7 @@ export default function Home() {
         .then((res) => res.ok ? res.json() : null)
         .then((data) => {
           if (data?.jobs) {
-            const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title));
+            const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title) && isFinanceRole(j.title));
             setBankCounts((prev) => ({ ...prev, [key]: filtered.length }));
           }
         })
@@ -668,7 +681,7 @@ export default function Home() {
         return res.json();
       })
       .then((data) => {
-        const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title));
+        const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title) && isFinanceRole(j.title));
         setJobs(filtered);
         setBankCounts((prev) => ({ ...prev, [activeBank]: filtered.length }));
 

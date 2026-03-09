@@ -4,7 +4,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
-import { isGraduateProgram, isInternship, isBankingEntryLevel } from "@/lib/notif-helpers";
+import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -213,6 +213,7 @@ export async function GET(request) {
         for (const job of jobs) {
           if (isGraduateProgram(job.title)) continue;
           if (!isBankingEntryLevel(job.title)) continue;
+          if (!isFinanceRole(job.title)) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
           kept++;
         }

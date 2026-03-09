@@ -1,5 +1,20 @@
 // Shared helpers used by both cron routes
 
+// Returns false for clearly non-finance roles (software engineering, IT, cybersecurity, etc.)
+// All jobs on the site should be finance/banking oriented.
+export function isFinanceRole(title) {
+  const t = title.toLowerCase();
+  if (t.includes("software engineer") || t.includes("software developer")) return false;
+  if (t.includes("application developer") || t.includes("web developer") || t.includes("full stack") || t.includes("fullstack")) return false;
+  if (/\btechnology analyst\b/.test(t) || /\btech analyst\b/.test(t)) return false;
+  if (t.includes("cybersecurity") || t.includes("cyber security") || t.includes("information security") || t.includes("infosec")) return false;
+  if (t.includes("cloud engineer") || t.includes("cloud architect") || t.includes("devops") || t.includes("site reliability")) return false;
+  if (t.includes("infrastructure engineer") || t.includes("network engineer") || t.includes("network administrator")) return false;
+  if (t.includes("data engineer") || t.includes("machine learning engineer") || t.includes("ai engineer")) return false;
+  if (/\bit\s+(analyst|support|intern|associate)\b/.test(t) || t.includes("it helpdesk") || t.includes("help desk")) return false;
+  return true;
+}
+
 export function isInternship(title) {
   const t = title.toLowerCase();
   return /\bintern\b/.test(t) || t.includes("internship") || t.includes("summer") || t.includes("co-op") || t.includes("coop");

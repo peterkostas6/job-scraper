@@ -92,6 +92,14 @@ function parseJobs(html) {
   let m;
   while ((m = regex.exec(html)) !== null) {
     const title = decodeEntities(m[2].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
+
+    // Exclude Associate/VP/Director level roles
+    const tl = title.toLowerCase();
+    if (/\bassociate\b/.test(tl) && !tl.includes("analyst")) continue;
+    if (tl.includes("vice president") || /\bvp\b/.test(tl)) continue;
+    if (/\bdirector\b/.test(tl)) continue;
+    if (/\bprincipal\b/.test(tl) || /\bpartner\b/.test(tl)) continue;
+
     const location = decodeEntities(m[3].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
     const dateStr = m[4] ? m[4].trim() : null;
     jobs.push({

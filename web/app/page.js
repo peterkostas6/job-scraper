@@ -23,9 +23,11 @@ const BANKS = {
   macquarie: { name: "Macquarie", shortName: "Macquarie", endpoint: "/api/jobs-macquarie" },
   piper: { name: "Piper Sandler", shortName: "Piper", endpoint: "/api/jobs-piper" },
   stifel: { name: "Stifel", shortName: "Stifel", endpoint: "/api/jobs-stifel" },
+  blackstone: { name: "Blackstone", shortName: "Blackstone", endpoint: "/api/jobs-blackstone" },
+  blackrock: { name: "BlackRock", shortName: "BlackRock", endpoint: "/api/jobs-blackrock" },
 };
 
-const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel"]);
+const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock"]);
 
 const JOB_TYPES = {
   all: "All Types",

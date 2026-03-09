@@ -29,6 +29,8 @@ const BANK_ENDPOINTS = {
   macquarie: "/api/jobs-macquarie",
   piper: "/api/jobs-piper",
   stifel: "/api/jobs-stifel",
+  blackstone: "/api/jobs-blackstone",
+  blackrock: "/api/jobs-blackrock",
 };
 
 const BANK_NAMES = {
@@ -49,6 +51,8 @@ const BANK_NAMES = {
   macquarie: "Macquarie",
   piper: "Piper Sandler",
   stifel: "Stifel",
+  blackstone: "Blackstone",
+  blackrock: "BlackRock",
 };
 
 function formatTimestamp(d) {

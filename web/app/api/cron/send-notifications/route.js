@@ -35,6 +35,18 @@ export async function GET(request) {
     const sentIds = [];
 
     if (rows.length > 0) {
+      // 1b. Cross-check queued jobs against the jobs table.
+      // Only send jobs that are still live AND still within the 48h Recent tab window.
+      // This ensures users only get notified about jobs they can actually find on the site.
+      const queuedLinks = [...new Set(rows.map((r) => r.job_link))];
+      const { rows: liveRows } = await sql`
+        SELECT link FROM jobs
+        WHERE link = ANY(${queuedLinks})
+          AND is_live = true
+          AND detected_at > NOW() - INTERVAL '48 hours'
+      `;
+      const liveLinks = new Set(liveRows.map((r) => r.link));
+
       // 2. Group rows by user_id
       const byUser = {};
       for (const row of rows) {
@@ -44,12 +56,14 @@ export async function GET(request) {
 
       // 3. For each user: fetch from Clerk, send email + SMS, collect row IDs
       for (const [userId, userRows] of Object.entries(byUser)) {
+        // Always mark rows as processed (delete them) even if filtered — prevents queue buildup
+        sentIds.push(...userRows.map((r) => r.id));
+
         let clerkUser;
         try {
           clerkUser = await client.users.getUser(userId);
         } catch (err) {
           console.error(`Could not fetch Clerk user ${userId}:`, err.message);
-          sentIds.push(...userRows.map((r) => r.id));
           continue;
         }
 
@@ -57,13 +71,19 @@ export async function GET(request) {
         const firstName = clerkUser.firstName || "";
         const prefs = clerkUser.unsafeMetadata?.notifications || {};
 
-        const jobs = userRows.map((r) => ({
-          title: r.job_title,
-          link: r.job_link,
-          bank: r.job_bank,
-          location: r.job_location,
-          category: r.job_category,
-        }));
+        // Only include jobs that are still live and in the Recent tab
+        const jobs = userRows
+          .filter((r) => liveLinks.has(r.job_link))
+          .map((r) => ({
+            title: r.job_title,
+            link: r.job_link,
+            bank: r.job_bank,
+            location: r.job_location,
+            category: r.job_category,
+          }));
+
+        // Nothing to send for this user after filtering
+        if (jobs.length === 0) continue;
 
         // Send email
         if (email) {
@@ -102,7 +122,6 @@ export async function GET(request) {
           }
         }
 
-        sentIds.push(...userRows.map((r) => r.id));
       }
 
       // 4. Delete processed rows

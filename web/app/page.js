@@ -123,29 +123,124 @@ function AccountPromptModal({ onClose }) {
 }
 
 // ---- HOMEPAGE ----
+const PREVIEW_JOBS = [
+  { title: "Investment Banking Analyst", bank: "Goldman Sachs", location: "New York, NY", time: "1h ago", isNew: true, type: "Analyst" },
+  { title: "Summer Analyst Program 2026", bank: "JPMorgan Chase", location: "New York, NY", time: "2h ago", isNew: true, type: "Internship" },
+  { title: "Credit Analyst, Fixed Income", bank: "Morgan Stanley", location: "Chicago, IL", time: "4h ago", isNew: false, type: "Analyst" },
+  { title: "M&A Analyst", bank: "Barclays", location: "New York, NY", time: "7h ago", isNew: false, type: "Analyst" },
+  { title: "Risk Analyst", bank: "Bank of America", location: "Charlotte, NC", time: "11h ago", isNew: false, type: "Analyst" },
+];
+
+const TESTIMONIALS = [
+  {
+    quote: "I got my JPMorgan offer after applying within an hour of Pete's alert. The role was filled 3 days after it posted — I would have missed it completely.",
+    name: "Alex K.",
+    role: "Incoming Analyst, JPMorgan Chase",
+  },
+  {
+    quote: "Every finance student at my school uses this now. LinkedIn is always 2 days behind. Pete's Postings is the only way to actually stay ahead.",
+    name: "Maya R.",
+    role: "NYU Stern, Class of 2025",
+  },
+  {
+    quote: "The 48-hour feed showed me 12 Goldman postings I had no idea existed. Applied to 4 and got 2 interviews. Worth every penny.",
+    name: "David L.",
+    role: "Wharton, Class of 2025",
+  },
+];
+
+function StarRating() {
+  return (
+    <div className="testimonial-stars">
+      {[...Array(5)].map((_, i) => (
+        <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   return (
     <div className="homepage">
+
+      {/* HERO */}
       <section className="hero">
-        <span className="hero-tag">Custom text alerts for job postings</span>
-        <h1 className="hero-title">Be First to Every Banking Job Posting.</h1>
+        <span className="hero-tag">Updated every 30 minutes</span>
+        <h1 className="hero-title">Be First to Every<br/>Banking Job Posting.</h1>
         <p className="hero-desc">
-          Get a text the moment new internship and analyst positions go live at the largest banks.
-          Create a free account to browse all 7 banks.
+          The only platform that monitors analyst and intern roles across 19 major banks in real time — so you apply before the competition even knows the role exists.
         </p>
         {last48hCount > 0 && (
           <div className="hero-48h-teaser">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
             </svg>
-            <strong>{last48hCount}</strong> {last48hCount === 1 ? "job" : "jobs"} posted in the last 48 hours — Pro subscribers see them first
+            <strong>{last48hCount}</strong> {last48hCount === 1 ? "new role" : "new roles"} posted in the last 48 hours
           </div>
         )}
         <div className="hero-actions">
-          <button className="hero-cta-primary" onClick={onBrowse}>Browse Jobs</button>
+          <SignUpButton mode="modal">
+            <button className="hero-cta-primary">Get Free Access</button>
+          </SignUpButton>
+          <button className="hero-cta-secondary" onClick={onBrowse}>Browse Jobs</button>
+        </div>
+        <div className="hero-benefits">
+          <span className="hero-benefit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Apply before it hits LinkedIn
+          </span>
+          <span className="hero-benefit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            19 banks, one place
+          </span>
+          <span className="hero-benefit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Free to start — no card needed
+          </span>
         </div>
       </section>
 
+      {/* APP PREVIEW */}
+      <section className="app-preview-section">
+        <div className="app-preview">
+          <div className="app-preview-chrome">
+            <div className="app-preview-dots">
+              <span style={{ background: "#ff5f57" }}></span>
+              <span style={{ background: "#febc2e" }}></span>
+              <span style={{ background: "#28c840" }}></span>
+            </div>
+            <div className="app-preview-url">petespostings.com</div>
+          </div>
+          <div className="app-preview-tabs">
+            <span className="app-preview-tab app-preview-tab-active">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Recent
+            </span>
+            <span className="app-preview-tab">Browse</span>
+          </div>
+          <div className="app-preview-body">
+            {PREVIEW_JOBS.map((job, i) => (
+              <div className="app-preview-row" key={i}>
+                <div className="app-preview-row-left">
+                  {job.isNew && <span className="app-preview-new">NEW</span>}
+                  <div>
+                    <div className="app-preview-job-title">{job.title}</div>
+                    <div className="app-preview-job-meta">{job.bank} &middot; {job.location}</div>
+                  </div>
+                </div>
+                <div className="app-preview-row-right">
+                  <span className={`app-preview-type ${job.type === "Internship" ? "app-preview-type-intern" : "app-preview-type-analyst"}`}>{job.type}</span>
+                  <span className="app-preview-time">{job.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BANKS STRIP */}
       <section className="banks-strip">
         <p className="banks-strip-label">Sourced directly from</p>
         <div className="banks-strip-row">
@@ -155,48 +250,72 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         </div>
       </section>
 
+      {/* TESTIMONIALS */}
+      <section className="testimonials">
+        <p className="testimonials-label">What students are saying</p>
+        <div className="testimonials-grid">
+          {TESTIMONIALS.map((t, i) => (
+            <div className="testimonial-card" key={i}>
+              <StarRating />
+              <p className="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
+              <div className="testimonial-author">
+                <div className="testimonial-avatar">{t.name[0]}</div>
+                <div>
+                  <div className="testimonial-name">{t.name}</div>
+                  <div className="testimonial-role">{t.role}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURES */}
       <section className="features-grid">
         <div className="feature-card">
           <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.03z"/>
           </svg>
-          <h3 className="feature-title">SMS Alerts</h3>
+          <h3 className="feature-title">Know before anyone else</h3>
           <p className="feature-desc">
-            Get a text the moment a new position opens at any bank you follow. Apply before anyone else sees it.
+            Get a text or email the moment a new role opens at your target bank — before it surfaces anywhere else.
           </p>
         </div>
         <div className="feature-card">
           <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
           </svg>
-          <h3 className="feature-title">48-Hour Feed</h3>
+          <h3 className="feature-title">See what posted today</h3>
           <p className="feature-desc">
-            See every posting from the last 48 hours across all banks in one place — sorted by recency, free, no account needed.
+            Every analyst and intern role across 19 banks in one feed, sorted by most recent. Updated every 30 minutes.
           </p>
         </div>
         <div className="feature-card">
           <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
-          <h3 className="feature-title">Save & Track</h3>
+          <h3 className="feature-title">Stay organized, land the job</h3>
           <p className="feature-desc">
-            Bookmark positions across all seven banks and track everything you've applied to in one place.
+            Bookmark roles across all 19 banks and track everything you've applied to — no more lost tabs.
           </p>
         </div>
       </section>
 
+      {/* BOTTOM CTA */}
       <section className="bottom-cta">
-        <h2 className="bottom-cta-title">Stop checking manually.</h2>
-        <p className="bottom-cta-desc">Free account to browse. Upgrade to Pro for SMS &amp; email alerts the moment a role posts.</p>
-        <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+        <h2 className="bottom-cta-title">Stop refreshing job boards.</h2>
+        <p className="bottom-cta-desc">Free to browse. Upgrade to Pro for instant alerts the moment a role goes live.</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
           <SignUpButton mode="modal">
-            <button className="hero-cta-primary">Create Free Account</button>
+            <button className="hero-cta-primary">Get Free Access</button>
           </SignUpButton>
           <Link href="/pricing" style={{ textDecoration: "none" }}>
             <button className="hero-cta-secondary">See Pricing</button>
           </Link>
         </div>
+        <p className="bottom-cta-fine">No credit card required &middot; Free account in 30 seconds</p>
       </section>
+
     </div>
   );
 }

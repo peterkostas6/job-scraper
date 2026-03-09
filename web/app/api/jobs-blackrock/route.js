@@ -80,30 +80,27 @@ function parseDate(dateStr) {
 function parseJobs(html) {
   const jobs = [];
 
-  // Extract dates from job-date divs
-  const dateRegex = /class="[^"]*job-date[^"]*"[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/g;
-  const dates = [];
-  let dm;
-  while ((dm = dateRegex.exec(html)) !== null) {
-    dates.push(dm[1].trim());
-  }
-
-  // Match job links and titles (TalentBrew standard structure)
+  // BlackRock TalentBrew structure:
+  // <a href="/job/..." data-job-id="...">
+  //   <h2>Title</h2>
+  //   <span class="job-location">Location</span>
+  //   <span class="job-date-posted">MM/DD/YYYY</span>
+  // </a>
   const regex =
-    /<a[^>]*href="([^"]*)"[^>]*class="[^"]*job-title[^"]*"[^>]*>[\s\S]*?<strong>([\s\S]*?)<\/strong>[\s\S]*?<\/a>[\s\S]*?<div[^>]*class="job-location"[^>]*>\s*([\s\S]*?)\s*<\/div>/g;
+    /<a\s+href="(\/job\/[^"]+)"\s+data-job-id="[^"]*"[^>]*>\s*<h2[^>]*>([\s\S]*?)<\/h2>\s*<span[^>]*class="job-location"[^>]*>([\s\S]*?)<\/span>\s*(?:<span[^>]*class="job-date-posted"[^>]*>([\s\S]*?)<\/span>)?/g;
 
   let m;
-  let i = 0;
   while ((m = regex.exec(html)) !== null) {
     const title = decodeEntities(m[2].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
+    const location = decodeEntities(m[3].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
+    const dateStr = m[4] ? m[4].trim() : null;
     jobs.push({
       title,
       link: BASE_URL + m[1].trim(),
-      location: decodeEntities(m[3].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()),
+      location,
       category: categorizeJob(title),
-      postedDate: parseDate(dates[i]) || null,
+      postedDate: parseDate(dateStr) || null,
     });
-    i++;
   }
   return jobs;
 }

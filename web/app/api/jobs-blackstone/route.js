@@ -62,6 +62,18 @@ function parseJobs(data) {
   const postings = data.jobPostings || [];
   return postings
     .filter((job) => {
+      const t = (job.title || "").toLowerCase();
+      // Only entry-level: must contain analyst, intern, or summer
+      if (!t.includes("analyst") && !/\bintern\b/.test(t) && !t.includes("summer")) return false;
+      // Exclude VP/Associate/Director/Principal seniority levels
+      if (t.includes("vice president") || /\bvp\b/.test(t) || /\bsvp\b/.test(t) || /\bevp\b/.test(t)) return false;
+      if (/\bassociate\b/.test(t) && !t.includes("analyst")) return false;
+      if (/\bdirector\b/.test(t)) return false;
+      if (/\bprincipal\b/.test(t)) return false;
+      if (/\bpartner\b/.test(t)) return false;
+      return true;
+    })
+    .filter((job) => {
       const loc = (job.locationsText || "").toLowerCase();
       // Keep US locations only
       return (

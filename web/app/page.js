@@ -162,6 +162,20 @@ function StarRating() {
 }
 
 function HomePage({ onBrowse, isSignedIn, last48hCount }) {
+  const [smsStep, setSmsStep] = useState(0);
+  useEffect(() => {
+    let t1, t2, t3;
+    const cycle = () => {
+      setSmsStep(0);
+      t1 = setTimeout(() => setSmsStep(1), 1600);
+      t2 = setTimeout(() => setSmsStep(2), 3000);
+      t3 = setTimeout(() => setSmsStep(0), 5800);
+    };
+    cycle();
+    const interval = setInterval(cycle, 6400);
+    return () => { clearInterval(interval); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
   return (
     <div className="homepage">
 
@@ -714,27 +728,12 @@ export default function Home() {
   const [last48hCount, setLast48hCount] = useState(0);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [smsStep, setSmsStep] = useState(0); // 0=off, 1=toggling on, 2=notif visible
   const [bankSearch, setBankSearch] = useState("");
 
   // Load welcome state from localStorage
   useEffect(() => {
     const welcomed = localStorage.getItem("pp-welcomed");
     if (!welcomed) setShowWelcome(true);
-  }, []);
-
-  // SMS toggle animation loop for landing page phone mockup
-  useEffect(() => {
-    let t1, t2, t3;
-    const cycle = () => {
-      setSmsStep(0);
-      t1 = setTimeout(() => setSmsStep(1), 1600);
-      t2 = setTimeout(() => setSmsStep(2), 3000);
-      t3 = setTimeout(() => setSmsStep(0), 5800);
-    };
-    cycle();
-    const interval = setInterval(cycle, 6400);
-    return () => { clearInterval(interval); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   // 8-second account prompt for anonymous users browsing outside the landing page

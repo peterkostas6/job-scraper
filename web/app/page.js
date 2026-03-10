@@ -236,7 +236,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* HERO */}
       <section className="hero">
-        <span className="hero-tag">Updated every 30 minutes</span>
+        <span className="hero-tag">Students are landing offers faster</span>
         <h1 className="hero-title">Be First to Every<br/>Banking Job Posting.</h1>
         <p className="hero-desc">
           The only platform that monitors analyst and intern roles across the major banks in real time — so you apply before the competition even knows the role exists.

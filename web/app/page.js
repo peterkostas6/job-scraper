@@ -166,7 +166,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   const [phoneText, setPhoneText] = useState('');
 
   // Steps 0-2: scroll through job rows; step 3+: click Alerts and set up notifications
-  const DELAYS = [500, 600, 600, 700, 500, 700, 350, 600, 1300, 700, 350, 700, 350, 700, 1600, 900, 2200];
+  const DELAYS = [1000, 900, 900, 900, 800, 700, 500, 700, 350, 600, 1300, 700, 350, 700, 350, 700, 1600, 900, 2200];
 
   useEffect(() => {
     const timeouts = [];
@@ -188,7 +188,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
   const PHONE_NUM = '(212) 555-0147';
   useEffect(() => {
-    if (animStep !== 8) return;
+    if (animStep !== 10) return;
     let i = 0;
     setPhoneText('');
     const id = setInterval(() => {
@@ -199,33 +199,35 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
     return () => clearInterval(id);
   }, [animStep]);
 
-  const inNotif = animStep >= 4;
-  const smsOn = animStep >= 6;
-  const phoneFocused = animStep >= 7;
-  const goldmanOn = animStep >= 10;
-  const internOn = animStep >= 12;
-  const saved = animStep >= 14;
-  const showIosNotif = animStep >= 15;
-  const clicking = [4, 6, 10, 12, 14].includes(animStep);
+  const inNotif = animStep >= 6;
+  const smsOn = animStep >= 8;
+  const phoneFocused = animStep >= 9;
+  const goldmanOn = animStep >= 12;
+  const internOn = animStep >= 14;
+  const saved = animStep >= 16;
+  const showIosNotif = animStep >= 17;
+  const clicking = [6, 8, 12, 14, 16].includes(animStep);
 
   const CURSOR = [
     { left: '35%',               top: '101px' }, // 0: row 1
     { left: '35%',               top: '155px' }, // 1: row 2
     { left: '35%',               top: '209px' }, // 2: row 3
-    { left: '30%',               top: '56px'  }, // 3: moving to Alerts tab
-    { left: '30%',               top: '56px'  }, // 4: clicking Alerts
-    { left: 'calc(100% - 40px)', top: '106px' }, // 5: SMS toggle
-    { left: 'calc(100% - 40px)', top: '106px' }, // 6: clicking SMS
-    { left: '44%',               top: '158px' }, // 7: phone input
-    { left: '44%',               top: '158px' }, // 8: typing
-    { left: '3%',                top: '228px' }, // 9: Goldman chip
-    { left: '3%',                top: '228px' }, // 10: clicking Goldman
-    { left: '44%',               top: '292px' }, // 11: Internship radio
-    { left: '44%',               top: '292px' }, // 12: clicking Internship
-    { left: '44%',               top: '335px' }, // 13: Save button
-    { left: '44%',               top: '335px' }, // 14: clicking Save
-    { left: '44%',               top: '335px' }, // 15: iOS notif appears
-    { left: '44%',               top: '335px' }, // 16: pause
+    { left: '35%',               top: '263px' }, // 3: row 4
+    { left: '35%',               top: '317px' }, // 4: row 5
+    { left: '30%',               top: '56px'  }, // 5: moving to Alerts tab
+    { left: '30%',               top: '56px'  }, // 6: clicking Alerts
+    { left: 'calc(100% - 40px)', top: '106px' }, // 7: SMS toggle
+    { left: 'calc(100% - 40px)', top: '106px' }, // 8: clicking SMS
+    { left: '44%',               top: '158px' }, // 9: phone input
+    { left: '44%',               top: '158px' }, // 10: typing
+    { left: '3%',                top: '228px' }, // 11: Goldman chip
+    { left: '3%',                top: '228px' }, // 12: clicking Goldman
+    { left: '44%',               top: '292px' }, // 13: Internship radio
+    { left: '44%',               top: '292px' }, // 14: clicking Internship
+    { left: '44%',               top: '335px' }, // 15: Save button
+    { left: '44%',               top: '335px' }, // 16: clicking Save
+    { left: '44%',               top: '335px' }, // 17: iOS notif appears
+    { left: '44%',               top: '335px' }, // 18: pause
   ];
   const cursorPos = CURSOR[Math.min(animStep, CURSOR.length - 1)];
 
@@ -326,7 +328,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
                 <div className="demo-phone-row">
                   <div className={`demo-phone-field${phoneFocused ? ' focused' : ''}`}>
                     <span>{phoneText}</span>
-                    {phoneFocused && animStep <= 6 && <span className="demo-caret">|</span>}
+                    {phoneFocused && animStep <= 10 && <span className="demo-caret">|</span>}
                   </div>
                 </div>
 

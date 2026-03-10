@@ -162,19 +162,67 @@ function StarRating() {
 }
 
 function HomePage({ onBrowse, isSignedIn, last48hCount }) {
-  const [smsStep, setSmsStep] = useState(0);
+  const [animStep, setAnimStep] = useState(0);
+  const [phoneText, setPhoneText] = useState('');
+
+  const DELAYS = [900, 700, 500, 700, 350, 600, 1300, 700, 350, 700, 350, 700, 1600, 1600];
+
   useEffect(() => {
-    let t1, t2, t3;
-    const cycle = () => {
-      setSmsStep(0);
-      t1 = setTimeout(() => setSmsStep(1), 1600);
-      t2 = setTimeout(() => setSmsStep(2), 3000);
-      t3 = setTimeout(() => setSmsStep(0), 5800);
+    const timeouts = [];
+    const runCycle = () => {
+      setAnimStep(0);
+      setPhoneText('');
+      let t = 0;
+      DELAYS.forEach((d, i) => {
+        t += d;
+        const id = setTimeout(() => setAnimStep(i + 1), t);
+        timeouts.push(id);
+      });
     };
-    cycle();
-    const interval = setInterval(cycle, 6400);
-    return () => { clearInterval(interval); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    runCycle();
+    const total = DELAYS.reduce((a, b) => a + b, 0);
+    const interval = setInterval(runCycle, total + 300);
+    return () => { timeouts.forEach(clearTimeout); clearInterval(interval); };
   }, []);
+
+  const PHONE_NUM = '(212) 555-0147';
+  useEffect(() => {
+    if (animStep !== 6) return;
+    let i = 0;
+    setPhoneText('');
+    const id = setInterval(() => {
+      i++;
+      setPhoneText(PHONE_NUM.slice(0, i));
+      if (i >= PHONE_NUM.length) clearInterval(id);
+    }, 90);
+    return () => clearInterval(id);
+  }, [animStep]);
+
+  const inNotif = animStep >= 2;
+  const smsOn = animStep >= 4;
+  const phoneFocused = animStep >= 5;
+  const goldmanOn = animStep >= 8;
+  const internOn = animStep >= 10;
+  const saved = animStep >= 12;
+  const clicking = [2, 4, 8, 10, 12].includes(animStep);
+
+  const CURSOR = [
+    { left: '44%',               top: '200px' },
+    { left: '30%',               top: '56px'  },
+    { left: '30%',               top: '56px'  },
+    { left: 'calc(100% - 40px)', top: '106px' },
+    { left: 'calc(100% - 40px)', top: '106px' },
+    { left: '44%',               top: '158px' },
+    { left: '44%',               top: '158px' },
+    { left: '3%',                top: '228px' },
+    { left: '3%',                top: '228px' },
+    { left: '44%',               top: '292px' },
+    { left: '44%',               top: '292px' },
+    { left: '44%',               top: '335px' },
+    { left: '44%',               top: '335px' },
+    { left: '44%',               top: '335px' },
+  ];
+  const cursorPos = CURSOR[Math.min(animStep, CURSOR.length - 1)];
 
   return (
     <div className="homepage">
@@ -218,25 +266,32 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* APP PREVIEW */}
       <section className="app-preview-section">
-        <div className="preview-two-col">
-          <div className="app-preview">
-            <div className="app-preview-chrome">
-              <div className="app-preview-dots">
-                <span style={{ background: "#ff5f57" }}></span>
-                <span style={{ background: "#febc2e" }}></span>
-                <span style={{ background: "#28c840" }}></span>
-              </div>
-              <div className="app-preview-url">petespostings.com</div>
+        <div className="app-preview">
+
+          <div className="app-preview-chrome">
+            <div className="app-preview-dots">
+              <span style={{ background: "#ff5f57" }}></span>
+              <span style={{ background: "#febc2e" }}></span>
+              <span style={{ background: "#28c840" }}></span>
             </div>
-            <div className="app-preview-tabs">
-              <span className="app-preview-tab app-preview-tab-active">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                Recent
-              </span>
-              <span className="app-preview-tab">Browse</span>
-            </div>
-            <div className="app-preview-body">
-              {PREVIEW_JOBS.map((job, i) => (
+            <div className="app-preview-url">petespostings.com</div>
+          </div>
+
+          <div className="app-preview-tabs">
+            <span className={`app-preview-tab${!inNotif ? ' app-preview-tab-active' : ''}`}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Recent
+            </span>
+            <span className="app-preview-tab">Browse</span>
+            <span className={`app-preview-tab${inNotif ? ' app-preview-tab-active' : ''}`}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Alerts
+            </span>
+          </div>
+
+          <div className="app-preview-body">
+            {!inNotif ? (
+              PREVIEW_JOBS.map((job, i) => (
                 <div className="app-preview-row" key={i}>
                   <div className="app-preview-row-left">
                     {job.isNew && <span className="app-preview-new">NEW</span>}
@@ -250,44 +305,60 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
                     <span className="app-preview-time">{job.time}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              ))
+            ) : (
+              <div className="demo-notif-panel">
+                <div className="demo-notif-row">
+                  <div>
+                    <div className="demo-notif-label">SMS Alerts</div>
+                    <div className="demo-notif-sublabel">Instant text messages</div>
+                  </div>
+                  <div className={`demo-toggle${smsOn ? ' demo-toggle-on' : ''}`}>
+                    <div className="demo-toggle-knob"></div>
+                  </div>
+                </div>
 
-          {/* PHONE MOCKUP — SMS notification animation */}
-          <div className="phone-mockup">
-            <div className="phone-frame">
-              <div className="phone-notch"></div>
-              <div className="phone-screen">
-                <div className="phone-screen-header">Notifications</div>
-                <div className="phone-setting-row">
-                  <div>
-                    <div className="phone-setting-title">Email alerts</div>
-                    <div className="phone-setting-sub">New job postings</div>
-                  </div>
-                  <div className="phone-toggle phone-toggle-on">
-                    <div className="phone-toggle-knob"></div>
+                <div className="demo-phone-row">
+                  <div className={`demo-phone-field${phoneFocused ? ' focused' : ''}`}>
+                    <span>{phoneText}</span>
+                    {phoneFocused && animStep <= 6 && <span className="demo-caret">|</span>}
                   </div>
                 </div>
-                <div className="phone-setting-row">
-                  <div>
-                    <div className="phone-setting-title">SMS alerts</div>
-                    <div className="phone-setting-sub">Text me instantly</div>
-                  </div>
-                  <div className={`phone-toggle${smsStep >= 1 ? " phone-toggle-on" : ""}`}>
-                    <div className="phone-toggle-knob"></div>
-                  </div>
+
+                <div className="demo-section-label">Banks</div>
+                <div className="demo-chips-row">
+                  <span className={`demo-chip${goldmanOn ? ' demo-chip-on' : ''}`}>Goldman</span>
+                  <span className="demo-chip">JPMorgan</span>
+                  <span className="demo-chip">Morgan Stanley</span>
+                  <span className="demo-chip">BofA</span>
                 </div>
-                <div className={`phone-sms-notif${smsStep >= 2 ? " phone-sms-notif-visible" : ""}`}>
-                  <div className="phone-sms-notif-header">
-                    <span className="phone-sms-notif-app">Pete&rsquo;s Postings</span>
-                    <span className="phone-sms-notif-time">now</span>
-                  </div>
-                  <div className="phone-sms-notif-text">New: Goldman Sachs — Investment Banking Analyst 2026. Apply now →</div>
+
+                <div className="demo-section-label">Job Type</div>
+                <div className="demo-radios-row">
+                  <span className={`demo-radio-option${!internOn ? ' demo-radio-on' : ''}`}>All</span>
+                  <span className="demo-radio-option">Analyst</span>
+                  <span className={`demo-radio-option${internOn ? ' demo-radio-on' : ''}`}>Internship</span>
+                </div>
+
+                <div className="demo-save-row">
+                  <button className={`demo-save-btn${saved ? ' demo-save-btn-saved' : ''}`}>
+                    {saved ? 'Saved \u2713' : 'Save Settings'}
+                  </button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
+
+          <div
+            className={`demo-cursor${clicking ? ' demo-cursor-clicking' : ''}`}
+            style={cursorPos}
+          >
+            <svg width="18" height="22" viewBox="0 0 18 22" fill="none">
+              <path d="M2 2L2 18L6.5 14L9.5 21L12 20L9 13L15 13Z"
+                fill="white" stroke="#1a2e44" strokeWidth="1.5" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
         </div>
       </section>
 

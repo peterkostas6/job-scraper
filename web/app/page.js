@@ -105,7 +105,7 @@ function AccountPromptModal({ onClose }) {
           </li>
           <li>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Save &amp; track jobs across all 7 banks
+            Save &amp; track jobs across all banks
           </li>
         </ul>
         <div className="modal-actions">
@@ -170,7 +170,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         <span className="hero-tag">Updated every 30 minutes</span>
         <h1 className="hero-title">Be First to Every<br/>Banking Job Posting.</h1>
         <p className="hero-desc">
-          The only platform that monitors analyst and intern roles across 19 major banks in real time — so you apply before the competition even knows the role exists.
+          The only platform that monitors analyst and intern roles across the major banks in real time — so you apply before the competition even knows the role exists.
         </p>
         {last48hCount > 0 && (
           <div className="hero-48h-teaser">
@@ -193,7 +193,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </span>
           <span className="hero-benefit">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            19 banks, one place
+            All banks, one place
           </span>
           <span className="hero-benefit">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -204,38 +204,75 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* APP PREVIEW */}
       <section className="app-preview-section">
-        <div className="app-preview">
-          <div className="app-preview-chrome">
-            <div className="app-preview-dots">
-              <span style={{ background: "#ff5f57" }}></span>
-              <span style={{ background: "#febc2e" }}></span>
-              <span style={{ background: "#28c840" }}></span>
+        <div className="preview-two-col">
+          <div className="app-preview">
+            <div className="app-preview-chrome">
+              <div className="app-preview-dots">
+                <span style={{ background: "#ff5f57" }}></span>
+                <span style={{ background: "#febc2e" }}></span>
+                <span style={{ background: "#28c840" }}></span>
+              </div>
+              <div className="app-preview-url">petespostings.com</div>
             </div>
-            <div className="app-preview-url">petespostings.com</div>
-          </div>
-          <div className="app-preview-tabs">
-            <span className="app-preview-tab app-preview-tab-active">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-              Recent
-            </span>
-            <span className="app-preview-tab">Browse</span>
-          </div>
-          <div className="app-preview-body">
-            {PREVIEW_JOBS.map((job, i) => (
-              <div className="app-preview-row" key={i}>
-                <div className="app-preview-row-left">
-                  {job.isNew && <span className="app-preview-new">NEW</span>}
-                  <div>
-                    <div className="app-preview-job-title">{job.title}</div>
-                    <div className="app-preview-job-meta">{job.bank} &middot; {job.location}</div>
+            <div className="app-preview-tabs">
+              <span className="app-preview-tab app-preview-tab-active">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Recent
+              </span>
+              <span className="app-preview-tab">Browse</span>
+            </div>
+            <div className="app-preview-body">
+              {PREVIEW_JOBS.map((job, i) => (
+                <div className="app-preview-row" key={i}>
+                  <div className="app-preview-row-left">
+                    {job.isNew && <span className="app-preview-new">NEW</span>}
+                    <div>
+                      <div className="app-preview-job-title">{job.title}</div>
+                      <div className="app-preview-job-meta">{job.bank} &middot; {job.location}</div>
+                    </div>
+                  </div>
+                  <div className="app-preview-row-right">
+                    <span className={`app-preview-type ${job.type === "Internship" ? "app-preview-type-intern" : "app-preview-type-analyst"}`}>{job.type}</span>
+                    <span className="app-preview-time">{job.time}</span>
                   </div>
                 </div>
-                <div className="app-preview-row-right">
-                  <span className={`app-preview-type ${job.type === "Internship" ? "app-preview-type-intern" : "app-preview-type-analyst"}`}>{job.type}</span>
-                  <span className="app-preview-time">{job.time}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* PHONE MOCKUP — SMS notification animation */}
+          <div className="phone-mockup">
+            <div className="phone-frame">
+              <div className="phone-notch"></div>
+              <div className="phone-screen">
+                <div className="phone-screen-header">Notifications</div>
+                <div className="phone-setting-row">
+                  <div>
+                    <div className="phone-setting-title">Email alerts</div>
+                    <div className="phone-setting-sub">New job postings</div>
+                  </div>
+                  <div className="phone-toggle phone-toggle-on">
+                    <div className="phone-toggle-knob"></div>
+                  </div>
+                </div>
+                <div className="phone-setting-row">
+                  <div>
+                    <div className="phone-setting-title">SMS alerts</div>
+                    <div className="phone-setting-sub">Text me instantly</div>
+                  </div>
+                  <div className={`phone-toggle${smsStep >= 1 ? " phone-toggle-on" : ""}`}>
+                    <div className="phone-toggle-knob"></div>
+                  </div>
+                </div>
+                <div className={`phone-sms-notif${smsStep >= 2 ? " phone-sms-notif-visible" : ""}`}>
+                  <div className="phone-sms-notif-header">
+                    <span className="phone-sms-notif-app">Pete&rsquo;s Postings</span>
+                    <span className="phone-sms-notif-time">now</span>
+                  </div>
+                  <div className="phone-sms-notif-text">New: Goldman Sachs — Investment Banking Analyst 2026. Apply now →</div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
@@ -287,7 +324,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </svg>
           <h3 className="feature-title">See what posted today</h3>
           <p className="feature-desc">
-            Every analyst and intern role across 19 banks in one feed, sorted by most recent. Updated every 30 minutes.
+            Every analyst and intern role across all major banks in one feed, sorted by most recent. Updated every 30 minutes.
           </p>
         </div>
         <div className="feature-card">
@@ -296,7 +333,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </svg>
           <h3 className="feature-title">Stay organized, land the job</h3>
           <p className="feature-desc">
-            Bookmark roles across all 19 banks and track everything you've applied to — no more lost tabs.
+            Bookmark roles across all banks and track everything you've applied to — no more lost tabs.
           </p>
         </div>
       </section>
@@ -363,7 +400,7 @@ function PaywallOverlay({ isSignedIn }) {
         <div className="paywall-badge">Pro</div>
         <h2 className="paywall-title">Unlock Pro Features</h2>
         <p className="paywall-desc">
-          Get SMS &amp; email alerts the moment new positions post, and save jobs across all 7 banks.
+          Get SMS &amp; email alerts the moment new positions post, and save jobs across all banks.
         </p>
       </div>
 
@@ -393,7 +430,7 @@ function PaywallOverlay({ isSignedIn }) {
       <div className="paywall-includes">
         <p className="paywall-includes-label">Pro includes</p>
         <div className="paywall-includes-list">
-          {["SMS text alerts", "Email alerts", "Save & bookmark jobs", "All 7 banks"].map((item) => (
+          {["SMS text alerts", "Email alerts", "Save & bookmark jobs", "All banks"].map((item) => (
             <span className="paywall-includes-item" key={item}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -677,12 +714,27 @@ export default function Home() {
   const [last48hCount, setLast48hCount] = useState(0);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [smsStep, setSmsStep] = useState(0); // 0=off, 1=toggling on, 2=notif visible
   const [bankSearch, setBankSearch] = useState("");
 
   // Load welcome state from localStorage
   useEffect(() => {
     const welcomed = localStorage.getItem("pp-welcomed");
     if (!welcomed) setShowWelcome(true);
+  }, []);
+
+  // SMS toggle animation loop for landing page phone mockup
+  useEffect(() => {
+    let t1, t2, t3;
+    const cycle = () => {
+      setSmsStep(0);
+      t1 = setTimeout(() => setSmsStep(1), 1600);
+      t2 = setTimeout(() => setSmsStep(2), 3000);
+      t3 = setTimeout(() => setSmsStep(0), 5800);
+    };
+    cycle();
+    const interval = setInterval(cycle, 6400);
+    return () => { clearInterval(interval); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   // 8-second account prompt for anonymous users browsing outside the landing page

@@ -165,7 +165,8 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   const [animStep, setAnimStep] = useState(0);
   const [phoneText, setPhoneText] = useState('');
 
-  const DELAYS = [900, 700, 500, 700, 350, 600, 1300, 700, 350, 700, 350, 700, 1600, 1600];
+  // Steps 0-2: scroll through job rows; step 3+: click Alerts and set up notifications
+  const DELAYS = [500, 600, 600, 700, 500, 700, 350, 600, 1300, 700, 350, 700, 350, 700, 1600, 900, 2200];
 
   useEffect(() => {
     const timeouts = [];
@@ -187,7 +188,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
   const PHONE_NUM = '(212) 555-0147';
   useEffect(() => {
-    if (animStep !== 6) return;
+    if (animStep !== 8) return;
     let i = 0;
     setPhoneText('');
     const id = setInterval(() => {
@@ -198,29 +199,33 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
     return () => clearInterval(id);
   }, [animStep]);
 
-  const inNotif = animStep >= 2;
-  const smsOn = animStep >= 4;
-  const phoneFocused = animStep >= 5;
-  const goldmanOn = animStep >= 8;
-  const internOn = animStep >= 10;
-  const saved = animStep >= 12;
-  const clicking = [2, 4, 8, 10, 12].includes(animStep);
+  const inNotif = animStep >= 4;
+  const smsOn = animStep >= 6;
+  const phoneFocused = animStep >= 7;
+  const goldmanOn = animStep >= 10;
+  const internOn = animStep >= 12;
+  const saved = animStep >= 14;
+  const showIosNotif = animStep >= 15;
+  const clicking = [4, 6, 10, 12, 14].includes(animStep);
 
   const CURSOR = [
-    { left: '44%',               top: '200px' },
-    { left: '30%',               top: '56px'  },
-    { left: '30%',               top: '56px'  },
-    { left: 'calc(100% - 40px)', top: '106px' },
-    { left: 'calc(100% - 40px)', top: '106px' },
-    { left: '44%',               top: '158px' },
-    { left: '44%',               top: '158px' },
-    { left: '3%',                top: '228px' },
-    { left: '3%',                top: '228px' },
-    { left: '44%',               top: '292px' },
-    { left: '44%',               top: '292px' },
-    { left: '44%',               top: '335px' },
-    { left: '44%',               top: '335px' },
-    { left: '44%',               top: '335px' },
+    { left: '35%',               top: '101px' }, // 0: row 1
+    { left: '35%',               top: '155px' }, // 1: row 2
+    { left: '35%',               top: '209px' }, // 2: row 3
+    { left: '30%',               top: '56px'  }, // 3: moving to Alerts tab
+    { left: '30%',               top: '56px'  }, // 4: clicking Alerts
+    { left: 'calc(100% - 40px)', top: '106px' }, // 5: SMS toggle
+    { left: 'calc(100% - 40px)', top: '106px' }, // 6: clicking SMS
+    { left: '44%',               top: '158px' }, // 7: phone input
+    { left: '44%',               top: '158px' }, // 8: typing
+    { left: '3%',                top: '228px' }, // 9: Goldman chip
+    { left: '3%',                top: '228px' }, // 10: clicking Goldman
+    { left: '44%',               top: '292px' }, // 11: Internship radio
+    { left: '44%',               top: '292px' }, // 12: clicking Internship
+    { left: '44%',               top: '335px' }, // 13: Save button
+    { left: '44%',               top: '335px' }, // 14: clicking Save
+    { left: '44%',               top: '335px' }, // 15: iOS notif appears
+    { left: '44%',               top: '335px' }, // 16: pause
   ];
   const cursorPos = CURSOR[Math.min(animStep, CURSOR.length - 1)];
 
@@ -347,6 +352,22 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* iOS-style notification banner */}
+          <div className={`demo-ios-notif${showIosNotif ? ' demo-ios-notif-visible' : ''}`}>
+            <div className="demo-ios-notif-icon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </div>
+            <div className="demo-ios-notif-body">
+              <div className="demo-ios-notif-header">
+                <span className="demo-ios-notif-app">Pete&rsquo;s Postings</span>
+                <span className="demo-ios-notif-time">now</span>
+              </div>
+              <div className="demo-ios-notif-text">New: Goldman Sachs — Investment Banking Analyst 2026. Tap to apply →</div>
+            </div>
           </div>
 
           <div

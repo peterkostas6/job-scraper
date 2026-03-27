@@ -25,9 +25,10 @@ const BANKS = {
   stifel: { name: "Stifel", shortName: "Stifel", endpoint: "/api/jobs-stifel" },
   blackstone: { name: "Blackstone", shortName: "Blackstone", endpoint: "/api/jobs-blackstone" },
   blackrock: { name: "BlackRock", shortName: "BlackRock", endpoint: "/api/jobs-blackrock" },
+  jefferies: { name: "Jefferies", shortName: "Jefferies", endpoint: "/api/jobs-jefferies" },
 };
 
-const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock"]);
+const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
 
 const JOB_TYPES = {
   all: "All Types",

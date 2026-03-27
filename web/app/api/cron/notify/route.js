@@ -31,6 +31,7 @@ const BANK_ENDPOINTS = {
   stifel: "/api/jobs-stifel",
   blackstone: "/api/jobs-blackstone",
   blackrock: "/api/jobs-blackrock",
+  jefferies: "/api/jobs-jefferies",
 };
 
 const BANK_NAMES = {
@@ -53,6 +54,7 @@ const BANK_NAMES = {
   stifel: "Stifel",
   blackstone: "Blackstone",
   blackrock: "BlackRock",
+  jefferies: "Jefferies",
 };
 
 function formatTimestamp(d) {

@@ -14,10 +14,68 @@ const CLOSED_POSTING_PHRASES = [
   "no longer active",
 ];
 
-// Checks whether a job link is dead: a definitive 404/410, or a 200 whose body
-// says the posting closed. Network errors/timeouts return false (benefit of the doubt) —
-// only a confirmed signal should ever mark a job dead.
+// Workday and Oracle Fusion (JPMC, Jefferies) candidate-facing pages are JS-rendered
+// SPAs: the HTML shell (and its SEO og:meta tags) return HTTP 200 with the original job
+// title even after a posting closes — the "no longer available" message only appears
+// after client-side JS calls the real status API. A plain HTML fetch can never see that,
+// so for these platforms we query the same JSON API the page itself uses.
+
+const WORKDAY_RE = /^https:\/\/([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com)\/[^/]+\/([^/]+)\/job\/(.+)$/i;
+const ORACLE_FUSION_RE = /^https:\/\/([a-z0-9.-]+\.oraclecloud\.com)\/hcmUI\/CandidateExperience\/[^/]+\/sites\/([^/]+)\/job\/(\d+)\/?$/i;
+
+async function fetchJson(url, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36", Accept: "application/json" },
+    });
+    return { res, json: await res.json().catch(() => null) };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Workday's own frontend calls this "cxs" API to render the job — returns 404 once closed.
+async function isWorkdayJobDead(match, timeoutMs) {
+  const [, host, site, jobPath] = match;
+  const tenant = host.split(".")[0];
+  const apiUrl = `https://${host}/wday/cxs/${tenant}/${site}/job/${jobPath}`;
+  try {
+    const { res } = await fetchJson(apiUrl, timeoutMs);
+    if (res.status === 404) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// Oracle Fusion Recruiting Cloud (JPMC, Jefferies) — the requisition search API only
+// returns a match while the posting is live; closed postings come back with 0 items.
+async function isOracleFusionJobDead(match, timeoutMs) {
+  const [, host, site, id] = match;
+  const apiUrl = `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?finder=ById;Id=${id},siteNumber=${site}`;
+  try {
+    const { res, json } = await fetchJson(apiUrl, timeoutMs);
+    if (!res.ok || !json) return false;
+    return Array.isArray(json.items) && json.items.length === 0;
+  } catch {
+    return false;
+  }
+}
+
+// Checks whether a job link is dead. Routes Workday/Oracle Fusion links to their real
+// status API (see above); everything else falls back to a definitive 404/410, or a 200
+// whose body says the posting closed. Network errors/timeouts return false (benefit of
+// the doubt) — only a confirmed signal should ever mark a job dead.
 export async function isJobLinkDead(link, timeoutMs = 8000) {
+  const workdayMatch = link.match(WORKDAY_RE);
+  if (workdayMatch) return isWorkdayJobDead(workdayMatch, timeoutMs);
+
+  const oracleMatch = link.match(ORACLE_FUSION_RE);
+  if (oracleMatch) return isOracleFusionJobDead(oracleMatch, timeoutMs);
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);

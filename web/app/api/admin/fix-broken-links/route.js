@@ -3,6 +3,7 @@
 // verifies the URL actually works, and marks broken ones as is_live=false.
 // Safe to re-run. Secured with CRON_SECRET.
 import { sql } from "@vercel/postgres";
+import { isJobLinkDead } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -30,22 +31,7 @@ export async function POST(request) {
     const brokenLinks = [];
     await Promise.all(
       rows.map(async (row) => {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-          const res = await fetch(row.link, {
-            method: "GET",
-            signal: controller.signal,
-            headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
-            redirect: "follow",
-          });
-          clearTimeout(timeoutId);
-          if (res.status === 404 || res.status === 410) {
-            brokenLinks.push(row.link);
-          }
-        } catch {
-          // Timeout or network error — leave as is_live=true (benefit of the doubt)
-        }
+        if (await isJobLinkDead(row.link)) brokenLinks.push(row.link);
       })
     );
 

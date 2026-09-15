@@ -4,7 +4,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
-import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole } from "@/lib/notif-helpers";
+import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -206,10 +206,12 @@ export async function GET(request) {
     // Collect all current entry-level jobs + per-bank stats
     const allJobs = [];
     const bankStats = {};
+    const succeededBankKeys = [];
     for (let i = 0; i < rawResults.length; i++) {
       const bankKey = bankEntries[i][0];
       const result = rawResults[i];
       if (result.status === "fulfilled") {
+        succeededBankKeys.push(bankKey);
         const { jobs } = result.value;
         let kept = 0;
         for (const job of jobs) {
@@ -238,31 +240,17 @@ export async function GET(request) {
       }
     }
 
-    // 2b. Verify new job links — skip any that return 404 (broken/taken down on bank site)
-    // Runs in parallel with an 8-second timeout per link.
-    // Only drops jobs with a definitive 404/410 — everything else gets benefit of the doubt.
+    // 2b. Verify new job links — skip any that are already dead (broken/closed on bank site).
+    // Runs in parallel with an 8-second timeout per link. Only drops jobs with a definitive
+    // dead signal (404/410, or a "no longer available" page) — everything else gets benefit of the doubt.
     const verifiedNewJobs = [];
     let skippedBrokenLinks = 0;
     if (newJobs.length > 0) {
       await Promise.all(
         newJobs.map(async (job) => {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            const res = await fetch(job.link, {
-              method: "GET",
-              signal: controller.signal,
-              headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
-              redirect: "follow",
-            });
-            clearTimeout(timeoutId);
-            if (res.status === 404 || res.status === 410) {
-              skippedBrokenLinks++;
-            } else {
-              verifiedNewJobs.push(job);
-            }
-          } catch {
-            // Timeout or network error — include the job (benefit of the doubt)
+          if (await isJobLinkDead(job.link)) {
+            skippedBrokenLinks++;
+          } else {
             verifiedNewJobs.push(job);
           }
         })
@@ -289,10 +277,14 @@ export async function GET(request) {
       `;
     }
 
-    // Update is_live for all tracked jobs — marks expired/removed jobs as not live
-    // so they disappear from the Recent tab automatically.
+    // Update is_live for tracked jobs at banks we successfully fetched this run — marks
+    // expired/removed jobs as not live so they disappear from the Recent tab automatically.
+    // Scoped to succeededBankKeys only: if a bank's API call failed this run, its jobs are
+    // left untouched rather than being wrongly marked dead just because we got no fresh data.
     const allCurrentLinks = allJobs.map((j) => j.link);
-    await sql`UPDATE jobs SET is_live = false WHERE is_live = true`;
+    if (succeededBankKeys.length > 0) {
+      await sql`UPDATE jobs SET is_live = false WHERE is_live = true AND bank_key = ANY(${succeededBankKeys})`;
+    }
     if (allCurrentLinks.length > 0) {
       await sql`UPDATE jobs SET is_live = true WHERE link = ANY(${allCurrentLinks})`;
     }

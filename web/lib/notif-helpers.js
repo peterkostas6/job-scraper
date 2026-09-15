@@ -1,5 +1,47 @@
 // Shared helpers used by both cron routes
 
+// Phrases ATS pages commonly show (with a 200 status) once a posting is closed/filled.
+// Checked case-insensitively against the fetched page body.
+const CLOSED_POSTING_PHRASES = [
+  "no longer accepting applications",
+  "no longer available",
+  "position has been filled",
+  "posting has closed",
+  "posting is closed",
+  "job is no longer",
+  "requisition is no longer",
+  "this position is closed",
+  "no longer active",
+];
+
+// Checks whether a job link is dead: a definitive 404/410, or a 200 whose body
+// says the posting closed. Network errors/timeouts return false (benefit of the doubt) —
+// only a confirmed signal should ever mark a job dead.
+export async function isJobLinkDead(link, timeoutMs = 8000) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(link, {
+      method: "GET",
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
+      redirect: "follow",
+    });
+    clearTimeout(timeoutId);
+
+    if (res.status === 404 || res.status === 410) return true;
+    if (!res.ok) return false;
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("text/html")) return false;
+
+    const body = (await res.text()).toLowerCase();
+    return CLOSED_POSTING_PHRASES.some((phrase) => body.includes(phrase));
+  } catch {
+    return false;
+  }
+}
+
 // Returns false for clearly non-finance roles (software engineering, IT, cybersecurity, etc.)
 // All jobs on the site should be finance/banking oriented.
 export function isFinanceRole(title) {

@@ -1611,11 +1611,14 @@ export default function Home() {
                       <span style={{ width: 14 }} />
                     </div>
                     {savedJobs.map((job, index) => (
-                      <a href={job.link} target="_blank" rel="noopener noreferrer" className="job-row" key={job.link}>
+                      <a href={job.link} target="_blank" rel="noopener noreferrer" className={`job-row${job.expiredAt ? " job-row-expired" : ""}`} key={job.link}>
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="job-title">{job.title}</span>
                         <span className="job-location"><span className="saved-bank-badge">{job.bank}</span></span>
-                        <div className="job-badges"><span className="job-badge" title={job.location}>{job.location || "—"}</span></div>
+                        <div className="job-badges">
+                          {job.expiredAt && <span className="job-badge badge-intern" title="No longer live on the bank's site">Expired</span>}
+                          <span className="job-badge" title={job.location}>{job.location || "—"}</span>
+                        </div>
                         <button className="job-bookmark job-bookmark-active" onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleBookmark(e, job); }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>

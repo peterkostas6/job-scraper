@@ -6,6 +6,67 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pete's Postings — a job board that scrapes analyst and intern-level job listings from 8 major banks and displays them in a web app. Has two interfaces: a Python CLI scraper that saves to CSV, and a Next.js web app with subscriptions, notifications, and a Recent tab. The user is a first-time coder — explain concepts clearly and avoid assumptions about prior knowledge.
 
+## Engineering Framework
+
+### 1. Think Before Coding
+
+Don't assume. Don't hide confusion. Surface tradeoffs.
+
+- State assumptions explicitly. If uncertain, ask rather than guess.
+- Present multiple interpretations. Don't pick silently when ambiguity exists.
+- Push back when warranted. If a simpler approach exists, say so.
+- Stop when confused. Name what's unclear and ask for clarification.
+
+### 2. Simplicity First
+
+Minimum code that solves the problem. Nothing speculative.
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If 200 lines could be 50, rewrite it.
+
+The test: would a senior engineer say this is overcomplicated? If yes, simplify.
+
+### 3. Surgical Changes
+
+Touch only what you must. Clean up only your own mess.
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it. Don't delete it.
+
+When your changes create orphans:
+
+- Remove imports, variables, and functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+
+Define success criteria. Loop until verified.
+
+Transform imperative tasks into verifiable goals:
+
+| Instead of... | Transform to... |
+|---|---|
+| "Add validation" | "Write tests for invalid inputs, then make them pass" |
+| "Fix the bug" | "Write a test that reproduces it, then make it pass" |
+| "Refactor X" | "Ensure tests pass before and after" |
+
+For multi-step tasks, state a brief plan:
+
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+
+Strong success criteria let the LLM loop independently. Weak criteria ("make it work") require constant clarification.
+
 ## Project Structure
 
 ```
@@ -133,15 +194,18 @@ Jobs with "graduate" / "grad program" / "grad programme" in the title are filter
 - **Vercel project name:** thisisforbenseyesonly
 - **Vercel root directory:** `web`
 - **Framework preset:** Next.js
-- Pushing to `main` automatically deploys to Vercel.
+- **Branches:** `dev` auto-deploys to dev.petespostings.com, `main` auto-deploys to petespostings.com.
+- Both sites share the same Vercel environment variables (Postgres, Redis, email, SMS) unless Preview gets its own values. Crons on the dev build run against live data.
 
 ### Workflow for making changes
 
 1. Pete asks for a change
-2. Claude makes the change locally
+2. Claude makes the change locally on the `dev` branch
 3. Pete previews at http://localhost:3000 (dev server must be running)
 4. Pete approves and asks Claude to push
-5. Claude commits and pushes to GitHub — Vercel auto-deploys
+5. Claude commits and pushes `dev` to GitHub — Vercel deploys to dev.petespostings.com
+6. Pete checks the dev site and asks Claude to go live
+7. Claude merges `dev` into `main` and pushes — Vercel deploys to petespostings.com
 
 ### Running the dev server
 
@@ -150,10 +214,17 @@ export PATH="$HOME/local/node/bin:$PATH"
 cd web && npm run dev    # starts at http://localhost:3000
 ```
 
-### Pushing changes live
+### Pushing to dev
 
 ```bash
+git checkout dev
 git add <files> && git commit -m "message" && git push
+```
+
+### Going live
+
+```bash
+git checkout main && git merge --ff-only dev && git push && git checkout dev
 ```
 
 ## Branding

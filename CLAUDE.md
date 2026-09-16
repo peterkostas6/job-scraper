@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pete's Postings — a job board that scrapes analyst and intern-level job listings from 8 major banks and displays them in a web app. Has two interfaces: a Python CLI scraper that saves to CSV, and a Next.js web app with subscriptions, notifications, and a Recent tab. The user is a first-time coder — explain concepts clearly and avoid assumptions about prior knowledge.
 
+## Design System Skill
+
+For ANY client-side work in `web/app` — new sections, components, CSS, or a request to make the site look cleaner or more consistent — reference `.claude/skills/petes-postings-design-system/`. It holds the design tokens, type scale, and component specs (buttons, badges, inputs, cards, job rows, nav, sidebar, modals, banners, states, icons) with correct/incorrect examples drawn from `globals.css`. Reuse an existing class before adding CSS; take every color, radius, and shadow from the skill's scales.
+
 ## Engineering Framework
 
 ### 1. Think Before Coding

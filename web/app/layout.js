@@ -46,6 +46,9 @@ export const metadata = {
     index: true,
     follow: true,
   },
+  other: {
+    "deploy-test": "round-1",
+  },
 };
 
 export default function RootLayout({ children }) {

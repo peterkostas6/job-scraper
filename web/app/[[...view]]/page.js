@@ -354,8 +354,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
         <p className="spec-intro">
           Banking role postings can surprise you at random hours across dozens of banks, then get pulled
-          again within days. If you&rsquo;re checking one site at a time between classes, you&rsquo;re
-          already behind.
+          again within days. If you&rsquo;re checking one site at a time, you&rsquo;re already behind.
         </p>
         <dl className="spec-sheet">
           <div className="spec-row">

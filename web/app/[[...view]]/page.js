@@ -280,21 +280,24 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
   const hoveredRow = animStep <= 4 ? animStep : -1;
 
-  // Stat-Led reveal: tick the hero figure from 0 to the live count over ~500ms.
+  // Stat-Led reveal: tick the hero figure from 0 to the live count over ~2.2s, then pop it.
   const hasCount = last48hCount > 0;
   const [shownCount, setShownCount] = useState(0);
+  const [countDone, setCountDone] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);
   useEffect(() => {
     if (!hasCount) return;
+    setCountDone(false);
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { setShownCount(last48hCount); return; }
+    if (reduce) { setShownCount(last48hCount); setCountDone(true); return; }
     const start = performance.now();
     let raf;
     const tick = (now) => {
-      const t = Math.min(1, (now - start) / 500);
+      const t = Math.min(1, (now - start) / 2200);
       const eased = 1 - Math.pow(1 - t, 3);
       setShownCount(Math.round(last48hCount * eased));
       if (t < 1) raf = requestAnimationFrame(tick);
+      else setCountDone(true);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
@@ -326,7 +329,13 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         </SignUpButton>
         <p className="hero-photo-links">
           <button className="hero-photo-link tnum" onClick={onBrowse}>
-            {hasCount ? `${shownCount} new roles in the last 48 hours` : `${BANK_COUNT} bank career sites, refreshed every 5 minutes`}
+            {hasCount ? (
+              <>
+                <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> new roles in the last 48 hours
+              </>
+            ) : (
+              `${BANK_COUNT} bank career sites, refreshed every 5 minutes`
+            )}
           </button>
           <span className="hero-photo-dot" aria-hidden="true">&middot;</span>
           <Link href="/pricing" className="hero-photo-link">See pricing</Link>
@@ -339,7 +348,9 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       {/* STATS · T4 strip, real numbers only */}
       <section className="stat-strip" aria-label="Live numbers">
         <div className="stat">
-          <p className="stat-num tnum">{hasCount ? shownCount : BANK_COUNT}</p>
+          <p className="stat-num tnum">
+            {hasCount ? <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> : BANK_COUNT}
+          </p>
           <p className="stat-label">{hasCount ? "new roles in the last 48 hours" : "bank career sites tracked"}</p>
         </div>
         <div className="stat">

@@ -388,6 +388,18 @@ nav {
 .hero-photo-link:hover { color: var(--cream); text-decoration-color: var(--cream); }
 .hero-photo-link:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--cream-25); border-radius: 4px; }
 
+/* Live count reveal: pops green once the tick-up animation lands on the real number. */
+.count-pop { display: inline-block; }
+.count-pop-done {
+  color: var(--green);
+  animation: count-pop-anim 480ms var(--ease-out);
+}
+@keyframes count-pop-anim {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
 /* Stat strip · T4, three up, hairlines between */
 .stat-strip {
   display: grid;

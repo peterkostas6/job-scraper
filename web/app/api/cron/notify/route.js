@@ -187,6 +187,11 @@ export async function GET(request) {
   }
 
   const runAt = new Date();
+  // ?dryRun=1 runs the full pipeline but writes nothing and sends nothing.
+  // ?simulateNew=N (dry run only) treats the N most recent stored jobs as new so matching can be exercised.
+  const url = new URL(request.url);
+  const dryRun = url.searchParams.get("dryRun") === "1";
+  const simulateNew = dryRun ? Math.min(parseInt(url.searchParams.get("simulateNew") || "0", 10) || 0, 25) : 0;
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
@@ -240,6 +245,11 @@ export async function GET(request) {
       for (const job of allJobs) {
         if (!existingLinks.has(job.link)) newJobs.push(job);
       }
+      if (simulateNew > 0 && newJobs.length === 0) {
+        const { rows: recent } = await sql`SELECT link FROM jobs WHERE is_live = true ORDER BY detected_at DESC LIMIT ${simulateNew}`;
+        const recentLinks = new Set(recent.map((r) => r.link));
+        for (const job of allJobs) if (recentLinks.has(job.link)) newJobs.push(job);
+      }
     }
 
     // 2b. Verify new job links — skip any that are already dead (broken/closed on bank site).
@@ -261,7 +271,7 @@ export async function GET(request) {
 
     // 3. Insert verified new jobs into Postgres with detected_at = now
     const detectedAt = new Date();
-    for (const job of verifiedNewJobs) {
+    if (!dryRun) for (const job of verifiedNewJobs) {
       await sql`
         INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at, is_live)
         VALUES (
@@ -284,10 +294,10 @@ export async function GET(request) {
     // Scoped to succeededBankKeys only: if a bank's API call failed this run, its jobs are
     // left untouched rather than being wrongly marked dead just because we got no fresh data.
     const allCurrentLinks = allJobs.map((j) => j.link);
-    if (succeededBankKeys.length > 0) {
+    if (!dryRun && succeededBankKeys.length > 0) {
       await sql`UPDATE jobs SET is_live = false WHERE is_live = true AND bank_key = ANY(${succeededBankKeys})`;
     }
-    if (allCurrentLinks.length > 0) {
+    if (!dryRun && allCurrentLinks.length > 0) {
       await sql`UPDATE jobs SET is_live = true WHERE link = ANY(${allCurrentLinks})`;
     }
 
@@ -297,6 +307,8 @@ export async function GET(request) {
     let notifiedUsers = 0;
     let emailsSent = 0;
     let smsSent = 0;
+    const wouldNotify = [];
+    let eligibleUsers = 0;
 
     if (verifiedNewJobs.length > 0) {
       const telnyx = telnyxConfig();
@@ -316,6 +328,7 @@ export async function GET(request) {
           u.unsafeMetadata?.notifications?.enabled === true
       );
 
+      eligibleUsers = notifyUsers.length;
       for (const user of notifyUsers) {
         const prefs = user.unsafeMetadata.notifications;
         const prefBanks = prefs.banks || [];
@@ -333,6 +346,11 @@ export async function GET(request) {
         });
 
         if (matchingJobs.length === 0) continue;
+
+        if (dryRun) {
+          wouldNotify.push({ userId: user.id, jobs: matchingJobs.length, sms: !!(telnyx && prefs.smsEnabled && prefs.phoneNumber) });
+          continue;
+        }
 
         const sent = await sendUserNotification({
           resend,
@@ -361,7 +379,7 @@ export async function GET(request) {
     // 5. Owner summary — only when something happened (new jobs or a bank error).
     //    At a 5-minute cadence an email on every run would be 288 a day.
     const bankErrors = Object.values(bankStats).filter((b) => b.error).length;
-    if (verifiedNewJobs.length > 0 || bankErrors > 0) try {
+    if (!dryRun && (verifiedNewJobs.length > 0 || bankErrors > 0)) try {
       await resend.emails.send({
         from: "Pete's Postings <notifications@petespostings.com>",
         to: OWNER_EMAIL,
@@ -377,7 +395,12 @@ export async function GET(request) {
     }
 
     return Response.json({
-      message: "Done",
+      message: dryRun ? "Dry run — nothing written or sent" : "Done",
+      dryRun,
+      simulateNew,
+      bankStats,
+      eligibleUsers,
+      wouldNotify,
       totalJobs: allJobs.length,
       newJobs: verifiedNewJobs.length,
       skippedBrokenLinks,

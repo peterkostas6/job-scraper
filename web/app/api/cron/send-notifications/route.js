@@ -17,6 +17,8 @@ export async function GET(request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const dryRun = new URL(request.url).searchParams.get("dryRun") === "1";
+
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -83,17 +85,20 @@ export async function GET(request) {
         // Nothing to send for this user after filtering
         if (jobs.length === 0) continue;
 
+        if (dryRun) { emailsSent += email ? 1 : 0; continue; }
         const sent = await sendUserNotification({ resend, telnyx, email, firstName, prefs, jobs });
         if (sent.emailSent) emailsSent++;
         if (sent.smsSent) smsSent++;
       }
 
       // 4. Delete processed rows
-      await sql`DELETE FROM notification_queue WHERE id = ANY(${sentIds})`;
+      if (!dryRun) await sql`DELETE FROM notification_queue WHERE id = ANY(${sentIds})`;
     }
 
     return Response.json({
-      message: "Done",
+      message: dryRun ? "Dry run — nothing deleted or sent" : "Done",
+      dryRun,
+      queuedRows: rows.length,
       emailsSent,
       smsSent,
       totalJobsSent: rows.length,

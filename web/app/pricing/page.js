@@ -193,7 +193,7 @@ export default function PricingPage() {
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           <div className="nav-center">
-            <Link href="/" className="nav-link">Browse Jobs</Link>
+            <Link href="/jobs" className="nav-link">Browse Jobs</Link>
           </div>
           <div className="nav-right">
             {isLoaded && (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
@@ -128,7 +128,7 @@ function AccountPromptModal({ onClose, last48hCount = 0 }) {
 
         <div className="modal-stagger" style={{ '--i': 0 }}>
           <div className="modal-prompt-icon">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
@@ -831,6 +831,21 @@ export default function Home() {
   const isSubscribed = user?.publicMetadata?.subscribed === true;
 
   const [activeBank, setActiveBank] = useState("jpmc");
+  // Keep ?bank= in sync on /jobs so a bank view can be linked to.
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.pathname !== "/jobs") return;
+    const b = new URLSearchParams(window.location.search).get("bank");
+    if (b && BANKS[b]) setActiveBank(b);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.pathname !== "/jobs") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("bank") !== activeBank) {
+      url.searchParams.set("bank", activeBank);
+      window.history.replaceState(null, "", url);
+    }
+  }, [activeBank]);
   const [jobType, setJobType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -845,16 +860,53 @@ export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [availableCategories, setAvailableCategories] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [viewingSaved, setViewingSaved] = useState(false);
-  const [viewNotifications, setViewNotifications] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", location: "" });
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
-  const [viewHome, setViewHome] = useState(true);
-  const [viewAbout, setViewAbout] = useState(false);
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
-  const [viewNewPostings, setViewNewPostings] = useState(false);
+
+  // ---- URL-driven views ----
+  // Each view has its own route. The flags below are derived from the pathname; the
+  // setView* functions keep the old call sites working by collecting the flags a handler
+  // sets, then pushing the matching route once the handler finishes.
+  const pathname = usePathname();
+  const VIEW_BY_PATH = { "/": "home", "/jobs": "browse", "/recent": "recent", "/saved": "saved", "/notifications": "notifications", "/about": "about" };
+  const routeView = VIEW_BY_PATH[pathname];
+  const view = routeView === "recent" && isLoaded && !isSignedIn ? "browse" : (routeView || "browse");
+  const viewHome = view === "home";
+  const viewAbout = view === "about";
+  const viewNewPostings = view === "recent";
+  const viewNotifications = view === "notifications";
+  const viewingSaved = view === "saved" || view === "notifications";
+
+  const pendingView = useRef(null);
+  function queueView(key, value) {
+    if (!pendingView.current) {
+      pendingView.current = { home: viewHome, about: viewAbout, recent: viewNewPostings, saved: viewingSaved, notifications: viewNotifications };
+      Promise.resolve().then(() => {
+        const f = pendingView.current;
+        pendingView.current = null;
+        const target = f.home ? "/" : f.about ? "/about" : f.recent ? "/recent" : f.notifications ? "/notifications" : f.saved ? "/saved" : "/jobs";
+        if (target !== pathname) router.push(target);
+      });
+    }
+    pendingView.current[key] = value;
+  }
+  const setViewHome = (v) => queueView("home", v);
+  const setViewAbout = (v) => queueView("about", v);
+  const setViewNewPostings = (v) => queueView("recent", v);
+  const setViewingSaved = (v) => queueView("saved", v);
+  const setViewNotifications = (v) => queueView("notifications", v);
+
+  // /recent is Pro-only: signed-out visitors land on the browse view and get the sign-up sheet.
+  useEffect(() => {
+    if (routeView === "recent" && isLoaded && !isSignedIn) {
+      router.replace("/jobs");
+      clerk.openSignUp();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeView, isLoaded, isSignedIn]);
   const [newPostingsData, setNewPostingsData] = useState({ last48h: [], thisWeek: [], last48hCount: 0, total: 0 });
   const [last48hCount, setLast48hCount] = useState(0);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
@@ -1079,6 +1131,8 @@ export default function Home() {
   const savedCount = [...bookmarks].filter((link) => filteredJobs.some((job) => job.link === link)).length;
   const isGatedBank = !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed);
 
+  if (!routeView) notFound();
+
   if (!isLoaded) {
     return (
       <div className="loading-state">
@@ -1091,31 +1145,27 @@ export default function Home() {
     <>
       <nav>
         <div className="nav-inner">
-          <span className="logo logo-link" onClick={() => { setViewHome(true); setViewAbout(false); setViewNewPostings(false); }}>
+          <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
             <svg className="logo-icon" width="30" height="30" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="8" fill="var(--navy)"/>
               <text x="16" y="23" textAnchor="middle" fontFamily="inherit" fontWeight="800" fontSize="20" fill="#fff">P</text>
             </svg>
             <span className="logo-text">Pete&rsquo;s Postings</span>
-          </span>
+          </Link>
           <div className="nav-center">
-            <button
-              className="nav-link"
-              onClick={() => { setViewHome(false); setViewAbout(false); setViewNewPostings(false); setViewingSaved(false); setViewNotifications(false); }}
-            >
-              Browse Jobs
-            </button>
-            <button
+            <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
+            <Link
+              href="/recent"
               className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
-              onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setViewHome(false); setViewAbout(false); setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); }}
+              onClick={(e) => { if (!isSignedIn) { e.preventDefault(); clerk.openSignUp(); } }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
               Recent Postings
-            </button>
-            <Link href="/pricing" className="nav-link" style={{ textDecoration: "none" }}>Pricing</Link>
-            <button className="nav-link" onClick={() => { setViewHome(false); setViewAbout(true); setViewNewPostings(false); }}>About</button>
+            </Link>
+            <Link href="/pricing" className="nav-link">Pricing</Link>
+            <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
           </div>
           <div className="nav-right">
             {isSignedIn && (
@@ -1149,14 +1199,14 @@ export default function Home() {
 
       {viewHome && !viewAbout && !viewNewPostings && (
         <HomePage
-          onBrowse={() => setViewHome(false)}
+          onBrowse={() => router.push("/jobs")}
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
         />
       )}
 
       {viewAbout && !viewNewPostings && (
-        <AboutPage onBrowse={() => { setViewAbout(false); setViewHome(false); }} />
+        <AboutPage onBrowse={() => router.push("/jobs")} />
       )}
 
       {isSignedIn && viewNewPostings && (

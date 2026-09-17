@@ -1154,6 +1154,12 @@ export default function Home() {
   const savedCount = [...bookmarks].filter((link) => filteredJobs.some((job) => job.link === link)).length;
   const isGatedBank = !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed);
 
+  // Homepage: the root background goes dark so overscroll above the hero shows navy, not cream.
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-dark-top", viewHome);
+    return () => document.documentElement.removeAttribute("data-dark-top");
+  }, [viewHome]);
+
   // Nav sits transparent over the dark homepage hero; frosts once the page scrolls.
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {

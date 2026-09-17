@@ -83,6 +83,8 @@
 }
 
 html, body { overflow-x: clip; }
+html { background: var(--cream); }
+html[data-dark-top] { background: var(--navy-deep); }
 
 button:focus-visible,
 a:focus-visible,

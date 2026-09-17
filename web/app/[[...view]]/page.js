@@ -351,11 +351,11 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* WHAT YOU GET · F3 spec sheet, problem-led */}
       <section className="spec">
-        <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh LinkedIn.</h2>
+        <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
         <p className="spec-intro">
-          Analyst and intern roles at {BANK_COUNT} banks go up at random hours across a dozen different
-          career pages, then get pulled again within days. If you&rsquo;re checking one site at a time
-          between classes, you&rsquo;re already behind.
+          Banking role postings can surprise you at random hours across dozens of banks, then get pulled
+          again within days. If you&rsquo;re checking one site at a time between classes, you&rsquo;re
+          already behind.
         </p>
         <dl className="spec-sheet">
           <div className="spec-row">

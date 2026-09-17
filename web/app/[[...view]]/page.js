@@ -349,6 +349,33 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
     <div className="homepage">
 
+      {/* WHAT YOU GET · F3 spec sheet, problem-led */}
+      <section className="spec">
+        <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh LinkedIn.</h2>
+        <p className="spec-intro">
+          Analyst and intern roles at {BANK_COUNT} banks go up at random hours across a dozen different
+          career pages, then get pulled again within days. If you&rsquo;re checking one site at a time
+          between classes, you&rsquo;re already behind.
+        </p>
+        <dl className="spec-sheet">
+          <div className="spec-row">
+            <dt>One feed</dt>
+            <dd className="spec-desc">Every analyst and intern posting from {BANK_COUNT} banks in one place, refreshed every 5 minutes — no more checking eight career sites by hand.</dd>
+            <dd className="spec-val tnum">Every 5 min</dd>
+          </div>
+          <div className="spec-row">
+            <dt>Alerts</dt>
+            <dd className="spec-desc">Get a text or email the second a role goes live at a bank you&rsquo;re watching, before it shows up on LinkedIn.</dd>
+            <dd className="spec-val">Text and email</dd>
+          </div>
+          <div className="spec-row">
+            <dt>Saved jobs</dt>
+            <dd className="spec-desc">Bookmark roles as you find them so you always know what you&rsquo;ve applied to and what&rsquo;s still open.</dd>
+            <dd className="spec-val">Free</dd>
+          </div>
+        </dl>
+      </section>
+
       {/* STATS · T4 strip, real numbers only */}
       <section className="stat-strip" aria-label="Live numbers">
         <div className="stat">
@@ -498,28 +525,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
             <p className="proof-attr"><strong>{t.name}</strong><br />{t.role}</p>
           </div>
         ))}
-      </section>
-
-      {/* WHAT YOU GET · F3 spec sheet */}
-      <section className="spec">
-        <h2 className="spec-title">What you get</h2>
-        <dl className="spec-sheet">
-          <div className="spec-row">
-            <dt>Alerts</dt>
-            <dd className="spec-desc">Get a text or email when a new role opens at a bank you follow, before it shows up on LinkedIn.</dd>
-            <dd className="spec-val">Text and email</dd>
-          </div>
-          <div className="spec-row">
-            <dt>Feed</dt>
-            <dd className="spec-desc">Every analyst and intern role across {BANK_COUNT} banks in one feed, newest first.</dd>
-            <dd className="spec-val tnum">Every 5 min</dd>
-          </div>
-          <div className="spec-row">
-            <dt>Saved jobs</dt>
-            <dd className="spec-desc">Bookmark roles across all banks and keep everything you&rsquo;ve applied to in one list.</dd>
-            <dd className="spec-val">Free</dd>
-          </div>
-        </dl>
       </section>
 
       {/* CLOSE · one button */}

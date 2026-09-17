@@ -358,7 +358,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         </p>
         <dl className="spec-sheet">
           <div className="spec-row">
-            <dt>One feed</dt>
+            <dt>One spot</dt>
             <dd className="spec-desc">We pull every analyst and intern posting directly from banks&rsquo; APIs — no more checking dozens of career sites by hand.</dd>
             <dd className="spec-val tnum">Every 5 min</dd>
           </div>
@@ -369,7 +369,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </div>
           <div className="spec-row">
             <dt>Alerts</dt>
-            <dd className="spec-desc">Get a text or email the second a role goes live at a bank you&rsquo;re watching, before it shows up on LinkedIn.</dd>
+            <dd className="spec-desc">Get a text or email the second a role goes live at a bank you&rsquo;re watching, customized to what you&rsquo;re looking for — before it shows up on LinkedIn.</dd>
             <dd className="spec-val">Text and email</dd>
           </div>
           <div className="spec-row">
@@ -1344,10 +1344,7 @@ export default function Home() {
       <nav className={viewHome && !scrolled ? "nav-on-dark" : ""}>
         <div className="nav-inner">
           <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
-            <svg className="logo-icon" width="30" height="30" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="var(--navy)"/>
-              <text x="16" y="23" textAnchor="middle" fontFamily="inherit" fontWeight="800" fontSize="20" fill="#fff">P</text>
-            </svg>
+            <img src="/logo-mark.png" alt="" className="logo-icon" width="22" height="28" />
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           <div className="nav-center">

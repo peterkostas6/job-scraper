@@ -156,6 +156,8 @@ nav {
 
 .logo-icon {
   display: block;
+  height: 28px;
+  width: auto;
 }
 
 .logo-text {

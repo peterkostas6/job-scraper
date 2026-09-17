@@ -1,6 +1,6 @@
 /* Hallmark · genre: atmospheric (hero) / modern-minimal (body) · macrostructure: Photographic · theme: studied-DNA (source: image, public reference; Pete's Postings tokens)
  * enrichment: E8 photo slot (public/hero.jpg) over E7 gradient + grain · nav: N1b, transparent-over-hero, frost-on-scroll · footer: Ft2
- * H6 knobs: image=full-bleed, caption=lower-left, text=overlaid centred · display: Instrument Serif roman (outlier, hero only) · T4 stat strip 3-up · F3 knobs: columns=3, rules=every row
+ * H6 knobs: image=full-bleed, caption=lower-left, text=overlaid centred · display: Inter 800, tight tracking (no outlier face) · T4 stat strip 3-up · F3 knobs: columns=3, rules=every row
  * T1 quote rows · T2 hairline wall · C3 typographic link · pre-emit critique: P4 H4 E4 S4 R4 V3
  * Scope: homepage + nav redesigned in place (hallmark redesign, single-page). App views untouched. */
 :root {
@@ -68,7 +68,6 @@
   --cream-80: rgba(250, 248, 245, 0.8);
   --cream-60: rgba(250, 248, 245, 0.6);
   --cream-25: rgba(250, 248, 245, 0.25);
-  --font-serif-stack: var(--font-serif), "Instrument Serif", Georgia, "Times New Roman", serif;
 
   /* Overlay */
   --scrim: rgba(30, 41, 59, 0.42);
@@ -316,12 +315,10 @@ nav {
 }
 
 .hero-photo-title {
-  font-family: var(--font-serif-stack);
-  font-weight: 400;
-  font-style: normal;
-  font-size: clamp(2.75rem, 6.6vw, 5.75rem);
-  line-height: 1.02;
-  letter-spacing: -0.015em;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 5.8vw, 5rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
   color: var(--cream);
   max-width: 16ch;
   min-width: 0;
@@ -333,10 +330,10 @@ nav {
   display: inline-block;
   background: var(--forest-blue);
   color: var(--white);
-  padding: 0 0.22em;
-  margin: 0 -0.05em;
-  border-radius: 0.12em;
-  line-height: 1.05;
+  padding: 0.02em 0.2em;
+  margin: 0 -0.04em;
+  border-radius: 0.14em;
+  line-height: 1.08;
 }
 
 .hero-photo-cta {

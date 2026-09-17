@@ -566,9 +566,9 @@ nav {
 /* What you get + demo · side by side on desktop */
 .spec-demo {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 3rem;
-  align-items: start;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 3.5rem;
+  align-items: center;
   padding: var(--space-2xl) 0 var(--space-3xl);
 }
 
@@ -580,6 +580,11 @@ nav {
 .spec-demo .app-demo {
   margin: 0;
   min-width: 0;
+  justify-self: center;
+}
+
+.spec-demo .app-preview {
+  max-width: 420px;
 }
 
 .spec-title {

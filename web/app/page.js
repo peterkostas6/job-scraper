@@ -78,46 +78,93 @@ function formatRelativeDate(effectiveTime, hasActualDate) {
 }
 
 // ---- ACCOUNT PROMPT MODAL ----
-function AccountPromptModal({ onClose }) {
+// Entrance: scrim fades, card rises + settles (280ms soft ease), content staggers in.
+// Exit: reverse over 180ms, then unmount. Esc closes. Body scroll is locked while open.
+function AccountPromptModal({ onClose, last48hCount = 0 }) {
+  const [closing, setClosing] = useState(false);
+  const primaryRef = useRef(null);
+
+  const close = () => {
+    if (closing) return;
+    setClosing(true);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(onClose, reduce ? 0 : 180);
+  };
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const t = setTimeout(() => primaryRef.current && primaryRef.current.focus(), 320);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const benefits = [
+    'SMS and email alerts when new positions open',
+    'Every posting from the last 48 hours, free',
+    'Save and track jobs across all banks',
+  ];
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="modal-overlay" data-state={closing ? 'closing' : 'open'} onClick={close}>
+      <div
+        className="modal-card modal-card-prompt"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="account-prompt-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="modal-close" onClick={close} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
         </button>
-        <div className="modal-prompt-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
+
+        <div className="modal-stagger" style={{ '--i': 0 }}>
+          <div className="modal-prompt-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
         </div>
-        <h2 className="modal-title">Don't miss the window</h2>
-        <p className="modal-subtitle">Banks fill roles within days of posting. Create an account to get notified the moment they go live.</p>
+
+        {last48hCount > 0 && (
+          <p className="modal-stat modal-stagger" style={{ '--i': 1 }}>
+            <span className="modal-stat-dot" aria-hidden="true" />
+            <strong className="tnum">{last48hCount}</strong>&nbsp;roles posted in the last 48 hours
+          </p>
+        )}
+
+        <h2 id="account-prompt-title" className="modal-title modal-stagger" style={{ '--i': 2 }}>Don&rsquo;t miss the window</h2>
+        <p className="modal-subtitle modal-stagger" style={{ '--i': 3 }}>
+          Banks fill roles within days of posting. Create a free account and get notified when they go live.
+        </p>
+
         <ul className="modal-benefits">
-          <li>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            SMS &amp; email alerts when new positions open
-          </li>
-          <li>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            See every posting from the last 48 hours — free
-          </li>
-          <li>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Save &amp; track jobs across all banks
-          </li>
+          {benefits.map((text, i) => (
+            <li key={text} className="modal-stagger" style={{ '--i': 4 + i }}>
+              <span className="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              {text}
+            </li>
+          ))}
         </ul>
-        <div className="modal-actions">
+
+        <div className="modal-actions modal-stagger" style={{ '--i': 7 }}>
           <SignUpButton mode="modal">
-            <button className="modal-cta-primary">Create Free Account</button>
+            <button className="modal-cta-primary" ref={primaryRef}>Create free account</button>
           </SignUpButton>
           <SignInButton mode="modal">
-            <button className="modal-cta-secondary">Sign In</button>
+            <button className="modal-cta-secondary">Sign in</button>
           </SignInButton>
         </div>
-        <button className="modal-dismiss-link" onClick={onClose}>Maybe later</button>
+        <button className="modal-dismiss-link modal-stagger" style={{ '--i': 8 }} onClick={close}>Maybe later</button>
       </div>
     </div>
   );
@@ -1796,7 +1843,7 @@ export default function Home() {
       </footer>
 
       {showAccountPrompt && !isSignedIn && !viewHome && (
-        <AccountPromptModal onClose={dismissAccountPrompt} />
+        <AccountPromptModal onClose={dismissAccountPrompt} last48hCount={last48hCount} />
       )}
     </>
   );

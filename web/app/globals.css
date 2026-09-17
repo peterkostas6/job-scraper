@@ -57,8 +57,17 @@
   /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-fast: 150ms;
   --dur-base: 200ms;
+  --dur-reveal: 280ms;
+  --dur-exit: 180ms;
+
+  /* Overlay */
+  --scrim: rgba(30, 41, 59, 0.42);
+  --highlight-neutral: #f5f5f5;
+  --shadow-modal: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 64px rgba(30, 41, 59, 0.22);
+  --ring: 0 0 0 4px var(--blue-20);
 }
 
 
@@ -691,6 +700,9 @@ nav {
   .demo-cursor-arrow, .demo-cursor-ripple, .demo-caret, .fade-in, .skeleton { animation: none !important; }
   .demo-ios-notif, .demo-toggle, .demo-toggle-knob { transition: none; }
   .spinner { animation-duration: 1.5s; }
+  .modal-overlay, .modal-overlay[data-state="closing"] { animation: modal-scrim-in 120ms linear both; }
+  .modal-card, .modal-overlay[data-state="closing"] .modal-card { animation: modal-scrim-in 120ms linear both; }
+  .modal-stagger { animation: none; }
 }
 
 .demo-notif-row {
@@ -2238,26 +2250,66 @@ footer {
 }
 
 /* ---- MODAL ---- */
+/* Overlay: scrim + blur fade in over the reveal duration. Exit reverses via data-state. */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  animation: modal-scrim-in var(--dur-reveal) var(--ease-reveal) both;
 }
 
+.modal-overlay[data-state="closing"] {
+  animation: modal-scrim-out var(--dur-exit) var(--ease-in-out) both;
+}
+
+/* Card: rise + settle. Coordinated opacity / transform / shadow tween (RA search-bar timing). */
 .modal-card {
   background: var(--white);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 2rem 1.75rem 1.75rem;
+  padding: 2rem 1.75rem 1.5rem;
   max-width: 400px;
   width: 100%;
   position: relative;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-modal);
+  animation: modal-card-in var(--dur-reveal) var(--ease-reveal) both;
+  will-change: transform, opacity;
+}
+
+.modal-overlay[data-state="closing"] .modal-card {
+  animation: modal-card-out var(--dur-exit) var(--ease-in-out) both;
+}
+
+/* Content: each block fades and rises 220ms, staggered 40ms apart after an 80ms lead. */
+.modal-stagger {
+  animation: modal-content-in 220ms var(--ease-reveal) both;
+  animation-delay: calc(80ms + var(--i, 0) * 40ms);
+}
+
+.modal-overlay[data-state="closing"] .modal-stagger {
+  animation: none;
+}
+
+@keyframes modal-scrim-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-scrim-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modal-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.975); box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(30,41,59,0.08); }
+  to   { opacity: 1; transform: none; box-shadow: var(--shadow-modal); }
+}
+@keyframes modal-card-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+@keyframes modal-content-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
 }
 
 .modal-card-wide {
@@ -2266,33 +2318,35 @@ footer {
 
 .modal-close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.25rem;
+  top: 0.875rem;
+  right: 0.875rem;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  border-radius: 4px;
-  transition: color 0.15s;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
-
-.modal-close:hover {
-  color: var(--text-secondary);
-}
+.modal-close:hover { background: var(--highlight-neutral); color: var(--text-primary); }
+.modal-close:active { opacity: 0.6; }
+.modal-close:focus-visible { outline: none; box-shadow: var(--ring); }
 
 .modal-prompt-icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   background: var(--blue-6);
+  box-shadow: inset 0 0 0 1px var(--blue-12);
   color: var(--forest-blue);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .modal-title {
@@ -2316,7 +2370,7 @@ footer {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0;
 }
 
 .modal-benefits li {
@@ -2331,6 +2385,59 @@ footer {
   color: var(--forest-blue);
   flex-shrink: 0;
 }
+
+/* Live-count chip · mini titling (10px, 0.08em) on a blue-6 pill */
+.modal-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--forest-blue);
+  background: var(--blue-6);
+  border: 1px solid var(--blue-12);
+  border-radius: 100px;
+  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+  margin-bottom: 0.9rem;
+}
+.modal-stat strong { font-weight: 700; }
+.modal-stat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-fill);
+}
+
+/* Benefit rows · check in an 18px round tile, hairline between rows */
+.modal-benefits li {
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--border);
+}
+.modal-benefits li:first-child { border-top: none; padding-top: 0; }
+.modal-check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--blue-8);
+  color: var(--forest-blue);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Buttons · Pete colors, RA state model: 4px ring on focus, press dips, disabled fades */
+.modal-cta-primary,
+.modal-cta-secondary {
+  transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out), box-shadow 140ms ease-out;
+}
+.modal-cta-primary:focus-visible,
+.modal-cta-secondary:focus-visible { outline: none; box-shadow: var(--ring); }
+.modal-cta-primary:active,
+.modal-cta-secondary:active { transform: translateY(1px); }
+.modal-cta-secondary:hover { background: var(--highlight-neutral); border-color: var(--border-strong); }
+.modal-dismiss-link:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 6px; }
 
 .modal-actions {
   display: flex;

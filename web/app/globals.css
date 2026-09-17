@@ -485,38 +485,24 @@ nav {
   color: var(--text-muted);
 }
 
-/* Sources · T2 hairline wall */
-.sources {
+/* Banks grid · live counts by bank */
+.banks-grid-section {
   padding: var(--space-xl) 0 var(--space-2xl);
   border-top: 1px solid var(--border);
 }
 
-.sources-title {
+.banks-grid-title {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--navy);
-  margin-bottom: var(--space-md);
+  margin-bottom: 0.3rem;
 }
 
-.logo-wall {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  border-top: 1px solid var(--border);
-  border-left: 1px solid var(--border);
-}
-
-.logo-wall li {
-  display: flex;
-  align-items: center;
-  min-height: 3.5rem;
-  padding: var(--space-xs) var(--space-sm);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
-  font-weight: 600;
+.banks-grid-desc {
+  font-size: 0.95rem;
   color: var(--text-secondary);
+  margin-bottom: var(--space-md);
 }
 
 /* C3 typographic link */
@@ -578,8 +564,20 @@ nav {
 .proof-attr strong { color: var(--navy); font-weight: 600; }
 
 /* What you get · F3 spec sheet */
-.spec {
+.spec-demo {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
   padding: var(--space-2xl) 0 var(--space-3xl);
+}
+
+.spec {
+  padding: 0;
+}
+
+.spec-demo .app-demo {
+  margin: 0;
 }
 
 .spec-title {
@@ -1184,12 +1182,27 @@ nav {
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 8px;
+  text-decoration: none;
+  transition: border-color var(--dur-base) var(--ease-out);
 }
+.about-bank-card:hover { border-color: rgba(0,0,0,0.1); }
 
 .about-bank-name {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.about-bank-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.banks-grid-explore-card .about-bank-name,
+.banks-grid-explore-card svg {
+  color: var(--forest-blue);
+  stroke: var(--forest-blue);
 }
 
 .about-bank-status {
@@ -3774,6 +3787,7 @@ footer {
     padding: calc(var(--space-2xl) + 56px) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
   }
   .hero-photo-title { max-width: 12ch; }
+  .spec-demo { grid-template-columns: 1fr; gap: 2rem; }
   .stat-strip { grid-template-columns: 1fr; gap: var(--space-md); }
   .stat { padding: 0; border-left: none; border-top: 1px solid var(--border); padding-top: var(--space-md); }
   .stat:first-child { border-top: none; padding-top: 0; }

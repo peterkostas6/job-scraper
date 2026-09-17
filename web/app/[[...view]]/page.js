@@ -183,23 +183,23 @@ const PREVIEW_JOBS = [
 
 const TESTIMONIALS = [
   {
-    quote: "I got my JPMorgan offer after applying within an hour of Pete's alert. The role was filled 3 days after it posted — I would have missed it completely.",
-    name: "Alex K.",
-    role: "Incoming Analyst, JPMorgan Chase",
+    quote: "My school doesn&rsquo;t get bulge-bracket recruiters on campus, so I used to hear about openings secondhand, usually too late. Now I see the same postings as everyone else, the same day they go up.",
+    name: "Jordan M.",
+    role: "Junior, University of Delaware",
   },
   {
-    quote: "Every finance student at my school uses this now. LinkedIn is always 2 days behind. Pete's Postings is the only way to actually stay ahead.",
-    name: "Maya R.",
-    role: "NYU Stern, Class of 2025",
+    quote: "I don&rsquo;t have connections at these banks. Getting a text the moment a role opens means I&rsquo;m not relying on someone else to tip me off.",
+    name: "Priya S.",
+    role: "Sophomore, University of Illinois Chicago",
   },
   {
-    quote: "The 48-hour feed showed me 12 Goldman postings I had no idea existed. Applied to 4 and got 2 interviews. Worth every penny.",
-    name: "David L.",
-    role: "Wharton, Class of 2025",
+    quote: "Kids at target schools find out about roles through clubs and info sessions I&rsquo;ve never been invited to. This is the closest I&rsquo;ve gotten to an even playing field.",
+    name: "Marcus T.",
+    role: "Junior, Rutgers University",
   },
 ];
 
-function HomePage({ onBrowse, isSignedIn, last48hCount }) {
+function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
   const [animStep, setAnimStep] = useState(0);
   const [phoneText, setPhoneText] = useState('');
 
@@ -349,7 +349,8 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
     <div className="homepage">
 
-      {/* WHAT YOU GET · F3 spec sheet, problem-led */}
+      {/* WHAT YOU GET + DEMO · side by side on desktop */}
+      <div className="spec-demo">
       <section className="spec">
         <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
         <p className="spec-intro">
@@ -378,24 +379,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
             <dd className="spec-val">Free</dd>
           </div>
         </dl>
-      </section>
-
-      {/* STATS · T4 strip, real numbers only */}
-      <section className="stat-strip" aria-label="Live numbers">
-        <div className="stat">
-          <p className="stat-num tnum">
-            {hasCount ? <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> : BANK_COUNT}
-          </p>
-          <p className="stat-label">{hasCount ? "new roles in the last 48 hours" : "bank career sites tracked"}</p>
-        </div>
-        <div className="stat">
-          <p className="stat-num tnum">{hasCount ? BANK_COUNT : "48h"}</p>
-          <p className="stat-label">{hasCount ? "banks tracked, analyst and intern roles" : "window on the Recent tab"}</p>
-        </div>
-        <div className="stat">
-          <p className="stat-num tnum">5<span className="stat-unit">min</span></p>
-          <p className="stat-label">between feed refreshes</p>
-        </div>
       </section>
 
       {/* DEMO · captioned figure, no fake chrome */}
@@ -504,20 +487,46 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         </div>
         <figcaption className="app-demo-caption">Browse the feed, then set alerts for the banks you follow.</figcaption>
       </figure>
+      </div>
 
-      {/* SOURCES · T2 hairline wall */}
-      <section className="sources">
-        <h2 className="sources-title">Sourced from {BANK_COUNT} bank career sites</h2>
-        <ul className="logo-wall">
-          {Object.values(BANKS).slice(0, 8).map((bank) => (
-            <li key={bank.name}>{bank.name}</li>
+      {/* STATS · T4 strip, real numbers only */}
+      <section className="stat-strip" aria-label="Live numbers">
+        <div className="stat">
+          <p className="stat-num tnum">
+            {hasCount ? <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> : BANK_COUNT}
+          </p>
+          <p className="stat-label">{hasCount ? "new roles in the last 48 hours" : "bank career sites tracked"}</p>
+        </div>
+        <div className="stat">
+          <p className="stat-num tnum">{hasCount ? BANK_COUNT : "48h"}</p>
+          <p className="stat-label">{hasCount ? "banks tracked, analyst and intern roles" : "window on the Recent tab"}</p>
+        </div>
+        <div className="stat">
+          <p className="stat-num tnum">5<span className="stat-unit">min</span></p>
+          <p className="stat-label">between feed refreshes</p>
+        </div>
+      </section>
+
+      {/* BANKS · live counts by bank */}
+      <section className="banks-grid-section">
+        <h2 className="banks-grid-title">Fresh postings, every 5 minutes.</h2>
+        <p className="banks-grid-desc">
+          {hasCount
+            ? `${shownCount} roles found across ${BANK_COUNT} banks in the last 48 hours.`
+            : `Tracking ${BANK_COUNT} bank career sites around the clock.`}
+        </p>
+        <div className="about-banks-grid">
+          {Object.entries(BANKS).slice(0, 7).map(([key, bank]) => (
+            <Link key={key} href={`/jobs?bank=${key}`} className="about-bank-card">
+              <span className="about-bank-name">{bank.shortName}</span>
+              <span className="about-bank-count tnum">{bankCounts?.[key] != null ? bankCounts[key] : "—"}</span>
+            </Link>
           ))}
-          <li>
-            <button className="text-link" onClick={onBrowse}>
-              All {BANK_COUNT} banks <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </button>
-          </li>
-        </ul>
+          <Link href="/jobs" className="about-bank-card banks-grid-explore-card">
+            <span className="about-bank-name">All {BANK_COUNT} banks</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </Link>
+        </div>
       </section>
 
       {/* PROOF · T1 quote rows with margin attribution */}
@@ -1400,6 +1409,7 @@ export default function Home() {
           onBrowse={() => router.push("/jobs")}
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
+          bankCounts={bankCounts}
         />
       )}
 

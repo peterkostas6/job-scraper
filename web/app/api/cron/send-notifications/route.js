@@ -1,10 +1,10 @@
-// POST /api/cron/send-notifications — reads notification_queue, sends batched email + SMS, clears rows
-// Only sends if there are new jobs queued. No "nothing found" emails.
-// Secured with CRON_SECRET header. Triggered at 14 UTC and 21 UTC daily.
+// GET /api/cron/send-notifications — retry sweep. The detection cron sends immediately;
+// anything that failed to deliver lands in notification_queue and is retried here every 15 minutes.
+// Secured with CRON_SECRET header.
 import { Resend } from "resend";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
-import { buildEmailHtml } from "@/lib/notif-helpers";
+import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -20,9 +20,7 @@ export async function GET(request) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const telnyxApiKey = process.env.TELNYX_API_KEY;
-    const telnyxFrom = process.env.TELNYX_PHONE_NUMBER;
-    const telnyxEnabled = telnyxApiKey && telnyxFrom;
+    const telnyx = telnyxConfig();
 
     // 1. Fetch all queued rows
     const { rows } = await sql`
@@ -85,43 +83,9 @@ export async function GET(request) {
         // Nothing to send for this user after filtering
         if (jobs.length === 0) continue;
 
-        // Send email
-        if (email) {
-          try {
-            await resend.emails.send({
-              from: "Pete's Postings <notifications@petespostings.com>",
-              to: email,
-              subject: `${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} on Pete's Postings`,
-              html: buildEmailHtml(jobs, firstName),
-            });
-            emailsSent++;
-          } catch (emailErr) {
-            console.error(`Failed to email ${email}:`, emailErr);
-          }
-        }
-
-        // Send SMS if enabled
-        if (telnyxEnabled && prefs.smsEnabled && prefs.phoneNumber) {
-          try {
-            const jobLines = jobs.slice(0, 3).map((j) => `• ${j.title} @ ${j.bank}`).join("\n");
-            const more = jobs.length > 3 ? `\n+ ${jobs.length - 3} more` : "";
-            const text = `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}\n\npetespostings.com\nReply STOP to unsubscribe`;
-
-            const resp = await fetch("https://api.telnyx.com/v2/messages", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${telnyxApiKey}`,
-              },
-              body: JSON.stringify({ from: telnyxFrom, to: prefs.phoneNumber, text }),
-            });
-            if (resp.ok) smsSent++;
-            else console.error(`SMS failed for ${prefs.phoneNumber}:`, await resp.text());
-          } catch (smsErr) {
-            console.error(`Failed to SMS ${prefs.phoneNumber}:`, smsErr);
-          }
-        }
-
+        const sent = await sendUserNotification({ resend, telnyx, email, firstName, prefs, jobs });
+        if (sent.emailSent) emailsSent++;
+        if (sent.smsSent) smsSent++;
       }
 
       // 4. Delete processed rows

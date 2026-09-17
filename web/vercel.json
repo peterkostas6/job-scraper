@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/notify",
-      "schedule": "*/30 * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/send-notifications",
-      "schedule": "0 14,21 * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/validate-saved-jobs",

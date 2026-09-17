@@ -1,10 +1,12 @@
-// GET /api/cron/notify — polls all bank APIs every 30 mins, detects new jobs, queues notifications
+// GET /api/cron/notify — polls all bank APIs every 5 mins, detects new jobs, and notifies matching users immediately.
+// Failed sends land in notification_queue for the 15-minute retry sweep (send-notifications).
 // Uses Postgres jobs table as the dedup source of truth (no Redis dependency).
 // Sends an owner summary email to pete@petespostings.com after every run.
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
 import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead } from "@/lib/notif-helpers";
+import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -170,7 +172,7 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, ba
     </table>
 
     <p style="font-size:11px;color:#cbd5e1;margin:0;">
-      Pete's Postings owner alert — sent automatically every 30 minutes
+      Pete's Postings owner alert — sent when a run finds new jobs or a bank error
     </p>
   </div>
 </body>
@@ -289,11 +291,15 @@ export async function GET(request) {
       await sql`UPDATE jobs SET is_live = true WHERE link = ANY(${allCurrentLinks})`;
     }
 
-    // 4. Queue notifications for subscribed users (only when new jobs exist)
+    // 4. Notify subscribed users right away (one email + one SMS per user per run).
+    //    Anything that fails to send is queued for the retry sweep.
     let queued = 0;
     let notifiedUsers = 0;
+    let emailsSent = 0;
+    let smsSent = 0;
 
     if (verifiedNewJobs.length > 0) {
+      const telnyx = telnyxConfig();
       const client = await clerkClient();
       let allUsers = [];
       let offset = 0;
@@ -328,26 +334,41 @@ export async function GET(request) {
 
         if (matchingJobs.length === 0) continue;
 
-        for (const job of matchingJobs) {
-          await sql`
-            INSERT INTO notification_queue (user_id, job_link, job_title, job_bank, job_location, job_category)
-            VALUES (${user.id}, ${job.link}, ${job.title}, ${job.bank}, ${job.location || ""}, ${job.category || ""})
-          `;
-          queued++;
+        const sent = await sendUserNotification({
+          resend,
+          telnyx,
+          email: user.emailAddresses?.[0]?.emailAddress,
+          firstName: user.firstName || "",
+          prefs,
+          jobs: matchingJobs,
+        });
+        if (sent.emailSent) emailsSent++;
+        if (sent.smsSent) smsSent++;
+        if (sent.emailSent || sent.smsSent) notifiedUsers++;
+
+        if (sent.failed) {
+          for (const job of matchingJobs) {
+            await sql`
+              INSERT INTO notification_queue (user_id, job_link, job_title, job_bank, job_location, job_category)
+              VALUES (${user.id}, ${job.link}, ${job.title}, ${job.bank}, ${job.location || ""}, ${job.category || ""})
+            `;
+            queued++;
+          }
         }
-        notifiedUsers++;
       }
     }
 
-    // 5. Send owner summary email (always — so you can verify the cron is running)
-    try {
+    // 5. Owner summary — only when something happened (new jobs or a bank error).
+    //    At a 5-minute cadence an email on every run would be 288 a day.
+    const bankErrors = Object.values(bankStats).filter((b) => b.error).length;
+    if (verifiedNewJobs.length > 0 || bankErrors > 0) try {
       await resend.emails.send({
         from: "Pete's Postings <notifications@petespostings.com>",
         to: OWNER_EMAIL,
         subject:
           newJobs.length > 0
-            ? `[Cron] ${newJobs.length} new ${newJobs.length === 1 ? "job" : "jobs"} — ${formatTimestamp(runAt)}`
-            : `[Cron] No new jobs — ${formatTimestamp(runAt)}`,
+            ? `[Cron] ${newJobs.length} new ${newJobs.length === 1 ? "job" : "jobs"} · ${emailsSent} email, ${smsSent} SMS sent — ${formatTimestamp(runAt)}`
+            : `[Cron] ${bankErrors} bank ${bankErrors === 1 ? "error" : "errors"} — ${formatTimestamp(runAt)}`,
         html: buildOwnerSummaryHtml({ runAt, allJobs, newJobs: verifiedNewJobs, skippedBrokenLinks, bankStats, queued, notifiedUsers }),
       });
     } catch (emailErr) {
@@ -360,7 +381,10 @@ export async function GET(request) {
       totalJobs: allJobs.length,
       newJobs: verifiedNewJobs.length,
       skippedBrokenLinks,
-      queued,
+      notifiedUsers,
+      emailsSent,
+      smsSent,
+      queuedForRetry: queued,
     });
   } catch (err) {
     console.error("Cron notify error:", err);

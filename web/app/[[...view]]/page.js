@@ -331,7 +331,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         </p>
       </div>
       <p className="hero-photo-caption tnum">
-        {hasCount ? `${shownCount} new roles in the last 48 hours` : `${BANK_COUNT} bank career sites, refreshed every 30 minutes`}
+        {hasCount ? `${shownCount} new roles in the last 48 hours` : `${BANK_COUNT} bank career sites, refreshed every 5 minutes`}
       </p>
     </section>
 
@@ -348,7 +348,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           <p className="stat-label">{hasCount ? "banks tracked, analyst and intern roles" : "window on the Recent tab"}</p>
         </div>
         <div className="stat">
-          <p className="stat-num tnum">30<span className="stat-unit">min</span></p>
+          <p className="stat-num tnum">5<span className="stat-unit">min</span></p>
           <p className="stat-label">between feed refreshes</p>
         </div>
       </section>
@@ -498,7 +498,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           <div className="spec-row">
             <dt>Feed</dt>
             <dd className="spec-desc">Every analyst and intern role across {BANK_COUNT} banks in one feed, newest first.</dd>
-            <dd className="spec-val tnum">Every 30 min</dd>
+            <dd className="spec-val tnum">Every 5 min</dd>
           </div>
           <div className="spec-row">
             <dt>Saved jobs</dt>
@@ -1714,7 +1714,7 @@ export default function Home() {
                     <div>
                       <p className="welcome-title">Welcome to Pete's Postings</p>
                       <p className="welcome-desc">
-                        Live postings from 7 bulge bracket banks. Hit <strong>⚡ Recent</strong> to see everything posted in the last 7 days — or upgrade to Pro for SMS &amp; email alerts the moment a role goes live.
+                        Live postings from 20 banks. Hit <strong>⚡ Recent</strong> to see everything posted in the last 7 days — or upgrade to Pro for SMS &amp; email alerts the moment a role goes live.
                       </p>
                     </div>
                     <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>
@@ -1851,7 +1851,7 @@ export default function Home() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Pulled live from bank career sites &middot; Updated every 30 minutes</p>
+            <p>Pulled live from bank career sites &middot; Checked every 5 minutes</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

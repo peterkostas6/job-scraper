@@ -411,7 +411,7 @@ export default function PricingPage() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Pulled live from bank career sites &middot; Updated every 30 minutes</p>
+            <p>Pulled live from bank career sites &middot; Checked every 5 minutes</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

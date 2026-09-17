@@ -94,8 +94,8 @@ job-scraper/
 │   │       ├── jobs-new/       # Recent tab — reads from Postgres jobs table (last 48h)
 │   │       ├── jobs-db/        # Deutsche Bank scraper (unrelated to Postgres "db")
 │   │       ├── cron/
-│   │       │   ├── notify/             # Hourly cron — detects new jobs, queues notifications
-│   │       │   └── send-notifications/ # 8-hour cron — sends batched email + SMS
+│   │       │   ├── notify/             # 5-minute cron — detects new jobs, sends alerts immediately
+│   │       │   └── send-notifications/ # 15-minute retry sweep — resends anything that failed
 │   │       └── admin/
 │   │           ├── init-db/        # One-time: creates Postgres tables
 │   │           └── migrate-jobs/   # One-time: copies Redis job-first-seen → Postgres
@@ -132,16 +132,13 @@ Shows **all currently active** analyst and intern job listings across all 8 bank
 ### Recent tab (`/api/jobs-new` → Postgres `jobs` table)
 Shows only jobs detected **within the last 48 hours** (Pro subscribers only). Reads from the Postgres `jobs` table. No "Earlier This Week" section — just the last 48 hours. The `jobs` table is a permanent historical record; jobs never get deleted.
 
-### Hourly cron (`/api/cron/notify`)
-Runs every hour. Detects new jobs by comparing current bank API results against Redis `seen-job-links`. For each new job:
-1. Writes to Redis `job-first-seen` (legacy, kept for fallback)
-2. **Inserts into Postgres `jobs` table** — powers the Recent tab
-3. For each subscribed user whose preferences (bank + job type) match: inserts into `notification_queue`
+### Detection cron (`/api/cron/notify`)
+Runs every 5 minutes. Fetches all 20 bank routes in parallel, compares links against the Postgres `jobs` table, verifies new links are not already dead, inserts them (powers the Recent tab), and marks removed jobs `is_live = false`. Then, for every subscribed user whose preferences match, it **sends one email and one SMS right away** through `lib/notif-send.js`. If a channel fails to deliver, the jobs are written to `notification_queue` for the retry sweep. The owner summary email goes to Pete only when a run finds new jobs or a bank error.
 
-Skips jobs posted more than 7 days ago (stale jobs that somehow appear new after a Redis wipe).
+Skips jobs posted more than 7 days ago (stale jobs that somehow appear new after a wipe).
 
-### 8-hour send cron (`/api/cron/send-notifications`)
-Runs at midnight, 8am, 4pm UTC. Reads all rows from `notification_queue`, groups by user, sends **one email + one SMS per user** with all accumulated matching jobs since the last send, then deletes those rows.
+### Retry sweep (`/api/cron/send-notifications`)
+Runs every 15 minutes. Drains `notification_queue`, keeps only jobs still live and inside the 48-hour window, and resends per user with the same shared sender. Rows are deleted after the sweep. Under normal conditions the queue is empty.
 
 ### Notification preferences
 Users set preferences in their dashboard: banks (multi-select), job type (analyst / internship / all), SMS enabled + phone number. The hourly cron filters new jobs against these preferences before queuing. Only jobs matching a user's preferences trigger a notification.
@@ -185,8 +182,10 @@ Two tables:
 - `job-first-seen` — hash of link → job metadata with `detectedAt` (legacy, kept alongside Postgres)
 
 ### Cron schedules (vercel.json)
-- `notify`: `0 * * * *` — top of every hour
-- `send-notifications`: `0 */8 * * *` — every 8 hours
+- `notify`: `*/5 * * * *` — every 5 minutes
+- `send-notifications`: `*/15 * * * *` — every 15 minutes (retry sweep)
+- `validate-saved-jobs`: `*/30 * * * *`
+- Vercel runs crons on the production deployment only, so the dev site never sends alerts.
 
 ### Graduate program filter
 Jobs with "graduate" / "grad program" / "grad programme" in the title are filtered out of both the browse dashboard and notifications (not analyst/intern level).

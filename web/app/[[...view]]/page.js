@@ -1173,6 +1173,148 @@ export default function Home() {
     return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
   }, []);
 
+  // ---- Sidebar (shared by the browse and recent views) ----
+  const BULGE = ["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays"];
+  const bankQuery = bankSearch.trim().toLowerCase();
+  const matchesBank = (bank) => !bankQuery || bank.name.toLowerCase().includes(bankQuery) || bank.shortName.toLowerCase().includes(bankQuery);
+  // Keep source order, but sink banks with zero open roles to the end of their group.
+  const orderBanks = (keys) => {
+    const known = keys.filter((k) => bankCounts[k] === undefined || bankCounts[k] > 0);
+    const empty = keys.filter((k) => bankCounts[k] === 0);
+    return [...known, ...empty];
+  };
+  const bankGroups = bankQuery
+    ? [{ label: null, keys: Object.keys(BANKS).filter((k) => matchesBank(BANKS[k])) }]
+    : [
+        { label: "Bulge bracket", keys: orderBanks(BULGE) },
+        { label: "More banks", keys: orderBanks(Object.keys(BANKS).filter((k) => !BULGE.includes(k))) },
+      ];
+  const totalOpen = Object.values(bankCounts).reduce((sum, c) => sum + c, 0);
+  const countsLoaded = Object.keys(bankCounts).length;
+
+  const renderBankRow = (key) => {
+    const bank = BANKS[key];
+    const needsAuth = !FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed);
+    const count = bankCounts[key];
+    const isActive = activeBank === key && !viewingSaved && !viewNewPostings;
+    return (
+      <button
+        key={key}
+        className={`sidebar-item${isActive ? " sidebar-item-active" : ""}${needsAuth ? " sidebar-item-locked" : ""}${count === 0 ? " sidebar-item-empty" : ""}`}
+        onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}
+        aria-current={isActive ? "page" : undefined}
+      >
+        <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
+        {needsAuth ? (
+          <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        ) : count === undefined ? (
+          <span className="sidebar-count sidebar-count-pending" aria-label="Loading">&middot;&middot;&middot;</span>
+        ) : (
+          <span className="sidebar-count tnum">{count}</span>
+        )}
+      </button>
+    );
+  };
+
+  const sidebar = (
+    <aside className="sidebar" aria-label="Banks and Pro features">
+      <div className="sidebar-header">
+        <span>Banks</span>
+        {countsLoaded > 0 && <span className="sidebar-total tnum">{totalOpen} open</span>}
+      </div>
+      <div className="bank-search-wrap">
+        <svg className="bank-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          className="bank-search-input"
+          type="text"
+          placeholder="Find a bank"
+          aria-label="Find a bank"
+          value={bankSearch}
+          onChange={(e) => setBankSearch(e.target.value)}
+        />
+        {bankSearch && (
+          <button className="bank-search-clear" onClick={() => setBankSearch("")} aria-label="Clear">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        )}
+      </div>
+
+      <div className="sidebar-banks">
+        {bankGroups.map((group) => (
+          <div key={group.label || "results"} className="sidebar-group">
+            {group.label && <div className="sidebar-group-label">{group.label}</div>}
+            {group.keys.length === 0 ? (
+              <p className="sidebar-empty">No bank matches &ldquo;{bankSearch.trim()}&rdquo;</p>
+            ) : group.keys.map(renderBankRow)}
+          </div>
+        ))}
+      </div>
+
+      <div className="sidebar-divider" />
+      <div className="sidebar-header">
+        <span>Pro</span>
+        {!isSubscribed && <Link href="/pricing" className="sidebar-pro-pill">Upgrade</Link>}
+      </div>
+      <button
+        className={`sidebar-item${viewNewPostings ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        onClick={() => {
+          if (!isSubscribed) { router.push("/pricing"); return; }
+          setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
+        }}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          Recent postings
+        </span>
+        {!isSubscribed ? (
+          last48hCount > 0 ? <span className="sidebar-count sidebar-count-teaser tnum">{last48hCount} new</span> : <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        ) : last48hCount > 0 ? <span className="sidebar-count tnum">{last48hCount}</span> : null}
+      </button>
+      <button
+        className={`sidebar-item${viewingSaved && !viewNotifications ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        onClick={() => {
+          if (!isSignedIn) { clerk.openSignUp(); return; }
+          if (!isSubscribed) { setViewingSaved(true); setViewNotifications(false); return; }
+          setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+        }}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved && !viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Saved jobs
+        </span>
+        {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : savedJobs.length > 0 && <span className="sidebar-count tnum">{savedJobs.length}</span>}
+      </button>
+      <button
+        className={`sidebar-item${viewNotifications ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        onClick={() => {
+          if (!isSignedIn) { clerk.openSignUp(); return; }
+          if (!isSubscribed) { setViewNotifications(true); setViewingSaved(true); return; }
+          setViewNotifications(true); setViewingSaved(true);
+        }}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifications
+        </span>
+        {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
+      </button>
+      <span className="sidebar-scroll-arrow" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </span>
+    </aside>
+  );
+
   if (!routeView) notFound();
 
   if (!isLoaded) {
@@ -1305,108 +1447,7 @@ export default function Home() {
             </div>
           </div>
           {/* Sidebar — same as normal view */}
-          <aside className="sidebar">
-            <div className="sidebar-header">
-              Banks
-              {Object.keys(bankCounts).length > 0 && (
-                <span style={{ color: "#94a3b8", fontSize: "0.7rem", fontWeight: 400, marginLeft: "0.375rem" }}>
-                  {Object.values(bankCounts).reduce((sum, c) => sum + c, 0)}
-                </span>
-              )}
-            </div>
-            <div className="bank-search-wrap">
-              <svg className="bank-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                className="bank-search-input"
-                type="text"
-                placeholder="Filter banks..."
-                value={bankSearch}
-                onChange={(e) => setBankSearch(e.target.value)}
-              />
-            </div>
-            <div className="banks-scroll">
-              {Object.entries(BANKS)
-                .filter(([, bank]) => bank.name.toLowerCase().includes(bankSearch.toLowerCase()))
-                .map(([key, bank]) => (
-                  <button
-                    key={key}
-                    className="sidebar-item"
-                    onClick={() => {
-                      setViewNewPostings(false);
-                      setViewingSaved(false);
-                      setViewNotifications(false);
-                      setActiveBank(key);
-                      setViewHome(false);
-                    }}
-                  >
-                    <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
-                    {bankCounts[key] !== undefined && <span className="sidebar-count">{bankCounts[key]}</span>}
-                  </button>
-                ))}
-            </div>
-            <div className="sidebar-divider" />
-            <div className="sidebar-header">Pro Features</div>
-            <button className="sidebar-item sidebar-item-active">
-              <span className="sidebar-saved-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                </svg>
-                Recent Postings
-              </span>
-              {newPostingsData.total > 0 && <span className="sidebar-count">{newPostingsData.total}</span>}
-            </button>
-            <button
-              className={`sidebar-item ${!isSubscribed ? "sidebar-item-locked" : ""}`}
-              onClick={() => {
-                if (!isSignedIn) { clerk.openSignUp(); return; }
-                setViewNewPostings(false);
-                setViewingSaved(true);
-                setViewNotifications(false);
-                setViewHome(false);
-              }}
-            >
-              <span className="sidebar-saved-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                </svg>
-                Saved Jobs
-              </span>
-              {!isSubscribed ? (
-                <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              ) : savedJobs.length > 0 && <span className="sidebar-count">{savedJobs.length}</span>}
-            </button>
-            <button
-              className={`sidebar-item ${!isSubscribed ? "sidebar-item-locked" : ""}`}
-              onClick={() => {
-                if (!isSignedIn) { clerk.openSignUp(); return; }
-                setViewNewPostings(false);
-                setViewingSaved(true);
-                setViewNotifications(true);
-                setViewHome(false);
-              }}
-            >
-              <span className="sidebar-saved-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                Notifications
-              </span>
-              {!isSubscribed ? (
-                <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              ) : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
-            </button>
-            <span className="sidebar-scroll-arrow" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </span>
-          </aside>
+          {sidebar}
 
           <main className="content">
             <div className="new-postings-header">
@@ -1484,125 +1525,7 @@ export default function Home() {
             </div>
           </div>
           {/* SIDEBAR */}
-          <aside className="sidebar">
-            <div className="sidebar-header">
-              Banks
-              {Object.keys(bankCounts).length > 0 && (
-                <span style={{ color: "#94a3b8", fontSize: "0.7rem", fontWeight: 400, marginLeft: "0.375rem" }}>
-                  {Object.values(bankCounts).reduce((sum, c) => sum + c, 0)}
-                </span>
-              )}
-            </div>
-            <div className="bank-search-wrap">
-              <svg className="bank-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                className="bank-search-input"
-                type="text"
-                placeholder="Filter banks..."
-                value={bankSearch}
-                onChange={(e) => setBankSearch(e.target.value)}
-              />
-            </div>
-            <div className="banks-scroll">
-              {Object.entries(BANKS)
-                .filter(([, bank]) => bank.name.toLowerCase().includes(bankSearch.toLowerCase()))
-                .map(([key, bank]) => {
-                  const needsAuth = !FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed);
-                  return (
-                    <button
-                      key={key}
-                      className={`sidebar-item ${activeBank === key && !viewingSaved && !viewNewPostings ? "sidebar-item-active" : ""} ${needsAuth ? "sidebar-item-locked" : ""}`}
-                      onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}
-                    >
-                      <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
-                      {needsAuth ? (
-                        <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                      ) : (
-                        bankCounts[key] !== undefined && <span className="sidebar-count">{bankCounts[key]}</span>
-                      )}
-                    </button>
-                  );
-                })}
-            </div>
-
-            <div className="sidebar-divider" />
-            <div className="sidebar-header">Pro Features</div>
-            <button
-              className={`sidebar-item ${!isSubscribed ? "sidebar-item-locked" : ""}`}
-              onClick={() => {
-                if (!isSubscribed) { router.push("/pricing"); return; }
-                setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
-              }}
-            >
-              <span className="sidebar-saved-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                </svg>
-                Most Recent Postings
-              </span>
-              {!isSubscribed ? (
-                last48hCount > 0 ? <span className="sidebar-count sidebar-count-teaser">{last48hCount}</span> : (
-                  <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                )
-              ) : last48hCount > 0 ? <span className="sidebar-count">{last48hCount}</span> : null}
-            </button>
-            <button
-              className={`sidebar-item ${viewingSaved && !viewNotifications ? "sidebar-item-active" : ""} ${!isSubscribed ? "sidebar-item-locked" : ""}`}
-              onClick={() => {
-                if (!isSignedIn) { clerk.openSignUp(); return; }
-                if (!isSubscribed) { setViewingSaved(true); setViewNotifications(false); return; }
-                setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
-              }}
-            >
-              <span className="sidebar-saved-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved && !viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                </svg>
-                Saved Jobs
-              </span>
-              {!isSubscribed ? (
-                <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              ) : savedJobs.length > 0 && <span className="sidebar-count">{savedJobs.length}</span>}
-            </button>
-
-            <button
-              className={`sidebar-item ${viewNotifications ? "sidebar-item-active" : ""} ${!isSubscribed ? "sidebar-item-locked" : ""}`}
-              onClick={() => {
-                if (!isSignedIn) { clerk.openSignUp(); return; }
-                if (!isSubscribed) { setViewNotifications(true); setViewingSaved(true); return; }
-                setViewNotifications(true); setViewingSaved(true);
-              }}
-            >
-              <span className="sidebar-saved-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill={viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                Notifications
-              </span>
-              {!isSubscribed ? (
-                <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              ) : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
-            </button>
-            <span className="sidebar-scroll-arrow" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </span>
-          </aside>
+          {sidebar}
 
           {/* MAIN CONTENT */}
           <main className="content">

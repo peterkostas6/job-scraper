@@ -3004,6 +3004,12 @@ footer {
   margin-bottom: 0.75rem;
 }
 
+.pricing-hero-underline {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 5px;
+}
+
 .pricing-hero-desc {
   font-size: 1rem;
   color: var(--text-secondary);

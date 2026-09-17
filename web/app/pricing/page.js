@@ -215,7 +215,7 @@ export default function PricingPage() {
       <div className="pricing-page">
         <section className="pricing-hero">
           <span className="hero-tag">Pricing</span>
-          <h1 className="pricing-hero-title">Simple, transparent pricing</h1>
+          <h1 className="pricing-hero-title">Be the <span className="pricing-hero-underline">first</span> to apply</h1>
           <p className="pricing-hero-desc">
             Upgrade to Pro to see new postings the moment they go live — plus SMS &amp; email alerts.
           </p>

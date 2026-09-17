@@ -7,6 +7,11 @@ import { sql } from "@vercel/postgres";
 import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
 
 export const dynamic = "force-dynamic";
+// The Postgres driver talks to Neon over HTTP. In production Next.js can serve a repeated,
+// identical query from its data cache, which made the dedupe SELECT return a stale link set
+// and every run re-detect the same jobs. Opt every fetch in these routes out of the cache.
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 export const maxDuration = 300;
 
 export async function GET(request) {

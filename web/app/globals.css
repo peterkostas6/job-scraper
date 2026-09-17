@@ -257,10 +257,11 @@ nav {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: calc(100dvh - 56px);
+  margin-top: -56px;               /* runs under the transparent nav */
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: var(--space-3xl) var(--space-lg) calc(var(--space-3xl) + 2rem);
+  padding: calc(var(--space-3xl) + 56px) var(--space-lg) calc(var(--space-3xl) + 2rem);
   background: var(--navy-deep);
   color: var(--cream);
 }
@@ -3694,8 +3695,8 @@ footer {
   .homepage { padding: 0 var(--space-sm); }
   .logo-text { display: none; }
   .hero-photo {
-    min-height: 82dvh;
-    padding: var(--space-2xl) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
+    min-height: 88dvh;
+    padding: calc(var(--space-2xl) + 56px) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
   }
   .hero-photo-title { max-width: 12ch; }
   .hero-photo-caption { left: var(--space-sm); right: var(--space-sm); }

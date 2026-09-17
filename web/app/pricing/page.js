@@ -190,6 +190,7 @@ export default function PricingPage() {
               <rect width="32" height="32" rx="8" fill="var(--navy)"/>
               <text x="16" y="23" textAnchor="middle" fontFamily="inherit" fontWeight="800" fontSize="20" fill="#fff">P</text>
             </svg>
+            <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           <div className="nav-right">
             <Link href="/" className="nav-link" style={{ textDecoration: "none" }}>Browse Jobs</Link>
@@ -403,7 +404,7 @@ export default function PricingPage() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA &middot; Citi &middot; DB &middot; Barclays</p>
+            <p>Pulled live from bank career sites &middot; Updated every 30 minutes</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

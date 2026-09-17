@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
@@ -124,6 +124,8 @@ function AccountPromptModal({ onClose }) {
 }
 
 // ---- HOMEPAGE ----
+const BANK_COUNT = Object.keys(BANKS).length;
+
 const PREVIEW_JOBS = [
   { title: "Investment Banking Analyst", bank: "Goldman Sachs", location: "New York, NY", time: "1h ago", isNew: true, type: "Analyst" },
   { title: "Summer Analyst Program 2026", bank: "JPMorgan Chase", location: "New York, NY", time: "2h ago", isNew: true, type: "Internship" },
@@ -209,28 +211,39 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   const showIosNotif = animStep >= 17;
   const clicking = [6, 8, 12, 14, 16].includes(animStep);
 
-  const CURSOR = [
-    { left: '35%',               top: '101px' }, // 0: row 1
-    { left: '35%',               top: '155px' }, // 1: row 2
-    { left: '35%',               top: '209px' }, // 2: row 3
-    { left: '35%',               top: '263px' }, // 3: row 4
-    { left: '35%',               top: '317px' }, // 4: row 5
-    { left: '30%',               top: '56px'  }, // 5: moving to Alerts tab
-    { left: '30%',               top: '56px'  }, // 6: clicking Alerts
-    { left: 'calc(100% - 40px)', top: '106px' }, // 7: SMS toggle
-    { left: 'calc(100% - 40px)', top: '106px' }, // 8: clicking SMS
-    { left: '44%',               top: '158px' }, // 9: phone input
-    { left: '44%',               top: '158px' }, // 10: typing
-    { left: '3%',                top: '228px' }, // 11: Goldman chip
-    { left: '3%',                top: '228px' }, // 12: clicking Goldman
-    { left: '44%',               top: '292px' }, // 13: Internship radio
-    { left: '44%',               top: '292px' }, // 14: clicking Internship
-    { left: '44%',               top: '335px' }, // 15: Save button
-    { left: '44%',               top: '335px' }, // 16: clicking Save
-    { left: '44%',               top: '335px' }, // 17: iOS notif appears
-    { left: '44%',               top: '335px' }, // 18: pause
+  // Which element the cursor points at on each step. Positions are measured
+  // from the DOM so the cursor lands on the real target at any viewport width.
+  const TARGETS = [
+    'row-0', 'row-1', 'row-2', 'row-3', 'row-4',   // 0-4: hover each job row
+    'tab-alerts', 'tab-alerts',                    // 5-6: move to, click Alerts
+    'toggle-sms', 'toggle-sms',                    // 7-8: move to, click SMS toggle
+    'field-phone', 'field-phone',                  // 9-10: focus, type phone
+    'chip-goldman', 'chip-goldman',                // 11-12: move to, click Goldman
+    'radio-intern', 'radio-intern',                // 13-14: move to, click Internship
+    'btn-save', 'btn-save', 'btn-save', 'btn-save',// 15-18: move to, click Save, notif, pause
   ];
-  const cursorPos = CURSOR[Math.min(animStep, CURSOR.length - 1)];
+  const previewRef = useRef(null);
+  const [cursorXY, setCursorXY] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const measure = () => {
+      const root = previewRef.current;
+      if (!root) return;
+      const key = TARGETS[Math.min(animStep, TARGETS.length - 1)];
+      const el = root.querySelector(`[data-demo="${key}"]`);
+      if (!el) return;
+      const r = root.getBoundingClientRect();
+      const t = el.getBoundingClientRect();
+      // Rows: aim a little left of center so the arrow sits on the title.
+      const fx = key.startsWith('row-') ? 0.35 : 0.5;
+      setCursorXY({ x: t.left - r.left + t.width * fx, y: t.top - r.top + t.height * 0.55 });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [animStep]);
+
+  const hoveredRow = animStep <= 4 ? animStep : -1;
 
   return (
     <div className="homepage">
@@ -238,18 +251,20 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       {/* HERO */}
       <section className="hero">
         <span className="hero-tag">Land more interviews</span>
-        <h1 className="hero-title">Be First to Every<br/>Banking Job Posting.</h1>
+        <h1 className="hero-title">Be first to every<br/>banking job posting.</h1>
         <p className="hero-desc">
           The only platform that monitors analyst and intern roles across the major banks in real time — so you apply before the competition even knows the role exists.
         </p>
-        {last48hCount > 0 && (
-          <div className="hero-48h-teaser">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-            <strong>{last48hCount}</strong> {last48hCount === 1 ? "new role" : "new roles"} posted in the last 48 hours
-          </div>
-        )}
+        <div className="hero-48h-teaser">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          {last48hCount > 0 ? (
+            <><strong>{last48hCount}</strong>&nbsp;{last48hCount === 1 ? "new role" : "new roles"} posted in the last 48 hours</>
+          ) : (
+            <>Watching <strong>{BANK_COUNT}</strong>&nbsp;bank career sites in real time</>
+          )}
+        </div>
         <div className="hero-actions">
           <SignUpButton mode="modal">
             <button className="hero-cta-primary">Get Free Access</button>
@@ -274,7 +289,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* APP PREVIEW */}
       <section className="app-preview-section">
-        <div className="app-preview">
+        <div className="app-preview" ref={previewRef}>
 
           <div className="app-preview-chrome">
             <div className="app-preview-dots">
@@ -291,7 +306,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
               Recent
             </span>
             <span className="app-preview-tab">Browse</span>
-            <span className={`app-preview-tab${inNotif ? ' app-preview-tab-active' : ''}`}>
+            <span className={`app-preview-tab${inNotif ? ' app-preview-tab-active' : ''}`} data-demo="tab-alerts">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               Alerts
             </span>
@@ -300,11 +315,11 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           <div className="app-preview-body">
             {!inNotif ? (
               PREVIEW_JOBS.map((job, i) => (
-                <div className="app-preview-row" key={i}>
+                <div className={`app-preview-row${hoveredRow === i ? ' app-preview-row-hover' : ''}`} key={i}>
                   <div className="app-preview-row-left">
-                    {job.isNew && <span className="app-preview-new">NEW</span>}
+                    {job.isNew && <span className="app-preview-new">New</span>}
                     <div>
-                      <div className="app-preview-job-title">{job.title}</div>
+                      <div className="app-preview-job-title" data-demo={`row-${i}`}>{job.title}</div>
                       <div className="app-preview-job-meta">{job.bank} &middot; {job.location}</div>
                     </div>
                   </div>
@@ -321,13 +336,13 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
                     <div className="demo-notif-label">SMS Alerts</div>
                     <div className="demo-notif-sublabel">Instant text messages</div>
                   </div>
-                  <div className={`demo-toggle${smsOn ? ' demo-toggle-on' : ''}`}>
+                  <div className={`demo-toggle${smsOn ? ' demo-toggle-on' : ''}`} data-demo="toggle-sms">
                     <div className="demo-toggle-knob"></div>
                   </div>
                 </div>
 
                 <div className="demo-phone-row">
-                  <div className={`demo-phone-field${phoneFocused ? ' focused' : ''}`}>
+                  <div className={`demo-phone-field${phoneFocused ? ' focused' : ''}`} data-demo="field-phone">
                     <span>{phoneText}</span>
                     {phoneFocused && animStep <= 10 && <span className="demo-caret">|</span>}
                   </div>
@@ -335,7 +350,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
                 <div className="demo-section-label">Banks</div>
                 <div className="demo-chips-row">
-                  <span className={`demo-chip${goldmanOn ? ' demo-chip-on' : ''}`}>Goldman</span>
+                  <span className={`demo-chip${goldmanOn ? ' demo-chip-on' : ''}`} data-demo="chip-goldman">Goldman</span>
                   <span className="demo-chip">JPMorgan</span>
                   <span className="demo-chip">Morgan Stanley</span>
                   <span className="demo-chip">BofA</span>
@@ -345,11 +360,11 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
                 <div className="demo-radios-row">
                   <span className={`demo-radio-option${!internOn ? ' demo-radio-on' : ''}`}>All</span>
                   <span className="demo-radio-option">Analyst</span>
-                  <span className={`demo-radio-option${internOn ? ' demo-radio-on' : ''}`}>Internship</span>
+                  <span className={`demo-radio-option${internOn ? ' demo-radio-on' : ''}`} data-demo="radio-intern">Internship</span>
                 </div>
 
                 <div className="demo-save-row">
-                  <button className={`demo-save-btn${saved ? ' demo-save-btn-saved' : ''}`}>
+                  <button className={`demo-save-btn${saved ? ' demo-save-btn-saved' : ''}`} data-demo="btn-save">
                     {saved ? 'Saved \u2713' : 'Save Settings'}
                   </button>
                 </div>
@@ -375,11 +390,13 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
           <div
             className={`demo-cursor${clicking ? ' demo-cursor-clicking' : ''}`}
-            style={cursorPos}
+            style={{ transform: `translate(${cursorXY.x}px, ${cursorXY.y}px)` }}
+            aria-hidden="true"
           >
-            <svg width="18" height="22" viewBox="0 0 18 22" fill="none">
-              <path d="M2 2L2 18L6.5 14L9.5 21L12 20L9 13L15 13Z"
-                fill="white" stroke="#1a2e44" strokeWidth="1.5" strokeLinejoin="round"/>
+            <span className="demo-cursor-ripple" />
+            <svg className="demo-cursor-arrow" width="20" height="24" viewBox="0 0 20 24" fill="none">
+              <path d="M3 2.2v16.3l4.3-3.9 2.9 6.6 3-1.3-2.9-6.5h6.1z"
+                fill="#fff" stroke="var(--navy)" strokeWidth="1.6" strokeLinejoin="round"/>
             </svg>
           </div>
 
@@ -388,17 +405,20 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* BANKS STRIP */}
       <section className="banks-strip">
-        <p className="banks-strip-label">Sourced directly from</p>
+        <p className="section-label">Sourced directly from</p>
         <div className="banks-strip-row">
-          {Object.values(BANKS).map((bank) => (
+          {Object.values(BANKS).slice(0, 8).map((bank) => (
             <span className="banks-strip-item" key={bank.name}>{bank.name}</span>
           ))}
+          {BANK_COUNT > 8 && (
+            <button className="banks-strip-more" onClick={onBrowse}>+{BANK_COUNT - 8} more</button>
+          )}
         </div>
       </section>
 
       {/* TESTIMONIALS */}
       <section className="testimonials">
-        <p className="testimonials-label">What students are saying</p>
+        <p className="section-label">What students are saying</p>
         <div className="testimonials-grid">
           {TESTIMONIALS.map((t, i) => (
             <div className="testimonial-card" key={i}>
@@ -417,7 +437,10 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       </section>
 
       {/* FEATURES */}
-      <section className="features-grid">
+      <section className="features">
+        <p className="section-label">How it works</p>
+        <h2 className="section-title">Everything you need to apply first</h2>
+        <div className="features-grid">
         <div className="feature-card">
           <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.03z"/>
@@ -445,19 +468,18 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
             Bookmark roles across all banks and track everything you've applied to — no more lost tabs.
           </p>
         </div>
+        </div>
       </section>
 
       {/* BOTTOM CTA */}
       <section className="bottom-cta">
         <h2 className="bottom-cta-title">Stop refreshing job boards.</h2>
         <p className="bottom-cta-desc">Free to browse. Upgrade to Pro for instant alerts the moment a role goes live.</p>
-        <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+        <div className="hero-actions bottom-cta-actions">
           <SignUpButton mode="modal">
             <button className="hero-cta-primary">Get Free Access</button>
           </SignUpButton>
-          <Link href="/pricing" style={{ textDecoration: "none" }}>
-            <button className="hero-cta-secondary">See Pricing</button>
-          </Link>
+          <Link href="/pricing" className="hero-cta-secondary">See Pricing</Link>
         </div>
         <p className="bottom-cta-fine">No credit card required &middot; Free account in 30 seconds</p>
       </section>
@@ -1060,13 +1082,14 @@ export default function Home() {
               <rect width="32" height="32" rx="8" fill="var(--navy)"/>
               <text x="16" y="23" textAnchor="middle" fontFamily="inherit" fontWeight="800" fontSize="20" fill="#fff">P</text>
             </svg>
+            <span className="logo-text">Pete&rsquo;s Postings</span>
           </span>
           <div className="nav-right">
             <button
               className="nav-link"
               onClick={() => { setViewHome(false); setViewAbout(false); setViewNewPostings(false); setViewingSaved(false); setViewNotifications(false); }}
             >
-              Dashboard
+              Browse Jobs
             </button>
             <button
               className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
@@ -1792,7 +1815,7 @@ export default function Home() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Live from JPMC &middot; GS &middot; MS &middot; BofA &middot; Citi &middot; DB &middot; Barclays</p>
+            <p>Pulled live from bank career sites &middot; Updated every 30 minutes</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

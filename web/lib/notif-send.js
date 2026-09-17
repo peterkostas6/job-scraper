@@ -60,6 +60,7 @@ export async function sendUserNotification({ resend, telnyx, userId, email, firs
     } catch (err) {
       console.error(`Failed to email ${email}:`, err?.message || err);
       result.failed = true;
+      result.emailError = err?.message || String(err);
     }
   }
 

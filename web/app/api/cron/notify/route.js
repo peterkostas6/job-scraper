@@ -60,6 +60,14 @@ const BANK_NAMES = {
   jefferies: "Jefferies",
 };
 
+async function dbIdentity() {
+  try {
+    const host = (() => { try { return new URL(process.env.POSTGRES_URL || "").host; } catch { return "unknown"; } })();
+    const { rows } = await sql`SELECT current_database() AS db, (SELECT count(*)::int FROM jobs) AS jobs, (SELECT count(*)::int FROM notification_queue) AS queued, (SELECT max(detected_at) FROM jobs) AS last_detected`;
+    return { host, ...rows[0] };
+  } catch (e) { return { error: e.message }; }
+}
+
 function formatTimestamp(d) {
   return d.toUTCString();
 }
@@ -394,6 +402,8 @@ export async function GET(request) {
       bankStats,
       eligibleUsers,
       wouldNotify,
+      sampleNewLinks: verifiedNewJobs.slice(0, 8).map((j) => j.link),
+      db: dryRun ? await dbIdentity() : undefined,
       totalJobs: allJobs.length,
       newJobs: verifiedNewJobs.length,
       skippedBrokenLinks,

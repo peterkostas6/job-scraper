@@ -360,7 +360,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         <dl className="spec-sheet">
           <div className="spec-row">
             <dt>One feed</dt>
-            <dd className="spec-desc">Every analyst and intern posting from {BANK_COUNT} banks in one place, refreshed every 5 minutes — no more checking eight career sites by hand.</dd>
+            <dd className="spec-desc">We pull every analyst and intern posting directly from banks&rsquo; APIs — no more checking dozens of career sites by hand.</dd>
             <dd className="spec-val tnum">Every 5 min</dd>
           </div>
           <div className="spec-row">

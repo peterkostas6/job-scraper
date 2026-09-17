@@ -1,6 +1,8 @@
 // POST /api/webhook/clerk — handles Clerk user lifecycle events
 // user.created: sends welcome email via Resend + grants student Pro access if qualifying .edu email
 // Secured with Svix signature verification using CLERK_WEBHOOK_SECRET
+import { welcomeEmail } from "@/lib/email-templates";
+import { sendEmail } from "@/lib/email";
 import { Resend } from "resend";
 import { createHmac } from "crypto";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -27,46 +29,6 @@ function verifyClerkWebhook(payload, headers) {
     const [version, hash] = sig.split(",");
     return version === "v1" && hash === computed;
   });
-}
-
-function buildWelcomeEmail(firstName) {
-  const name = firstName || "there";
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#faf8f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
-    <p style="font-size:20px;font-weight:800;color:#1e293b;margin:0 0 32px;">Pete's Postings</p>
-    <p style="font-size:16px;color:#334155;margin:0 0 12px;">Hey ${name},</p>
-    <p style="font-size:15px;color:#334155;line-height:1.7;margin:0 0 24px;">
-      Welcome to Pete's Postings. You now have access to live analyst and internship postings
-      pulled directly from <strong>7 bulge bracket bank career sites</strong> — updated daily.
-      No LinkedIn noise, no outdated spreadsheets.
-    </p>
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
-      <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px;">Your free access includes</p>
-      <ul style="margin:0;padding:0 0 0 20px;font-size:14px;color:#475569;line-height:2;">
-        <li>Live postings from JPMC, GS, MS, BofA, Citi, Deutsche Bank &amp; Barclays</li>
-        <li>Filter by location, job type, and category</li>
-        <li>Search by title across any bank</li>
-        <li>New postings from the past week</li>
-      </ul>
-    </div>
-    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px 20px;margin-bottom:28px;">
-      <p style="font-size:13px;font-weight:700;color:#1e40af;margin:0 0 6px;">Want more? Upgrade to Pro</p>
-      <p style="font-size:13px;color:#3b82f6;line-height:1.6;margin:0;">
-        Save jobs, get email alerts for new postings, and see jobs posted in the last 48 hours — starting at $4.99/mo.
-      </p>
-    </div>
-    <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://petespostings.com" style="display:inline-block;padding:12px 32px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Browse Jobs Now</a>
-    </div>
-    <p style="font-size:11px;color:#94a3b8;text-align:center;line-height:1.6;">
-      Pete's Postings &middot; Not affiliated with any listed bank
-    </p>
-  </div>
-</body>
-</html>`;
 }
 
 export async function POST(req) {
@@ -111,12 +73,8 @@ export async function POST(req) {
     // Send welcome email
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: "Pete's Postings <hello@petespostings.com>",
-        to: email,
-        subject: "Welcome to Pete's Postings",
-        html: buildWelcomeEmail(firstName),
-      });
+      const { subject, html, text } = welcomeEmail({ firstName, bankCount: 20 });
+      await sendEmail(resend, { to: email, subject, html, text, idempotencyKey: `welcome-${userData.id}`, tags: [{ name: "type", value: "welcome" }] });
     } catch (err) {
       console.error("Failed to send welcome email:", err);
     }

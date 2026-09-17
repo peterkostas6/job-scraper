@@ -1,3 +1,6 @@
+import { prefsEmail } from "@/lib/email-templates";
+import { sendEmail } from "@/lib/email";
+import { telnyxConfig, sendSms } from "@/lib/notif-send";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
 
@@ -18,72 +21,6 @@ const JOB_TYPE_LABELS = {
   internship: "Internship only",
   fulltime: "Analyst only",
 };
-
-function buildPrefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phoneNumber, banks, categories, jobType }) {
-  const name = firstName || "there";
-  const bankList = banks && banks.length > 0
-    ? banks.map((k) => BANK_NAMES[k] || k).join(", ")
-    : "All banks";
-  const categoryList = categories && categories.length > 0
-    ? categories.join(", ")
-    : "All categories";
-  const jobTypeLabel = JOB_TYPE_LABELS[jobType] || "All types";
-  const subject = isFirstSetup ? "Your notification preferences are set up" : "Your notification preferences were updated";
-  const intro = isFirstSetup
-    ? `You're all set. Here's a summary of what you'll be notified about:`
-    : `Your notification preferences have been updated. Here's what's now active:`;
-
-  const html = `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#faf8f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
-    <p style="font-size:20px;font-weight:800;color:#1e293b;margin:0 0 32px;">Pete's Postings</p>
-    <p style="font-size:15px;color:#334155;margin:0 0 8px;">Hey ${name},</p>
-    <p style="font-size:15px;color:#334155;line-height:1.7;margin:0 0 24px;">${intro}</p>
-
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
-      <table style="width:100%;border-collapse:collapse;">
-        <tr>
-          <td style="padding:8px 0;color:#64748b;font-size:13px;width:160px;border-bottom:1px solid #f1f5f9;">Email alerts</td>
-          <td style="padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid #f1f5f9;color:${enabled ? "#16a34a" : "#94a3b8"};">${enabled ? "On" : "Off"}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 0;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">SMS alerts</td>
-          <td style="padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid #f1f5f9;color:${smsEnabled ? "#16a34a" : "#94a3b8"};">${smsEnabled ? `On${phoneNumber ? ` · ${phoneNumber}` : ""}` : "Off"}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 0;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Banks</td>
-          <td style="padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid #f1f5f9;">${bankList}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 0;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Categories</td>
-          <td style="padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid #f1f5f9;">${categoryList}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 0;color:#64748b;font-size:13px;">Job type</td>
-          <td style="padding:8px 0;font-size:14px;font-weight:600;">${jobTypeLabel}</td>
-        </tr>
-      </table>
-    </div>
-
-    <p style="font-size:14px;color:#475569;line-height:1.7;margin:0 0 24px;">
-      Alerts go out at <strong>9am and 4pm ET</strong> on days when new matching jobs are posted.
-      You can update your preferences anytime from your dashboard.
-    </p>
-
-    <div style="text-align:center;margin-bottom:28px;">
-      <a href="https://petespostings.com" style="display:inline-block;padding:12px 32px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Browse Active Postings</a>
-    </div>
-
-    <p style="font-size:15px;color:#334155;">— Pete</p>
-    <p style="font-size:11px;color:#94a3b8;margin-top:32px;">Pete's Postings · Not affiliated with any listed bank</p>
-  </div>
-</body>
-</html>`;
-
-  return { subject, html };
-}
 
 // GET — fetch current notification preferences
 export async function GET() {
@@ -154,46 +91,30 @@ export async function POST(request) {
     if (email) {
       try {
         const resend = new Resend(process.env.RESEND_API_KEY);
-        const { subject, html } = buildPrefsEmail({
+        const { subject, html, text } = prefsEmail({
           firstName,
           isFirstSetup,
           enabled: Boolean(enabled),
           smsEnabled: Boolean(smsEnabled),
           phoneNumber: phoneNumber || "",
-          banks: Array.isArray(banks) ? banks : [],
+          bankNames: (Array.isArray(banks) ? banks : []).map((k) => BANK_NAMES[k] || k),
           categories: Array.isArray(categories) ? categories : [],
-          jobType: jobType || "all",
+          jobTypeLabel: JOB_TYPE_LABELS[jobType] || "All types",
+          userId,
         });
-        await resend.emails.send({
-          from: "Pete's Postings <hello@petespostings.com>",
-          to: email,
-          subject,
-          html,
-        });
+        await sendEmail(resend, { to: email, subject, html, text, tags: [{ name: "type", value: "prefs" }] });
       } catch (emailErr) {
         console.error("Prefs confirmation email failed:", emailErr);
       }
     }
 
-    // Send welcome SMS when SMS is enabled for the first time, re-enabled, or phone number changes
+    // Send a welcome text when SMS is enabled for the first time, re-enabled, or the number changes
     const newPhone = phoneNumber?.trim();
     if (smsEnabled && newPhone && (newPhone !== oldPhone || !oldSmsEnabled)) {
-      const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-      const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-      const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-
-      if (twilioSid && twilioToken && twilioFrom) {
-        const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. I'll send you a text based on your preferences when new jobs get posted. Good luck! petespostings.com`;
-
-        const encoded = new URLSearchParams({ To: newPhone, From: twilioFrom, Body: welcomeMsg });
-        await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Basic ${Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64")}`,
-          },
-          body: encoded.toString(),
-        }).catch((e) => console.error("Welcome SMS failed:", e));
+      const telnyx = telnyxConfig();
+      if (telnyx) {
+        const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
+        sendSms(telnyx, newPhone, welcomeMsg).catch((e) => console.error("Welcome SMS failed:", e.message));
       }
     }
 

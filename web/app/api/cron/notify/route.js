@@ -7,6 +7,7 @@ import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
 import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead } from "@/lib/notif-helpers";
 import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
+import { layout, sendEmail, BRAND } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -104,23 +105,13 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, ba
 
   const errorCount = Object.values(bankStats).filter((s) => s.error).length;
 
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="max-width:680px;margin:0 auto;padding:32px 24px;">
-
-    <table style="width:100%;margin-bottom:24px;"><tr>
-      <td><span style="font-size:17px;font-weight:800;color:#1e293b;">Pete's Postings</span></td>
-      <td style="text-align:right;font-size:12px;color:#94a3b8;">Cron Summary</td>
-    </tr></table>
-
-    <p style="margin:0 0 24px;font-size:13px;color:#64748b;">
-      Run at: <strong style="color:#334155;">${formatTimestamp(runAt)}</strong>
-    </p>
-
+  return layout({
+    title: `Cron summary · ${newJobs.length} new · ${formatTimestamp(runAt)}`,
+    heading: newJobs.length > 0 ? `${newJobs.length} new ${newJobs.length === 1 ? "job" : "jobs"} detected` : `${errorCount} bank ${errorCount === 1 ? "error" : "errors"}`,
+    intro: `Run at ${formatTimestamp(runAt)}. ${notifiedUsers} ${notifiedUsers === 1 ? "user" : "users"} notified, ${queued} queued for retry.`,
+    body: `
     <!-- Stats row -->
-    <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:24px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:24px;">
       <tr>
         <td style="padding:20px 24px;text-align:center;border-right:1px solid #e2e8f0;">
           <div style="font-size:32px;font-weight:800;color:#1e293b;">${allJobs.length}</div>
@@ -146,9 +137,9 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, ba
     </table>
 
     <!-- New jobs -->
-    <h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">
+    <h2 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">
       New Jobs Detected (${newJobs.length})
-    </h3>
+    </h2>
     <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
       <tr>
         <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 12px 8px 0;font-weight:600;">TITLE</th>
@@ -160,9 +151,9 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, ba
     </table>
 
     <!-- Bank breakdown -->
-    <h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">
+    <h2 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">
       Bank Breakdown
-    </h3>
+    </h2>
     <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
       <tr>
         <th style="text-align:left;font-size:11px;color:#94a3b8;padding:0 0 8px;font-weight:600;">BANK</th>
@@ -174,9 +165,9 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, ba
     <p style="font-size:11px;color:#cbd5e1;margin:0;">
       Pete's Postings owner alert — sent when a run finds new jobs or a bank error
     </p>
-  </div>
-</body>
-</html>`;
+`,
+    footer: {},
+  });
 }
 
 export async function GET(request) {
@@ -355,6 +346,7 @@ export async function GET(request) {
         const sent = await sendUserNotification({
           resend,
           telnyx,
+          userId: user.id,
           email: user.emailAddresses?.[0]?.emailAddress,
           firstName: user.firstName || "",
           prefs,
@@ -380,8 +372,8 @@ export async function GET(request) {
     //    At a 5-minute cadence an email on every run would be 288 a day.
     const bankErrors = Object.values(bankStats).filter((b) => b.error).length;
     if (!dryRun && (verifiedNewJobs.length > 0 || bankErrors > 0)) try {
-      await resend.emails.send({
-        from: "Pete's Postings <notifications@petespostings.com>",
+      await sendEmail(resend, {
+        from: BRAND.fromAlerts,
         to: OWNER_EMAIL,
         subject:
           newJobs.length > 0
@@ -414,8 +406,8 @@ export async function GET(request) {
     // Try to notify Pete of the failure
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: "Pete's Postings <notifications@petespostings.com>",
+      await sendEmail(resend, {
+        from: BRAND.fromAlerts,
         to: OWNER_EMAIL,
         subject: `[Cron ERROR] ${formatTimestamp(runAt)}`,
         html: `<div style="font-family:sans-serif;padding:32px;max-width:600px;">

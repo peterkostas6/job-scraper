@@ -100,7 +100,10 @@ job-scraper/
 │   │           ├── init-db/        # One-time: creates Postgres tables
 │   │           └── migrate-jobs/   # One-time: copies Redis job-first-seen → Postgres
 │   ├── lib/
-│   │   └── notif-helpers.js    # Shared: isInternship, isGraduateProgram, buildEmailHtml
+│   │   ├── notif-helpers.js    # Shared: isInternship, isGraduateProgram, isJobLinkDead
+│   │   ├── email.js            # Email layer: accessible layout, plain-text pairing, signed unsubscribe links, send wrapper (idempotency + retry)
+│   │   ├── email-templates.js  # Every customer email: alert, welcome, preferences, club inquiry
+│   │   └── notif-send.js       # One email + one SMS per user (used by the detection cron and the retry sweep)
 │   ├── package.json
 │   ├── jsconfig.json           # Enables @/ import alias
 │   └── next.config.js
@@ -139,6 +142,9 @@ Skips jobs posted more than 7 days ago (stale jobs that somehow appear new after
 
 ### Retry sweep (`/api/cron/send-notifications`)
 Runs every 15 minutes. Drains `notification_queue`, keeps only jobs still live and inside the 48-hour window, and resends per user with the same shared sender. Rows are deleted after the sweep. Under normal conditions the queue is empty.
+
+### Email rules (from the Resend email-best-practices skill)
+Every email goes through `lib/email.js`: `layout()` for the HTML shell (lang/dir, `<title>`, preheader, presentational tables, one h1, 16px body, 4.5:1 contrast, footer with sender identity and unsubscribe/preferences links) and `sendEmail()` for delivery (reply-to pete@, idempotency key, retry on 5xx/429, plain-text alternative). Alert emails carry `List-Unsubscribe` headers; `/api/unsubscribe` honours them immediately with a signed token. Set `EMAIL_POSTAL_ADDRESS` in Vercel to print a postal address in the footer. Preview any template at `/api/admin/test-notification?preview=alert|welcome|prefs|club&key=<CRON_SECRET>`.
 
 ### Notification preferences
 Users set preferences in their dashboard: banks (multi-select), job type (analyst / internship / all), SMS enabled + phone number. The hourly cron filters new jobs against these preferences before queuing. Only jobs matching a user's preferences trigger a notification.

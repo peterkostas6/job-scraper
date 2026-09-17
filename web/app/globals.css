@@ -387,6 +387,8 @@ nav {
 }
 .hero-photo-link:hover { color: var(--cream); text-decoration-color: var(--cream); }
 .hero-photo-link:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--cream-25); border-radius: 4px; }
+.hero-photo-link-plain { text-decoration: none; }
+.hero-photo-link-plain:hover { text-decoration: none; }
 
 /* Caption in the corner (H6). Carries the live number so the stat still leads. */
 .hero-photo-caption {
@@ -397,6 +399,13 @@ nav {
   font-size: 0.78rem;
   letter-spacing: 0.01em;
   color: var(--cream-60);
+}
+
+.hero-photo-caption-underline {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--cream-60);
 }
 
 /* Stat strip · T4, three up, hairlines between */

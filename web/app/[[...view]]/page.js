@@ -325,13 +325,17 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           <button className="hero-photo-cta">Get free access</button>
         </SignUpButton>
         <p className="hero-photo-links">
-          <button className="hero-photo-link" onClick={onBrowse}>Browse {BANK_COUNT} banks</button>
+          <button className="hero-photo-link hero-photo-link-plain" onClick={onBrowse}>Browse {BANK_COUNT} banks</button>
           <span className="hero-photo-dot" aria-hidden="true">&middot;</span>
           <Link href="/pricing" className="hero-photo-link">See pricing</Link>
         </p>
       </div>
       <p className="hero-photo-caption tnum">
-        {hasCount ? `${shownCount} new roles in the last 48 hours` : `${BANK_COUNT} bank career sites, refreshed every 5 minutes`}
+        {hasCount ? (
+          <span className="hero-photo-caption-underline">{shownCount} new roles in the last 48 hours</span>
+        ) : (
+          `${BANK_COUNT} bank career sites, refreshed every 5 minutes`
+        )}
       </p>
     </section>
 

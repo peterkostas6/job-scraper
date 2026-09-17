@@ -564,20 +564,8 @@ nav {
 .proof-attr strong { color: var(--navy); font-weight: 600; }
 
 /* What you get · F3 spec sheet */
-.spec-demo {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 2.5rem;
-  align-items: center;
-  padding: var(--space-2xl) 0 var(--space-3xl);
-}
-
 .spec {
-  padding: 0;
-}
-
-.spec-demo .app-demo {
-  margin: 0;
+  padding: var(--space-2xl) 0 var(--space-3xl);
 }
 
 .spec-title {
@@ -3787,7 +3775,6 @@ footer {
     padding: calc(var(--space-2xl) + 56px) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
   }
   .hero-photo-title { max-width: 12ch; }
-  .spec-demo { grid-template-columns: 1fr; gap: 2rem; }
   .stat-strip { grid-template-columns: 1fr; gap: var(--space-md); }
   .stat { padding: 0; border-left: none; border-top: 1px solid var(--border); padding-top: var(--space-md); }
   .stat:first-child { border-top: none; padding-top: 0; }

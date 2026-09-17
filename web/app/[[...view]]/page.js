@@ -349,8 +349,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
 
     <div className="homepage">
 
-      {/* WHAT YOU GET + DEMO · side by side on desktop */}
-      <div className="spec-demo">
+      {/* WHAT YOU GET · F3 spec sheet, problem-led */}
       <section className="spec">
         <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
         <p className="spec-intro">
@@ -487,7 +486,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
         </div>
         <figcaption className="app-demo-caption">Browse the feed, then set alerts for the banks you follow.</figcaption>
       </figure>
-      </div>
 
       {/* STATS · T4 strip, real numbers only */}
       <section className="stat-strip" aria-label="Live numbers">

@@ -30,8 +30,8 @@ export async function sendSms(telnyx, to, text) {
 
 /**
  * Send one email and (if enabled) one SMS to a user for a batch of jobs.
- * Returns { emailSent, smsSent, failed } — failed is true when a channel the user
- * has enabled could not be delivered, so the caller can queue the jobs for retry.
+ * Returns { emailSent, smsSent, failed } — failed is true only when the email could not
+ * be delivered, so the caller queues the jobs for the retry sweep.
  */
 export async function sendUserNotification({ resend, telnyx, userId, email, firstName, prefs, jobs }) {
   const result = { emailSent: false, smsSent: false, failed: false };
@@ -68,8 +68,10 @@ export async function sendUserNotification({ resend, telnyx, userId, email, firs
       await sendSms(telnyx, prefs.phoneNumber, buildSmsText(jobs));
       result.smsSent = true;
     } catch (err) {
+      // SMS failures are logged but never queued: a retry would hit the same carrier or
+      // account limit, and re-queuing would resend the email that already went out.
       console.error(`Failed to SMS ${prefs.phoneNumber}:`, err?.message || err);
-      result.failed = true;
+      result.smsError = err?.message || String(err);
     }
   }
 

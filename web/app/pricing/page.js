@@ -192,13 +192,20 @@ export default function PricingPage() {
             </svg>
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
+          <div className="nav-center">
+            <Link href="/" className="nav-link">Browse Jobs</Link>
+          </div>
           <div className="nav-right">
-            <Link href="/" className="nav-link" style={{ textDecoration: "none" }}>Browse Jobs</Link>
             {isLoaded && (
               isSignedIn ? <UserButton /> : (
-                <SignInButton mode="modal">
-                  <button className="nav-signin">Sign In</button>
-                </SignInButton>
+                <>
+                  <SignInButton mode="modal">
+                    <button className="nav-signin">Sign in</button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="nav-cta">Get free access</button>
+                  </SignUpButton>
+                </>
               )
             )}
           </div>

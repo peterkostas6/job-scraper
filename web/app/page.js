@@ -152,18 +152,6 @@ const TESTIMONIALS = [
   },
 ];
 
-function StarRating() {
-  return (
-    <div className="testimonial-stars">
-      {[...Array(5)].map((_, i) => (
-        <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="none">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-      ))}
-    </div>
-  );
-}
-
 function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   const [animStep, setAnimStep] = useState(0);
   const [phoneText, setPhoneText] = useState('');
@@ -245,61 +233,60 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
   const hoveredRow = animStep <= 4 ? animStep : -1;
 
+  // Stat-Led reveal: tick the hero figure from 0 to the live count over ~500ms.
+  const hasCount = last48hCount > 0;
+  const [shownCount, setShownCount] = useState(0);
+  useEffect(() => {
+    if (!hasCount) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { setShownCount(last48hCount); return; }
+    const start = performance.now();
+    let raf;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / 500);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setShownCount(Math.round(last48hCount * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [last48hCount, hasCount]);
+
   return (
     <div className="homepage">
 
-      {/* HERO */}
+      {/* HERO · H4 Stat-Led, two-column */}
       <section className="hero">
-        <span className="hero-tag">Land more interviews</span>
-        <h1 className="hero-title">Be first to every<br/>banking job posting.</h1>
-        <p className="hero-desc">
-          Analyst and intern roles at {BANK_COUNT} banks, tracked in real time so you apply before the competition knows the role exists.
-        </p>
-        <div className="hero-48h-teaser">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          {last48hCount > 0 ? (
-            <><strong>{last48hCount}</strong>&nbsp;{last48hCount === 1 ? "new role" : "new roles"} posted in the last 48 hours</>
-          ) : (
-            <>Watching <strong>{BANK_COUNT}</strong>&nbsp;bank career sites in real time</>
-          )}
+        <div className="hero-copy">
+          <h1 className="hero-title">Be first to every banking job posting.</h1>
+          <p className="hero-desc">
+            Analyst and intern roles at {BANK_COUNT} banks, tracked in real time so you apply before the competition knows the role exists.
+          </p>
+          <div className="hero-actions">
+            <SignUpButton mode="modal">
+              <button className="hero-cta-primary">Get Free Access</button>
+            </SignUpButton>
+            <button className="hero-cta-secondary" onClick={onBrowse}>Browse Jobs</button>
+          </div>
+          <p className="hero-fine">Free to start, no card needed.</p>
         </div>
-        <div className="hero-actions">
-          <SignUpButton mode="modal">
-            <button className="hero-cta-primary">Get Free Access</button>
-          </SignUpButton>
-          <button className="hero-cta-secondary" onClick={onBrowse}>Browse Jobs</button>
-        </div>
-        <div className="hero-benefits">
-          <span className="hero-benefit">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Apply before it hits LinkedIn
-          </span>
-          <span className="hero-benefit">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            All banks, one place
-          </span>
-          <span className="hero-benefit">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Free to start, no card needed
-          </span>
+        <div className="hero-stat">
+          <p className="hero-figure tnum">{hasCount ? shownCount : BANK_COUNT}</p>
+          <p className="hero-qualifier">
+            {hasCount
+              ? `new analyst and intern ${last48hCount === 1 ? "role" : "roles"} posted in the last 48 hours.`
+              : "bank career sites watched in real time."}
+          </p>
+          <dl className="hero-substats">
+            <div><dt>Banks tracked</dt><dd className="tnum">{BANK_COUNT}</dd></div>
+            <div><dt>Feed refresh</dt><dd className="tnum">30 min</dd></div>
+          </dl>
         </div>
       </section>
 
-      {/* APP PREVIEW */}
-      <section className="app-preview-section">
+      {/* DEMO · captioned figure, no fake chrome */}
+      <figure className="app-demo">
         <div className="app-preview" ref={previewRef}>
-
-          <div className="app-preview-chrome">
-            <div className="app-preview-dots">
-              <span style={{ background: "#ff5f57" }}></span>
-              <span style={{ background: "#febc2e" }}></span>
-              <span style={{ background: "#28c840" }}></span>
-            </div>
-            <div className="app-preview-url">petespostings.com</div>
-          </div>
-
           <div className="app-preview-tabs">
             <span className={`app-preview-tab${!inNotif ? ' app-preview-tab-active' : ''}`}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -401,87 +388,67 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </div>
 
         </div>
-      </section>
+        <figcaption className="app-demo-caption">Browse the feed, then set alerts for the banks you follow.</figcaption>
+      </figure>
 
-      {/* BANKS STRIP */}
-      <section className="banks-strip">
-        <p className="section-label">Sourced directly from</p>
-        <div className="banks-strip-row">
+      {/* SOURCES · T2 hairline wall */}
+      <section className="sources">
+        <h2 className="sources-title">Sourced from {BANK_COUNT} bank career sites</h2>
+        <ul className="logo-wall">
           {Object.values(BANKS).slice(0, 8).map((bank) => (
-            <span className="banks-strip-item" key={bank.name}>{bank.name}</span>
+            <li key={bank.name}>{bank.name}</li>
           ))}
-          {BANK_COUNT > 8 && (
-            <button className="banks-strip-more" onClick={onBrowse}>+{BANK_COUNT - 8} more</button>
-          )}
-        </div>
+          <li>
+            <button className="text-link" onClick={onBrowse}>
+              All {BANK_COUNT} banks <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </li>
+        </ul>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="testimonials">
-        <p className="section-label">What students are saying</p>
-        <div className="testimonials-grid">
-          {TESTIMONIALS.map((t, i) => (
-            <div className="testimonial-card" key={i}>
-              <StarRating />
-              <p className="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar">{t.name[0]}</div>
-                <div>
-                  <div className="testimonial-name">{t.name}</div>
-                  <div className="testimonial-role">{t.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* PROOF · T1 quote rows with margin attribution */}
+      <section className="proof">
+        <h2 className="proof-title">What students say</h2>
+        {TESTIMONIALS.map((t) => (
+          <div className="proof-row" key={t.name}>
+            <blockquote className="proof-quote">&ldquo;{t.quote}&rdquo;</blockquote>
+            <p className="proof-attr"><strong>{t.name}</strong><br />{t.role}</p>
+          </div>
+        ))}
       </section>
 
-      {/* FEATURES */}
-      <section className="features">
-        <p className="section-label">How it works</p>
-        <h2 className="section-title">What you get</h2>
-        <div className="features-grid">
-        <div className="feature-card">
-          <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.03z"/>
-          </svg>
-          <h3 className="feature-title">Get alerts for your banks</h3>
-          <p className="feature-desc">
-            Get a text or email when a new role opens at a bank you follow, before it shows up on LinkedIn.
-          </p>
-        </div>
-        <div className="feature-card">
-          <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          <h3 className="feature-title">See what posted today</h3>
-          <p className="feature-desc">
-            Every analyst and intern role across {BANK_COUNT} banks in one feed, newest first. Updated every 30 minutes.
-          </p>
-        </div>
-        <div className="feature-card">
-          <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-          </svg>
-          <h3 className="feature-title">Track your applications</h3>
-          <p className="feature-desc">
-            Bookmark roles across all banks and keep everything you've applied to in one list.
-          </p>
-        </div>
-        </div>
+      {/* WHAT YOU GET · F3 spec sheet */}
+      <section className="spec">
+        <h2 className="spec-title">What you get</h2>
+        <dl className="spec-sheet">
+          <div className="spec-row">
+            <dt>Alerts</dt>
+            <dd className="spec-desc">Get a text or email when a new role opens at a bank you follow, before it shows up on LinkedIn.</dd>
+            <dd className="spec-val">Text and email</dd>
+          </div>
+          <div className="spec-row">
+            <dt>Feed</dt>
+            <dd className="spec-desc">Every analyst and intern role across {BANK_COUNT} banks in one feed, newest first.</dd>
+            <dd className="spec-val tnum">Every 30 min</dd>
+          </div>
+          <div className="spec-row">
+            <dt>Saved jobs</dt>
+            <dd className="spec-desc">Bookmark roles across all banks and keep everything you&rsquo;ve applied to in one list.</dd>
+            <dd className="spec-val">Free</dd>
+          </div>
+        </dl>
       </section>
 
-      {/* BOTTOM CTA */}
-      <section className="bottom-cta">
-        <h2 className="bottom-cta-title">Stop refreshing job boards.</h2>
-        <p className="bottom-cta-desc">Free to browse. Upgrade to Pro for instant alerts the moment a role goes live.</p>
-        <div className="hero-actions bottom-cta-actions">
-          <SignUpButton mode="modal">
-            <button className="hero-cta-primary">Get Free Access</button>
-          </SignUpButton>
-          <Link href="/pricing" className="hero-cta-secondary">See Pricing</Link>
-        </div>
-        <p className="bottom-cta-fine">No credit card required &middot; Free account in 30 seconds</p>
+      {/* CLOSE · one button */}
+      <section className="close-cta">
+        <h2 className="close-title">Stop refreshing job boards.</h2>
+        <p className="close-desc">Free to browse. Upgrade to Pro for instant alerts the moment a role goes live.</p>
+        <SignUpButton mode="modal">
+          <button className="hero-cta-primary">Get Free Access</button>
+        </SignUpButton>
+        <p className="close-fine">
+          No credit card required &middot; Free account in 30 seconds &middot; <Link href="/pricing" className="text-link">See pricing</Link>
+        </p>
       </section>
 
     </div>
@@ -1084,7 +1051,7 @@ export default function Home() {
             </svg>
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </span>
-          <div className="nav-right">
+          <div className="nav-center">
             <button
               className="nav-link"
               onClick={() => { setViewHome(false); setViewAbout(false); setViewNewPostings(false); setViewingSaved(false); setViewNotifications(false); }}
@@ -1102,6 +1069,8 @@ export default function Home() {
             </button>
             <Link href="/pricing" className="nav-link" style={{ textDecoration: "none" }}>Pricing</Link>
             <button className="nav-link" onClick={() => { setViewHome(false); setViewAbout(true); setViewNewPostings(false); }}>About</button>
+          </div>
+          <div className="nav-right">
             {isSignedIn && (
               <button
                 className={`nav-bell${viewNotifications ? " nav-bell-active" : ""}`}
@@ -1118,9 +1087,14 @@ export default function Home() {
             {isSignedIn ? (
               <UserButton />
             ) : (
-              <SignInButton mode="modal">
-                <button className="nav-signin">Sign In</button>
-              </SignInButton>
+              <>
+                <SignInButton mode="modal">
+                  <button className="nav-signin">Sign in</button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="nav-cta">Get free access</button>
+                </SignUpButton>
+              </>
             )}
           </div>
         </div>

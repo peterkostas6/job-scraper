@@ -924,7 +924,11 @@ export default function Home() {
 
   // /recent is Pro-only: signed-out visitors land on the browse view and get the sign-up sheet.
   useEffect(() => {
+    if (routeView === "recent") {
+      console.log("[recent-guard]", { routeView, isLoaded, isSignedIn, isSubscribed });
+    }
     if (routeView === "recent" && isLoaded && !isSignedIn) {
+      console.log("[recent-guard] redirecting to /jobs — isLoaded && !isSignedIn was true");
       router.replace("/jobs");
       clerk.openSignUp();
     }

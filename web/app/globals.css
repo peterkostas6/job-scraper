@@ -413,13 +413,6 @@ nav {
   border-left: 1px solid var(--border);
 }
 .stat:first-child { padding-left: 0; border-left: none; }
-.stat-highlight { position: relative; }
-.stat-arrow {
-  position: absolute;
-  top: -38px;
-  left: 6px;
-  pointer-events: none;
-}
 
 .stat-num {
   font-size: 2.5rem;
@@ -3773,7 +3766,6 @@ footer {
   .stat-strip { grid-template-columns: 1fr; gap: var(--space-md); }
   .stat { padding: 0; border-left: none; border-top: 1px solid var(--border); padding-top: var(--space-md); }
   .stat:first-child { border-top: none; padding-top: 0; }
-  .stat-arrow { display: none; }
   .logo-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .proof-row, .spec-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
   .spec-val { text-align: left; }

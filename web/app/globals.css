@@ -566,7 +566,7 @@ nav {
 /* What you get + demo · side by side on desktop */
 .spec-demo {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 3.5rem;
   align-items: center;
   padding: var(--space-2xl) 0 var(--space-3xl);
@@ -633,7 +633,6 @@ nav {
   font-weight: 600;
   color: var(--navy);
   text-align: right;
-  white-space: nowrap;
 }
 
 /* Close · one button */

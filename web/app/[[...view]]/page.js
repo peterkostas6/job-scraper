@@ -347,7 +347,17 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* STATS · T4 strip, real numbers only */}
       <section className="stat-strip" aria-label="Live numbers">
-        <div className="stat">
+        <div className={`stat${hasCount ? " stat-highlight" : ""}`}>
+          {hasCount && (
+            <svg className="stat-arrow" width="56" height="46" viewBox="0 0 56 46" fill="none" aria-hidden="true">
+              <defs>
+                <marker id="stat-arrow-head" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto-start-reverse">
+                  <path d="M0,0 L7,3.5 L0,7 Z" fill="var(--green)" />
+                </marker>
+              </defs>
+              <path d="M6 4C6 24 18 38 40 38" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" fill="none" markerEnd="url(#stat-arrow-head)" />
+            </svg>
+          )}
           <p className="stat-num tnum">
             {hasCount ? <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> : BANK_COUNT}
           </p>

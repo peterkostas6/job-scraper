@@ -283,6 +283,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   // Stat-Led reveal: tick the hero figure from 0 to the live count over ~500ms.
   const hasCount = last48hCount > 0;
   const [shownCount, setShownCount] = useState(0);
+  const [photoOk, setPhotoOk] = useState(true);
   useEffect(() => {
     if (!hasCount) return;
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -300,34 +301,55 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   }, [last48hCount, hasCount]);
 
   return (
+    <>
+    {/* HERO · photographic fold, marquee statement. Photo slot: public/hero.jpg (see caption below). */}
+    <section className="hero-photo" data-photo={photoOk ? "on" : "off"}>
+      <div className="hero-photo-bg" aria-hidden="true">
+        {/* TODO: Replace with a real photograph — a Wall Street street at dawn works. Target 2400×1400, under 400 KB. */}
+        <img
+          src="/hero.jpg"
+          alt=""
+          className="hero-photo-img"
+          fetchpriority="high"
+          decoding="async"
+          onError={() => setPhotoOk(false)}
+        />
+        <span className="hero-photo-glow" />
+        <span className="hero-photo-grain" />
+      </div>
+      <div className="hero-photo-copy">
+        <h1 className="hero-photo-title">
+          Be first to every <mark className="hero-mark">banking job</mark> posting.
+        </h1>
+        <SignUpButton mode="modal">
+          <button className="hero-photo-cta">Get free access</button>
+        </SignUpButton>
+        <p className="hero-photo-links">
+          <button className="hero-photo-link" onClick={onBrowse}>Browse {BANK_COUNT} banks</button>
+          <span className="hero-photo-dot" aria-hidden="true">&middot;</span>
+          <Link href="/pricing" className="hero-photo-link">See pricing</Link>
+        </p>
+      </div>
+      <p className="hero-photo-caption tnum">
+        {hasCount ? `${shownCount} new roles in the last 48 hours` : `${BANK_COUNT} bank career sites, refreshed every 30 minutes`}
+      </p>
+    </section>
+
     <div className="homepage">
 
-      {/* HERO · H4 Stat-Led, two-column */}
-      <section className="hero">
-        <div className="hero-copy">
-          <h1 className="hero-title">Be first to every banking job posting.</h1>
-          <p className="hero-desc">
-            Analyst and intern roles at {BANK_COUNT} banks, tracked in real time so you apply before the competition knows the role exists.
-          </p>
-          <div className="hero-actions">
-            <SignUpButton mode="modal">
-              <button className="hero-cta-primary">Get Free Access</button>
-            </SignUpButton>
-            <button className="hero-cta-secondary" onClick={onBrowse}>Browse Jobs</button>
-          </div>
-          <p className="hero-fine">Free to start, no card needed.</p>
+      {/* STATS · T4 strip, real numbers only */}
+      <section className="stat-strip" aria-label="Live numbers">
+        <div className="stat">
+          <p className="stat-num tnum">{hasCount ? shownCount : BANK_COUNT}</p>
+          <p className="stat-label">{hasCount ? "new roles in the last 48 hours" : "bank career sites tracked"}</p>
         </div>
-        <div className="hero-stat">
-          <p className="hero-figure tnum">{hasCount ? shownCount : BANK_COUNT}</p>
-          <p className="hero-qualifier">
-            {hasCount
-              ? `new analyst and intern ${last48hCount === 1 ? "role" : "roles"} posted in the last 48 hours.`
-              : "bank career sites watched in real time."}
-          </p>
-          <dl className="hero-substats">
-            <div><dt>Banks tracked</dt><dd className="tnum">{BANK_COUNT}</dd></div>
-            <div><dt>Feed refresh</dt><dd className="tnum">30 min</dd></div>
-          </dl>
+        <div className="stat">
+          <p className="stat-num tnum">{hasCount ? BANK_COUNT : "48h"}</p>
+          <p className="stat-label">{hasCount ? "banks tracked, analyst and intern roles" : "window on the Recent tab"}</p>
+        </div>
+        <div className="stat">
+          <p className="stat-num tnum">30<span className="stat-unit">min</span></p>
+          <p className="stat-label">between feed refreshes</p>
         </div>
       </section>
 
@@ -499,6 +521,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       </section>
 
     </div>
+    </>
   );
 }
 
@@ -1131,6 +1154,19 @@ export default function Home() {
   const savedCount = [...bookmarks].filter((link) => filteredJobs.some((job) => job.link === link)).length;
   const isGatedBank = !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed);
 
+  // Nav sits transparent over the dark homepage hero; frosts once the page scrolls.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { setScrolled(window.scrollY > 24); raf = 0; });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+
   if (!routeView) notFound();
 
   if (!isLoaded) {
@@ -1143,7 +1179,7 @@ export default function Home() {
 
   return (
     <>
-      <nav>
+      <nav className={viewHome && !scrolled ? "nav-on-dark" : ""}>
         <div className="nav-inner">
           <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
             <svg className="logo-icon" width="30" height="30" viewBox="0 0 32 32" fill="none">

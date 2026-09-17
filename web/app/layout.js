@@ -1,12 +1,20 @@
 import "./globals.css";
 import Script from "next/script";
-import { Inter } from "next/font/google";
+import { Inter, Instrument_Serif } from "next/font/google";
 
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
   variable: "--font-inter",
+});
+
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: "normal",
+  display: "swap",
+  variable: "--font-serif",
 });
 import { ClerkProvider } from "@clerk/nextjs";
 import { PostHogProvider } from "./providers";
@@ -59,7 +67,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={inter.variable}>
+      <html lang="en" className={`${inter.variable} ${serif.variable}`}>
         <head>
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-4RWTGXJJQP"

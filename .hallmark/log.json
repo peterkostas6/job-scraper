@@ -1,3 +1,20 @@
 [
-  { "date": "2026-09-16", "macrostructure": "Stat-Led", "theme": "existing (Pete's Postings tokens)", "enrichment": "none", "nav": "N1b", "footer": "Ft2", "brief": "Pete's Postings · homepage redesign in place (modern-minimal)" }
+  {
+    "date": "2026-09-16",
+    "macrostructure": "Photographic",
+    "theme": "studied-DNA (source: image \u00b7 public reference \u00b7 Pete's Postings tokens)",
+    "enrichment": "E8 photo slot + E7 grain",
+    "nav": "N1b transparent-over-hero",
+    "footer": "Ft2",
+    "brief": "Pete's Postings \u00b7 homepage hero after a photographic serif reference"
+  },
+  {
+    "date": "2026-09-16",
+    "macrostructure": "Stat-Led",
+    "theme": "existing (Pete's Postings tokens)",
+    "enrichment": "none",
+    "nav": "N1b",
+    "footer": "Ft2",
+    "brief": "Pete's Postings \u00b7 homepage redesign in place (modern-minimal)"
+  }
 ]

@@ -7,7 +7,7 @@ tags: typography, heading, display, hero, title, navy, inter
 
 ## Heading Typography
 
-All headings are Inter, weight 800 (700 at 1.1rem and below), navy, tight line-height, negative tracking on the large sizes. There is no serif and no second family.
+All headings are Inter, weight 800 (700 at 1.1rem and below), navy, tight line-height, negative tracking on the large sizes. One outlier: the homepage hero statement is Instrument Serif 400, roman, in cream on the dark canvas (`--font-serif-stack`). It is used in that one slot only. Never italic, never elsewhere.
 
 **Incorrect (semibold, near-black, loose tracking, made-up size):**
 

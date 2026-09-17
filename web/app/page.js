@@ -253,7 +253,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         <span className="hero-tag">Land more interviews</span>
         <h1 className="hero-title">Be first to every<br/>banking job posting.</h1>
         <p className="hero-desc">
-          The only platform that monitors analyst and intern roles across the major banks in real time — so you apply before the competition even knows the role exists.
+          Analyst and intern roles at {BANK_COUNT} banks, tracked in real time so you apply before the competition knows the role exists.
         </p>
         <div className="hero-48h-teaser">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -282,7 +282,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </span>
           <span className="hero-benefit">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Free to start — no card needed
+            Free to start, no card needed
           </span>
         </div>
       </section>
@@ -384,7 +384,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
                 <span className="demo-ios-notif-app">Pete&rsquo;s Postings</span>
                 <span className="demo-ios-notif-time">now</span>
               </div>
-              <div className="demo-ios-notif-text">New: Goldman Sachs — Investment Banking Analyst 2026. Tap to apply →</div>
+              <div className="demo-ios-notif-text">Goldman Sachs · Investment Banking Analyst 2026. Tap to apply →</div>
             </div>
           </div>
 
@@ -439,15 +439,15 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       {/* FEATURES */}
       <section className="features">
         <p className="section-label">How it works</p>
-        <h2 className="section-title">Everything you need to apply first</h2>
+        <h2 className="section-title">What you get</h2>
         <div className="features-grid">
         <div className="feature-card">
           <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.03z"/>
           </svg>
-          <h3 className="feature-title">Know before anyone else</h3>
+          <h3 className="feature-title">Get alerts for your banks</h3>
           <p className="feature-desc">
-            Get a text or email the moment a new role opens at your target bank — before it surfaces anywhere else.
+            Get a text or email when a new role opens at a bank you follow, before it shows up on LinkedIn.
           </p>
         </div>
         <div className="feature-card">
@@ -456,16 +456,16 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </svg>
           <h3 className="feature-title">See what posted today</h3>
           <p className="feature-desc">
-            Every analyst and intern role across all major banks in one feed, sorted by most recent. Updated every 30 minutes.
+            Every analyst and intern role across {BANK_COUNT} banks in one feed, newest first. Updated every 30 minutes.
           </p>
         </div>
         <div className="feature-card">
           <svg className="feature-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
-          <h3 className="feature-title">Stay organized, land the job</h3>
+          <h3 className="feature-title">Track your applications</h3>
           <p className="feature-desc">
-            Bookmark roles across all banks and track everything you've applied to — no more lost tabs.
+            Bookmark roles across all banks and keep everything you've applied to in one list.
           </p>
         </div>
         </div>

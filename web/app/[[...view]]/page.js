@@ -364,6 +364,11 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
             <dd className="spec-val tnum">Every 5 min</dd>
           </div>
           <div className="spec-row">
+            <dt>48-hour feed</dt>
+            <dd className="spec-desc">See every role the moment it&rsquo;s posted, not just what&rsquo;s still live. Candidates who apply within 24&ndash;48 hours see a 33% higher chance of landing an interview.</dd>
+            <dd className="spec-val">+33% interview odds</dd>
+          </div>
+          <div className="spec-row">
             <dt>Alerts</dt>
             <dd className="spec-desc">Get a text or email the second a role goes live at a bank you&rsquo;re watching, before it shows up on LinkedIn.</dd>
             <dd className="spec-val">Text and email</dd>

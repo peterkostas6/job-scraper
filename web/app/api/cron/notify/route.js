@@ -368,17 +368,18 @@ export async function GET(request) {
       }
     }
 
-    // 5. Owner summary — only when something happened (new jobs or a bank error).
-    //    At a 5-minute cadence an email on every run would be 288 a day.
+    // 5. Owner summary — only when the run found new jobs. Bank errors are listed inside
+    //    that email rather than triggering one of their own, so a flaky bank at a
+    //    5-minute cadence cannot produce an email every 5 minutes.
     const bankErrors = Object.values(bankStats).filter((b) => b.error).length;
-    if (!dryRun && (verifiedNewJobs.length > 0 || bankErrors > 0)) try {
+    if (!dryRun && verifiedNewJobs.length > 0) try {
       await sendEmail(resend, {
         from: BRAND.fromAlerts,
         to: OWNER_EMAIL,
         subject:
           newJobs.length > 0
-            ? `[Cron] ${newJobs.length} new ${newJobs.length === 1 ? "job" : "jobs"} · ${emailsSent} email, ${smsSent} SMS sent — ${formatTimestamp(runAt)}`
-            : `[Cron] ${bankErrors} bank ${bankErrors === 1 ? "error" : "errors"} — ${formatTimestamp(runAt)}`,
+            ? `[Cron] ${newJobs.length} new ${newJobs.length === 1 ? "job" : "jobs"} · ${emailsSent} email, ${smsSent} SMS sent${bankErrors ? ` · ${bankErrors} bank ${bankErrors === 1 ? "error" : "errors"}` : ""} — ${formatTimestamp(runAt)}`
+            : `[Cron] No new jobs — ${formatTimestamp(runAt)}`,
         html: buildOwnerSummaryHtml({ runAt, allJobs, newJobs: verifiedNewJobs, skippedBrokenLinks, bankStats, queued, notifiedUsers }),
       });
     } catch (emailErr) {

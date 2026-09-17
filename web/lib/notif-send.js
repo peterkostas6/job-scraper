@@ -10,8 +10,11 @@ export function telnyxConfig() {
   return apiKey && from ? { apiKey, from } : null;
 }
 
+// Plain ASCII only: a single non-GSM character (like a bullet) switches the whole
+// message to UCS-2 and halves the characters per billable segment.
 export function buildSmsText(jobs) {
-  const jobLines = jobs.slice(0, 3).map((j) => `• ${j.title} @ ${j.bank}`).join("\n");
+  const clean = (s) => String(s).replace(/[\u2013\u2014]/g, "-").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[^\x20-\x7E\n]/g, "");
+  const jobLines = jobs.slice(0, 3).map((j) => `- ${clean(j.title).slice(0, 48)} @ ${clean(j.bank)}`).join("\n");
   const more = jobs.length > 3 ? `\n+ ${jobs.length - 3} more` : "";
   return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}\n\npetespostings.com/recent\nReply STOP to unsubscribe`;
 }

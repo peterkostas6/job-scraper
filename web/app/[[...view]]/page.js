@@ -183,17 +183,17 @@ const PREVIEW_JOBS = [
 
 const TESTIMONIALS = [
   {
-    quote: "My school doesn&rsquo;t get bulge-bracket recruiters on campus, so I used to hear about openings secondhand, usually too late. Now I see the same postings as everyone else, the same day they go up.",
+    quote: "My school doesn’t get bulge-bracket recruiters on campus, so I used to hear about openings secondhand, usually too late. Now I see the same postings as everyone else, the same day they go up.",
     name: "Jordan M.",
     role: "Junior, University of Delaware",
   },
   {
-    quote: "I don&rsquo;t have connections at these banks. Getting a text the moment a role opens means I&rsquo;m not relying on someone else to tip me off.",
+    quote: "I don’t have connections at these banks. Getting a text the moment a role opens means I’m not relying on someone else to tip me off.",
     name: "Priya S.",
     role: "Sophomore, University of Illinois Chicago",
   },
   {
-    quote: "Kids at target schools find out about roles through clubs and info sessions I&rsquo;ve never been invited to. This is the closest I&rsquo;ve gotten to an even playing field.",
+    quote: "Kids at target schools find out about roles through clubs and info sessions I’ve never been invited to. This is the closest I’ve gotten to an even playing field.",
     name: "Marcus T.",
     role: "Junior, Rutgers University",
   },
@@ -349,7 +349,8 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
 
     <div className="homepage">
 
-      {/* WHAT YOU GET · F3 spec sheet, problem-led */}
+      {/* WHAT YOU GET + DEMO · side by side on desktop */}
+      <div className="spec-demo">
       <section className="spec">
         <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
         <p className="spec-intro">
@@ -486,6 +487,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
         </div>
         <figcaption className="app-demo-caption">Browse the feed, then set alerts for the banks you follow.</figcaption>
       </figure>
+      </div>
 
       {/* STATS · T4 strip, real numbers only */}
       <section className="stat-strip" aria-label="Live numbers">

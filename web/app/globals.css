@@ -485,97 +485,6 @@ nav {
   color: var(--text-muted);
 }
 
-/* Banks grid · live counts by bank */
-.banks-grid-section {
-  padding: var(--space-xl) 0 var(--space-2xl);
-  border-top: 1px solid var(--border);
-}
-
-.banks-grid-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--navy);
-  margin-bottom: 0.3rem;
-}
-
-.banks-grid-desc {
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-md);
-}
-
-.job-tile-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-}
-
-.job-tile {
-  display: flex;
-  flex-direction: column;
-  aspect-ratio: 1;
-  padding: 1.1rem;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  text-decoration: none;
-  transition: border-color var(--dur-base) var(--ease-out);
-}
-.job-tile:hover { border-color: rgba(0,0,0,0.1); }
-
-.job-tile-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--navy);
-  color: #fff;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  margin-bottom: 0.75rem;
-  flex-shrink: 0;
-}
-
-.job-tile-role {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-bottom: 0.3rem;
-}
-
-.job-tile-bank {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  margin-top: auto;
-  margin-bottom: 0.5rem;
-}
-
-.job-tile .job-badge {
-  align-self: flex-start;
-}
-
-.job-tile-explore-arrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  color: var(--forest-blue);
-  margin-bottom: 0.75rem;
-  flex-shrink: 0;
-}
-.job-tile-explore .job-tile-role { color: var(--forest-blue); }
 
 /* C3 typographic link */
 .text-link {
@@ -3854,7 +3763,6 @@ footer {
   }
   .hero-photo-title { max-width: 12ch; }
   .spec-demo { grid-template-columns: 1fr; gap: 2rem; }
-  .job-tile-grid { grid-template-columns: repeat(2, 1fr); }
   .stat-strip { grid-template-columns: 1fr; gap: var(--space-md); }
   .stat { padding: 0; border-left: none; border-top: 1px solid var(--border); padding-top: var(--space-md); }
   .stat:first-child { border-top: none; padding-top: 0; }

@@ -199,7 +199,7 @@ const TESTIMONIALS = [
   },
 ];
 
-function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
+function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts, bankLatest }) {
   const [animStep, setAnimStep] = useState(0);
   const [phoneText, setPhoneText] = useState('');
 
@@ -507,7 +507,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
         </div>
       </section>
 
-      {/* BANKS · live counts by bank */}
+      {/* BANKS · newest posting per bank, square tiles */}
       <section className="banks-grid-section">
         <h2 className="banks-grid-title">Fresh postings, every 5 minutes.</h2>
         <p className="banks-grid-desc">
@@ -515,16 +515,28 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, bankCounts }) {
             ? `${shownCount} roles found across ${BANK_COUNT} banks in the last 48 hours.`
             : `Tracking ${BANK_COUNT} bank career sites around the clock.`}
         </p>
-        <div className="about-banks-grid">
-          {Object.entries(BANKS).slice(0, 7).map(([key, bank]) => (
-            <Link key={key} href={`/jobs?bank=${key}`} className="about-bank-card">
-              <span className="about-bank-name">{bank.shortName}</span>
-              <span className="about-bank-count tnum">{bankCounts?.[key] != null ? bankCounts[key] : "—"}</span>
-            </Link>
-          ))}
-          <Link href="/jobs" className="about-bank-card banks-grid-explore-card">
-            <span className="about-bank-name">All {BANK_COUNT} banks</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <div className="job-tile-grid">
+          {Object.entries(BANKS).slice(0, 7).map(([key, bank]) => {
+            const latest = bankLatest?.[key];
+            return (
+              <Link key={key} href={`/jobs?bank=${key}`} className="job-tile">
+                <span className="job-tile-icon">{bank.shortName.slice(0, 2).toUpperCase()}</span>
+                <span className="job-tile-role">{latest ? latest.title : bank.name}</span>
+                <span className="job-tile-bank">{bank.name}</span>
+                {latest && (
+                  <span className={`job-badge ${isInternship(latest.title) ? "badge-intern" : "badge-analyst"}`}>
+                    {isInternship(latest.title) ? "Internship" : "Analyst"}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+          <Link href="/jobs" className="job-tile job-tile-explore">
+            <span className="job-tile-explore-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+            <span className="job-tile-role">Explore all {BANK_COUNT} banks</span>
+            <span className="job-tile-bank">Every open analyst &amp; intern role</span>
           </Link>
         </div>
       </section>
@@ -908,6 +920,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bankCounts, setBankCounts] = useState({});
+  const [bankLatest, setBankLatest] = useState({});
   const [bookmarks, setBookmarks] = useState(new Set());
   const [savedJobs, setSavedJobs] = useState([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
@@ -1034,6 +1047,7 @@ export default function Home() {
           if (data?.jobs) {
             const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title) && isFinanceRole(j.title));
             setBankCounts((prev) => ({ ...prev, [key]: filtered.length }));
+            if (filtered[0]) setBankLatest((prev) => ({ ...prev, [key]: filtered[0] }));
           }
         })
         .catch(() => {});
@@ -1410,6 +1424,7 @@ export default function Home() {
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
           bankCounts={bankCounts}
+          bankLatest={bankLatest}
         />
       )}
 

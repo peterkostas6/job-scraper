@@ -55,7 +55,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { enabled, banks, categories, jobType, smsEnabled } = body;
+    const { enabled, banks, categories, jobType } = body;
 
     // Normalize phone number to E.164 format (+1XXXXXXXXXX)
     let phoneNumber = (body.phoneNumber || "").replace(/\D/g, "");
@@ -70,6 +70,11 @@ export async function POST(request) {
     const oldSmsEnabled = oldPrefs?.smsEnabled || false;
     const isFirstSetup = !oldPrefs;
 
+    // SMS can only be enabled with explicit, unchecked-by-default opt-in consent and a phone number
+    const smsConsent = Boolean(body.smsConsent);
+    const smsEnabled = Boolean(body.smsEnabled) && smsConsent && phoneNumber.length > 0;
+    const smsConsentAt = smsConsent ? (oldPrefs?.smsConsentAt || new Date().toISOString()) : null;
+
     await client.users.updateUser(userId, {
       unsafeMetadata: {
         ...user.unsafeMetadata,
@@ -78,8 +83,10 @@ export async function POST(request) {
           banks: Array.isArray(banks) ? banks : [],
           categories: Array.isArray(categories) ? categories : [],
           jobType: jobType || "all",
-          smsEnabled: Boolean(smsEnabled),
+          smsEnabled,
           phoneNumber: phoneNumber || "",
+          smsConsent,
+          smsConsentAt,
         },
       },
     });

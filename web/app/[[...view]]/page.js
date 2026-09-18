@@ -903,7 +903,7 @@ export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [availableCategories, setAvailableCategories] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", location: "" });
+  const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", smsConsent: false, location: "" });
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
@@ -1587,9 +1587,24 @@ export default function Home() {
                             value={notifPrefs.phoneNumber || ""}
                             onChange={(e) => { setNotifPrefs((p) => ({ ...p, phoneNumber: e.target.value })); setNotifSaved(false); }}
                           />
-                          <p style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.5rem", lineHeight: 1.5 }}>
-                            By enabling SMS, you agree to receive transactional job alert messages from Pete's Postings. Reply <strong>STOP</strong> to unsubscribe at any time. Reply <strong>HELP</strong> for help. Message and data rates may apply.
+                          <p className="notif-section-desc" style={{ marginTop: "0.6rem" }}>
+                            Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply.
                           </p>
+                          <label className="notif-consent">
+                            <input
+                              type="checkbox"
+                              checked={notifPrefs.smsConsent}
+                              onChange={(e) => { setNotifPrefs((p) => ({ ...p, smsConsent: e.target.checked })); setNotifSaved(false); }}
+                            />
+                            <span>
+                              I agree to receive recurring automated text messages from Pete's Postings about new job postings matching my preferences. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete's Postings. See our{" "}
+                              <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
+                              <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
+                            </span>
+                          </label>
+                          {!notifPrefs.smsConsent && (
+                            <p className="notif-consent-hint">Check the box above to enable SMS alerts.</p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1645,7 +1660,11 @@ export default function Home() {
                       </>
                     )}
                     <div className="notif-actions">
-                      <button className="notif-save" onClick={saveNotifPrefs} disabled={notifSaving}>
+                      <button
+                        className="notif-save"
+                        onClick={saveNotifPrefs}
+                        disabled={notifSaving || (notifPrefs.smsEnabled && (!notifPrefs.phoneNumber.trim() || !notifPrefs.smsConsent))}
+                      >
                         {notifSaving ? "Saving..." : notifSaved ? "Saved" : "Save Preferences"}
                       </button>
                     </div>
@@ -1864,6 +1883,11 @@ export default function Home() {
           <div className="footer-right">
             <p>Pulled live from bank career sites &middot; Checked every 5 minutes</p>
             <p>&copy; 2026 Pete's Postings</p>
+            <p className="footer-links">
+              <Link href="/privacy" className="text-link">Privacy Policy</Link>
+              <span aria-hidden="true"> &middot; </span>
+              <Link href="/terms" className="text-link">Terms of Service</Link>
+            </p>
           </div>
         </div>
       </footer>

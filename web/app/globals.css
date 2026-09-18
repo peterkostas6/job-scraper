@@ -475,17 +475,8 @@ nav {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  padding: var(--space-2xl) 0;
+  padding: var(--space-md) 0 var(--space-2xl);
   overflow: hidden;
-}
-
-.proof-marquee-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  color: var(--navy);
-  text-align: center;
-  margin: 0 0 var(--space-lg);
 }
 
 .marquee-row {
@@ -568,7 +559,7 @@ nav {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 3.5rem;
   align-items: center;
-  padding: var(--space-2xl) 0 var(--space-3xl);
+  padding: var(--space-2xl) 0 var(--space-lg);
 }
 
 .spec {
@@ -3780,7 +3771,6 @@ footer {
     padding: calc(var(--space-2xl) + 56px) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
   }
   .hero-photo-title { max-width: 12ch; }
-  .proof-marquee-title { font-size: 1.75rem; }
   .spec-demo { grid-template-columns: 1fr; gap: 2rem; }
   .proof-row, .spec-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
   .spec-val { text-align: left; }

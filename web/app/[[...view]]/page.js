@@ -506,7 +506,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* PROOF · two-row auto-scrolling testimonial marquee */}
       <section className="proof-marquee">
-        <h2 className="proof-marquee-title">What students say</h2>
         {[TESTIMONIALS.slice(0, 3), TESTIMONIALS.slice(3, 6)].map((row, rowIndex) => (
           <div className={`marquee-row${rowIndex === 1 ? " marquee-row-reverse" : ""}`} key={rowIndex}>
             <div className="marquee-track">

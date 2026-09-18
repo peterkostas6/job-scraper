@@ -480,9 +480,9 @@ nav {
 }
 
 .proof-marquee-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -1px;
   color: var(--navy);
   text-align: center;
   margin: 0 0 var(--space-lg);
@@ -3780,6 +3780,7 @@ footer {
     padding: calc(var(--space-2xl) + 56px) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
   }
   .hero-photo-title { max-width: 12ch; }
+  .proof-marquee-title { font-size: 1.75rem; }
   .spec-demo { grid-template-columns: 1fr; gap: 2rem; }
   .proof-row, .spec-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
   .spec-val { text-align: left; }

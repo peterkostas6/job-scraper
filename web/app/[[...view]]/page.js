@@ -530,7 +530,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* CLOSE · one button */}
       <section className="close-cta">
-        <h2 className="close-title">Get Notified With A Text Instantly</h2>
+        <h2 className="close-title">Get Notified With A Text, Instantly</h2>
         <p className="close-desc">Stop refreshing job boards.</p>
         <SignUpButton mode="modal">
           <button className="hero-cta-primary">Get Free Access</button>

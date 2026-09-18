@@ -489,24 +489,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       </figure>
       </div>
 
-      {/* STATS · T4 strip, real numbers only */}
-      <section className="stat-strip" aria-label="Live numbers">
-        <div className="stat">
-          <p className="stat-num tnum">
-            {hasCount ? <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> : BANK_COUNT}
-          </p>
-          <p className="stat-label">{hasCount ? "new roles in the last 48 hours" : "bank career sites tracked"}</p>
-        </div>
-        <div className="stat">
-          <p className="stat-num tnum">{hasCount ? BANK_COUNT : "48h"}</p>
-          <p className="stat-label">{hasCount ? "banks tracked, analyst and intern roles" : "window on the Recent tab"}</p>
-        </div>
-        <div className="stat">
-          <p className="stat-num tnum">5<span className="stat-unit">min</span></p>
-          <p className="stat-label">between feed refreshes</p>
-        </div>
-      </section>
-
       {/* PROOF · T1 quote rows with margin attribution */}
       <section className="proof">
         <h2 className="proof-title">What students say</h2>

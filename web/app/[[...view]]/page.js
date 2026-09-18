@@ -1302,10 +1302,9 @@ export default function Home() {
         {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : savedJobs.length > 0 && <span className="sidebar-count tnum">{savedJobs.length}</span>}
       </button>
       <button
-        className={`sidebar-item${viewNotifications ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        className={`sidebar-item${viewNotifications ? " sidebar-item-active" : ""}${!isSignedIn ? " sidebar-item-locked" : ""}`}
         onClick={() => {
           if (!isSignedIn) { clerk.openSignUp(); return; }
-          if (!isSubscribed) { setViewNotifications(true); setViewingSaved(true); return; }
           setViewNotifications(true); setViewingSaved(true);
         }}
       >
@@ -1316,7 +1315,7 @@ export default function Home() {
           </svg>
           Notifications
         </span>
-        {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
+        {!isSignedIn ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
       </button>
       <span className="sidebar-scroll-arrow" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1524,10 +1523,9 @@ export default function Home() {
                 Saved
               </button>
               <button
-                className={`mobile-pro-pill${viewNotifications ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                className={`mobile-pro-pill${viewNotifications ? " mobile-pro-pill-active" : ""}${!isSignedIn ? " mobile-pro-pill-locked" : ""}`}
                 onClick={() => {
                   if (!isSignedIn) { clerk.openSignUp(); return; }
-                  if (!isSubscribed) { router.push("/pricing"); return; }
                   setViewingSaved(true); setViewNotifications(true);
                 }}
               >
@@ -1541,13 +1539,26 @@ export default function Home() {
           {/* MAIN CONTENT */}
           <main className="content">
             {/* Notifications view */}
-            {viewNotifications && !isSubscribed && <PaywallOverlay isSignedIn={isSignedIn} />}
-            {viewNotifications && isSubscribed && (
+            {viewNotifications && !isSignedIn && <PaywallOverlay isSignedIn={isSignedIn} />}
+            {viewNotifications && isSignedIn && (
               <div className="notif-panel">
                 <div className="notif-header">
                   <h2 className="notif-title">Manage Notifications</h2>
                   <p className="notif-desc">Get notified when new jobs matching your preferences are posted. We check daily.</p>
                 </div>
+                {!isSubscribed && (
+                  <div className="recent-teaser-strip" style={{ marginBottom: "1.25rem" }}>
+                    <span className="recent-teaser-content">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                      </svg>
+                      You can set your alert preferences below, but Pro is required to actually receive them.
+                    </span>
+                    <button className="recent-teaser-cta" onClick={() => router.push("/pricing")}>
+                      Upgrade →
+                    </button>
+                  </div>
+                )}
                 {notifLoading ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
                 ) : (

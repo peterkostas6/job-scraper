@@ -530,8 +530,8 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
 
       {/* CLOSE · one button */}
       <section className="close-cta">
-        <h2 className="close-title">Stop refreshing job boards.</h2>
-        <p className="close-desc">Free to browse. Upgrade to Pro for instant alerts the moment a role goes live.</p>
+        <h2 className="close-title">Get Notified With A Text Instantly</h2>
+        <p className="close-desc">Stop refreshing job boards.</p>
         <SignUpButton mode="modal">
           <button className="hero-cta-primary">Get Free Access</button>
         </SignUpButton>

@@ -197,6 +197,21 @@ const TESTIMONIALS = [
     name: "Marcus T.",
     role: "Junior, Rutgers University",
   },
+  {
+    quote: "I go to a state school with no investment banking club. I didn’t even know half of these roles existed until I started getting the alerts.",
+    name: "Sam O.",
+    role: "Senior, University of Massachusetts Amherst",
+  },
+  {
+    quote: "Postings disappear fast. Getting them straight from the bank instead of a forwarded email three days late actually mattered.",
+    name: "Elena V.",
+    role: "Junior, Temple University",
+  },
+  {
+    quote: "I applied to a Citi analyst posting a few minutes after it went up. Got an interview the following week. I don’t think that happens if I’m only checking once a day.",
+    name: "Tyler B.",
+    role: "Sophomore, Indiana University",
+  },
 ];
 
 function HomePage({ onBrowse, isSignedIn, last48hCount }) {
@@ -489,13 +504,27 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       </figure>
       </div>
 
-      {/* PROOF · T1 quote rows with margin attribution */}
-      <section className="proof">
-        <h2 className="proof-title">What students say</h2>
-        {TESTIMONIALS.map((t) => (
-          <div className="proof-row" key={t.name}>
-            <blockquote className="proof-quote">&ldquo;{t.quote}&rdquo;</blockquote>
-            <p className="proof-attr"><strong>{t.name}</strong><br />{t.role}</p>
+      {/* PROOF · two-row auto-scrolling testimonial marquee */}
+      <section className="proof-marquee">
+        <h2 className="proof-marquee-title">What students say</h2>
+        {[TESTIMONIALS.slice(0, 3), TESTIMONIALS.slice(3, 6)].map((row, rowIndex) => (
+          <div className={`marquee-row${rowIndex === 1 ? " marquee-row-reverse" : ""}`} key={rowIndex}>
+            <div className="marquee-track">
+              {row.concat(row).map((t, i) => (
+                <div className="testimonial-card" key={`${t.name}-${i}`}>
+                  <div className="testimonial-stars" aria-hidden="true">★★★★★</div>
+                  <blockquote className="testimonial-quote">&ldquo;{t.quote}&rdquo;</blockquote>
+                  <div className="testimonial-attr">
+                    <span className="testimonial-avatar">{t.name.split(" ").map((w) => w[0]).join("")}</span>
+                    <span>
+                      <strong>{t.name}</strong>
+                      <br />
+                      {t.role}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </section>

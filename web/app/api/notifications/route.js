@@ -87,6 +87,7 @@ export async function POST(request) {
           phoneNumber: phoneNumber || "",
           smsConsent,
           smsConsentAt,
+          smsOptOutAt: smsEnabled ? null : oldPrefs?.smsOptOutAt || null,
         },
       },
     });

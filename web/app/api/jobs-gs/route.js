@@ -25,6 +25,7 @@ const GS_QUERY = `query GetRoles($searchQueryInput: RoleSearchQueryInput!) {
       status
       division
       skills
+      createdDate
       jobType {
         code
         description
@@ -137,6 +138,7 @@ function parseJobs(data) {
         link: `${GS_SITE_URL}/${numericId}`,
         location,
         category: categorizeJob(title, item.division, item.jobFunction),
+        postedDate: item.createdDate || null,
       };
     });
 

@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 
 const API_URL = "https://blackstone.wd1.myworkdayjobs.com/wday/cxs/blackstone/Blackstone_Careers/jobs";
+const DETAIL_BASE = "https://blackstone.wd1.myworkdayjobs.com/wday/cxs/blackstone/Blackstone_Careers";
 const SITE_URL = "https://blackstone.wd1.myworkdayjobs.com/en-US/Blackstone_Careers";
 
 function categorizeJob(title) {
@@ -97,8 +98,37 @@ function parseJobs(data) {
       link: `${SITE_URL}${job.externalPath}`,
       location: job.locationsText || "",
       category: categorizeJob(job.title || ""),
-      postedDate: parseWorkdayDate(job.postedOn),
+      externalPath: job.externalPath,
     }));
+}
+
+// Blackstone's list endpoint doesn't include a posted date — only the individual job
+// detail endpoint does. Volume is small (~40 postings), so fetch each detail page,
+// a few at a time, to fill in postedDate.
+async function fetchPostedDate(externalPath) {
+  try {
+    const res = await fetch(`${DETAIL_BASE}${externalPath}`, {
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return parseWorkdayDate(data.jobPostingInfo?.postedOn);
+  } catch {
+    return null;
+  }
+}
+
+async function attachPostedDates(jobs) {
+  const CONCURRENCY = 5;
+  for (let i = 0; i < jobs.length; i += CONCURRENCY) {
+    const batch = jobs.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      batch.map(async (job) => {
+        job.postedDate = await fetchPostedDate(job.externalPath);
+        delete job.externalPath;
+      })
+    );
+  }
 }
 
 export async function GET() {
@@ -126,6 +156,8 @@ export async function GET() {
         await sleep(500);
       }
     }
+
+    await attachPostedDates(allJobs);
 
     return Response.json({ jobs: allJobs, count: allJobs.length });
   } catch (err) {

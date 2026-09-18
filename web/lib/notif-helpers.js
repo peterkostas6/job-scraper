@@ -100,6 +100,53 @@ export async function isJobLinkDead(link, timeoutMs = 8000) {
   }
 }
 
+// Same dead-link check as isJobLinkDead, but also recovers a posted date from the job
+// page's embedded JSON-LD (schema.org JobPosting "datePosted") when the bank's list API
+// didn't supply one (e.g. Citi/TalentBrew). Only used for jobs missing postedDate, so
+// banks that already supply it from their list API never take on this extra parsing —
+// and for the ones that don't, this reuses the same fetch isJobLinkDead would otherwise
+// make alone, so no additional request is added.
+export async function checkJobLinkAndDate(link, timeoutMs = 8000) {
+  const workdayMatch = link.match(WORKDAY_RE);
+  if (workdayMatch) return { dead: await isWorkdayJobDead(workdayMatch, timeoutMs), postedDate: null };
+
+  const oracleMatch = link.match(ORACLE_FUSION_RE);
+  if (oracleMatch) return { dead: await isOracleFusionJobDead(oracleMatch, timeoutMs), postedDate: null };
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(link, {
+      method: "GET",
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
+      redirect: "follow",
+    });
+    clearTimeout(timeoutId);
+
+    if (res.status === 404 || res.status === 410) return { dead: true, postedDate: null };
+    if (!res.ok) return { dead: false, postedDate: null };
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("text/html")) return { dead: false, postedDate: null };
+
+    const body = await res.text();
+    const dead = CLOSED_POSTING_PHRASES.some((phrase) => body.toLowerCase().includes(phrase));
+
+    let postedDate = null;
+    if (!dead) {
+      const m = body.match(/"datePosted"\s*:\s*"([^"]+)"/);
+      if (m) {
+        const d = new Date(m[1]);
+        if (!isNaN(d.getTime())) postedDate = d.toISOString();
+      }
+    }
+    return { dead, postedDate };
+  } catch {
+    return { dead: false, postedDate: null };
+  }
+}
+
 // Returns false for clearly non-finance roles (software engineering, IT, cybersecurity, etc.)
 // All jobs on the site should be finance/banking oriented.
 export function isFinanceRole(title) {

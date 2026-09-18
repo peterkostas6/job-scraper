@@ -5,7 +5,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
-import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead } from "@/lib/notif-helpers";
+import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
 import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
 
@@ -259,15 +259,27 @@ export async function GET(request) {
     // 2b. Verify new job links — skip any that are already dead (broken/closed on bank site).
     // Runs in parallel with an 8-second timeout per link. Only drops jobs with a definitive
     // dead signal (404/410, or a "no longer available" page) — everything else gets benefit of the doubt.
+    // Jobs whose scraper couldn't supply a postedDate (e.g. Citi's list API has none) get it
+    // recovered here from the same fetch, via checkJobLinkAndDate — so every job that makes it
+    // into the jobs table has a real posted date to fall back on, not just detected_at.
     const verifiedNewJobs = [];
     let skippedBrokenLinks = 0;
     if (newJobs.length > 0) {
       await Promise.all(
         newJobs.map(async (job) => {
-          if (await isJobLinkDead(job.link)) {
-            skippedBrokenLinks++;
+          if (job.postedDate) {
+            if (await isJobLinkDead(job.link)) {
+              skippedBrokenLinks++;
+            } else {
+              verifiedNewJobs.push(job);
+            }
           } else {
-            verifiedNewJobs.push(job);
+            const { dead, postedDate } = await checkJobLinkAndDate(job.link);
+            if (dead) {
+              skippedBrokenLinks++;
+            } else {
+              verifiedNewJobs.push({ ...job, postedDate });
+            }
           }
         })
       );

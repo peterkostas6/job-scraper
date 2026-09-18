@@ -60,9 +60,15 @@ export async function GET() {
     const jobs = [];
     for (const row of rows) {
       const detectedAt = Number(row.detected_at_ms);
+      const postedAt = row.posted_date ? new Date(row.posted_date).getTime() : null;
+      // The real posted date (when we have one) is the authoritative signal for freshness.
+      // detected_at is only a proxy — it's "when our cron first saw it," which is normally
+      // within minutes of posting but can drift if detection was ever delayed. Fall back to
+      // detected_at only for the banks whose scraper can't supply a posted date.
+      const effectiveAt = postedAt != null ? postedAt : detectedAt;
 
-      // Show job if cron detected it within the last 48 hours
-      if (detectedAt < fortyEightHoursAgo) continue;
+      // Show job if it was actually posted (or, lacking that, detected) within 48 hours
+      if (effectiveAt < fortyEightHoursAgo) continue;
 
       // Only show banking entry-level roles — filter out ops, admin, etc.
       if (!isBankingEntryLevel(row.title)) continue;
@@ -77,13 +83,15 @@ export async function GET() {
         bank: row.bank,
         bankKey: row.bank_key,
         category: row.category,
-        postedDate: row.posted_date ? new Date(row.posted_date).toISOString() : null,
+        postedDate: postedAt != null ? new Date(postedAt).toISOString() : null,
         detectedAt,
+        effectiveTime: effectiveAt,
+        hasActualDate: postedAt != null,
       });
     }
 
     // Sort newest first
-    jobs.sort((a, b) => b.detectedAt - a.detectedAt);
+    jobs.sort((a, b) => b.effectiveTime - a.effectiveTime);
 
     return Response.json({
       last48h: isSubscribed ? jobs : [],

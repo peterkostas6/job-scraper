@@ -181,6 +181,13 @@ const PREVIEW_JOBS = [
   { title: "Risk Analyst", bank: "Bank of America", location: "Charlotte, NC", time: "11h ago", isNew: false, type: "Analyst" },
 ];
 
+const HERO_NOTIFS = [
+  { bank: "Goldman Sachs", title: "Investment Banking Analyst 2026" },
+  { bank: "JPMorgan Chase", title: "Summer Analyst Program 2026" },
+  { bank: "Morgan Stanley", title: "M&A Analyst, Fixed Income" },
+  { bank: "Barclays", title: "Investment Banking Analyst" },
+];
+
 const TESTIMONIALS = [
   {
     quote: "My school doesn’t get bulge-bracket recruiters on campus, so I used to hear about openings secondhand, usually too late. Now I see the same postings as everyone else, the same day they go up.",
@@ -300,6 +307,37 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
   const [shownCount, setShownCount] = useState(0);
   const [countDone, setCountDone] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);
+
+  // Hero notification banner: loops through mock "you just got a text" alerts
+  const [heroNotifIndex, setHeroNotifIndex] = useState(0);
+  const [heroNotifVisible, setHeroNotifVisible] = useState(false);
+  useEffect(() => {
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let alive = true;
+    let timer;
+    if (reduceMotion) {
+      timer = setTimeout(() => { if (alive) setHeroNotifVisible(true); }, 900);
+      return () => { alive = false; clearTimeout(timer); };
+    }
+    const HOLD_MS = 4200;
+    const GAP_MS = 1400;
+    const cycle = () => {
+      if (!alive) return;
+      setHeroNotifVisible(true);
+      timer = setTimeout(() => {
+        if (!alive) return;
+        setHeroNotifVisible(false);
+        timer = setTimeout(() => {
+          if (!alive) return;
+          setHeroNotifIndex((i) => (i + 1) % HERO_NOTIFS.length);
+          cycle();
+        }, GAP_MS);
+      }, HOLD_MS);
+    };
+    timer = setTimeout(cycle, 1000);
+    return () => { alive = false; clearTimeout(timer); };
+  }, []);
+  const heroNotif = HERO_NOTIFS[heroNotifIndex];
   useEffect(() => {
     if (!hasCount) return;
     setCountDone(false);
@@ -359,6 +397,26 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           <span className="hero-photo-dot" aria-hidden="true">&middot;</span>
           <Link href="/pricing" className="hero-photo-link">See pricing</Link>
         </p>
+      </div>
+
+      {/* Animated "you just got a text" banner — loops mock alerts to show the SMS feature */}
+      <div className={`hero-notif${heroNotifVisible ? ' hero-notif-visible' : ''}`} aria-hidden="true">
+        <div className="hero-notif-icon">
+          <span className="hero-notif-dot" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+        <div className="hero-notif-body">
+          <div className="hero-notif-header">
+            <span className="hero-notif-app">Pete&rsquo;s Postings</span>
+            <span className="hero-notif-badge">SMS</span>
+            <span className="hero-notif-time">now</span>
+          </div>
+          <div className="hero-notif-text">
+            <strong>{heroNotif.bank}</strong> just posted &mdash; {heroNotif.title}. Tap to apply &rarr;
+          </div>
+        </div>
       </div>
     </section>
 

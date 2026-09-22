@@ -37,6 +37,19 @@ function formatRelativeDate(effectiveTime, hasActualDate) {
   return `${diffDays}d ago`;
 }
 
+// "Sep 18" from the bank's posted date, or "Sep 18, 9:55 PM" when all we have is the
+// minute our cron first saw it. Banks publish a date, not a time, so the date alone is honest.
+function formatPostedAt(job) {
+  if (job.postedDate) {
+    return new Date(job.postedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  if (job.detectedAt) {
+    const d = new Date(job.detectedAt);
+    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  }
+  return "—";
+}
+
 // ---- ACCOUNT PROMPT MODAL ----
 // Entrance: scrim fades, card rises + settles (280ms soft ease), content staggers in.
 // Exit: reverse over 180ms, then unmount. Esc closes. Body scroll is locked while open.
@@ -1843,7 +1856,8 @@ export default function Home() {
                       <span className="job-index">#</span>
                       <span className="job-title">Title</span>
                       <span className="job-location">Location</span>
-                      <span className="job-badges">Type / Posted</span>
+                      <span className="job-posted">Posted</span>
+                      <span className="job-badges">Type</span>
                       <span style={{ width: 14 }} />
                       <span style={{ width: 14 }} />
                     </div>
@@ -1852,13 +1866,11 @@ export default function Home() {
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="job-title">{job.title}</span>
                         <span className="job-location">{job.location || "—"}</span>
+                        <span className="job-posted tnum">{formatPostedAt(job)}</span>
                         <div className="job-badges">
                           <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>
                             {isInternship(job.title) ? "Internship" : "Analyst"}
                           </span>
-                          {(job.postedDate || job.detectedAt) && (
-                            <span className="job-badge badge-new-time">{formatRelativeDate(job.postedDate ? new Date(job.postedDate).getTime() : job.detectedAt)}</span>
-                          )}
                         </div>
                         <button className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}`} onClick={(e) => toggleBookmark(e, job)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

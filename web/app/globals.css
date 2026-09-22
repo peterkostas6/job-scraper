@@ -2073,6 +2073,7 @@ nav {
 .job-row-header .job-index,
 .job-row-header .job-title,
 .job-row-header .job-location,
+.job-row-header .job-posted,
 .job-row-header .job-badges {
   font-size: 0.62rem;
   font-weight: 600;
@@ -2139,6 +2140,14 @@ nav {
   text-overflow: ellipsis;
   flex-shrink: 0;
   text-align: center;
+}
+
+.job-posted {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 108px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .job-badges {
@@ -3704,6 +3713,11 @@ footer {
     max-width: none;
     white-space: normal;
     overflow: visible;
+  }
+
+  .job-posted {
+    width: auto;
+    font-size: 0.72rem;
   }
 
   .job-badges {

@@ -2133,19 +2133,17 @@ nav {
 .job-location {
   font-size: 0.75rem;
   color: var(--text-muted);
-  min-width: 100px;
-  max-width: 180px;
+  width: 180px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 0;
-  text-align: center;
 }
 
 .job-posted {
   font-size: 0.75rem;
   color: var(--text-muted);
-  width: 108px;
+  width: 96px;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -2153,6 +2151,7 @@ nav {
 .job-badges {
   display: flex;
   gap: 0.4rem;
+  width: 96px;
   flex-shrink: 0;
 }
 
@@ -3709,8 +3708,7 @@ footer {
   .job-location {
     display: inline;
     font-size: 0.72rem;
-    min-width: auto;
-    max-width: none;
+    width: auto;
     white-space: normal;
     overflow: visible;
   }
@@ -3722,6 +3720,7 @@ footer {
 
   .job-badges {
     display: flex;
+    width: auto;
   }
 
   .job-badge {

@@ -211,65 +211,114 @@ export async function GET(request) {
       }
     }
 
-    // 2b. Verify new job links — skip any that are already dead (broken/closed on bank site).
+    // 2b. Verify new job links — drop any that are already dead (broken/closed on bank site).
     // Runs in parallel with an 8-second timeout per link. Only drops jobs with a definitive
     // dead signal (404/410, or a "no longer available" page) — everything else gets benefit of the doubt.
     // Jobs whose scraper couldn't supply a postedDate (e.g. Citi's list API has none) get it
     // recovered here from the same fetch, via checkJobLinkAndDate — so every job that makes it
     // into the jobs table has a real posted date to fall back on, not just detected_at.
     const verifiedNewJobs = [];
-    let skippedBrokenLinks = 0;
+    const deadNewLinks = new Set();
+    const recoveredDates = new Map();
     if (newJobs.length > 0) {
       await Promise.all(
         newJobs.map(async (job) => {
           if (job.postedDate) {
             if (await isJobLinkDead(job.link)) {
-              skippedBrokenLinks++;
+              deadNewLinks.add(job.link);
             } else {
               verifiedNewJobs.push(job);
             }
           } else {
             const { dead, postedDate } = await checkJobLinkAndDate(job.link);
             if (dead) {
-              skippedBrokenLinks++;
+              deadNewLinks.add(job.link);
             } else {
+              if (postedDate) recoveredDates.set(job.link, postedDate);
               verifiedNewJobs.push({ ...job, postedDate });
             }
           }
         })
       );
     }
+    const skippedBrokenLinks = deadNewLinks.size;
 
-    // 3. Insert verified new jobs into Postgres with detected_at = now
+    // 3. Upsert every current job in one statement. New rows get detected_at = now; rows we
+    //    already had refresh their title, location and last_seen_at. A new job whose link
+    //    failed the check above is stored with link_dead = true so it is never shown and
+    //    never re-checked on every run. The site reads this table, so it must stay current.
     const detectedAt = new Date();
-    if (!dryRun) for (const job of verifiedNewJobs) {
+    const uniqueJobs = [...new Map(allJobs.map((j) => [j.link, j])).values()];
+    if (!dryRun && uniqueJobs.length > 0) {
       await sql`
-        INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at, is_live)
-        VALUES (
-          ${job.link},
-          ${job.title},
-          ${job.bank},
-          ${job.bankKey || ""},
-          ${job.location || ""},
-          ${job.category || ""},
-          ${job.postedDate ? new Date(job.postedDate) : null},
-          ${detectedAt},
-          true
-        )
-        ON CONFLICT (link) DO NOTHING
+        INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at, is_live, link_dead, last_seen_at)
+        SELECT u.link, u.title, u.bank, u.bank_key, u.location, u.category, u.posted_date, ${detectedAt}, true, u.link_dead, ${detectedAt}
+        FROM unnest(
+          ${uniqueJobs.map((j) => j.link)}::text[],
+          ${uniqueJobs.map((j) => j.title)}::text[],
+          ${uniqueJobs.map((j) => j.bank)}::text[],
+          ${uniqueJobs.map((j) => j.bankKey || "")}::text[],
+          ${uniqueJobs.map((j) => j.location || "")}::text[],
+          ${uniqueJobs.map((j) => j.category || "")}::text[],
+          ${uniqueJobs.map((j) => { const d = j.postedDate || recoveredDates.get(j.link); return d ? new Date(d).toISOString() : null; })}::timestamptz[],
+          ${uniqueJobs.map((j) => deadNewLinks.has(j.link))}::boolean[]
+        ) AS u(link, title, bank, bank_key, location, category, posted_date, link_dead)
+        ON CONFLICT (link) DO UPDATE SET
+          title = EXCLUDED.title,
+          location = EXCLUDED.location,
+          category = EXCLUDED.category,
+          posted_date = COALESCE(EXCLUDED.posted_date, jobs.posted_date),
+          is_live = true,
+          last_seen_at = EXCLUDED.last_seen_at
       `;
     }
 
-    // Update is_live for tracked jobs at banks we successfully fetched this run — marks
-    // expired/removed jobs as not live so they disappear from the Recent tab automatically.
-    // Scoped to succeededBankKeys only: if a bank's API call failed this run, its jobs are
-    // left untouched rather than being wrongly marked dead just because we got no fresh data.
-    const allCurrentLinks = allJobs.map((j) => j.link);
+    // 3b. Anything a successfully fetched bank no longer lists is not live. One statement,
+    //     so readers never see a moment where every job at a bank is off. Scoped to
+    //     succeededBankKeys: a bank whose API call failed keeps its rows untouched.
+    const allCurrentLinks = uniqueJobs.map((j) => j.link);
     if (!dryRun && succeededBankKeys.length > 0) {
-      await sql`UPDATE jobs SET is_live = false WHERE is_live = true AND bank_key = ANY(${succeededBankKeys})`;
+      await sql`
+        UPDATE jobs SET is_live = false
+        WHERE is_live AND bank_key = ANY(${succeededBankKeys}) AND NOT (link = ANY(${allCurrentLinks}::text[]))
+      `;
     }
-    if (!dryRun && allCurrentLinks.length > 0) {
-      await sql`UPDATE jobs SET is_live = true WHERE link = ANY(${allCurrentLinks})`;
+
+    // 3c. Re-check a slice of live links each run, oldest check first. A posting can vanish
+    //     from the bank's page while its search results still list it; this catches those.
+    //     15 per run covers every live job every few hours.
+    let recheckedLinks = 0;
+    let recheckedDead = 0;
+    if (!dryRun) {
+      const { rows: toCheck } = await sql`
+        SELECT link FROM jobs WHERE is_live AND NOT link_dead
+        ORDER BY last_checked_at ASC NULLS FIRST LIMIT 15
+      `;
+      const checked = await Promise.all(toCheck.map(async (r) => ({ link: r.link, dead: await isJobLinkDead(r.link) })));
+      const deadLinks = checked.filter((c) => c.dead).map((c) => c.link);
+      if (checked.length > 0) {
+        await sql`
+          UPDATE jobs SET last_checked_at = NOW(), link_dead = (link = ANY(${deadLinks}::text[]))
+          WHERE link = ANY(${checked.map((c) => c.link)})
+        `;
+      }
+      recheckedLinks = checked.length;
+      recheckedDead = deadLinks.length;
+    }
+
+    // 3d. Per-bank health for the QC view (/api/admin/bank-status).
+    if (!dryRun) {
+      for (const [bankKey, stat] of Object.entries(bankStats)) {
+        await sql`
+          INSERT INTO bank_status (bank_key, last_run_at, last_success_at, last_error, live_count)
+          VALUES (${bankKey}, NOW(), ${stat.error ? null : detectedAt}, ${stat.error}, ${stat.kept})
+          ON CONFLICT (bank_key) DO UPDATE SET
+            last_run_at = NOW(),
+            last_success_at = COALESCE(EXCLUDED.last_success_at, bank_status.last_success_at),
+            last_error = EXCLUDED.last_error,
+            live_count = CASE WHEN EXCLUDED.last_error IS NULL THEN EXCLUDED.live_count ELSE bank_status.live_count END
+        `;
+      }
     }
 
     // 4. Notify subscribed users right away (one email + one SMS per user per run).
@@ -379,6 +428,8 @@ export async function GET(request) {
       totalJobs: allJobs.length,
       newJobs: verifiedNewJobs.length,
       skippedBrokenLinks,
+      recheckedLinks,
+      recheckedDead,
       notifiedUsers,
       emailsSent,
       smsSent,

@@ -47,7 +47,7 @@ export async function GET(request) {
       const { rows: liveRows } = await sql`
         SELECT link FROM jobs
         WHERE link = ANY(${queuedLinks})
-          AND is_live = true
+          AND is_live = true AND NOT link_dead
           AND detected_at > NOW() - INTERVAL '48 hours'
       `;
       const liveLinks = new Set(liveRows.map((r) => r.link));

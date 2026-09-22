@@ -51,6 +51,28 @@ export async function POST(request) {
       CREATE INDEX IF NOT EXISTS idx_jobs_detected_at ON jobs(detected_at)
     `;
 
+    // is_live = the bank still lists it. link_dead = the posting page itself is gone.
+    // Two columns because two different checks write them, and they must not fight.
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_live BOOLEAN NOT NULL DEFAULT true`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS link_dead BOOLEAN NOT NULL DEFAULT false`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS last_checked_at TIMESTAMPTZ`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_jobs_is_live ON jobs(is_live)`;
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_jobs_live_bank ON jobs(bank_key) WHERE is_live AND NOT link_dead
+    `;
+
+    // Per-bank health from the last cron run: which scrapers fail, and when each last worked.
+    await sql`
+      CREATE TABLE IF NOT EXISTS bank_status (
+        bank_key TEXT PRIMARY KEY,
+        last_run_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_success_at TIMESTAMPTZ,
+        last_error TEXT,
+        live_count INT NOT NULL DEFAULT 0
+      )
+    `;
+
     // One row per send attempt and per carrier delivery event, so "who got what, and
     // what failed" can be answered from the database instead of scrolling logs.
     await sql`
@@ -71,7 +93,7 @@ export async function POST(request) {
       CREATE INDEX IF NOT EXISTS idx_nl_created_at ON notification_log(created_at)
     `;
 
-    return Response.json({ ok: true, message: "notification_queue, jobs, and notification_log tables ready" });
+    return Response.json({ ok: true, message: "notification_queue, jobs, notification_log, and bank_status tables ready" });
   } catch (err) {
     console.error("init-db error:", err);
     return Response.json({ error: "DB init failed", details: err.message }, { status: 500 });

@@ -46,7 +46,7 @@ export async function GET() {
         EXTRACT(EPOCH FROM detected_at)::bigint * 1000 AS detected_at_ms
       FROM jobs
       WHERE detected_at > NOW() - INTERVAL '7 days'
-        AND is_live = true
+        AND is_live = true AND NOT link_dead
       ORDER BY detected_at DESC
     `;
 

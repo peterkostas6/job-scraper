@@ -1,6 +1,6 @@
 // POST /api/admin/fix-broken-links — one-time cleanup.
 // Checks every job currently in the Recent tab (last 48h, is_live=true),
-// verifies the URL actually works, and marks broken ones as is_live=false.
+// verifies the URL actually works, and marks broken ones link_dead=true.
 // Safe to re-run. Secured with CRON_SECRET.
 import { sql } from "@vercel/postgres";
 import { isJobLinkDead } from "@/lib/notif-helpers";
@@ -20,7 +20,7 @@ export async function POST(request) {
     const { rows } = await sql`
       SELECT link FROM jobs
       WHERE detected_at > NOW() - INTERVAL '48 hours'
-        AND is_live = true
+        AND is_live = true AND NOT link_dead
     `;
 
     if (rows.length === 0) {
@@ -37,7 +37,7 @@ export async function POST(request) {
 
     // Mark broken links as not live
     if (brokenLinks.length > 0) {
-      await sql`UPDATE jobs SET is_live = false WHERE link = ANY(${brokenLinks})`;
+      await sql`UPDATE jobs SET link_dead = true, last_checked_at = NOW() WHERE link = ANY(${brokenLinks})`;
     }
 
     return Response.json({

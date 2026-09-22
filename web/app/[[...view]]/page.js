@@ -25,24 +25,6 @@ function isInternship(title) {
   );
 }
 
-function isGraduateProgram(title) {
-  const t = title.toLowerCase();
-  return /\bgraduate\b/.test(t) || /\bgrad\s+program/.test(t) || /\bgrad\s+programme/.test(t);
-}
-
-function isFinanceRole(title) {
-  const t = title.toLowerCase();
-  if (t.includes("software engineer") || t.includes("software developer")) return false;
-  if (t.includes("application developer") || t.includes("web developer") || t.includes("full stack") || t.includes("fullstack")) return false;
-  if (/\btechnology analyst\b/.test(t) || /\btech analyst\b/.test(t)) return false;
-  if (t.includes("cybersecurity") || t.includes("cyber security") || t.includes("information security") || t.includes("infosec")) return false;
-  if (t.includes("cloud engineer") || t.includes("cloud architect") || t.includes("devops") || t.includes("site reliability")) return false;
-  if (t.includes("infrastructure engineer") || t.includes("network engineer") || t.includes("network administrator")) return false;
-  if (t.includes("data engineer") || t.includes("machine learning engineer") || t.includes("ai engineer")) return false;
-  if (/\bit\s+(analyst|support|intern|associate)\b/.test(t) || t.includes("it helpdesk") || t.includes("help desk")) return false;
-  return true;
-}
-
 function formatRelativeDate(effectiveTime, hasActualDate) {
   const now = Date.now();
   const diffMs = now - effectiveTime;
@@ -928,6 +910,7 @@ export default function Home() {
   const [jobType, setJobType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [allJobs, setAllJobs] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1048,20 +1031,27 @@ export default function Home() {
       .catch(() => {});
   }, [isLoaded]);
 
-  // Fetch all bank counts on load
+  // Load every live job once. The cron refreshes the table every 5 minutes, so the
+  // page never has to call a bank's own API.
   useEffect(() => {
     if (!isLoaded) return;
-    Object.entries(BANKS).forEach(([key, bank]) => {
-      fetch(bank.endpoint)
-        .then((res) => res.ok ? res.json() : null)
-        .then((data) => {
-          if (data?.jobs) {
-            const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title) && isFinanceRole(j.title));
-            setBankCounts((prev) => ({ ...prev, [key]: filtered.length }));
-          }
-        })
-        .catch(() => {});
-    });
+    fetch("/api/jobs-live")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch jobs");
+        return res.json();
+      })
+      .then((data) => {
+        const loaded = data.jobs || [];
+        setAllJobs(loaded);
+        const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
+        for (const job of loaded) if (job.bankKey in counts) counts[job.bankKey]++;
+        setBankCounts(counts);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, [isLoaded]);
 
   // Fetch recent postings data when that view is opened
@@ -1078,53 +1068,29 @@ export default function Home() {
       .finally(() => setNewPostingsLoading(false));
   }, [viewNewPostings]);
 
-  // Fetch jobs when bank changes
+  // Show the active bank's jobs from the loaded list
   useEffect(() => {
     if (!FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed)) {
       setJobs([]);
-      setLoading(false);
       return;
     }
 
-    if (!isLoaded) return;
-
-    setLoading(true);
-    setError(null);
-    setJobs([]);
     setSearchQuery("");
     setLocationFilter("");
     setCategoryFilter("");
     setShowSavedOnly(false);
 
-    const controller = new AbortController();
+    const bankJobs = allJobs.filter((job) => job.bankKey === activeBank);
+    setJobs(bankJobs);
 
-    fetch(BANKS[activeBank].endpoint, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch jobs");
-        return res.json();
-      })
-      .then((data) => {
-        const filtered = data.jobs.filter((j) => !isGraduateProgram(j.title) && isFinanceRole(j.title));
-        setJobs(filtered);
-        setBankCounts((prev) => ({ ...prev, [activeBank]: filtered.length }));
+    const locs = [...new Set(
+      bankJobs.flatMap((job) => (job.location || "").split(";").map((l) => l.trim())).filter(Boolean)
+    )].sort();
+    setAvailableLocations(locs);
 
-        const locs = [...new Set(
-          data.jobs.flatMap((job) => (job.location || "").split(";").map((l) => l.trim())).filter(Boolean)
-        )].sort();
-        setAvailableLocations(locs);
-
-        const cats = [...new Set(data.jobs.map((job) => job.category).filter(Boolean))].sort();
-        setAvailableCategories(cats);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (err.name === "AbortError") return;
-        setError(err.message);
-        setLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [activeBank, isSignedIn, isSubscribed, isLoaded]);
+    const cats = [...new Set(bankJobs.map((job) => job.category).filter(Boolean))].sort();
+    setAvailableCategories(cats);
+  }, [activeBank, allJobs, isSignedIn, isSubscribed]);
 
   function toggleBookmark(e, job) {
     e.preventDefault();
@@ -1856,7 +1822,7 @@ export default function Home() {
                 {!isGatedBank && loading && (
                   <>
                     <div style={{ padding: "12px 16px 4px", fontSize: "13px", color: "#94a3b8" }}>
-                      Calling {BANKS[activeBank].name} API to pull accurate jobs...
+                      Loading jobs...
                     </div>
                     <SkeletonRows />
                   </>

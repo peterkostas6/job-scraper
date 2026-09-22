@@ -118,6 +118,11 @@ export async function checkJobLinkAndDate(link, timeoutMs = 8000) {
   const workdayMatch = link.match(WORKDAY_RE);
   if (workdayMatch) return { dead: await isWorkdayJobDead(workdayMatch, timeoutMs), postedDate: null };
 
+  const workdaySiteMatch = link.match(WORKDAYSITE_RE);
+  if (workdaySiteMatch && WORKDAYSITE_TENANTS[workdaySiteMatch[2]]) {
+    return { dead: await isWorkdayJobDead(workdaySiteMatch, timeoutMs, WORKDAYSITE_TENANTS[workdaySiteMatch[2]]), postedDate: null };
+  }
+
   const oracleMatch = link.match(ORACLE_FUSION_RE);
   if (oracleMatch) return { dead: await isOracleFusionJobDead(oracleMatch, timeoutMs), postedDate: null };
 

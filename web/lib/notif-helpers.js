@@ -21,6 +21,10 @@ const CLOSED_POSTING_PHRASES = [
 // so for these platforms we query the same JSON API the page itself uses.
 
 const WORKDAY_RE = /^https:\/\/([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com)\/[^/]+\/([^/]+)\/job\/(.+)$/i;
+// Some tenants (Wells Fargo) live on myworkdaysite.com, where the host carries no tenant
+// name, so the site name has to map to it by hand.
+const WORKDAYSITE_RE = /^https:\/\/(wd\d+\.myworkdaysite\.com)\/[^/]+\/([^/]+)\/job\/(.+)$/i;
+const WORKDAYSITE_TENANTS = { WellsFargoJobs: "wf" };
 const ORACLE_FUSION_RE = /^https:\/\/([a-z0-9.-]+\.oraclecloud\.com)\/hcmUI\/CandidateExperience\/[^/]+\/sites\/([^/]+)\/job\/(\d+)\/?$/i;
 
 async function fetchJson(url, timeoutMs) {
@@ -38,9 +42,8 @@ async function fetchJson(url, timeoutMs) {
 }
 
 // Workday's own frontend calls this "cxs" API to render the job — returns 404 once closed.
-async function isWorkdayJobDead(match, timeoutMs) {
+async function isWorkdayJobDead(match, timeoutMs, tenant = match[1].split(".")[0]) {
   const [, host, site, jobPath] = match;
-  const tenant = host.split(".")[0];
   const apiUrl = `https://${host}/wday/cxs/${tenant}/${site}/job/${jobPath}`;
   try {
     const { res } = await fetchJson(apiUrl, timeoutMs);
@@ -72,6 +75,11 @@ async function isOracleFusionJobDead(match, timeoutMs) {
 export async function isJobLinkDead(link, timeoutMs = 8000) {
   const workdayMatch = link.match(WORKDAY_RE);
   if (workdayMatch) return isWorkdayJobDead(workdayMatch, timeoutMs);
+
+  const workdaySiteMatch = link.match(WORKDAYSITE_RE);
+  if (workdaySiteMatch && WORKDAYSITE_TENANTS[workdaySiteMatch[2]]) {
+    return isWorkdayJobDead(workdaySiteMatch, timeoutMs, WORKDAYSITE_TENANTS[workdaySiteMatch[2]]);
+  }
 
   const oracleMatch = link.match(ORACLE_FUSION_RE);
   if (oracleMatch) return isOracleFusionJobDead(oracleMatch, timeoutMs);

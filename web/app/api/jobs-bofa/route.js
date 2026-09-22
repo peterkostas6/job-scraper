@@ -84,11 +84,17 @@ async function fetchCampusJobs() {
 
   let match;
   while ((match = rowRegex.exec(html)) !== null) {
-    const link = match[1];
+    // TAL.net puts a per-session token (xf-...) in every link. The page opens fine without
+    // it, and keeping it would make the same job look new on every scrape.
+    const link = match[1].replace(/\/xf-[0-9a-f]+\//i, "/");
     const title = match[2].trim().replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
     const location = match[3].trim();
 
     jobs.push({ title, link, location, category: categorizeJob(title) });
+  }
+
+  if (jobs.length === 0) {
+    console.warn(`BofA TAL.net: 0 rows parsed (status ${response.status}, url ${response.url}, ${html.length} bytes): ${html.slice(0, 300).replace(/\s+/g, " ")}`);
   }
 
   // Filter to US only

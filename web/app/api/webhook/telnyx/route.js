@@ -1,9 +1,10 @@
 // POST /api/webhook/telnyx — receives Telnyx delivery status callbacks and inbound texts.
+// Every event lands in notification_log so carrier blocks and STOP replies are visible.
 // On inbound STOP-family keywords, turns off SMS for the matching user so the site
 // reflects reality (Telnyx already blocks further sends to that number regardless).
 // On inbound HELP-family keywords, sends back a short help text.
 import { clerkClient } from "@clerk/nextjs/server";
-import { telnyxConfig, sendSms } from "@/lib/notif-send";
+import { telnyxConfig, sendSms, logNotification } from "@/lib/notif-send";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +25,24 @@ async function findUserByPhone(client, phone) {
 export async function POST(request) {
   const body = await request.json().catch(() => null);
   const event = body?.data;
+  const payload = event?.payload;
+
+  if (payload) {
+    const inbound = payload.direction === "inbound" || event.event_type === "message.received";
+    const to = payload.to?.[0] || {};
+    const errors = (payload.errors || []).map((e) => `${e.code || ""} ${e.title || ""} ${e.detail || ""}`.trim()).join("; ");
+    await logNotification({
+      channel: inbound ? "sms-inbound" : "sms-delivery",
+      status: inbound ? (payload.text || "").trim().slice(0, 40) : to.status || event.event_type || "unknown",
+      recipient: inbound ? payload.from?.phone_number || null : to.phone_number || null,
+      error: errors || null,
+      providerId: payload.id || null,
+    });
+  }
 
   if (event?.event_type === "message.received") {
-    const from = event.payload?.from?.phone_number;
-    const text = (event.payload?.text || "").trim().toUpperCase();
+    const from = payload?.from?.phone_number;
+    const text = (payload?.text || "").trim().toUpperCase();
 
     if (from && (STOP_KEYWORDS.has(text) || HELP_KEYWORDS.has(text))) {
       try {

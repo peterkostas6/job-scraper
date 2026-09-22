@@ -1,6 +1,7 @@
 // Shared sender for job notifications. Used by the detection cron (immediate send)
 // and by the retry sweep (queued rows). One email and at most one SMS per call.
 import crypto from "crypto";
+import { sql } from "@vercel/postgres";
 import { alertEmail } from "@/lib/email-templates";
 import { sendEmail, unsubscribeUrl, BRAND } from "@/lib/email";
 
@@ -19,6 +20,7 @@ export function buildSmsText(jobs) {
   return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}\n\npetespostings.com/recent\nReply STOP to unsubscribe`;
 }
 
+// Returns the Telnyx message id so delivery callbacks can be matched to the send.
 export async function sendSms(telnyx, to, text) {
   const resp = await fetch("https://api.telnyx.com/v2/messages", {
     method: "POST",
@@ -26,6 +28,21 @@ export async function sendSms(telnyx, to, text) {
     body: JSON.stringify({ from: telnyx.from, to, text }),
   });
   if (!resp.ok) throw new Error(`Telnyx ${resp.status}: ${await resp.text()}`);
+  const body = await resp.json().catch(() => null);
+  return body?.data?.id || null;
+}
+
+// Records a send attempt or a delivery event. Never throws: a logging failure must not
+// stop a notification from going out.
+export async function logNotification({ userId = null, channel, status, recipient = null, jobLinks = null, error = null, providerId = null }) {
+  try {
+    await sql`
+      INSERT INTO notification_log (user_id, channel, status, recipient, job_links, error, provider_id)
+      VALUES (${userId}, ${channel}, ${status}, ${recipient}, ${jobLinks}, ${error}, ${providerId})
+    `;
+  } catch (err) {
+    console.error("notification_log insert failed:", err?.message || err);
+  }
 }
 
 /**
@@ -37,13 +54,14 @@ export async function sendUserNotification({ resend, telnyx, userId, email, firs
   const result = { emailSent: false, smsSent: false, failed: false };
   if (!jobs || jobs.length === 0) return result;
   const uid = userId || email || "anon";
+  const jobLinks = jobs.map((j) => j.link);
 
   if (email) {
     try {
       const { subject, html, text } = alertEmail({ jobs, firstName, userId: uid });
       // Same user + same set of links = same key, so a retry never double-sends.
       const linkHash = crypto.createHash("sha256").update(jobs.map((j) => j.link).sort().join("|")).digest("hex").slice(0, 16);
-      await sendEmail(resend, {
+      const sent = await sendEmail(resend, {
         from: BRAND.fromAlerts,
         to: email,
         subject,
@@ -57,22 +75,26 @@ export async function sendUserNotification({ resend, telnyx, userId, email, firs
         tags: [{ name: "type", value: "job-alert" }],
       });
       result.emailSent = true;
+      await logNotification({ userId, channel: "email", status: "sent", recipient: email, jobLinks, providerId: sent?.id || null });
     } catch (err) {
       console.error(`Failed to email ${email}:`, err?.message || err);
       result.failed = true;
       result.emailError = err?.message || String(err);
+      await logNotification({ userId, channel: "email", status: "failed", recipient: email, jobLinks, error: result.emailError });
     }
   }
 
   if (telnyx && prefs?.smsEnabled && prefs?.phoneNumber) {
     try {
-      await sendSms(telnyx, prefs.phoneNumber, buildSmsText(jobs));
+      const messageId = await sendSms(telnyx, prefs.phoneNumber, buildSmsText(jobs));
       result.smsSent = true;
+      await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
     } catch (err) {
       // SMS failures are logged but never queued: a retry would hit the same carrier or
       // account limit, and re-queuing would resend the email that already went out.
       console.error(`Failed to SMS ${prefs.phoneNumber}:`, err?.message || err);
       result.smsError = err?.message || String(err);
+      await logNotification({ userId, channel: "sms", status: "failed", recipient: prefs.phoneNumber, jobLinks, error: result.smsError });
     }
   }
 

@@ -8,6 +8,7 @@ import { Resend } from "resend";
 import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
 import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
+import { BANKS, BANK_NAMES } from "@/lib/banks";
 
 export const dynamic = "force-dynamic";
 // The Postgres driver talks to Neon over HTTP. In production Next.js can serve a repeated,
@@ -18,52 +19,6 @@ export const revalidate = 0;
 export const maxDuration = 300;
 
 const OWNER_EMAIL = "pete@petespostings.com";
-
-const BANK_ENDPOINTS = {
-  jpmc: "/api/jobs",
-  gs: "/api/jobs-gs",
-  ms: "/api/jobs-ms",
-  bofa: "/api/jobs-bofa",
-  citi: "/api/jobs-citi",
-  db: "/api/jobs-db",
-  barclays: "/api/jobs-barclays",
-  wells: "/api/jobs-wells",
-  mufg: "/api/jobs-mufg",
-  td: "/api/jobs-td",
-  mizuho: "/api/jobs-mizuho",
-  bmo: "/api/jobs-bmo",
-  hl: "/api/jobs-hl",
-  guggenheim: "/api/jobs-guggenheim",
-  macquarie: "/api/jobs-macquarie",
-  piper: "/api/jobs-piper",
-  stifel: "/api/jobs-stifel",
-  blackstone: "/api/jobs-blackstone",
-  blackrock: "/api/jobs-blackrock",
-  jefferies: "/api/jobs-jefferies",
-};
-
-const BANK_NAMES = {
-  jpmc: "JPMorgan Chase",
-  gs: "Goldman Sachs",
-  ms: "Morgan Stanley",
-  bofa: "Bank of America",
-  citi: "Citi",
-  db: "Deutsche Bank",
-  barclays: "Barclays",
-  wells: "Wells Fargo",
-  mufg: "MUFG",
-  td: "TD Securities",
-  mizuho: "Mizuho",
-  bmo: "BMO",
-  hl: "Houlihan Lokey",
-  guggenheim: "Guggenheim",
-  macquarie: "Macquarie",
-  piper: "Piper Sandler",
-  stifel: "Stifel",
-  blackstone: "Blackstone",
-  blackrock: "BlackRock",
-  jefferies: "Jefferies",
-};
 
 async function dbIdentity() {
   try {
@@ -202,7 +157,7 @@ export async function GET(request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com";
 
     // 1. Fetch jobs from all banks in parallel
-    const bankEntries = Object.entries(BANK_ENDPOINTS);
+    const bankEntries = Object.entries(BANKS).map(([k, b]) => [k, b.endpoint]);
     const rawResults = await Promise.allSettled(
       bankEntries.map(async ([bankKey, endpoint]) => {
         const res = await fetch(`${baseUrl}${endpoint}`, {

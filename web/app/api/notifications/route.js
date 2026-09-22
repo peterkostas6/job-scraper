@@ -1,20 +1,11 @@
 import { prefsEmail } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
 import { telnyxConfig, sendSms } from "@/lib/notif-send";
+import { BANK_NAMES } from "@/lib/banks";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
-
-const BANK_NAMES = {
-  jpmc: "JPMorgan Chase",
-  gs: "Goldman Sachs",
-  ms: "Morgan Stanley",
-  bofa: "Bank of America",
-  citi: "Citi",
-  db: "Deutsche Bank",
-  barclays: "Barclays",
-};
 
 const JOB_TYPE_LABELS = {
   all: "All types (analyst + internship)",

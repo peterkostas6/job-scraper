@@ -1843,7 +1843,7 @@ export default function Home() {
                       <span className="job-index">#</span>
                       <span className="job-title">Title</span>
                       <span className="job-location">Location</span>
-                      <span className="job-badges">Type</span>
+                      <span className="job-badges">Type / Posted</span>
                       <span style={{ width: 14 }} />
                       <span style={{ width: 14 }} />
                     </div>
@@ -1856,6 +1856,9 @@ export default function Home() {
                           <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>
                             {isInternship(job.title) ? "Internship" : "Analyst"}
                           </span>
+                          {(job.postedDate || job.detectedAt) && (
+                            <span className="job-badge badge-new-time">{formatRelativeDate(job.postedDate ? new Date(job.postedDate).getTime() : job.detectedAt)}</span>
+                          )}
                         </div>
                         <button className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}`} onClick={(e) => toggleBookmark(e, job)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

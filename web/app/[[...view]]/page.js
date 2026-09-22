@@ -1548,7 +1548,7 @@ export default function Home() {
               <div className="notif-panel">
                 <div className="notif-header">
                   <h2 className="notif-title">Manage Notifications</h2>
-                  <p className="notif-desc">Get notified when new jobs matching your preferences are posted. We check daily.</p>
+                  <p className="notif-desc">Get notified when new jobs matching your preferences are posted. We check every 5 minutes.</p>
                 </div>
                 {notifLoading ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
@@ -1746,7 +1746,7 @@ export default function Home() {
                     <div>
                       <p className="welcome-title">Welcome to Pete's Postings</p>
                       <p className="welcome-desc">
-                        Live postings from 20 banks. Hit <strong>⚡ Recent</strong> to see everything posted in the last 7 days — or upgrade to Pro for SMS &amp; email alerts the moment a role goes live.
+                        Live postings from 20 banks. Hit <strong>⚡ Recent</strong> to see everything posted in the last 48 hours — or upgrade to Pro for SMS &amp; email alerts the moment a role goes live.
                       </p>
                     </div>
                     <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>

@@ -391,7 +391,7 @@ export default function PricingPage() {
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">What does the recent postings feed include?</h3>
-              <p className="pricing-faq-a">Pro subscribers see every job posted in the last 48 hours across all banks, updated hourly. You'll also get SMS or email alerts so you don't have to check manually.</p>
+              <p className="pricing-faq-a">Pro subscribers see every job posted in the last 48 hours across all banks, checked every 5 minutes. You'll also get SMS or email alerts so you don't have to check manually.</p>
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">How do club memberships work?</h3>

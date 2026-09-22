@@ -399,13 +399,13 @@ nav {
   width: min(380px, calc(100% - 2.5rem));
   display: flex;
   align-items: flex-start;
-  gap: 0.7rem;
-  padding: 0.8rem 1rem;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
   background: rgba(250, 250, 252, 0.92);
   backdrop-filter: blur(16px) saturate(1.4);
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.12);
   transform: translate(-50%, -140%);
   opacity: 0;
@@ -419,34 +419,14 @@ nav {
 }
 
 .hero-notif-icon {
-  position: relative;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 9px;
-  background: var(--navy);
+  background: linear-gradient(180deg, #6df58a 0%, #22c55e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.hero-notif-visible .hero-notif-icon svg {
-  animation: hero-notif-ring 0.6s var(--ease-out) 0.4s;
-}
-
-.hero-notif-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #22c55e;
-  border: 2px solid rgba(250, 250, 252, 0.92);
-}
-
-.hero-notif-visible .hero-notif-dot {
-  animation: hero-notif-pulse 1.6s ease-out 0.9s;
 }
 
 .hero-notif-body {
@@ -458,52 +438,31 @@ nav {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin-bottom: 3px;
+  margin-bottom: 1px;
 }
 
 .hero-notif-app {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--navy);
-  letter-spacing: 0.01em;
-}
-
-.hero-notif-badge {
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--forest-blue);
-  background: rgba(37, 99, 235, 0.08);
-  border-radius: 100px;
-  padding: 0.1rem 0.4rem;
+  font-size: 0.72rem;
+  color: #6b7280;
 }
 
 .hero-notif-time {
-  font-size: 0.66rem;
-  color: #9ca3af;
+  font-size: 0.68rem;
+  color: #6b7280;
   margin-left: auto;
+}
+
+.hero-notif-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
 }
 
 .hero-notif-text {
   font-size: 0.82rem;
-  color: #1f2937;
-  line-height: 1.4;
-}
-
-.hero-notif-text strong { color: var(--navy); }
-
-@keyframes hero-notif-ring {
-  0%, 100% { transform: rotate(0deg); }
-  20% { transform: rotate(-14deg); }
-  40% { transform: rotate(11deg); }
-  60% { transform: rotate(-7deg); }
-  80% { transform: rotate(4deg); }
-}
-
-@keyframes hero-notif-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
-  70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  color: #111827;
+  line-height: 1.35;
 }
 
 /* Live count reveal: pops green once the tick-up animation lands on the real number. */
@@ -965,7 +924,6 @@ nav {
   .hero-notif { transition: opacity 0.3s ease; }
   .hero-notif.hero-notif-visible { transform: translate(-50%, 0); }
   .hero-notif:not(.hero-notif-visible) { transform: translate(-50%, 0); }
-  .hero-notif-icon svg, .hero-notif-dot { animation: none !important; }
   .spinner { animation-duration: 1.5s; }
   .modal-overlay, .modal-overlay[data-state="closing"] { animation: modal-scrim-in 120ms linear both; }
   .modal-card, .modal-overlay[data-state="closing"] .modal-card { animation: modal-scrim-in 120ms linear both; }

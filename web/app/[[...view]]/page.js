@@ -359,22 +359,21 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
         </p>
       </div>
 
-      {/* Animated "you just got a text" banner — loops mock alerts to show the SMS feature */}
+      {/* Animated "you just got a text" banner — styled as an iPhone Messages notification */}
       <div className={`hero-notif${heroNotifVisible ? ' hero-notif-visible' : ''}`} aria-hidden="true">
         <div className="hero-notif-icon">
-          <span className="hero-notif-dot" />
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+            <path d="M12 3C6.5 3 2 6.6 2 11c0 2.3 1.2 4.4 3.1 5.8-.2 1.3-.8 2.5-1.7 3.4 1.9-.2 3.6-.9 5-1.9 1.1.3 2.4.5 3.6.5 5.5 0 10-3.6 10-8S17.5 3 12 3z"/>
           </svg>
         </div>
         <div className="hero-notif-body">
           <div className="hero-notif-header">
-            <span className="hero-notif-app">Pete&rsquo;s Postings</span>
-            <span className="hero-notif-badge">SMS</span>
+            <span className="hero-notif-app">Messages</span>
             <span className="hero-notif-time">now</span>
           </div>
+          <div className="hero-notif-title">Pete&rsquo;s Postings</div>
           <div className="hero-notif-text">
-            <strong>{heroNotif.bank}</strong> just posted &mdash; {heroNotif.title}. Tap to apply &rarr;
+            {heroNotif.bank} just posted &mdash; {heroNotif.title}. Tap to apply &rarr;
           </div>
         </div>
       </div>

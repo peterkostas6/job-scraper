@@ -362,8 +362,8 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       {/* Animated "you just got a text" banner — styled as an iPhone Messages notification */}
       <div className={`hero-notif${heroNotifVisible ? ' hero-notif-visible' : ''}`} aria-hidden="true">
         <div className="hero-notif-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-            <path d="M12 3C6.5 3 2 6.6 2 11c0 2.3 1.2 4.4 3.1 5.8-.2 1.3-.8 2.5-1.7 3.4 1.9-.2 3.6-.9 5-1.9 1.1.3 2.4.5 3.6.5 5.5 0 10-3.6 10-8S17.5 3 12 3z"/>
+          <svg width="26" height="26" viewBox="0 0 64 64" fill="white" aria-hidden="true">
+            <path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/>
           </svg>
         </div>
         <div className="hero-notif-body">

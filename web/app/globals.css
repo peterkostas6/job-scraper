@@ -3161,6 +3161,11 @@ footer {
   margin-bottom: 0.35rem;
 }
 
+/* Plans sit under the locked Recent teaser rather than inside it. */
+.new-paywall + .paywall {
+  margin-top: 2rem;
+}
+
 .hero-photo-link-pending {
   visibility: hidden;
 }

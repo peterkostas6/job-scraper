@@ -646,7 +646,7 @@ function PaywallOverlay({ isSignedIn }) {
       <div className="paywall-includes">
         <p className="paywall-includes-label">Pro includes</p>
         <div className="paywall-includes-list">
-          {["SMS text alerts", "Email alerts", "Save & bookmark jobs", "All banks"].map((item) => (
+          {["SMS text alerts", "Email alerts", "Save & bookmark jobs", "48-hour recent feed"].map((item) => (
             <span className="paywall-includes-item" key={item}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -792,9 +792,10 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
     <div className="new-postings-view">
       <div className="new-section">
         {!isSubscribed ? (
+          <>
           <div className="new-paywall">
             <div className="new-paywall-blur">
-              {[1,2,3].map(i => (
+              {[1,2,3,4].map(i => (
                 <div className="job-row new-paywall-fake" key={i}>
                   <div className="skeleton skeleton-index" />
                   <div className="skeleton skeleton-title" />
@@ -813,9 +814,10 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
                 {last48hCount > 0 ? `${last48hCount} ${last48hCount === 1 ? "job was" : "jobs were"} posted in the last 48 hours. ` : ""}
                 Upgrade to Pro to see them here, or <Link href="/jobs?bank=all" className="text-link">browse every open job</Link> for free in the Browse tab.
               </p>
-              <PaywallOverlay isSignedIn={isSignedIn} />
             </div>
           </div>
+          <PaywallOverlay isSignedIn={isSignedIn} />
+          </>
         ) : (
           <>
             {/* Filters */}

@@ -1486,7 +1486,7 @@ export default function Home() {
                   setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
                 }}
               >
-                ⚡ Last 48h
+                Last 48h
               </button>
               <button
                 className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
@@ -1564,7 +1564,7 @@ export default function Home() {
                   setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
                 }}
               >
-                ⚡ Last 48h
+                Last 48h
               </button>
               <button
                 className={`mobile-pro-pill${viewingSaved && !viewNotifications ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
@@ -1819,7 +1819,7 @@ export default function Home() {
                     <div>
                       <p className="welcome-title">Welcome to Pete's Postings</p>
                       <p className="welcome-desc">
-                        Live postings from 20 banks. Hit <strong>⚡ Recent</strong> to see everything posted in the last 48 hours — or upgrade to Pro for SMS &amp; email alerts the moment a role goes live.
+                        Live postings from 20 banks. Hit <strong>Recent</strong> to see everything posted in the last 48 hours — or upgrade to Pro for SMS &amp; email alerts the moment a role goes live.
                       </p>
                     </div>
                     <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>

@@ -114,7 +114,9 @@ export async function POST(request) {
       if (sms) {
         const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
         // Awaited: Vercel freezes the function once the response is sent, which would drop an in-flight send.
-        await sendSms(sms, newPhone, welcomeMsg).catch((e) => console.error("Welcome SMS failed:", e.message));
+        // Attach the contact card so the number saves as "Pete's Postings" in one tap.
+        const contactCard = `${new URL(request.url).origin}/petes-postings.vcf`;
+        await sendSms(sms, newPhone, welcomeMsg, contactCard).catch((e) => console.error("Welcome SMS failed:", e.message));
       }
     }
 

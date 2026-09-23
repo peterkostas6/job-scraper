@@ -23,14 +23,14 @@ export function buildSmsText(jobs) {
 }
 
 // Returns the Twilio message SID so delivery callbacks can be matched to the send.
-export async function sendSms(sms, to, text) {
+export async function sendSms(sms, to, text, mediaUrl) {
   const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sms.accountSid}/Messages.json`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: `Basic ${Buffer.from(`${sms.accountSid}:${sms.authToken}`).toString("base64")}`,
     },
-    body: new URLSearchParams({ MessagingServiceSid: sms.messagingServiceSid, To: to, Body: text }),
+    body: new URLSearchParams({ MessagingServiceSid: sms.messagingServiceSid, To: to, Body: text, ...(mediaUrl && { MediaUrl: mediaUrl }) }),
   });
   if (!resp.ok) throw new Error(`Twilio ${resp.status}: ${await resp.text()}`);
   const body = await resp.json().catch(() => null);

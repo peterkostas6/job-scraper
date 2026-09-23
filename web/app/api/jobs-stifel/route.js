@@ -1,6 +1,7 @@
 // GET /api/jobs-stifel — fetches Stifel analyst & intern jobs from iCIMS
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const BASE_URL = "https://careers-stifel.icims.com";
 const SEARCH_URL = `${BASE_URL}/jobs/search`;

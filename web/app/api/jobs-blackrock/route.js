@@ -2,6 +2,7 @@
 // BlackRock uses TalentBrew (Radancy) at careers.blackrock.com — same platform as Barclays
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const BASE_URL = "https://careers.blackrock.com";
 const API_URL = `${BASE_URL}/search-jobs/results`;

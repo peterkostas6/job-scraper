@@ -3,6 +3,7 @@
 // so the browser calls OUR API, and our API calls JPMC's API.
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const API_URL =
   "https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions";

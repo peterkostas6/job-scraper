@@ -3,6 +3,7 @@
 // so our server makes the request on behalf of the browser.
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const GS_API_URL = "https://api-higher.gs.com/gateway/api/v1/graphql";
 const GS_SITE_URL = "https://higher.gs.com/roles";

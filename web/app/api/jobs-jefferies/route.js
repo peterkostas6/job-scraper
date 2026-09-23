@@ -1,6 +1,7 @@
 // GET /api/jobs-jefferies — fetches Jefferies analyst & intern jobs from Oracle HCM
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const API_URL =
   "https://hdid.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions";

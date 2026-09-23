@@ -1,6 +1,7 @@
 // GET /api/jobs-wells — fetches Wells Fargo analyst & intern jobs from Workday
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const WORKDAY_URL = "https://wd1.myworkdaysite.com/wday/cxs/wf/WellsFargoJobs/jobs";
 const WORKDAY_SITE = "https://wd1.myworkdaysite.com/en-US/WellsFargoJobs";

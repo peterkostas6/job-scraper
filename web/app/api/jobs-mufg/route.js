@@ -1,6 +1,7 @@
 // GET /api/jobs-mufg — fetches MUFG analyst & intern jobs from Workday
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const WORKDAY_URL = "https://mufgub.wd3.myworkdayjobs.com/wday/cxs/mufgub/MUFG-Careers/jobs";
 const WORKDAY_SITE = "https://mufgub.wd3.myworkdayjobs.com/en-US/MUFG-Careers";

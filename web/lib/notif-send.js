@@ -15,11 +15,43 @@ export function smsConfig() {
 
 // Plain ASCII only: a single non-GSM character (like a bullet) switches the whole
 // message to UCS-2 and halves the characters per billable segment.
-export function buildSmsText(jobs) {
+// shortUrls (optional) holds one short link per job; when every job has one, each job
+// gets its own link instead of the Recent page link.
+export function buildSmsText(jobs, withOptOut, shortUrls) {
   const clean = (s) => String(s).replace(/[\u2013\u2014]/g, "-").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[^\x20-\x7E\n]/g, "");
-  const jobLines = jobs.slice(0, 3).map((j) => `- ${clean(j.title).slice(0, 48)} @ ${clean(j.bank)}`).join("\n");
+  const perJob = jobs.length <= 3 && shortUrls?.length === jobs.length && shortUrls.every(Boolean);
+  const jobLines = jobs.slice(0, 3).map((j, i) => `- ${clean(j.title).slice(0, 48)} @ ${clean(j.bank)}${perJob ? `\n${shortUrls[i]}` : ""}`).join("\n");
   const more = jobs.length > 3 ? `\n+ ${jobs.length - 3} more` : "";
-  return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}\n\npetespostings.com/recent\nReply STOP to unsubscribe`;
+  const footer = perJob ? "" : "\n\npetespostings.com/recent";
+  return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}${footer}${withOptOut ? "\n\nReply STOP to unsubscribe" : ""}`;
+}
+
+// Returns petespostings.com/j/<code> for this user + job, or null if it can't be saved.
+// The code comes from a hash, so a resend of the same job reuses the same link.
+async function shortLink(userId, link) {
+  const code = crypto.createHash("sha256").update(`${userId}|${link}`).digest("base64url").slice(0, 8);
+  try {
+    await sql`INSERT INTO short_links (code, link, user_id) VALUES (${code}, ${link}, ${userId}) ON CONFLICT (code) DO NOTHING`;
+    return `petespostings.com/j/${code}`;
+  } catch (err) {
+    console.error("short link insert failed:", err?.message || err);
+    return null;
+  }
+}
+
+// Carrier guidelines ask for opt-out wording in the first text and then periodically,
+// not in every text. Alerts carry it when this number hasn't had it in 30 days.
+async function needsOptOutReminder(phone) {
+  try {
+    const { rows } = await sql`
+      SELECT 1 FROM notification_log
+      WHERE channel = 'sms-optout-notice' AND recipient = ${phone} AND created_at > NOW() - INTERVAL '30 days'
+      LIMIT 1
+    `;
+    return rows.length === 0;
+  } catch {
+    return true;
+  }
 }
 
 // Returns the Twilio message SID so delivery callbacks can be matched to the send.
@@ -92,9 +124,12 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
 
   if (sms && prefs?.smsEnabled && prefs?.phoneNumber) {
     try {
-      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs));
+      const withOptOut = await needsOptOutReminder(prefs.phoneNumber);
+      const shortUrls = jobs.length <= 3 ? await Promise.all(jobs.map((j) => shortLink(uid, j.link))) : null;
+      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs, withOptOut, shortUrls));
       result.smsSent = true;
       await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
+      if (withOptOut) await logNotification({ userId, channel: "sms-optout-notice", status: "sent", recipient: prefs.phoneNumber, providerId: messageId });
     } catch (err) {
       // SMS failures are logged but never queued: a retry would hit the same carrier or
       // account limit, and re-queuing would resend the email that already went out.

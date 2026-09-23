@@ -1,6 +1,6 @@
 import { prefsEmail } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
-import { smsConfig, sendSms } from "@/lib/notif-send";
+import { smsConfig, sendSms, logNotification } from "@/lib/notif-send";
 import { BANK_NAMES } from "@/lib/banks";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
@@ -116,7 +116,9 @@ export async function POST(request) {
         // Awaited: Vercel freezes the function once the response is sent, which would drop an in-flight send.
         // Attach the contact card so the number saves as "Pete's Postings" in one tap.
         const contactCard = `${new URL(request.url).origin}/petes-postings.vcf`;
-        await sendSms(sms, newPhone, welcomeMsg, contactCard).catch((e) => console.error("Welcome SMS failed:", e.message));
+        const welcomeSid = await sendSms(sms, newPhone, welcomeMsg, contactCard).catch((e) => console.error("Welcome SMS failed:", e.message));
+        // The welcome text carries the STOP wording, so alerts can skip it for the next 30 days.
+        if (welcomeSid) await logNotification({ userId, channel: "sms-optout-notice", status: "sent", recipient: newPhone, providerId: welcomeSid });
       }
     }
 

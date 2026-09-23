@@ -1,8 +1,10 @@
 // GET /api/admin/test-notification?to=<email>[&phone=<e164>] — sends one sample alert through the
 // shared sender so email and SMS delivery can be checked without waiting for a real posting.
+// Add &resendLast=1 to send the jobs from the most recent real text alert instead of the samples.
 // GET ...?preview=alert|welcome|prefs|club — returns the rendered HTML instead of sending.
 // Guarded by CRON_SECRET (Authorization: Bearer, or ?key= for browser previews).
 import { Resend } from "resend";
+import { sql } from "@vercel/postgres";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { alertEmail, welcomeEmail, prefsEmail, clubConfirmationEmail } from "@/lib/email-templates";
 
@@ -38,6 +40,21 @@ export async function GET(request) {
   const phone = url.searchParams.get("phone");
   if (!to && !phone) return Response.json({ error: "Pass ?to=<email> and/or ?phone=<e164>, or ?preview=alert" }, { status: 400 });
 
+  let jobs = SAMPLE_JOBS;
+  if (url.searchParams.get("resendLast") === "1") {
+    const { rows } = await sql`
+      SELECT j.title, j.bank, j.link, j.location, j.category
+      FROM jobs j
+      WHERE j.link IN (
+        SELECT unnest(job_links) FROM (
+          SELECT job_links FROM notification_log WHERE channel = 'sms' AND status = 'sent' ORDER BY created_at DESC LIMIT 1
+        ) last
+      )
+    `;
+    if (rows.length === 0) return Response.json({ error: "No previous text alert found" }, { status: 404 });
+    jobs = rows;
+  }
+
   const sms = smsConfig();
   const result = await sendUserNotification({
     resend: new Resend(process.env.RESEND_API_KEY),
@@ -46,7 +63,7 @@ export async function GET(request) {
     email: to,
     firstName: "",
     prefs: { smsEnabled: !!phone, phoneNumber: phone },
-    jobs: SAMPLE_JOBS,
+    jobs,
   });
   return Response.json({ ...result, smsConfigured: !!sms });
 }

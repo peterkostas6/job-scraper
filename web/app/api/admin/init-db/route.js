@@ -93,7 +93,21 @@ export async function POST(request) {
       CREATE INDEX IF NOT EXISTS idx_nl_created_at ON notification_log(created_at)
     `;
 
-    return Response.json({ ok: true, message: "notification_queue, jobs, notification_log, and bank_status tables ready" });
+    // Short links in alert texts (petespostings.com/j/<code>). One code per user + job,
+    // so clicks show how many people opened each job.
+    await sql`
+      CREATE TABLE IF NOT EXISTS short_links (
+        code TEXT PRIMARY KEY,
+        link TEXT NOT NULL,
+        user_id TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        clicks INT NOT NULL DEFAULT 0,
+        first_clicked_at TIMESTAMPTZ,
+        last_clicked_at TIMESTAMPTZ
+      )
+    `;
+
+    return Response.json({ ok: true, message: "notification_queue, jobs, notification_log, bank_status, and short_links tables ready" });
   } catch (err) {
     console.error("init-db error:", err);
     return Response.json({ error: "DB init failed", details: err.message }, { status: 500 });

@@ -197,7 +197,7 @@ const TESTIMONIALS = [
   },
 ];
 
-function HomePage({ onBrowse, isSignedIn, last48hCount }) {
+function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
   const [animStep, setAnimStep] = useState(0);
   const [phoneText, setPhoneText] = useState('');
 
@@ -361,14 +361,9 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           </SignUpButton>
         )}
         <p className="hero-photo-links">
-          <button className="hero-photo-link tnum" onClick={onBrowse}>
-            {hasCount ? (
-              <>
-                <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> new roles in the last 48 hours
-              </>
-            ) : (
-              `${BANK_COUNT} bank career sites, updated instantly`
-            )}
+          {/* Hidden (but holding its space) until the count arrives, so the line never swaps text. */}
+          <button className={`hero-photo-link tnum${last48hCount === null ? " hero-photo-link-pending" : ""}`} onClick={onRecent}>
+            <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> new {last48hCount === 1 ? "role" : "roles"} in the last 48 hours
           </button>
           <span className="hero-photo-dot" aria-hidden="true">&middot;</span>
           <Link href="/pricing" className="hero-photo-link">See pricing</Link>
@@ -768,7 +763,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
         <span className="job-title">{job.title}</span>
         <span className="job-location">{cleanLocation(job.location) || "—"}</span>
-        <div className="job-badges">
+        <div className="job-badges job-badges-wide">
           <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>
             {isInternship(job.title) ? "Internship" : "Analyst"}
           </span>
@@ -787,7 +782,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
       <span className="job-index">#</span>
       <span className="job-title">Title</span>
       <span className="job-location">Location</span>
-      <span className="job-badges">Type / Posted</span>
+      <span className="job-badges job-badges-wide">Type / Posted</span>
       <span className="new-bank-label" style={{ fontSize: "0.62rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)" }}>Bank</span>
       <span style={{ width: 14 }} />
     </div>
@@ -813,10 +808,11 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              <p className="new-paywall-title">
-                {last48hCount > 0 ? `${last48hCount} jobs posted in the last 48 hours` : "See the freshest postings"}
+              <p className="new-paywall-title">Recent postings is a Pro feature</p>
+              <p className="new-paywall-desc">
+                {last48hCount > 0 ? `${last48hCount} ${last48hCount === 1 ? "job was" : "jobs were"} posted in the last 48 hours. ` : ""}
+                Upgrade to Pro to see them here, or <Link href="/jobs?bank=all" className="text-link">browse every open job</Link> for free in the Browse tab.
               </p>
-              <p className="new-paywall-desc">Upgrade to Pro to see jobs posted in the last 48 hours.</p>
               <PaywallOverlay isSignedIn={isSignedIn} />
             </div>
           </div>
@@ -950,7 +946,7 @@ export default function Home() {
   const pathname = usePathname();
   const VIEW_BY_PATH = { "/": "home", "/jobs": "browse", "/recent": "recent", "/saved": "saved", "/notifications": "notifications", "/about": "about" };
   const routeView = VIEW_BY_PATH[pathname];
-  const view = routeView === "recent" && isLoaded && !isSignedIn ? "browse" : (routeView || "browse");
+  const view = routeView || "browse";
   const viewHome = view === "home";
   const viewAbout = view === "about";
   const viewNewPostings = view === "recent";
@@ -976,16 +972,8 @@ export default function Home() {
   const setViewingSaved = (v) => queueView("saved", v);
   const setViewNotifications = (v) => queueView("notifications", v);
 
-  // /recent is Pro-only: signed-out visitors land on the browse view and get the sign-up sheet.
-  useEffect(() => {
-    if (routeView === "recent" && isLoaded && !isSignedIn) {
-      router.replace("/jobs");
-      clerk.openSignUp();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeView, isLoaded, isSignedIn]);
   const [newPostingsData, setNewPostingsData] = useState({ last48h: [], thisWeek: [], last48hCount: 0, total: 0 });
-  const [last48hCount, setLast48hCount] = useState(0);
+  const [last48hCount, setLast48hCount] = useState(null);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
@@ -1443,6 +1431,7 @@ export default function Home() {
       {viewHome && !viewAbout && !viewNewPostings && (
         <HomePage
           onBrowse={() => router.push("/jobs")}
+          onRecent={() => router.push("/recent")}
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
         />

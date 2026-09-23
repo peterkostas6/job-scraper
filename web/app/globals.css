@@ -2161,6 +2161,11 @@ nav {
   flex-shrink: 0;
 }
 
+/* Recent postings shows type + age side by side ("INTERNSHIP" + "1 DAY AGO"). */
+.job-badges-wide {
+  width: 170px;
+}
+
 .job-badge {
   font-size: 0.58rem;
   font-weight: 600;
@@ -3154,6 +3159,10 @@ footer {
   font-weight: 700;
   color: var(--navy);
   margin-bottom: 0.35rem;
+}
+
+.hero-photo-link-pending {
+  visibility: hidden;
 }
 
 .new-paywall-desc {

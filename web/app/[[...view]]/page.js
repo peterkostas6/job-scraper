@@ -1309,7 +1309,6 @@ export default function Home() {
       <button
         className={`sidebar-item${viewNewPostings ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
         onClick={() => {
-          if (!isSubscribed) { router.push("/pricing"); return; }
           setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
         }}
       >
@@ -1387,10 +1386,6 @@ export default function Home() {
             <Link
               href="/recent"
               className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
-              onClick={(e) => {
-                if (!isSignedIn) { e.preventDefault(); clerk.openSignUp(); return; }
-                if (!isSubscribed) { e.preventDefault(); router.push("/pricing"); }
-              }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -1469,7 +1464,6 @@ export default function Home() {
               <button
                 className="mobile-pro-pill mobile-pro-pill-active"
                 onClick={() => {
-                  if (!isSubscribed) { router.push("/pricing"); return; }
                   setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
                 }}
               >
@@ -1548,7 +1542,6 @@ export default function Home() {
               <button
                 className={`mobile-pro-pill${viewNewPostings ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
                 onClick={() => {
-                  if (!isSubscribed) { router.push("/pricing"); return; }
                   setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
                 }}
               >
@@ -1797,7 +1790,7 @@ export default function Home() {
                       </svg>
                       <strong>{last48hCount}</strong> {last48hCount === 1 ? "job" : "jobs"} posted in the last 48 hours
                     </span>
-                    <button className="recent-teaser-cta" onClick={() => router.push("/pricing")}>
+                    <button className="recent-teaser-cta" onClick={() => router.push("/recent")}>
                       See them →
                     </button>
                   </div>

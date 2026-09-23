@@ -377,7 +377,7 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
           </div>
           <p className="hero-spots-text">
             <span className="hero-spots-dot" aria-hidden="true" />
-            <span>Accepting {MEMBER_CAP.toLocaleString()} members &middot; <strong className="tnum">{(memberCount || 0).toLocaleString()}</strong> joined</span>
+            Accepting {MEMBER_CAP.toLocaleString()} members &middot; <strong className="tnum">{(memberCount || 0).toLocaleString()}</strong> joined
           </p>
         </div>
         <p className="hero-photo-links">

@@ -145,6 +145,7 @@ function AccountPromptModal({ onClose, last48hCount = 0 }) {
 
 // ---- HOMEPAGE ----
 const BANK_COUNT = Object.keys(BANKS).length;
+const MEMBER_CAP = 2000;
 // Every posting is US-based, so ", United States" only pushes the city out of view.
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
 const NOTIF_CATEGORIES = ["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"];
@@ -284,6 +285,15 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
   const [countDone, setCountDone] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);
 
+  // Live account count from Clerk for the member meter under the hero button.
+  const [memberCount, setMemberCount] = useState(null);
+  useEffect(() => {
+    fetch("/api/member-count")
+      .then((res) => res.json())
+      .then((data) => { if (typeof data.count === "number") setMemberCount(data.count); })
+      .catch(() => {});
+  }, []);
+
   // Hero notification banner: loops through mock "you just got a text" alerts
   const [heroNotifIndex, setHeroNotifIndex] = useState(0);
   const [heroNotifVisible, setHeroNotifVisible] = useState(false);
@@ -360,6 +370,15 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
             <button className="hero-photo-cta">Get free access</button>
           </SignUpButton>
         )}
+        {/* Hidden (but holding its space) until the count arrives. */}
+        <div className={`hero-spots${memberCount === null ? " hero-photo-link-pending" : ""}`}>
+          <div className="hero-spots-bar" aria-hidden="true">
+            <span style={{ width: `${Math.max(2, Math.min(100, ((memberCount || 0) / MEMBER_CAP) * 100))}%` }} />
+          </div>
+          <p className="hero-spots-text">
+            Only accepting {MEMBER_CAP.toLocaleString()} members &middot; <strong className="tnum">{(memberCount || 0).toLocaleString()}</strong> joined
+          </p>
+        </div>
         <p className="hero-photo-links">
           {/* Hidden (but holding its space) until the count arrives, so the line never swaps text. */}
           <button className={`hero-photo-link tnum${last48hCount === null ? " hero-photo-link-pending" : ""}`} onClick={onRecent}>

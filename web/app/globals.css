@@ -372,6 +372,37 @@ nav {
 }
 .hero-photo-dot { color: var(--cream-60); }
 
+/* Member meter under the hero button: thin track, blue fill, one line of text. */
+.hero-spots {
+  max-width: 280px;
+  margin: var(--space-md) auto 0;
+}
+
+.hero-spots-bar {
+  height: 4px;
+  border-radius: 100px;
+  background: var(--cream-25);
+  overflow: hidden;
+}
+
+.hero-spots-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--forest-blue);
+}
+
+.hero-spots-text {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--cream-80);
+}
+
+.hero-spots-text strong {
+  color: var(--cream);
+  font-weight: 600;
+}
+
 .hero-photo-link {
   font-family: inherit;
   font-size: inherit;

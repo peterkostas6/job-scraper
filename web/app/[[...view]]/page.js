@@ -1441,7 +1441,7 @@ export default function Home() {
         <AboutPage onBrowse={() => router.push("/jobs")} />
       )}
 
-      {isSignedIn && viewNewPostings && (
+      {viewNewPostings && (
         <div className="app-layout">
           {/* Mobile top bar — replaces sidebar on mobile */}
           <div className="mobile-top-bar">

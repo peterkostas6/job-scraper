@@ -145,6 +145,8 @@ function AccountPromptModal({ onClose, last48hCount = 0 }) {
 
 // ---- HOMEPAGE ----
 const BANK_COUNT = Object.keys(BANKS).length;
+// Every posting is US-based, so ", United States" only pushes the city out of view.
+const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
 const NOTIF_CATEGORIES = ["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"];
 
 const PREVIEW_JOBS = [
@@ -349,7 +351,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
       </div>
       <div className="hero-photo-copy">
         <h1 className="hero-photo-title">
-          Be first to every <mark className="hero-mark">banking job</mark> posting.
+          Get <mark className="hero-mark">a text</mark> the instant a bank posts your job.
         </h1>
         {isSignedIn ? (
           <button className="hero-photo-cta" onClick={onBrowse}>Browse jobs</button>
@@ -365,7 +367,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
                 <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> new roles in the last 48 hours
               </>
             ) : (
-              `${BANK_COUNT} bank career sites, refreshed every 5 minutes`
+              `${BANK_COUNT} bank career sites, updated instantly`
             )}
           </button>
           <span className="hero-photo-dot" aria-hidden="true">&middot;</span>
@@ -407,7 +409,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           <div className="spec-row">
             <dt>One spot</dt>
             <dd className="spec-desc">We pull every analyst and intern posting directly from banks&rsquo; APIs — no more checking dozens of career sites by hand.</dd>
-            <dd className="spec-val tnum">Every 5 min</dd>
+            <dd className="spec-val">Instant</dd>
           </div>
           <div className="spec-row">
             <dt>48-hour feed</dt>
@@ -422,7 +424,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount }) {
           <div className="spec-row">
             <dt>Saved jobs</dt>
             <dd className="spec-desc">Bookmark roles as you find them so you always know what you&rsquo;ve applied to and what&rsquo;s still open.</dd>
-            <dd className="spec-val">Free</dd>
+            <dd className="spec-val">Pro</dd>
           </div>
         </dl>
       </section>
@@ -705,7 +707,7 @@ function AboutPage({ onBrowse }) {
       <section className="about-section">
         <h2 className="about-heading">Why it matters</h2>
         <p className="about-text">
-          Most applicants find out about new postings days late — through word of mouth or a LinkedIn post from someone else. Your odds of getting an interview drop massively if you don't apply within the first few hours or days. <strong>Pro subscribers see new roles within the hour they post</strong>, before most people even know they exist.
+          Most applicants find out about new postings days late — through word of mouth or a LinkedIn post from someone else. Your odds of getting an interview drop massively if you don't apply within the first few hours or days. <strong>Pro subscribers see new roles the instant they post</strong>, before most people even know they exist.
         </p>
       </section>
 
@@ -765,7 +767,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
       <a href={job.link} target="_blank" rel="noopener noreferrer" className="job-row">
         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
         <span className="job-title">{job.title}</span>
-        <span className="job-location">{job.location || "—"}</span>
+        <span className="job-location">{cleanLocation(job.location) || "—"}</span>
         <div className="job-badges">
           <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>
             {isInternship(job.title) ? "Internship" : "Analyst"}
@@ -909,7 +911,7 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined" || window.location.pathname !== "/jobs") return;
     const b = new URLSearchParams(window.location.search).get("bank");
-    if (b && BANKS[b]) setActiveBank(b);
+    if (b && (BANKS[b] || b === "all")) setActiveBank(b);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -1054,7 +1056,7 @@ export default function Home() {
         return res.json();
       })
       .then((data) => {
-        const loaded = data.jobs || [];
+        const loaded = (data.jobs || []).map((job) => ({ ...job, location: cleanLocation(job.location) }));
         setAllJobs(loaded);
         const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
         for (const job of loaded) if (job.bankKey in counts) counts[job.bankKey]++;
@@ -1083,7 +1085,7 @@ export default function Home() {
 
   // Show the active bank's jobs from the loaded list
   useEffect(() => {
-    if (!FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed)) {
+    if (activeBank !== "all" && !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed)) {
       setJobs([]);
       return;
     }
@@ -1093,7 +1095,9 @@ export default function Home() {
     setCategoryFilter("");
     setShowSavedOnly(false);
 
-    const bankJobs = allJobs.filter((job) => job.bankKey === activeBank);
+    const bankJobs = activeBank === "all"
+      ? allJobs.filter((job) => FREE_BANKS.has(job.bankKey) || (isSignedIn && isSubscribed))
+      : allJobs.filter((job) => job.bankKey === activeBank);
     setJobs(bankJobs);
 
     const locs = [...new Set(
@@ -1121,7 +1125,7 @@ export default function Home() {
       if (prev.some((j) => j.link === link)) {
         next = prev.filter((j) => j.link !== link);
       } else {
-        next = [...prev, { title: job.title, link: job.link, location: job.location || "", bank: BANKS[activeBank]?.name || "" }];
+        next = [...prev, { title: job.title, link: job.link, location: job.location || "", bank: job.bank || BANKS[activeBank]?.name || "" }];
       }
       user.update({ unsafeMetadata: { ...user.unsafeMetadata, savedJobs: next } });
       return next;
@@ -1197,7 +1201,7 @@ export default function Home() {
 
   const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link)) : filteredJobs;
   const savedCount = [...bookmarks].filter((link) => filteredJobs.some((job) => job.link === link)).length;
-  const isGatedBank = !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed);
+  const isGatedBank = activeBank !== "all" && !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed);
 
   // Homepage: the root background goes dark so overscroll above the hero shows navy, not cream.
   useEffect(() => {
@@ -1287,6 +1291,16 @@ export default function Home() {
       </div>
 
       <div className="sidebar-banks">
+        {!bankQuery && (
+          <button
+            className={`sidebar-item${activeBank === "all" && !viewingSaved && !viewNewPostings ? " sidebar-item-active" : ""}`}
+            onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank("all"); }}
+            aria-current={activeBank === "all" && !viewingSaved && !viewNewPostings ? "page" : undefined}
+          >
+            <span>All banks</span>
+            {countsLoaded > 0 && <span className="sidebar-count tnum">{totalOpen}</span>}
+          </button>
+        )}
         {bankGroups.map((group) => (
           <div key={group.label || "results"} className="sidebar-group">
             {group.label && <div className="sidebar-group-label">{group.label}</div>}
@@ -1454,6 +1468,7 @@ export default function Home() {
                   setActiveBank(e.target.value);
                 }}
               >
+                <option value="all">All banks</option>
                 {Object.entries(BANKS).map(([key, bank]) => (
                   <option key={key} value={key}>{bank.name}</option>
                 ))}
@@ -1532,6 +1547,7 @@ export default function Home() {
                   setActiveBank(e.target.value);
                 }}
               >
+                <option value="all">All banks</option>
                 {Object.entries(BANKS).map(([key, bank]) => (
                   <option key={key} value={key}>{bank.name}</option>
                 ))}
@@ -1580,7 +1596,7 @@ export default function Home() {
               <div className="notif-panel">
                 <div className="notif-header">
                   <h2 className="notif-title">Job alerts</h2>
-                  <p className="notif-desc">We check every bank every 5 minutes. When a role matching your filters goes live, you hear about it right away.</p>
+                  <p className="notif-desc">When a role matching your filters goes live, you hear about it instantly.</p>
                 </div>
                 {notifLoading ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
@@ -1762,7 +1778,7 @@ export default function Home() {
                         <span className="job-location"><span className="saved-bank-badge">{job.bank}</span></span>
                         <div className="job-badges">
                           {job.expiredAt && <span className="job-badge badge-intern" title="No longer live on the bank's site">Expired</span>}
-                          <span className="job-badge" title={job.location}>{job.location || "—"}</span>
+                          <span className="job-badge" title={cleanLocation(job.location)}>{cleanLocation(job.location) || "—"}</span>
                         </div>
                         <button className="job-bookmark job-bookmark-active" onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleBookmark(e, job); }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1857,7 +1873,7 @@ export default function Home() {
                 {!isGatedBank && !loading && !error && (
                   <div className="results-bar">
                     <span className="results-text">
-                      {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} at {BANKS[activeBank].name}
+                      {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} {activeBank === "all" ? "across all banks" : `at ${BANKS[activeBank].name}`}
                     </span>
                     <button className={`saved-toggle ${viewingSaved ? "saved-toggle-active" : ""}`} onClick={() => {
                       if (!isSignedIn) { clerk.openSignUp(); return; }
@@ -1900,6 +1916,7 @@ export default function Home() {
                       <span className="job-location">Location</span>
                       <span className="job-posted">Posted</span>
                       <span className="job-badges">Type</span>
+                      {activeBank === "all" && <span className="new-bank-label">Bank</span>}
                       <span style={{ width: 14 }} />
                       <span style={{ width: 14 }} />
                     </div>
@@ -1914,6 +1931,7 @@ export default function Home() {
                             {isInternship(job.title) ? "Internship" : "Analyst"}
                           </span>
                         </div>
+                        {activeBank === "all" && <span className="new-bank-label">{job.bank}</span>}
                         <button className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}`} onClick={(e) => toggleBookmark(e, job)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
@@ -1939,7 +1957,7 @@ export default function Home() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Pulled live from bank career sites &middot; Checked every 5 minutes</p>
+            <p>Pulled live from bank career sites &middot; Updated instantly</p>
             <p>&copy; 2026 Pete's Postings</p>
             <p className="footer-links">
               <Link href="/privacy" className="text-link">Privacy Policy</Link>

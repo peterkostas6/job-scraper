@@ -119,8 +119,8 @@ nav {
   border-bottom-color: transparent;
 }
 .nav-on-dark .logo-text { color: var(--cream); }
-.nav-on-dark .logo-icon rect { fill: var(--cream); }
-.nav-on-dark .logo-icon text { fill: var(--navy); }
+/* The logo is a navy PNG; over the dark hero it renders white so it stays visible. */
+.nav-on-dark .logo-icon { filter: brightness(0) invert(1); }
 .nav-on-dark .nav-link { color: var(--cream-80); }
 .nav-on-dark .nav-link:hover,
 .nav-on-dark .nav-link-active { color: var(--cream); background: transparent; }
@@ -2074,7 +2074,8 @@ nav {
 .job-row-header .job-title,
 .job-row-header .job-location,
 .job-row-header .job-posted,
-.job-row-header .job-badges {
+.job-row-header .job-badges,
+.job-row-header .new-bank-label {
   font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;

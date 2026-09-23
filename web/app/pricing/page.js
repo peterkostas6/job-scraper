@@ -387,11 +387,11 @@ export default function PricingPage() {
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">How do SMS alerts work?</h3>
-              <p className="pricing-faq-a">Pro users can add a phone number in their notification settings. When our daily check finds a new posting matching your preferences, you'll get a text with the role title, bank, and a direct link to apply.</p>
+              <p className="pricing-faq-a">Pro users can add a phone number in their notification settings. The instant a new posting matches your preferences, you'll get a text with the role title, bank, and a direct link to apply.</p>
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">What does the recent postings feed include?</h3>
-              <p className="pricing-faq-a">Pro subscribers see every job posted in the last 48 hours across all banks, checked every 5 minutes. You'll also get SMS or email alerts so you don't have to check manually.</p>
+              <p className="pricing-faq-a">Pro subscribers see every job posted in the last 48 hours across all banks, updated instantly. You'll also get SMS or email alerts so you don't have to check manually.</p>
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">How do club memberships work?</h3>
@@ -408,7 +408,7 @@ export default function PricingPage() {
             <p>Data sourced from public careers APIs. Not affiliated with any listed company.</p>
           </div>
           <div className="footer-right">
-            <p>Pulled live from bank career sites &middot; Checked every 5 minutes</p>
+            <p>Pulled live from bank career sites &middot; Updated instantly</p>
             <p>&copy; 2026 Pete's Postings</p>
           </div>
         </div>

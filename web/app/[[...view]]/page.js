@@ -376,7 +376,7 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
             <span style={{ width: `${Math.max(2, Math.min(100, ((memberCount || 0) / MEMBER_CAP) * 100))}%` }} />
           </div>
           <p className="hero-spots-text">
-            Only accepting {MEMBER_CAP.toLocaleString()} members &middot; <strong className="tnum">{(memberCount || 0).toLocaleString()}</strong> joined
+            Accepting {MEMBER_CAP.toLocaleString()} members &middot; <strong className="tnum">{(memberCount || 0).toLocaleString()}</strong> joined
           </p>
         </div>
         <p className="hero-photo-links">

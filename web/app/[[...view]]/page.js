@@ -351,7 +351,7 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
       </div>
       <div className="hero-photo-copy">
         <h1 className="hero-photo-title">
-          Get <mark className="hero-mark">a text</mark> the instant a bank posts your job.
+          Get <mark className="hero-mark">a text</mark> the instant a bank posts a job.
         </h1>
         {isSignedIn ? (
           <button className="hero-photo-cta" onClick={onBrowse}>Browse jobs</button>

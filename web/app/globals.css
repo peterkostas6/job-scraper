@@ -1468,6 +1468,11 @@ nav {
 
 .sidebar-banks { margin-bottom: 0.25rem; }
 .sidebar-group + .sidebar-group { margin-top: 0.75rem; }
+/* "All banks" sits above the grouped list, so it needs the gap a group heading would get. */
+.sidebar-item-all {
+  margin-bottom: 0.75rem;
+}
+
 .sidebar-group-label {
   font-size: 0.62rem;
   font-weight: 600;
@@ -3095,7 +3100,9 @@ footer {
   font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
-  min-width: 80px;
+  width: 110px;               /* fixed so long bank names don't shift the other columns */
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex-shrink: 0;
 }
 
@@ -3910,6 +3917,7 @@ footer {
 
   /* ---- NEW POSTINGS ---- */
   .new-bank-label {
+    width: auto;
     min-width: 60px;
     font-size: 0.65rem;
   }

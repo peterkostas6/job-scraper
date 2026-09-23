@@ -1293,7 +1293,7 @@ export default function Home() {
       <div className="sidebar-banks">
         {!bankQuery && (
           <button
-            className={`sidebar-item${activeBank === "all" && !viewingSaved && !viewNewPostings ? " sidebar-item-active" : ""}`}
+            className={`sidebar-item sidebar-item-all${activeBank === "all" && !viewingSaved && !viewNewPostings ? " sidebar-item-active" : ""}`}
             onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank("all"); }}
             aria-current={activeBank === "all" && !viewingSaved && !viewNewPostings ? "page" : undefined}
           >

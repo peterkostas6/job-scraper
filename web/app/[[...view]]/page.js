@@ -147,6 +147,8 @@ function AccountPromptModal({ onClose, last48hCount = 0 }) {
 const BANK_COUNT = Object.keys(BANKS).length;
 const MEMBER_CAP = 2000;
 // Every posting is US-based, so ", United States" only pushes the city out of view.
+// Job links go through /go so clicks are counted before the visitor reaches the bank's site.
+const trackedLink = (link) => `/go?u=${encodeURIComponent(link)}`;
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
 const NOTIF_CATEGORIES = ["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"];
 
@@ -643,7 +645,7 @@ function PaywallOverlay({ isSignedIn }) {
         <div className="paywall-plan">
           <h3 className="paywall-plan-name">Monthly</h3>
           <div className="paywall-plan-price">
-            <span className="paywall-plan-amount">$4.99</span>
+            <span className="paywall-plan-amount">$7.99</span>
             <span className="paywall-plan-period">/mo</span>
           </div>
           <p className="paywall-plan-billing">Billed monthly</p>
@@ -654,10 +656,10 @@ function PaywallOverlay({ isSignedIn }) {
           <div className="paywall-plan-tag">Best Value</div>
           <h3 className="paywall-plan-name">Yearly</h3>
           <div className="paywall-plan-price">
-            <span className="paywall-plan-amount">$3.33</span>
+            <span className="paywall-plan-amount">$5.00</span>
             <span className="paywall-plan-period">/mo</span>
           </div>
-          <p className="paywall-plan-billing">Billed $39.99/year</p>
+          <p className="paywall-plan-billing">Billed $59.99/year</p>
           {ctaBtn("yearly", "Get Yearly", true)}
         </div>
       </div>
@@ -778,7 +780,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
     const timeLabel = formatRelativeDate(effectiveTime, job.hasActualDate);
 
     return (
-      <a href={job.link} target="_blank" rel="noopener noreferrer" className="job-row">
+      <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="job-row">
         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
         <span className="job-title">{job.title}</span>
         <span className="job-location">{cleanLocation(job.location) || "—"}</span>
@@ -958,6 +960,8 @@ export default function Home() {
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
+  const [companyRequest, setCompanyRequest] = useState("");
+  const [companyRequestStatus, setCompanyRequestStatus] = useState(null); // null | "sending" | "sent" | error message
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
 
   // ---- URL-driven views ----
@@ -1185,6 +1189,24 @@ export default function Home() {
     const city = (notifPrefs.location || "").trim() ? ` in ${notifPrefs.location.trim()}` : "";
     return `You'll get ${channels.join(" and ")} for new ${type} roles${cats} ${banks}${city}.`;
   })();
+
+  async function sendCompanyRequest(e) {
+    e.preventDefault();
+    setCompanyRequestStatus("sending");
+    try {
+      const res = await fetch("/api/company-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company: companyRequest }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setCompanyRequestStatus(data.error || "Couldn't send your request. Try again."); return; }
+      setCompanyRequest("");
+      setCompanyRequestStatus("sent");
+    } catch {
+      setCompanyRequestStatus("Couldn't send your request. Try again.");
+    }
+  }
 
   function saveNotifPrefs() {
     setNotifSaving(true);
@@ -1733,6 +1755,27 @@ export default function Home() {
                       </div>
                     )}
 
+                    <div className="notif-section">
+                      <h3 className="notif-section-title">Missing a company?</h3>
+                      <p className="notif-toggle-sub">Tell us which company to add and we&apos;ll look into tracking its jobs.</p>
+                      <form className="company-request-row" onSubmit={sendCompanyRequest}>
+                        <input
+                          className="notif-phone-input"
+                          type="text"
+                          placeholder="Company name"
+                          aria-label="Company name"
+                          maxLength={100}
+                          value={companyRequest}
+                          onChange={(e) => { setCompanyRequest(e.target.value); if (companyRequestStatus !== "sending") setCompanyRequestStatus(null); }}
+                        />
+                        <button className="welcome-dismiss" type="submit" disabled={companyRequestStatus === "sending" || companyRequest.trim().length < 2}>
+                          {companyRequestStatus === "sending" ? "Sending..." : "Request"}
+                        </button>
+                      </form>
+                      {companyRequestStatus === "sent" && <p className="notif-toggle-sub" role="status">Thanks, we got your request.</p>}
+                      {companyRequestStatus && !["sending", "sent"].includes(companyRequestStatus) && <p className="inquiry-error" role="alert">{companyRequestStatus}</p>}
+                    </div>
+
                     <div className="notif-actions">
                       <p className={`notif-summary${notifBlocker ? " notif-summary-blocked" : ""}`}>{notifBlocker || notifSummary}</p>
                       <button
@@ -1775,7 +1818,7 @@ export default function Home() {
                       <span style={{ width: 14 }} />
                     </div>
                     {savedJobs.map((job, index) => (
-                      <a href={job.link} target="_blank" rel="noopener noreferrer" className={`job-row${job.expiredAt ? " job-row-expired" : ""}`} key={job.link}>
+                      <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className={`job-row${job.expiredAt ? " job-row-expired" : ""}`} key={job.link}>
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="job-title">{job.title}</span>
                         <span className="job-location"><span className="saved-bank-badge">{job.bank}</span></span>
@@ -1924,7 +1967,7 @@ export default function Home() {
                       <span style={{ width: 14 }} />
                     </div>
                     {displayJobs.map((job, index) => (
-                      <a href={job.link} target="_blank" rel="noopener noreferrer" className="job-row" key={index}>
+                      <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="job-row" key={index}>
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="job-title">{job.title}</span>
                         <span className="job-location">{job.location || "—"}</span>

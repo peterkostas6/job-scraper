@@ -238,7 +238,7 @@ export default function PricingPage() {
               >Annual</button>
             </div>
             {billing === "yearly" ? (
-              <span style={{ fontSize: "0.85rem", color: "var(--forest-blue)", fontWeight: 600 }}>Save $20/yr with annual billing</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--forest-blue)", fontWeight: 600 }}>Save $35/yr with annual billing</span>
             ) : (
               <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>14-day free trial included</span>
             )}
@@ -290,23 +290,23 @@ export default function PricingPage() {
               <div className="pricing-card-price">
                 {billing === "yearly" ? (
                   <>
-                    <span className="pricing-card-amount">$3.33</span>
+                    <span className="pricing-card-amount">$5.00</span>
                     <span className="pricing-card-period">/mo</span>
                   </>
                 ) : (
                   <>
-                    <span className="pricing-card-amount">$4.99</span>
+                    <span className="pricing-card-amount">$7.99</span>
                     <span className="pricing-card-period">/mo</span>
                   </>
                 )}
               </div>
               {billing === "yearly" ? (
                 <p className="pricing-card-tagline">
-                  <span style={{ textDecoration: "line-through", color: "var(--text-muted)", marginRight: "0.35rem" }}>$59.88</span>
-                  <span style={{ color: "var(--forest-blue)", fontWeight: 600 }}>$39.99/yr — save $20</span>
+                  <span style={{ textDecoration: "line-through", color: "var(--text-muted)", marginRight: "0.35rem" }}>$95.88</span>
+                  <span style={{ color: "var(--forest-blue)", fontWeight: 600 }}>$59.99/yr — save $35</span>
                 </p>
               ) : (
-                <p className="pricing-card-tagline">14-day free trial · then $4.99/mo</p>
+                <p className="pricing-card-tagline">14-day free trial · then $7.99/mo</p>
               )}
             </div>
             <ul className="pricing-card-features">
@@ -324,12 +324,12 @@ export default function PricingPage() {
                   disabled={checkoutLoading !== null}
                   style={{ width: "100%" }}
                 >
-                  {checkoutLoading ? "Redirecting..." : billing === "yearly" ? "Get Pro — $39.99/yr" : "Start Free Trial"}
+                  {checkoutLoading ? "Redirecting..." : billing === "yearly" ? "Get Pro — $59.99/yr" : "Start Free Trial"}
                 </button>
               ) : (
                 <SignUpButton mode="modal">
                   <button className="pricing-card-cta pricing-cta-primary" style={{ width: "100%" }}>
-                    {billing === "yearly" ? "Get Pro — $39.99/yr" : "Start Free Trial"}
+                    {billing === "yearly" ? "Get Pro — $59.99/yr" : "Start Free Trial"}
                   </button>
                 </SignUpButton>
               )}
@@ -379,7 +379,7 @@ export default function PricingPage() {
           <div className="pricing-faq-list">
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">How does the free trial work?</h3>
-              <p className="pricing-faq-a">The monthly plan includes a 14-day free trial. You'll need a card on file to start — you won't be charged anything today. After 14 days, your card is automatically charged $4.99. Cancel anytime before the trial ends and you won't pay a thing.</p>
+              <p className="pricing-faq-a">The monthly plan includes a 14-day free trial. You'll need a card on file to start — you won't be charged anything today. After 14 days, your card is automatically charged $7.99. Cancel anytime before the trial ends and you won't pay a thing.</p>
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">Can I cancel anytime?</h3>

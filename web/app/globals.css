@@ -2457,6 +2457,19 @@ nav {
   cursor: pointer;
 }
 
+/* Missing-company request: field and button on one line. */
+.company-request-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.company-request-row .welcome-dismiss:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Stays pinned to the bottom of the screen so Save is always in reach on this long page. */
 .notif-actions {
   position: sticky;

@@ -207,3 +207,6 @@ export function isBankingEntryLevel(title) {
   );
 }
 
+
+// Link previews and carrier scanners open links too; those visits are not people.
+export const BOT_UA = /bot|crawl|spider|preview|facebookexternalhit|slurp|scan/i;

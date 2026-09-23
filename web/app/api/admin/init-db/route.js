@@ -93,8 +93,8 @@ export async function POST(request) {
       CREATE INDEX IF NOT EXISTS idx_nl_created_at ON notification_log(created_at)
     `;
 
-    // Short links in alert texts (petespostings.com/j/<code>). One code per user + job,
-    // so clicks show how many people opened each job.
+    // Job link clicks: short links in alert texts (petespostings.com/j/<code>) and job links
+    // on the site (/go). One row per user + job, so clicks show how many people opened each job.
     await sql`
       CREATE TABLE IF NOT EXISTS short_links (
         code TEXT PRIMARY KEY,
@@ -103,11 +103,25 @@ export async function POST(request) {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         clicks INT NOT NULL DEFAULT 0,
         first_clicked_at TIMESTAMPTZ,
-        last_clicked_at TIMESTAMPTZ
+        last_clicked_at TIMESTAMPTZ,
+        source TEXT NOT NULL DEFAULT 'sms'
+      )
+    `;
+    // source: 'sms' for links in alert texts, 'web' for job links clicked on the site.
+    await sql`ALTER TABLE short_links ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'sms'`;
+
+    // Companies Pro members ask us to add.
+    await sql`
+      CREATE TABLE IF NOT EXISTS company_requests (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        email TEXT,
+        company TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `;
 
-    return Response.json({ ok: true, message: "notification_queue, jobs, notification_log, bank_status, and short_links tables ready" });
+    return Response.json({ ok: true, message: "notification_queue, jobs, notification_log, bank_status, short_links, and company_requests tables ready" });
   } catch (err) {
     console.error("init-db error:", err);
     return Response.json({ error: "DB init failed", details: err.message }, { status: 500 });

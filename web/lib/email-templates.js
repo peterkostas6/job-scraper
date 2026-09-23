@@ -171,5 +171,19 @@ export function clubInquiryEmail({ schoolName, clubName, memberCount, contactNam
   return { subject, html, text };
 }
 
+export function companyRequestEmail({ company, name, email }) {
+  const subject = `Company request: ${company}`;
+  const rows = [["Company", company], ["From", name || "Not given"], ["Email", email]];
+  const html = layout({
+    title: subject,
+    heading: "A Pro member asked for a new company",
+    body: `<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:4px 0 20px;border-collapse:collapse;"><tbody>${rows.map(([k, v]) => `<tr><th scope="row" style="text-align:left;padding:10px 12px 10px 0;font-size:15px;font-weight:500;color:${C.muted};border-top:1px solid ${C.hairline};width:35%;">${escapeHtml(k)}</th><td style="padding:10px 0;font-size:15px;font-weight:600;color:${C.navy};border-top:1px solid ${C.hairline};">${escapeHtml(v)}</td></tr>`).join("")}</tbody></table>`,
+    cta: { label: `Reply to ${name || email}`, url: `mailto:${email}` },
+    footer: {},
+  });
+  const text = textVersion([subject, "", ...rows.map(([k, v]) => `${k}: ${v}`)]);
+  return { subject, html, text };
+}
+
 function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
 function maskPhone(p) { const d = String(p).replace(/\D/g, ""); return d.length >= 4 ? `***-***-${d.slice(-4)}` : p; }

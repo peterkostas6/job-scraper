@@ -1,11 +1,9 @@
 // GET /j/<code> — short link from an alert text. Counts the click, then sends the
 // visitor on to the job posting on the bank's site.
 import { sql } from "@vercel/postgres";
+import { BOT_UA } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
-
-// Link previews and carrier scanners fetch the URL too; those are not people.
-const BOT_UA = /bot|crawl|spider|preview|facebookexternalhit|slurp|scan/i;
 
 export async function GET(request, { params }) {
   const home = new URL("/", request.url);

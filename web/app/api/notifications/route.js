@@ -113,7 +113,8 @@ export async function POST(request) {
       const sms = smsConfig();
       if (sms) {
         const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
-        sendSms(sms, newPhone, welcomeMsg).catch((e) => console.error("Welcome SMS failed:", e.message));
+        // Awaited: Vercel freezes the function once the response is sent, which would drop an in-flight send.
+        await sendSms(sms, newPhone, welcomeMsg).catch((e) => console.error("Welcome SMS failed:", e.message));
       }
     }
 

@@ -145,6 +145,7 @@ function AccountPromptModal({ onClose, last48hCount = 0 }) {
 
 // ---- HOMEPAGE ----
 const BANK_COUNT = Object.keys(BANKS).length;
+const NOTIF_CATEGORIES = ["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"];
 
 const PREVIEW_JOBS = [
   { title: "Investment Banking Analyst", bank: "Goldman Sachs", location: "New York, NY", time: "1h ago", isNew: true, type: "Analyst" },
@@ -1153,6 +1154,25 @@ export default function Home() {
     setNotifSaved(false);
   }
 
+  // Why Save is disabled, in words, so the button never looks broken.
+  const notifBlocker = notifPrefs.smsEnabled && !(notifPrefs.phoneNumber || "").trim()
+    ? "Add your mobile number to turn on texts."
+    : notifPrefs.smsEnabled && !notifPrefs.smsConsent
+      ? "Check the consent box to turn on texts."
+      : "";
+
+  // One plain sentence describing exactly what the current settings will send.
+  const notifSummary = (() => {
+    const channels = [notifPrefs.smsEnabled && "a text", notifPrefs.enabled && "an email"].filter(Boolean);
+    if (channels.length === 0) return "Alerts are off.";
+    const list = (items) => items.length === 2 ? items.join(" or ") : items.join(", ");
+    const type = { internship: "internship", fulltime: "analyst" }[notifPrefs.jobType] || "analyst and internship";
+    const cats = notifPrefs.categories.length === 0 ? "" : notifPrefs.categories.length <= 2 ? ` in ${list(notifPrefs.categories)}` : ` in ${notifPrefs.categories.length} categories`;
+    const banks = notifPrefs.banks.length === 0 ? `at all ${BANK_COUNT} banks` : notifPrefs.banks.length <= 2 ? `at ${list(notifPrefs.banks.map((k) => BANKS[k]?.name || k))}` : `at ${notifPrefs.banks.length} banks`;
+    const city = (notifPrefs.location || "").trim() ? ` in ${notifPrefs.location.trim()}` : "";
+    return `You'll get ${channels.join(" and ")} for new ${type} roles${cats} ${banks}${city}.`;
+  })();
+
   function saveNotifPrefs() {
     setNotifSaving(true);
     setNotifSaved(false);
@@ -1559,76 +1579,102 @@ export default function Home() {
             {viewNotifications && isSubscribed && (
               <div className="notif-panel">
                 <div className="notif-header">
-                  <h2 className="notif-title">Manage Notifications</h2>
-                  <p className="notif-desc">Get notified when new jobs matching your preferences are posted. We check every 5 minutes.</p>
+                  <h2 className="notif-title">Job alerts</h2>
+                  <p className="notif-desc">We check every bank every 5 minutes. When a role matching your filters goes live, you hear about it right away.</p>
                 </div>
                 {notifLoading ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
                 ) : (
                   <>
                     <div className="notif-section">
-                      <div className="notif-toggle-row">
-                        <span className="notif-toggle-label">Email notifications</span>
-                        <button
-                          className={`notif-toggle ${notifPrefs.enabled ? "notif-toggle-on" : ""}`}
-                          onClick={() => { setNotifPrefs((p) => ({ ...p, enabled: !p.enabled })); setNotifSaved(false); }}
-                        >
-                          <span className="notif-toggle-knob" />
-                        </button>
-                      </div>
-                    </div>
+                      <h3 className="notif-section-title">How should we reach you?</h3>
 
-                    <div className="notif-section">
-                      <div className="notif-toggle-row">
-                        <div>
-                          <span className="notif-toggle-label">SMS notifications</span>
-                          <p className="notif-section-desc" style={{ margin: "0.2rem 0 0" }}>Get a text when new matching jobs are posted.</p>
+                      <div className="notif-channel">
+                        <div className="notif-toggle-row">
+                          <div>
+                            <span className="notif-toggle-label">Text message</span>
+                            <p className="notif-toggle-sub">The fastest way to hear about a new role.</p>
+                          </div>
+                          <button
+                            className={`notif-toggle ${notifPrefs.smsEnabled ? "notif-toggle-on" : ""}`}
+                            role="switch"
+                            aria-checked={notifPrefs.smsEnabled}
+                            aria-label="Text message alerts"
+                            onClick={() => { setNotifPrefs((p) => ({ ...p, smsEnabled: !p.smsEnabled })); setNotifSaved(false); }}
+                          >
+                            <span className="notif-toggle-knob" />
+                          </button>
                         </div>
-                        <button
-                          className={`notif-toggle ${notifPrefs.smsEnabled ? "notif-toggle-on" : ""}`}
-                          onClick={() => { setNotifPrefs((p) => ({ ...p, smsEnabled: !p.smsEnabled })); setNotifSaved(false); }}
-                        >
-                          <span className="notif-toggle-knob" />
-                        </button>
-                      </div>
-                      {notifPrefs.smsEnabled && (
-                        <div style={{ marginTop: "0.875rem" }}>
-                          <label className="notif-section-title" style={{ display: "block", marginBottom: "0.4rem" }}>Phone number</label>
-                          <input
-                            className="notif-phone-input"
-                            type="tel"
-                            placeholder="+1 (555) 000-0000"
-                            value={notifPrefs.phoneNumber || ""}
-                            onChange={(e) => { setNotifPrefs((p) => ({ ...p, phoneNumber: e.target.value })); setNotifSaved(false); }}
-                          />
-                          <p className="notif-section-desc" style={{ marginTop: "0.6rem" }}>
-                            Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply.
-                          </p>
-                          <label className="notif-consent">
+                        {notifPrefs.smsEnabled && (
+                          <div className="notif-sms-setup">
+                            <label className="notif-field-label" htmlFor="notif-phone">Mobile number</label>
                             <input
-                              type="checkbox"
-                              checked={notifPrefs.smsConsent}
-                              onChange={(e) => { setNotifPrefs((p) => ({ ...p, smsConsent: e.target.checked })); setNotifSaved(false); }}
+                              id="notif-phone"
+                              className="notif-phone-input"
+                              type="tel"
+                              autoComplete="tel"
+                              placeholder="(555) 000-0000"
+                              value={notifPrefs.phoneNumber || ""}
+                              onChange={(e) => { setNotifPrefs((p) => ({ ...p, phoneNumber: e.target.value })); setNotifSaved(false); }}
                             />
-                            <span>
-                              I agree to receive recurring automated text messages from Pete's Postings about new job postings matching my preferences. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete's Postings. See our{" "}
-                              <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
-                              <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
-                            </span>
-                          </label>
-                          {!notifPrefs.smsConsent && (
-                            <p className="notif-consent-hint">Check the box above to enable SMS alerts.</p>
-                          )}
+                            <label className="notif-consent">
+                              <input
+                                type="checkbox"
+                                checked={notifPrefs.smsConsent}
+                                onChange={(e) => { setNotifPrefs((p) => ({ ...p, smsConsent: e.target.checked })); setNotifSaved(false); }}
+                              />
+                              <span>
+                                I agree to receive recurring automated text messages from Pete's Postings about new job postings matching my preferences. Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete's Postings. See our{" "}
+                                <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
+                                <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
+                              </span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="notif-channel">
+                        <div className="notif-toggle-row">
+                          <div>
+                            <span className="notif-toggle-label">Email</span>
+                            <p className="notif-toggle-sub">{user?.primaryEmailAddress?.emailAddress ? `Sent to ${user.primaryEmailAddress.emailAddress}` : "Sent to your account email."}</p>
+                          </div>
+                          <button
+                            className={`notif-toggle ${notifPrefs.enabled ? "notif-toggle-on" : ""}`}
+                            role="switch"
+                            aria-checked={notifPrefs.enabled}
+                            aria-label="Email alerts"
+                            onClick={() => { setNotifPrefs((p) => ({ ...p, enabled: !p.enabled })); setNotifSaved(false); }}
+                          >
+                            <span className="notif-toggle-knob" />
+                          </button>
                         </div>
-                      )}
+                      </div>
                     </div>
 
                     {(notifPrefs.enabled || notifPrefs.smsEnabled) && (
-                      <>
-                        <div className="notif-section">
-                          <h3 className="notif-section-title">Banks</h3>
-                          <p className="notif-section-desc">Select which banks to get alerts for. Leave empty for all banks.</p>
+                      <div className="notif-section">
+                        <h3 className="notif-section-title">Which jobs?</h3>
+
+                        <div className="notif-group">
+                          <div className="notif-field-label">Job type</div>
+                          <div className="notif-radio-group">
+                            {[["all", "Analyst & internship"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([val, label]) => (
+                              <label className="notif-radio" key={val}>
+                                <input type="radio" name="notifJobType" value={val} checked={notifPrefs.jobType === val} onChange={() => { setNotifPrefs((p) => ({ ...p, jobType: val })); setNotifSaved(false); }} />
+                                <span>{label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="notif-group">
+                          <div className="notif-field-label">Banks</div>
                           <div className="notif-checkboxes">
+                            <label className="notif-checkbox">
+                              <input type="checkbox" checked={notifPrefs.banks.length === 0} onChange={() => { setNotifPrefs((p) => ({ ...p, banks: [] })); setNotifSaved(false); }} />
+                              <span>All banks</span>
+                            </label>
                             {Object.entries(BANKS).map(([key, bank]) => (
                               <label className="notif-checkbox" key={key}>
                                 <input type="checkbox" checked={notifPrefs.banks.includes(key)} onChange={() => toggleNotifBank(key)} />
@@ -1637,11 +1683,15 @@ export default function Home() {
                             ))}
                           </div>
                         </div>
-                        <div className="notif-section">
-                          <h3 className="notif-section-title">Categories</h3>
-                          <p className="notif-section-desc">Select which categories to get alerts for. Leave empty for all categories.</p>
+
+                        <div className="notif-group">
+                          <div className="notif-field-label">Categories</div>
                           <div className="notif-checkboxes">
-                            {["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"].map((cat) => (
+                            <label className="notif-checkbox">
+                              <input type="checkbox" checked={notifPrefs.categories.length === 0} onChange={() => { setNotifPrefs((p) => ({ ...p, categories: [] })); setNotifSaved(false); }} />
+                              <span>All categories</span>
+                            </label>
+                            {NOTIF_CATEGORIES.map((cat) => (
                               <label className="notif-checkbox" key={cat}>
                                 <input type="checkbox" checked={notifPrefs.categories.includes(cat)} onChange={() => toggleNotifCategory(cat)} />
                                 <span>{cat}</span>
@@ -1649,37 +1699,29 @@ export default function Home() {
                             ))}
                           </div>
                         </div>
-                        <div className="notif-section">
-                          <h3 className="notif-section-title">Job Type</h3>
-                          <div className="notif-radio-group">
-                            {[["all", "All Types"], ["internship", "Internship Only"], ["fulltime", "Analyst Only"]].map(([val, label]) => (
-                              <label className="notif-radio" key={val}>
-                                <input type="radio" name="notifJobType" value={val} checked={notifPrefs.jobType === val} onChange={() => { setNotifPrefs((p) => ({ ...p, jobType: val })); setNotifSaved(false); }} />
-                                <span>{label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="notif-section">
-                          <h3 className="notif-section-title">Location</h3>
-                          <p className="notif-section-desc">Only get alerts for jobs in a specific city. Leave blank for all locations.</p>
+
+                        <div className="notif-group">
+                          <label className="notif-field-label" htmlFor="notif-location">City</label>
                           <input
+                            id="notif-location"
                             className="notif-phone-input"
                             type="text"
-                            placeholder="e.g. New York, Chicago, Houston..."
+                            placeholder="Any city"
                             value={notifPrefs.location || ""}
                             onChange={(e) => { setNotifPrefs((p) => ({ ...p, location: e.target.value })); setNotifSaved(false); }}
                           />
                         </div>
-                      </>
+                      </div>
                     )}
+
                     <div className="notif-actions">
+                      <p className={`notif-summary${notifBlocker ? " notif-summary-blocked" : ""}`}>{notifBlocker || notifSummary}</p>
                       <button
                         className="notif-save"
                         onClick={saveNotifPrefs}
-                        disabled={notifSaving || (notifPrefs.smsEnabled && (!notifPrefs.phoneNumber.trim() || !notifPrefs.smsConsent))}
+                        disabled={notifSaving || !!notifBlocker}
                       >
-                        {notifSaving ? "Saving..." : notifSaved ? "Saved" : "Save Preferences"}
+                        {notifSaving ? "Saving..." : notifSaved ? "Saved" : "Save"}
                       </button>
                     </div>
                   </>

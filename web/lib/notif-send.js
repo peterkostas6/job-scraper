@@ -61,7 +61,8 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
   const uid = userId || email || "anon";
   const jobLinks = jobs.map((j) => j.link);
 
-  if (email) {
+  // prefs.enabled is the email switch; undefined (the admin test) still emails.
+  if (email && prefs?.enabled !== false) {
     try {
       const { subject, html, text } = alertEmail({ jobs, firstName, userId: uid });
       // Same user + same set of links = same key, so a retry never double-sends.

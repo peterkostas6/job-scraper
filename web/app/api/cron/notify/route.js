@@ -345,7 +345,8 @@ export async function GET(request) {
       const notifyUsers = allUsers.filter(
         (u) =>
           u.publicMetadata?.subscribed === true &&
-          u.unsafeMetadata?.notifications?.enabled === true
+          // Either channel counts: a texts-only subscriber has email off.
+          (u.unsafeMetadata?.notifications?.enabled === true || u.unsafeMetadata?.notifications?.smsEnabled === true)
       );
 
       eligibleUsers = notifyUsers.length;

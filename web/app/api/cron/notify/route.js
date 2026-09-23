@@ -6,7 +6,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
 import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
-import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
+import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
 import { BANKS, BANK_NAMES } from "@/lib/banks";
 
@@ -331,7 +331,7 @@ export async function GET(request) {
     let eligibleUsers = 0;
 
     if (verifiedNewJobs.length > 0) {
-      const telnyx = telnyxConfig();
+      const sms = smsConfig();
       const client = await clerkClient();
       let allUsers = [];
       let offset = 0;
@@ -368,13 +368,13 @@ export async function GET(request) {
         if (matchingJobs.length === 0) continue;
 
         if (dryRun) {
-          wouldNotify.push({ userId: user.id, jobs: matchingJobs.length, sms: !!(telnyx && prefs.smsEnabled && prefs.phoneNumber) });
+          wouldNotify.push({ userId: user.id, jobs: matchingJobs.length, sms: !!(sms && prefs.smsEnabled && prefs.phoneNumber) });
           continue;
         }
 
         const sent = await sendUserNotification({
           resend,
-          telnyx,
+          sms,
           userId: user.id,
           email: user.emailAddresses?.[0]?.emailAddress,
           firstName: user.firstName || "",

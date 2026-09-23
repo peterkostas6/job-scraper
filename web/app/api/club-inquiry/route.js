@@ -2,6 +2,7 @@
 // Sends an internal notification email to Pete + a confirmation email to the requester
 import { clubInquiryEmail, clubConfirmationEmail } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
+import { smsConfig, sendSms } from "@/lib/notif-send";
 import { Resend } from "resend";
 
 export async function POST(req) {
@@ -28,21 +29,9 @@ export async function POST(req) {
     await sendEmail(resend, { to: contactEmail, ...confirm, tags: [{ name: "type", value: "club-confirmation" }] });
 
     // Send SMS alert to Pete
-    const telnyxApiKey = process.env.TELNYX_API_KEY;
-    const telnyxFrom = process.env.TELNYX_PHONE_NUMBER;
-    if (telnyxApiKey && telnyxFrom) {
-      await fetch("https://api.telnyx.com/v2/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${telnyxApiKey}`,
-        },
-        body: JSON.stringify({
-          from: telnyxFrom,
-          to: "+14014878091",
-          text: `Club inquiry: ${clubName} @ ${schoolName}\n${memberCount ? memberCount + " members\n" : ""}${contactName} — ${contactEmail}`,
-        }),
-      });
+    const sms = smsConfig();
+    if (sms) {
+      await sendSms(sms, "+14014878091", `Club inquiry: ${clubName} @ ${schoolName}\n${memberCount ? memberCount + " members\n" : ""}${contactName} — ${contactEmail}`);
     }
 
     return Response.json({ success: true });

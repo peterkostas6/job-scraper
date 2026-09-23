@@ -5,10 +5,12 @@ import { sql } from "@vercel/postgres";
 import { alertEmail } from "@/lib/email-templates";
 import { sendEmail, unsubscribeUrl, BRAND } from "@/lib/email";
 
-export function telnyxConfig() {
-  const apiKey = process.env.TELNYX_API_KEY;
-  const from = process.env.TELNYX_PHONE_NUMBER;
-  return apiKey && from ? { apiKey, from } : null;
+// Sends go through the Twilio Messaging Service that the approved A2P campaign is attached to.
+export function smsConfig() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+  return accountSid && authToken && messagingServiceSid ? { accountSid, authToken, messagingServiceSid } : null;
 }
 
 // Plain ASCII only: a single non-GSM character (like a bullet) switches the whole
@@ -20,16 +22,19 @@ export function buildSmsText(jobs) {
   return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}\n\npetespostings.com/recent\nReply STOP to unsubscribe`;
 }
 
-// Returns the Telnyx message id so delivery callbacks can be matched to the send.
-export async function sendSms(telnyx, to, text) {
-  const resp = await fetch("https://api.telnyx.com/v2/messages", {
+// Returns the Twilio message SID so delivery callbacks can be matched to the send.
+export async function sendSms(sms, to, text) {
+  const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sms.accountSid}/Messages.json`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${telnyx.apiKey}` },
-    body: JSON.stringify({ from: telnyx.from, to, text }),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${Buffer.from(`${sms.accountSid}:${sms.authToken}`).toString("base64")}`,
+    },
+    body: new URLSearchParams({ MessagingServiceSid: sms.messagingServiceSid, To: to, Body: text }),
   });
-  if (!resp.ok) throw new Error(`Telnyx ${resp.status}: ${await resp.text()}`);
+  if (!resp.ok) throw new Error(`Twilio ${resp.status}: ${await resp.text()}`);
   const body = await resp.json().catch(() => null);
-  return body?.data?.id || null;
+  return body?.sid || null;
 }
 
 // Records a send attempt or a delivery event. Never throws: a logging failure must not
@@ -50,7 +55,7 @@ export async function logNotification({ userId = null, channel, status, recipien
  * Returns { emailSent, smsSent, failed } — failed is true only when the email could not
  * be delivered, so the caller queues the jobs for the retry sweep.
  */
-export async function sendUserNotification({ resend, telnyx, userId, email, firstName, prefs, jobs }) {
+export async function sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs }) {
   const result = { emailSent: false, smsSent: false, failed: false };
   if (!jobs || jobs.length === 0) return result;
   const uid = userId || email || "anon";
@@ -84,9 +89,9 @@ export async function sendUserNotification({ resend, telnyx, userId, email, firs
     }
   }
 
-  if (telnyx && prefs?.smsEnabled && prefs?.phoneNumber) {
+  if (sms && prefs?.smsEnabled && prefs?.phoneNumber) {
     try {
-      const messageId = await sendSms(telnyx, prefs.phoneNumber, buildSmsText(jobs));
+      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs));
       result.smsSent = true;
       await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
     } catch (err) {

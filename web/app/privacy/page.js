@@ -47,7 +47,7 @@ export default function PrivacyPage() {
         <ul style={{ fontSize: 15, color: "#334155", lineHeight: 2, paddingLeft: 20 }}>
           <li><strong>Clerk</strong> — authentication and user management</li>
           <li><strong>Resend</strong> — transactional email delivery</li>
-          <li><strong>Telnyx</strong> — SMS message delivery</li>
+          <li><strong>Twilio</strong> — SMS message delivery</li>
           <li><strong>Stripe</strong> — payment processing</li>
           <li><strong>Vercel</strong> — hosting and infrastructure</li>
           <li><strong>PostHog</strong> — anonymous usage analytics</li>

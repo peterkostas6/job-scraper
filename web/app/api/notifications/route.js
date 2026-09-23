@@ -1,6 +1,6 @@
 import { prefsEmail } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
-import { telnyxConfig, sendSms } from "@/lib/notif-send";
+import { smsConfig, sendSms } from "@/lib/notif-send";
 import { BANK_NAMES } from "@/lib/banks";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
@@ -110,10 +110,10 @@ export async function POST(request) {
     // Send a welcome text when SMS is enabled for the first time, re-enabled, or the number changes
     const newPhone = phoneNumber?.trim();
     if (smsEnabled && newPhone && (newPhone !== oldPhone || !oldSmsEnabled)) {
-      const telnyx = telnyxConfig();
-      if (telnyx) {
+      const sms = smsConfig();
+      if (sms) {
         const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
-        sendSms(telnyx, newPhone, welcomeMsg).catch((e) => console.error("Welcome SMS failed:", e.message));
+        sendSms(sms, newPhone, welcomeMsg).catch((e) => console.error("Welcome SMS failed:", e.message));
       }
     }
 

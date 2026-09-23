@@ -4,7 +4,7 @@
 import { Resend } from "resend";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
-import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
+import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 
 export const dynamic = "force-dynamic";
 // The Postgres driver talks to Neon over HTTP. In production Next.js can serve a repeated,
@@ -27,7 +27,7 @@ export async function GET(request) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const telnyx = telnyxConfig();
+    const sms = smsConfig();
 
     // 1. Fetch all queued rows
     const { rows } = await sql`
@@ -91,7 +91,7 @@ export async function GET(request) {
         if (jobs.length === 0) continue;
 
         if (dryRun) { emailsSent += email ? 1 : 0; continue; }
-        const sent = await sendUserNotification({ resend, telnyx, userId, email, firstName, prefs, jobs });
+        const sent = await sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs });
         if (sent.emailSent) emailsSent++;
         if (sent.smsSent) smsSent++;
       }

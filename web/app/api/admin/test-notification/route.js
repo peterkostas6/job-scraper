@@ -3,7 +3,7 @@
 // GET ...?preview=alert|welcome|prefs|club — returns the rendered HTML instead of sending.
 // Guarded by CRON_SECRET (Authorization: Bearer, or ?key= for browser previews).
 import { Resend } from "resend";
-import { sendUserNotification, telnyxConfig } from "@/lib/notif-send";
+import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { alertEmail, welcomeEmail, prefsEmail, clubConfirmationEmail } from "@/lib/email-templates";
 
 export const dynamic = "force-dynamic";
@@ -38,15 +38,15 @@ export async function GET(request) {
   const phone = url.searchParams.get("phone");
   if (!to && !phone) return Response.json({ error: "Pass ?to=<email> and/or ?phone=<e164>, or ?preview=alert" }, { status: 400 });
 
-  const telnyx = telnyxConfig();
+  const sms = smsConfig();
   const result = await sendUserNotification({
     resend: new Resend(process.env.RESEND_API_KEY),
-    telnyx,
+    sms,
     userId: "test-user",
     email: to,
     firstName: "",
     prefs: { smsEnabled: !!phone, phoneNumber: phone },
     jobs: SAMPLE_JOBS,
   });
-  return Response.json({ ...result, smsConfigured: !!telnyx });
+  return Response.json({ ...result, smsConfigured: !!sms });
 }

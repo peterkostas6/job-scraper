@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { createHmac } from "crypto";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sendMetaServerEvent } from "@/lib/meta-capi";
+import { sendRedditServerEvent } from "@/lib/reddit-capi";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,7 @@ export async function POST(req) {
 
     // Server copy of the browser's CompleteRegistration (same event ID).
     await sendMetaServerEvent({ eventName: "CompleteRegistration", eventId: `reg_${userData.id}`, email, externalId: userData.id });
+    await sendRedditServerEvent({ eventType: "SignUp", conversionId: `reg_${userData.id}`, email, externalId: userData.id });
   }
 
   return Response.json({ received: true });

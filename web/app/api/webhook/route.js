@@ -3,6 +3,7 @@
 import Stripe from "stripe";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sendMetaServerEvent } from "@/lib/meta-capi";
+import { sendRedditServerEvent } from "@/lib/reddit-capi";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -42,9 +43,12 @@ export async function POST(req) {
     const m = session.metadata || {};
     const who = { email: session.customer_details?.email || session.customer_email, externalId: clerkUserId, ip: m.ip, userAgent: m.ua, fbp: m.fbp, fbc: m.fbc };
     if (m.plan === "yearly") {
-      await sendMetaServerEvent({ eventName: "Purchase", eventId: `purchase_${session.id}`, value: (session.amount_total || 0) / 100, ...who });
+      const value = (session.amount_total || 0) / 100;
+      await sendMetaServerEvent({ eventName: "Purchase", eventId: `purchase_${session.id}`, value, ...who });
+      await sendRedditServerEvent({ eventType: "Purchase", conversionId: `purchase_${session.id}`, value, ...who });
     } else {
       await sendMetaServerEvent({ eventName: "StartTrial", eventId: `trial_${session.id}`, value: 7.99, ...who });
+      await sendRedditServerEvent({ eventType: "Lead", conversionId: `trial_${session.id}`, value: 7.99, ...who });
     }
   }
 
@@ -61,6 +65,13 @@ export async function POST(req) {
         value: invoice.amount_paid / 100,
         email: invoice.customer_email,
         ip: m.ip, userAgent: m.ua, fbp: m.fbp, fbc: m.fbc,
+      });
+      await sendRedditServerEvent({
+        eventType: "Purchase",
+        conversionId: `purchase_${invoice.id}`,
+        value: invoice.amount_paid / 100,
+        email: invoice.customer_email,
+        ip: m.ip, userAgent: m.ua,
       });
     }
   }

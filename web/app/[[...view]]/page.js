@@ -676,6 +676,7 @@ function PaywallOverlay({ isSignedIn }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   function handleSubscribe(plan) {
+    trackMeta("InitiateCheckout", { value: plan === "yearly" ? 59.99 : 7.99, currency: "USD" });
     setLoading(true);
     setSelectedPlan(plan);
     fetch("/api/checkout", {
@@ -1050,10 +1051,13 @@ export default function Home() {
     const url = new URL(window.location.href);
     if (url.searchParams.get("subscribed") !== "true") return;
     // Monthly starts a 14-day trial; yearly is charged now. Prices match the pricing page.
-    if (url.searchParams.get("plan") === "yearly") trackMeta("Purchase", { value: 59.99, currency: "USD" });
-    else trackMeta("StartTrial", { value: 7.99, currency: "USD" });
+    // Event IDs match the Stripe webhook's server copies (app/api/webhook/route.js).
+    const sessionId = url.searchParams.get("session_id") || "";
+    if (url.searchParams.get("plan") === "yearly") trackMeta("Purchase", { value: 59.99, currency: "USD" }, sessionId && `purchase_${sessionId}`);
+    else trackMeta("StartTrial", { value: 7.99, currency: "USD" }, sessionId && `trial_${sessionId}`);
     url.searchParams.delete("subscribed");
     url.searchParams.delete("plan");
+    url.searchParams.delete("session_id");
     window.history.replaceState(null, "", url);
     setShowProWelcome(true);
   }, []);
@@ -1068,7 +1072,7 @@ export default function Home() {
       if (localStorage.getItem(key)) return;
       localStorage.setItem(key, "1");
     } catch {}
-    trackMeta("CompleteRegistration");
+    trackMeta("CompleteRegistration", undefined, `reg_${user.id}`);
   }, [user?.id, user?.createdAt]);
   useEffect(() => {
     if (!showProWelcome || !user || isSubscribed) return;

@@ -3,11 +3,12 @@
 // wait for it (up to ~10s) instead of being dropped.
 export const META_PIXEL_ID = "1637006874440767";
 
-export function trackMeta(event, params) {
+// eventId matches the server copy (lib/meta-capi.js) so Meta counts the event once.
+export function trackMeta(event, params, eventId) {
   if (typeof window === "undefined") return;
   let tries = 0;
   const send = () => {
-    if (window.fbq) window.fbq("track", event, params);
+    if (window.fbq) window.fbq("track", event, params, eventId ? { eventID: eventId } : undefined);
     else if (tries++ < 20) setTimeout(send, 500);
   };
   send();

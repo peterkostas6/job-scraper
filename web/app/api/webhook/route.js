@@ -2,6 +2,7 @@
 // When a subscription is created or deleted, we update the user's Clerk metadata
 import Stripe from "stripe";
 import { clerkClient } from "@clerk/nextjs/server";
+import { sendMetaServerEvent } from "@/lib/meta-capi";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -34,6 +35,32 @@ export async function POST(req) {
           stripeCustomerId: session.customer,
           stripeSubscriptionId: session.subscription,
         },
+      });
+    }
+
+    // Same event IDs the browser uses on the welcome step, so Meta counts each once.
+    const m = session.metadata || {};
+    const who = { email: session.customer_details?.email || session.customer_email, externalId: clerkUserId, ip: m.ip, userAgent: m.ua, fbp: m.fbp, fbc: m.fbc };
+    if (m.plan === "yearly") {
+      await sendMetaServerEvent({ eventName: "Purchase", eventId: `purchase_${session.id}`, value: (session.amount_total || 0) / 100, ...who });
+    } else {
+      await sendMetaServerEvent({ eventName: "StartTrial", eventId: `trial_${session.id}`, value: 7.99, ...who });
+    }
+  }
+
+  // A trial turning paid and every renewal. The first invoice of a subscription is
+  // skipped: it is $0 for a trial, and yearly's first payment was reported above.
+  if (event.type === "invoice.paid") {
+    const invoice = event.data.object;
+    if (invoice.amount_paid > 0 && invoice.billing_reason !== "subscription_create") {
+      // Newer Stripe API versions nest subscription details under invoice.parent.
+      const m = invoice.parent?.subscription_details?.metadata || invoice.subscription_details?.metadata || {};
+      await sendMetaServerEvent({
+        eventName: "Purchase",
+        eventId: `purchase_${invoice.id}`,
+        value: invoice.amount_paid / 100,
+        email: invoice.customer_email,
+        ip: m.ip, userAgent: m.ua, fbp: m.fbp, fbc: m.fbc,
       });
     }
   }

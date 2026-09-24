@@ -28,6 +28,16 @@ export async function POST(req) {
   const user = await (await clerkClient()).users.getUser(userId);
   const email = user.emailAddresses[0]?.emailAddress;
 
+  // Meta browser identifiers and plan, stored on the session and subscription so the
+  // Stripe webhook can report trials and payments to Meta's Conversions API.
+  const meta = {
+    plan,
+    fbp: req.cookies?.get("_fbp")?.value || "",
+    fbc: req.cookies?.get("_fbc")?.value || "",
+    ip: (req.headers.get("x-forwarded-for") || "").split(",")[0].trim(),
+    ua: (req.headers.get("user-agent") || "").slice(0, 400),
+  };
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     payment_method_types: ["card"],
@@ -39,13 +49,15 @@ export async function POST(req) {
       },
     ],
     // 14-day free trial on monthly plan only — card required upfront, auto-charges after trial
-    ...(plan === "monthly" && {
-      subscription_data: { trial_period_days: 14 },
-    }),
+    subscription_data: {
+      metadata: meta,
+      ...(plan === "monthly" && { trial_period_days: 14 }),
+    },
     metadata: {
       clerkUserId: userId,
+      ...meta,
     },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}?subscribed=true&plan=${plan}`,
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}?subscribed=true&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}`,
   });
 

@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/email";
 import { Resend } from "resend";
 import { createHmac } from "crypto";
 import { clerkClient } from "@clerk/nextjs/server";
+import { sendMetaServerEvent } from "@/lib/meta-capi";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,9 @@ export async function POST(req) {
     } catch (err) {
       console.error("Failed to send welcome email:", err);
     }
+
+    // Server copy of the browser's CompleteRegistration (same event ID).
+    await sendMetaServerEvent({ eventName: "CompleteRegistration", eventId: `reg_${userData.id}`, email, externalId: userData.id });
   }
 
   return Response.json({ received: true });

@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>1. What We Collect</h2>
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>When you create an account, we collect your email address and name. If you enable SMS notifications, we also collect your phone number. We use Clerk for authentication, which may collect additional sign-in data.</p>
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>We use PostHog and Google Analytics to understand how the site is used, such as which pages are visited and which features are used. Both set cookies or similar browser storage so they can recognize repeat visits. You can block these cookies in your browser settings, or opt out of Google Analytics with Google&rsquo;s <a href="https://tools.google.com/dlpage/gaoptout" style={{ color: "#2563eb" }}>opt-out browser add-on</a>. </p>
-        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginTop: 12 }}>We use the Meta Pixel to measure our Facebook and Instagram ads. It uses cookies to record page visits and actions such as creating an account or starting a subscription, so Meta can report how our ads perform and show them to people likely to find the site useful. Meta may combine this with information it already has about you under its own <a href="https://www.facebook.com/privacy/policy" style={{ color: "#2563eb" }}>privacy policy</a>. You can control ad personalization in your <a href="https://accountscenter.facebook.com/ad_preferences" style={{ color: "#2563eb" }}>Meta ad preferences</a>. We do not sell your data to third parties.</p>
+        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginTop: 12 }}>We use the Meta Pixel and the Reddit Pixel to measure our Facebook, Instagram and Reddit ads. It uses cookies to record page visits and actions such as creating an account or starting a subscription, so Meta and Reddit can report how our ads perform and show them to people likely to find the site useful. Each may combine this with information it already has about you under its own privacy policy (<a href="https://www.facebook.com/privacy/policy" style={{ color: "#2563eb" }}>Meta</a>, <a href="https://www.reddit.com/policies/privacy-policy" style={{ color: "#2563eb" }}>Reddit</a>). You can control ad personalization in your <a href="https://accountscenter.facebook.com/ad_preferences" style={{ color: "#2563eb" }}>Meta ad preferences</a> and <a href="https://www.reddit.com/settings/privacy" style={{ color: "#2563eb" }}>Reddit privacy settings</a>. We do not sell your data to third parties.</p>
       </section>
 
       <section style={{ marginBottom: 36 }}>
@@ -54,6 +54,7 @@ export default function PrivacyPage() {
           <li><strong>PostHog</strong> — product usage analytics</li>
           <li><strong>Google Analytics</strong> — website traffic analytics</li>
           <li><strong>Meta Pixel</strong> — measuring the Facebook and Instagram ads we run</li>
+          <li><strong>Reddit Pixel</strong> — measuring the Reddit ads we run</li>
         </ul>
       </section>
 

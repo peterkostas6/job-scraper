@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useUser, SignUpButton, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { trackMeta } from "@/lib/meta-pixel";
+import { track } from "@/lib/track";
 
 function ClubInquiryModal({ onClose }) {
   const [form, setForm] = useState({
@@ -163,7 +163,7 @@ export default function PricingPage() {
 
   function handleSubscribe() {
     const plan = billing;
-    trackMeta("InitiateCheckout", { value: plan === "yearly" ? 59.99 : 7.99, currency: "USD" });
+    track("InitiateCheckout", plan === "yearly" ? 59.99 : 7.99);
     setCheckoutLoading(plan);
     fetch("/api/checkout", {
       method: "POST",

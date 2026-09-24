@@ -5,7 +5,7 @@ import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
-import { trackMeta } from "@/lib/meta-pixel";
+import { track } from "@/lib/track";
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
 
@@ -676,7 +676,7 @@ function PaywallOverlay({ isSignedIn }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   function handleSubscribe(plan) {
-    trackMeta("InitiateCheckout", { value: plan === "yearly" ? 59.99 : 7.99, currency: "USD" });
+    track("InitiateCheckout", plan === "yearly" ? 59.99 : 7.99);
     setLoading(true);
     setSelectedPlan(plan);
     fetch("/api/checkout", {
@@ -1053,8 +1053,8 @@ export default function Home() {
     // Monthly starts a 14-day trial; yearly is charged now. Prices match the pricing page.
     // Event IDs match the Stripe webhook's server copies (app/api/webhook/route.js).
     const sessionId = url.searchParams.get("session_id") || "";
-    if (url.searchParams.get("plan") === "yearly") trackMeta("Purchase", { value: 59.99, currency: "USD" }, sessionId && `purchase_${sessionId}`);
-    else trackMeta("StartTrial", { value: 7.99, currency: "USD" }, sessionId && `trial_${sessionId}`);
+    if (url.searchParams.get("plan") === "yearly") track("Purchase", 59.99, sessionId && `purchase_${sessionId}`);
+    else track("StartTrial", 7.99, sessionId && `trial_${sessionId}`);
     url.searchParams.delete("subscribed");
     url.searchParams.delete("plan");
     url.searchParams.delete("session_id");
@@ -1062,7 +1062,7 @@ export default function Home() {
     setShowProWelcome(true);
   }, []);
 
-  // Tell Meta about a brand-new account once: signed in, created in the last 10 minutes,
+  // Tell the ad platforms about a brand-new account once: signed in, created in the last 10 minutes,
   // and not already reported from this browser.
   useEffect(() => {
     if (!user?.id || !user.createdAt) return;
@@ -1072,7 +1072,7 @@ export default function Home() {
       if (localStorage.getItem(key)) return;
       localStorage.setItem(key, "1");
     } catch {}
-    trackMeta("CompleteRegistration", undefined, `reg_${user.id}`);
+    track("CompleteRegistration", undefined, `reg_${user.id}`);
   }, [user?.id, user?.createdAt]);
   useEffect(() => {
     if (!showProWelcome || !user || isSubscribed) return;

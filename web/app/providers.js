@@ -4,7 +4,7 @@ import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { trackMeta } from "@/lib/meta-pixel";
+import { track } from "@/lib/track";
 
 export function PostHogProvider({ children }) {
   useEffect(() => {
@@ -15,12 +15,12 @@ export function PostHogProvider({ children }) {
     });
   }, []);
 
-  // The pixel's base code counts the first page; count each in-app page change after it.
+  // The pixels' base code counts the first page; count each in-app page change after it.
   const pathname = usePathname();
   const firstPath = useRef(true);
   useEffect(() => {
     if (firstPath.current) { firstPath.current = false; return; }
-    trackMeta("PageView");
+    track("PageView");
   }, [pathname]);
 
   return <PHProvider client={posthog}>{children}</PHProvider>;

@@ -12,6 +12,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { PostHogProvider } from "./providers";
 import { BANKS } from "@/lib/banks";
 import { META_PIXEL_ID } from "@/lib/meta-pixel";
+import { REDDIT_PIXEL_ID } from "@/lib/reddit-pixel";
 
 // Every page inherits this, so link previews (iMessage, Instagram, Slack, LinkedIn)
 // show the current pitch. The preview image lives in opengraph-image.js.
@@ -95,6 +96,14 @@ export default function RootLayout({ children }) {
               'https://connect.facebook.net/en_US/fbevents.js');
               fbq('init', '${META_PIXEL_ID}');
               fbq('track', 'PageView');
+            `}
+          </Script>
+          {/* Reddit Pixel base code (first page visit; later ones come from providers.js). */}
+          <Script id="reddit-pixel" strategy="afterInteractive">
+            {`
+              !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js",t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);
+              rdt('init','${REDDIT_PIXEL_ID}');
+              rdt('track', 'PageVisit');
             `}
           </Script>
         </head>

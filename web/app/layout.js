@@ -58,6 +58,10 @@ export const metadata = {
     index: true,
     follow: true,
   },
+  // Proves to Meta (Business Settings → Domains) that we own petespostings.com.
+  verification: {
+    other: { "facebook-domain-verification": "pvzc5cu4hbtidvhwugpzo6ofrmqebj" },
+  },
 };
 
 export default function RootLayout({ children }) {

@@ -6,7 +6,10 @@ import { REDDIT_PIXEL_ID } from "@/lib/reddit-pixel";
 
 const hash = (v) => crypto.createHash("sha256").update(String(v).trim().toLowerCase()).digest("hex");
 
-// eventType is Reddit's name (SignUp, Lead, Purchase). value is in USD.
+// eventType is Reddit's pixel name (SignUp, Lead, Purchase); the v3 API wants it upper-snake.
+const TRACKING_TYPE = { SignUp: "SIGN_UP", Lead: "LEAD", Purchase: "PURCHASE" };
+
+// value is in USD.
 export async function sendRedditServerEvent({ eventType, conversionId, email, externalId, value, ip, userAgent }) {
   const token = process.env.REDDIT_CAPI_TOKEN;
   if (!token) return;
@@ -18,20 +21,21 @@ export async function sendRedditServerEvent({ eventType, conversionId, email, ex
   if (userAgent) user.user_agent = userAgent;
 
   const event = {
-    event_at: new Date().toISOString(),
-    event_type: { tracking_type: eventType },
+    event_at: Date.now(),
+    action_source: "WEBSITE",
+    type: { tracking_type: TRACKING_TYPE[eventType] },
     user,
-    event_metadata: {
+    metadata: {
       conversion_id: conversionId,
-      ...(value != null && { value_decimal: value, currency: "USD" }),
+      ...(value != null && { value, currency: "USD" }),
     },
   };
 
   try {
-    const res = await fetch(`https://ads-api.reddit.com/api/v2.0/conversions/events/${REDDIT_PIXEL_ID}`, {
+    const res = await fetch(`https://ads-api.reddit.com/api/v3/pixels/${REDDIT_PIXEL_ID}/conversion_events`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "User-Agent": "petespostings/1.0" },
-      body: JSON.stringify({ events: [event] }),
+      body: JSON.stringify({ data: { events: [event] } }),
     });
     if (!res.ok) console.error(`Reddit CAPI ${eventType} failed:`, res.status, await res.text());
   } catch (err) {

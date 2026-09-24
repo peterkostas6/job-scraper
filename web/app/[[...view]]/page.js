@@ -1037,6 +1037,7 @@ export default function Home() {
   const [notifSaved, setNotifSaved] = useState(false);
   const [companyRequest, setCompanyRequest] = useState("");
   const [companyRequestStatus, setCompanyRequestStatus] = useState(null); // null | "sending" | "sent" | error message
+  const [showCompanyRequest, setShowCompanyRequest] = useState(false);
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [showProWelcome, setShowProWelcome] = useState(false);
   const [proWelcomeTimedOut, setProWelcomeTimedOut] = useState(false);
@@ -1494,6 +1495,18 @@ export default function Home() {
         </span>
         {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
       </button>
+      <button
+        className={`sidebar-item${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        onClick={() => { setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Request a company
+        </span>
+        {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : null}
+      </button>
       <span className="sidebar-scroll-arrow" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="9 18 15 12 9 6"/>
@@ -1628,6 +1641,12 @@ export default function Home() {
               >
                 Alerts
               </button>
+              <button
+                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => { setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+              >
+                Request
+              </button>
             </div>
           </div>
           {/* Sidebar — same as normal view */}
@@ -1705,6 +1724,12 @@ export default function Home() {
                 }}
               >
                 Alerts
+              </button>
+              <button
+                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => { setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+              >
+                Request
               </button>
             </div>
           </div>
@@ -1852,27 +1877,6 @@ export default function Home() {
                         </div>
                       </div>
                     )}
-
-                    <div className="notif-section">
-                      <h3 className="notif-section-title">Missing a company?</h3>
-                      <p className="notif-toggle-sub">Tell us which company to add and we&apos;ll look into tracking its jobs.</p>
-                      <form className="company-request-row" onSubmit={sendCompanyRequest}>
-                        <input
-                          className="notif-phone-input"
-                          type="text"
-                          placeholder="Company name"
-                          aria-label="Company name"
-                          maxLength={100}
-                          value={companyRequest}
-                          onChange={(e) => { setCompanyRequest(e.target.value); if (companyRequestStatus !== "sending") setCompanyRequestStatus(null); }}
-                        />
-                        <button className="welcome-dismiss" type="submit" disabled={companyRequestStatus === "sending" || companyRequest.trim().length < 2}>
-                          {companyRequestStatus === "sending" ? "Sending..." : "Request"}
-                        </button>
-                      </form>
-                      {companyRequestStatus === "sent" && <p className="notif-toggle-sub" role="status">Thanks, we got your request.</p>}
-                      {companyRequestStatus && !["sending", "sent"].includes(companyRequestStatus) && <p className="inquiry-error" role="alert">{companyRequestStatus}</p>}
-                    </div>
 
                     <div className="notif-actions">
                       <p className={`notif-summary${notifBlocker ? " notif-summary-blocked" : ""}`}>{notifBlocker || notifSummary}</p>
@@ -2111,6 +2115,53 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {showCompanyRequest && (
+        <div className="modal-overlay" data-state="open" onClick={() => setShowCompanyRequest(false)}>
+          <div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="company-request-title" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowCompanyRequest(false)} aria-label="Close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18M6 6l12 12"/>
+              </svg>
+            </button>
+            <div className="modal-prompt-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </div>
+            <h2 id="company-request-title" className="modal-title">Request a company</h2>
+            {isSubscribed ? (
+              <>
+                <p className="modal-subtitle">Tell us which company to add and we&rsquo;ll look into tracking its jobs.</p>
+                <form className="company-request-form" onSubmit={sendCompanyRequest}>
+                  <input
+                    className="inquiry-input"
+                    type="text"
+                    placeholder="Company name"
+                    aria-label="Company name"
+                    maxLength={100}
+                    autoFocus
+                    value={companyRequest}
+                    onChange={(e) => { setCompanyRequest(e.target.value); if (companyRequestStatus !== "sending") setCompanyRequestStatus(null); }}
+                  />
+                  <button className="modal-cta-primary" type="submit" disabled={companyRequestStatus === "sending" || companyRequest.trim().length < 2}>
+                    {companyRequestStatus === "sending" ? "Sending..." : "Send request"}
+                  </button>
+                </form>
+                {companyRequestStatus === "sent" && <p className="company-request-sent" role="status">Thanks, we got your request.</p>}
+                {companyRequestStatus && !["sending", "sent"].includes(companyRequestStatus) && <p className="inquiry-error" role="alert">{companyRequestStatus}</p>}
+              </>
+            ) : (
+              <>
+                <p className="modal-subtitle">Requesting companies is a Pro feature. Upgrade to tell us which company to track next.</p>
+                <div className="modal-actions">
+                  <button className="modal-cta-primary" onClick={() => { setShowCompanyRequest(false); router.push("/pricing"); }}>See Pro plans</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {showProWelcome && (
         <ProWelcomeModal

@@ -2458,16 +2458,18 @@ nav {
 }
 
 /* Missing-company request: field and button on one line. */
-.company-request-row {
+/* Request-a-company pop-up (opened from the Pro section of the sidebar). */
+.company-request-form {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  align-items: center;
-  margin-top: 0.75rem;
 }
 
-.company-request-row .welcome-dismiss:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.company-request-sent {
+  font-size: 0.82rem;
+  color: var(--green);
+  text-align: center;
+  margin-top: 0.75rem;
 }
 
 /* Stays pinned to the bottom of the screen so Save is always in reach on this long page. */

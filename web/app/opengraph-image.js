@@ -60,9 +60,12 @@ export default async function Image() {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", fontSize: 84, fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.03em" }}>
+          {/* One span per word so lines break between words, not after a long phrase. */}
           <span style={{ marginRight: 22 }}>Get</span>
           <span style={{ background: "#2563eb", borderRadius: 14, padding: "0 16px", marginRight: 22 }}>a text</span>
-          <span>the instant a bank posts a job.</span>
+          {"the instant a bank posts a job.".split(" ").map((word, i) => (
+            <span key={i} style={{ marginRight: 22 }}>{word}</span>
+          ))}
         </div>
 
         <div style={{ display: "flex", fontSize: 28, fontWeight: 500, color: "rgba(250,248,245,0.7)" }}>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useUser, SignUpButton, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { track } from "@/lib/track";
+import { openBillingPortal } from "@/lib/billing";
 
 function ClubInquiryModal({ onClose }) {
   const [form, setForm] = useState({
@@ -156,7 +157,7 @@ function ClubInquiryModal({ onClose }) {
 }
 
 export default function PricingPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
   const [billing, setBilling] = useState("monthly");
@@ -196,7 +197,15 @@ export default function PricingPage() {
           </div>
           <div className="nav-right">
             {isLoaded && (
-              isSignedIn ? <UserButton /> : (
+              isSignedIn ? (
+                <UserButton>
+                  {user?.publicMetadata?.stripeCustomerId && (
+                    <UserButton.MenuItems>
+                      <UserButton.Action label="Manage subscription" labelIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>} onClick={openBillingPortal} />
+                    </UserButton.MenuItems>
+                  )}
+                </UserButton>
+              ) : (
                 <>
                   <SignInButton mode="modal">
                     <button className="nav-signin">Sign in</button>

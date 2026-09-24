@@ -6,6 +6,7 @@ import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@cler
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
 import { track } from "@/lib/track";
+import { openBillingPortal } from "@/lib/billing";
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
 
@@ -1529,6 +1530,16 @@ export default function Home() {
         </span>
         {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : null}
       </button>
+      {user?.publicMetadata?.stripeCustomerId && (
+        <button className="sidebar-item" onClick={openBillingPortal}>
+          <span className="sidebar-saved-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+            </svg>
+            Manage subscription
+          </span>
+        </button>
+      )}
       <span className="sidebar-scroll-arrow" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="9 18 15 12 9 6"/>
@@ -1584,7 +1595,13 @@ export default function Home() {
               </button>
             )}
             {isSignedIn ? (
-              <UserButton />
+              <UserButton>
+                {user?.publicMetadata?.stripeCustomerId && (
+                  <UserButton.MenuItems>
+                    <UserButton.Action label="Manage subscription" labelIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>} onClick={openBillingPortal} />
+                  </UserButton.MenuItems>
+                )}
+              </UserButton>
             ) : (
               <>
                 <SignInButton mode="modal">

@@ -5,6 +5,7 @@ import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
+import { trackMeta } from "@/lib/meta-pixel";
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
 
@@ -1048,10 +1049,27 @@ export default function Home() {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (url.searchParams.get("subscribed") !== "true") return;
+    // Monthly starts a 14-day trial; yearly is charged now. Prices match the pricing page.
+    if (url.searchParams.get("plan") === "yearly") trackMeta("Purchase", { value: 59.99, currency: "USD" });
+    else trackMeta("StartTrial", { value: 7.99, currency: "USD" });
     url.searchParams.delete("subscribed");
+    url.searchParams.delete("plan");
     window.history.replaceState(null, "", url);
     setShowProWelcome(true);
   }, []);
+
+  // Tell Meta about a brand-new account once: signed in, created in the last 10 minutes,
+  // and not already reported from this browser.
+  useEffect(() => {
+    if (!user?.id || !user.createdAt) return;
+    if (Date.now() - new Date(user.createdAt).getTime() > 10 * 60 * 1000) return;
+    const key = `pp-signup-tracked-${user.id}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, "1");
+    } catch {}
+    trackMeta("CompleteRegistration");
+  }, [user?.id, user?.createdAt]);
   useEffect(() => {
     if (!showProWelcome || !user || isSubscribed) return;
     let tries = 0;

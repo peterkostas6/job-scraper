@@ -45,7 +45,7 @@ export async function POST(req) {
     metadata: {
       clerkUserId: userId,
     },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}?subscribed=true`,
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}?subscribed=true&plan=${plan}`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}`,
   });
 

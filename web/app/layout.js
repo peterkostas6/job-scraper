@@ -10,11 +10,17 @@ const inter = Inter({
 });
 import { ClerkProvider } from "@clerk/nextjs";
 import { PostHogProvider } from "./providers";
+import { BANKS } from "@/lib/banks";
+
+// Every page inherits this, so link previews (iMessage, Instagram, Slack, LinkedIn)
+// show the current pitch. The preview image lives in opengraph-image.js.
+const BANK_COUNT = Object.keys(BANKS).length;
+const TITLE = "Pete\u2019s Postings \u2014 Get a text the instant a bank posts a job";
+const DESCRIPTION = `Live analyst and internship postings from ${BANK_COUNT} banks, including JPMorgan, Goldman Sachs, Morgan Stanley, Bank of America, and Citi. Get a text the instant a role matching your filters goes live.`;
 
 export const metadata = {
-  title: "Petes Postings - Analyst and Intern Jobs at Top Banks",
-  description:
-    "Browse live analyst and internship postings from JPMorgan Chase, Goldman Sachs, Morgan Stanley, Bank of America, Citi, Deutsche Bank, and Barclays. Updated directly from bank career sites.",
+  title: "Pete\u2019s Postings \u2014 Analyst and Intern Jobs at Top Banks",
+  description: DESCRIPTION,
   keywords: [
     "analyst jobs",
     "investment banking internship",
@@ -32,19 +38,17 @@ export const metadata = {
     "finance internship",
   ],
   openGraph: {
-    title: "Petes Postings - Every BB Analyst and Intern Application in One Place",
-    description:
-      "Live analyst and internship postings from 8 bulge bracket banks. Pulled directly from career sites, never outdated.",
+    title: TITLE,
+    description: DESCRIPTION,
     url: "https://petespostings.com",
-    siteName: "Petes Postings",
+    siteName: "Pete\u2019s Postings",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Petes Postings - BB Analyst and Intern Jobs",
-    description:
-      "Live analyst and internship postings from JPMorgan, Goldman Sachs, Morgan Stanley, BofA, Citi, Deutsche Bank, Barclays, and UBS.",
+    title: TITLE,
+    description: DESCRIPTION,
   },
   metadataBase: new URL("https://petespostings.com"),
   alternates: {

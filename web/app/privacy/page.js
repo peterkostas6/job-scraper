@@ -6,14 +6,14 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1e293b" }}>
-      <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: February 27, 2026</p>
+      <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: September 23, 2026</p>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Privacy Policy</h1>
       <p style={{ fontSize: 15, color: "#475569", marginBottom: 40 }}>Pete's Postings · petespostings.com</p>
 
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>1. What We Collect</h2>
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>When you create an account, we collect your email address and name. If you enable SMS notifications, we also collect your phone number. We use Clerk for authentication, which may collect additional sign-in data.</p>
-        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>We use PostHog for anonymous usage analytics (page views, feature usage). We do not sell your data to third parties.</p>
+        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>We use PostHog and Google Analytics to understand how the site is used, such as which pages are visited and which features are used. Both set cookies or similar browser storage so they can recognize repeat visits. You can block these cookies in your browser settings, or opt out of Google Analytics with Google&rsquo;s <a href="https://tools.google.com/dlpage/gaoptout" style={{ color: "#2563eb" }}>opt-out browser add-on</a>. We do not sell your data to third parties.</p>
       </section>
 
       <section style={{ marginBottom: 36 }}>
@@ -50,7 +50,8 @@ export default function PrivacyPage() {
           <li><strong>Twilio</strong> — SMS message delivery</li>
           <li><strong>Stripe</strong> — payment processing</li>
           <li><strong>Vercel</strong> — hosting and infrastructure</li>
-          <li><strong>PostHog</strong> — anonymous usage analytics</li>
+          <li><strong>PostHog</strong> — product usage analytics</li>
+          <li><strong>Google Analytics</strong> — website traffic analytics</li>
         </ul>
       </section>
 

@@ -2865,6 +2865,26 @@ footer {
   justify-content: center;
 }
 
+/* Pro welcome: each row is a feature name plus a one-line description. */
+.modal-benefits-detailed li {
+  align-items: flex-start;
+  text-align: left;
+  line-height: 1.5;
+}
+.modal-benefits-detailed .modal-check { margin-top: 0.1rem; }
+.modal-benefits-detailed strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.modal-pending-note {
+  font-size: 0.75rem;
+  color: var(--amber-ink);
+  line-height: 1.5;
+  text-align: center;
+  margin-top: 0.6rem;
+}
+
 /* Buttons · Pete colors, RA state model: 4px ring on focus, press dips, disabled fades */
 .modal-cta-primary,
 .modal-cta-secondary {

@@ -143,6 +143,81 @@ function AccountPromptModal({ onClose, last48hCount = 0 }) {
   );
 }
 
+
+// Shown once when Stripe sends a new subscriber back with ?subscribed=true.
+// The Stripe webhook flips the account to Pro a few seconds after checkout, so the
+// main button waits for that before sending them to set up alerts.
+function ProWelcomeModal({ onClose, onSetupAlerts, activated, timedOut }) {
+  const primaryRef = useRef(null);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (activated && primaryRef.current) primaryRef.current.focus();
+  }, [activated]);
+
+  const features = [
+    ['Text alerts', 'Get a text the instant a bank posts a job that matches your filters.'],
+    ['Email alerts', 'The same alerts in your inbox, if you want them there too.'],
+    ['Recent postings', `Every job posted in the last 48 hours across all ${Object.keys(BANKS).length} banks, in one list.`],
+    ['Saved jobs', 'Bookmark roles as you go and keep track of what you\u2019ve applied to.'],
+  ];
+
+  return (
+    <div className="modal-overlay" data-state="open" onClick={onClose}>
+      <div
+        className="modal-card modal-card-prompt"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pro-welcome-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="modal-close" onClick={onClose} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+
+        <div className="modal-success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 id="pro-welcome-title" className="modal-title">Welcome to Pro</h2>
+        <p className="modal-subtitle">Thanks for subscribing. Here&rsquo;s everything you just unlocked:</p>
+
+        <ul className="modal-benefits modal-benefits-detailed">
+          {features.map(([name, desc]) => (
+            <li key={name}>
+              <span className="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span><strong>{name}</strong> &mdash; {desc}</span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="modal-subtitle">Texts are the fastest way to hear about a new role. Pick your banks and add your number to turn them on.</p>
+
+        <div className="modal-actions">
+          <button className="modal-cta-primary" ref={primaryRef} onClick={onSetupAlerts} disabled={!activated}>
+            {activated ? "Set up your text alerts" : "Activating Pro\u2026"}
+          </button>
+        </div>
+        {!activated && timedOut && (
+          <p className="modal-pending-note">This is taking longer than usual. Refresh the page in a minute, or email pete@petespostings.com if Pro still isn&rsquo;t on.</p>
+        )}
+        <button className="modal-dismiss-link" onClick={onClose}>I&rsquo;ll do it later</button>
+      </div>
+    </div>
+  );
+}
+
 // ---- HOMEPAGE ----
 const BANK_COUNT = Object.keys(BANKS).length;
 const MEMBER_CAP = 2000;
@@ -963,6 +1038,29 @@ export default function Home() {
   const [companyRequest, setCompanyRequest] = useState("");
   const [companyRequestStatus, setCompanyRequestStatus] = useState(null); // null | "sending" | "sent" | error message
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
+  const [showProWelcome, setShowProWelcome] = useState(false);
+  const [proWelcomeTimedOut, setProWelcomeTimedOut] = useState(false);
+
+  // Stripe returns new subscribers to /?subscribed=true. Show the Pro welcome once, drop
+  // the flag from the URL, and reload the Clerk user until the webhook has marked it Pro.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("subscribed") !== "true") return;
+    url.searchParams.delete("subscribed");
+    window.history.replaceState(null, "", url);
+    setShowProWelcome(true);
+  }, []);
+  useEffect(() => {
+    if (!showProWelcome || !user || isSubscribed) return;
+    let tries = 0;
+    const id = setInterval(() => {
+      tries++;
+      user.reload().catch(() => {});
+      if (tries >= 15) { clearInterval(id); setProWelcomeTimedOut(true); }
+    }, 2000);
+    return () => clearInterval(id);
+  }, [showProWelcome, user, isSubscribed]);
 
   // ---- URL-driven views ----
   // Each view has its own route. The flags below are derived from the pathname; the
@@ -2013,6 +2111,15 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {showProWelcome && (
+        <ProWelcomeModal
+          activated={isSubscribed}
+          timedOut={proWelcomeTimedOut}
+          onClose={() => setShowProWelcome(false)}
+          onSetupAlerts={() => { setShowProWelcome(false); router.push("/notifications"); }}
+        />
+      )}
 
       {showAccountPrompt && !isSignedIn && !viewHome && (
         <AccountPromptModal onClose={dismissAccountPrompt} last48hCount={last48hCount} />

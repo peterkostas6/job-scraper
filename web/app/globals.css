@@ -2044,11 +2044,6 @@ nav {
 }
 
 /* Includes strip */
-.paywall-includes {
-  text-align: center;
-  margin-bottom: 1.25rem;
-}
-
 .paywall-includes-label {
   font-size: 0.65rem;
   font-weight: 600;
@@ -2058,24 +2053,40 @@ nav {
   margin-bottom: 0.6rem;
 }
 
-.paywall-includes-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem 1rem;
+/* "What you unlock": a checklist card between the header and the plans. */
+.paywall-unlocks {
+  width: 100%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
-.paywall-includes-item {
+.paywall-unlocks-list {
+  list-style: none;
   display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.78rem;
-  font-weight: 500;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.paywall-unlocks-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
   color: var(--text-secondary);
+  text-align: left;
 }
 
-.paywall-includes-item svg {
-  color: var(--forest-blue);
+.paywall-unlocks-list .modal-check {
+  margin-top: 0.12rem;
+}
+
+.paywall-unlocks-list strong {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .paywall-signin {

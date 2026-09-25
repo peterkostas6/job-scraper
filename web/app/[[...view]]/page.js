@@ -715,6 +715,24 @@ function PaywallOverlay({ isSignedIn }) {
         </p>
       </div>
 
+      <div className="paywall-unlocks">
+        <p className="paywall-includes-label">What you unlock</p>
+        <ul className="paywall-unlocks-list">
+          {[
+            ["Instant text alerts", "A text the moment a bank posts a role matching your banks, job type and city."],
+            ["Email alerts", "The same alerts in your inbox, if you want them there too."],
+            ["Recent postings", `Every job posted in the last 48 hours across all ${BANK_COUNT} banks, in one list.`],
+            ["Saved jobs", "Bookmark roles and keep track of what you\u2019ve applied to."],
+            ["Request a company", "Tell us which firm to track next."],
+          ].map(([name, desc]) => (
+            <li key={name}>
+              <span className="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span><strong>{name}</strong> &mdash; {desc}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div className="paywall-plans">
         <div className="paywall-plan">
           <h3 className="paywall-plan-name">Monthly</h3>
@@ -722,7 +740,7 @@ function PaywallOverlay({ isSignedIn }) {
             <span className="paywall-plan-amount">$7.99</span>
             <span className="paywall-plan-period">/mo</span>
           </div>
-          <p className="paywall-plan-billing">Billed monthly</p>
+          <p className="paywall-plan-billing">14-day free trial, then billed monthly</p>
           {ctaBtn("monthly", "Get Monthly", false)}
         </div>
 
@@ -735,20 +753,6 @@ function PaywallOverlay({ isSignedIn }) {
           </div>
           <p className="paywall-plan-billing">Billed $59.99/year</p>
           {ctaBtn("yearly", "Get Yearly", true)}
-        </div>
-      </div>
-
-      <div className="paywall-includes">
-        <p className="paywall-includes-label">Pro includes</p>
-        <div className="paywall-includes-list">
-          {["SMS text alerts", "Email alerts", "Save & bookmark jobs", "48-hour recent feed"].map((item) => (
-            <span className="paywall-includes-item" key={item}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              {item}
-            </span>
-          ))}
         </div>
       </div>
 

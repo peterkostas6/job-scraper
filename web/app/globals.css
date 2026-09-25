@@ -1628,6 +1628,64 @@ nav {
   margin-bottom: 1.5rem;
 }
 
+/* Alerts shortcut on Recent postings: info banner with a bell and one filled button. */
+.alerts-callout {
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+}
+
+.alerts-callout-body {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.alerts-callout-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--blue-8);
+  color: var(--forest-blue);
+}
+
+.alerts-callout-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--forest-blue);
+  color: var(--white);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.alerts-callout-cta:hover {
+  background: var(--forest-blue-hover);
+}
+
+/* Without Pro: outlined and locked, so it reads as a preview rather than a live action. */
+.alerts-callout-cta-locked {
+  background: var(--white);
+  color: var(--forest-blue);
+  border: 1px solid var(--blue-25);
+}
+
+.alerts-callout-cta-locked:hover {
+  background: var(--blue-4);
+  border-color: var(--blue-40);
+}
+
 .welcome-title {
   font-size: 0.95rem;
   font-weight: 700;
@@ -3890,6 +3948,16 @@ footer {
   .welcome-banner {
     flex-direction: column;
     text-align: center;
+  }
+
+  .alerts-callout {
+    align-items: stretch;
+    text-align: left;
+    gap: 0.85rem;
+  }
+
+  .alerts-callout-cta {
+    justify-content: center;
   }
 
   /* ---- PAYWALL ---- */

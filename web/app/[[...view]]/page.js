@@ -1699,6 +1699,38 @@ export default function Home() {
                 Jobs posted in the last 48 hours across all banks. Apply early — roles fill fast.
               </p>
             </div>
+
+            {/* Shortcut to alert settings: everyone sees it; without Pro it opens the paywall. */}
+            <div className="welcome-banner alerts-callout">
+              <div className="alerts-callout-body">
+                <span className="alerts-callout-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                </span>
+                <div>
+                  <p className="welcome-title">
+                    {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
+                      ? `Your ${notifPrefs.smsEnabled ? "text" : "email"} alerts are on`
+                      : "Get a text the instant a new job posts"}
+                  </p>
+                  <p className="welcome-desc">
+                    {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
+                      ? "Change which banks, roles and cities you hear about."
+                      : "Set up text or email alerts for the banks and roles you want, so you never have to check this page."}
+                  </p>
+                </div>
+              </div>
+              <button
+                className={`alerts-callout-cta${!isSubscribed ? " alerts-callout-cta-locked" : ""}`}
+                onClick={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
+              >
+                {!isSubscribed && (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                )}
+                {!isSubscribed ? "Pro: set up alerts" : isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled) ? "Edit alerts" : "Set up alerts"}
+              </button>
+            </div>
             <NewPostingsView
               isSubscribed={isSubscribed}
               isSignedIn={isSignedIn}

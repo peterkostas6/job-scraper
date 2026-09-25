@@ -1692,7 +1692,6 @@ export default function Home() {
               )}
             </Link>
             <Link href="/pricing" className="nav-link">Pricing</Link>
-            <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
           </div>
           <div className="nav-right">
             {!isLoaded ? null : isSignedIn ? (
@@ -2280,6 +2279,8 @@ export default function Home() {
             <p>Pulled live from bank career sites &middot; Updated instantly</p>
             <p>&copy; 2026 Pete's Postings</p>
             <p className="footer-links">
+              <Link href="/about" className="text-link">About</Link>
+              <span aria-hidden="true"> &middot; </span>
               <Link href="/privacy" className="text-link">Privacy Policy</Link>
               <span aria-hidden="true"> &middot; </span>
               <Link href="/terms" className="text-link">Terms of Service</Link>

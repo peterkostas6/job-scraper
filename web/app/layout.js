@@ -77,7 +77,6 @@ const clerkAppearance = {
     colorBackground: "#ffffff",
     colorInput: "#ffffff",
     colorInputForeground: "#1a1a1a",
-    colorBorder: "rgba(0, 0, 0, 0.12)",
     colorRing: "rgba(37, 99, 235, 0.25)",
     colorDanger: "#dc3535",
     colorModalBackdrop: "rgba(0, 0, 0, 0.45)",
@@ -96,12 +95,13 @@ const clerkAppearance = {
       textTransform: "none",
       "&:hover": { backgroundColor: "#1d4ed8" },
     },
-    // Explicit hairline borders: Clerk's default ones nearly vanish on a white card.
+    // Clerk draws these outlines with box-shadow (border-width is 0), so the hairline and the
+    // focus ring are set there.
     formFieldInput: {
-      border: "1px solid rgba(0, 0, 0, 0.12)",
-      "&:focus": { borderColor: "#2563eb", boxShadow: "0 0 0 3px rgba(37, 99, 235, 0.1)" },
+      boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.12)",
+      "&:focus": { boxShadow: "0 0 0 1px #2563eb, 0 0 0 4px rgba(37, 99, 235, 0.1)" },
     },
-    socialButtonsBlockButton: { border: "1px solid rgba(0, 0, 0, 0.12)" },
+    socialButtonsBlockButton: { boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.12)" },
     footerActionLink: { color: "#2563eb", fontWeight: 600 },
   },
 };

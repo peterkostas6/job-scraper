@@ -3302,6 +3302,17 @@ footer {
 }
 
 /* Nav "New" link */
+/* Alerts link: text plus a small lock when the viewer doesn't have Pro. */
+.nav-link-alerts {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.nav-link-lock {
+  opacity: 0.6;
+}
+
 .nav-link-new {
   display: flex;
   align-items: center;

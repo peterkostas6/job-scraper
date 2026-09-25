@@ -1573,6 +1573,15 @@ export default function Home() {
               </svg>
               Recent Postings
             </Link>
+            {/* Everyone sees Alerts; without Pro it carries a lock and /notifications shows the paywall. */}
+            <Link href="/notifications" className={`nav-link nav-link-alerts${viewNotifications ? " nav-link-active" : ""}`}>
+              Alerts
+              {!isSubscribed && (
+                <svg className="nav-link-lock" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Pro feature">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              )}
+            </Link>
             <Link href="/pricing" className="nav-link">Pricing</Link>
             <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
           </div>

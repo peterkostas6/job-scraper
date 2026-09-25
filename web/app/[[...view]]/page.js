@@ -825,7 +825,7 @@ function AboutPage({ onBrowse }) {
           Applying to banking internships and analyst roles is brutal. After applying to 300+ internships, I was sick of tracking new postings in an outdated spreadsheet and finding out about roles too late.
         </p>
         <p className="about-text">
-          So I built this for myself. Friends started asking for it, then their friends, so I opened it up to everyone.
+          I built this for myself, but after heavy demand decided to make it open to the public.
         </p>
       </section>
 

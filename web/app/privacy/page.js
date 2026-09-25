@@ -1,6 +1,7 @@
 export const metadata = {
   title: "Privacy Policy — Pete's Postings",
   description: "Privacy policy for Pete's Postings.",
+  alternates: { canonical: "https://petespostings.com/privacy" },
 };
 
 export default function PrivacyPage() {

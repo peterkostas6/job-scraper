@@ -1,6 +1,7 @@
 export const metadata = {
   title: "Terms of Service — Pete's Postings",
   description: "Terms of service for Pete's Postings.",
+  alternates: { canonical: "https://petespostings.com/terms" },
 };
 
 export default function TermsPage() {

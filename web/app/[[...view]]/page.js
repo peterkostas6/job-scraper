@@ -767,42 +767,145 @@ function PaywallOverlay({ isSignedIn }) {
 }
 
 // ---- ABOUT PAGE ----
+// Written for readers and search engines alike: plain headings, real answers, and links to
+// every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
+const ABOUT_FAQ = [
+  ["Is Pete's Postings free?",
+    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free, with no account needed. Pro adds instant text and email alerts, the 48-hour recent postings feed, saved jobs, and company requests. See the pricing page for current plans; the monthly plan starts with a 14-day free trial.`],
+  ["How fast will I hear about a new posting?",
+    "Instantly. As soon as a bank posts a role that matches your alert settings, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
+  ["Which banks do you track?",
+    `${BANK_COUNT} banks, including JPMorgan Chase, Goldman Sachs, Morgan Stanley, Bank of America, Citi, Deutsche Bank, Barclays, Wells Fargo, Jefferies, Blackstone, and BlackRock. The full list is above.`],
+  ["Are the listings real and up to date?",
+    "Yes. Every posting comes straight from each bank's own careers system, not from reposts or aggregators, and each one links to the official application page. Roles that are taken down disappear from the site."],
+  ["What kinds of roles are listed?",
+    "Analyst and internship roles: summer analyst and summer internship programs, off-cycle internships, and full-time analyst positions across investment banking, sales and trading, research, wealth management, risk, technology, and more."],
+  ["Can I choose which jobs I get texts about?",
+    "Yes. Pick the banks, job type (analyst or internship), categories, and city you care about, and you only hear about matching roles. Reply STOP to any text to turn texts off."],
+  ["Can I cancel Pro any time?",
+    "Yes. Choose Manage subscription from your account menu to cancel online in a few clicks. You keep Pro until the end of the period you paid for."],
+];
+
 function AboutPage({ onBrowse }) {
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: ABOUT_FAQ.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://petespostings.com" },
+        { "@type": "ListItem", position: 2, name: "About", item: "https://petespostings.com/about" },
+      ],
+    },
+  ];
+
   return (
     <div className="about-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+
       <section className="about-hero">
         <span className="hero-tag">About</span>
-        <h1 className="about-title">Applying to banking internships and analyst positions sucks.</h1>
+        <h1 className="about-title">Instant alerts for investment banking internships and analyst jobs</h1>
+        <p className="about-subtitle">
+          Pete&rsquo;s Postings tracks every analyst and internship posting at {BANK_COUNT} banks and texts you the moment a role you want goes live.
+        </p>
       </section>
 
       <section className="about-section about-section-first">
+        <h2 className="about-heading">Why I built it</h2>
         <p className="about-text">
-          I built this for myself, but after heavy demand decided to make it open to the public.
+          Applying to banking internships and analyst roles is brutal. After applying to 300+ internships, I was sick of tracking new postings in an outdated spreadsheet and finding out about roles too late.
         </p>
         <p className="about-text">
-          After applying to 300+ internships, I was sick of tracking new banking roles in an outdated spreadsheet and applying to roles too late.
+          So I built this for myself. Friends started asking for it, then their friends, so I opened it up to everyone.
         </p>
       </section>
 
       <section className="about-section">
         <h2 className="about-heading">What you get</h2>
-        <p className="about-text">
-          This site lets you look at each bank in one place, sourced directly from their API — so no fake listings.
-        </p>
-        <p className="about-text">
-          For me, what was most valuable was the text alerts. You set what jobs you want text alerts for, and get a message as soon as they go live. No more stress of checking 20+ different sites.
+        <div className="about-features">
+          <div className="about-feature">
+            <strong>A text the instant a role posts</strong>
+            <span>Choose your banks, job type, categories, and city. When a matching role goes live, you get a text with a direct link to apply, usually before it shows up on LinkedIn.</span>
+          </div>
+          <div className="about-feature">
+            <strong>Every bank in one place</strong>
+            <span>All open analyst and internship roles across {BANK_COUNT} banks in one searchable list, instead of checking 20 different career sites every day.</span>
+          </div>
+          <div className="about-feature">
+            <strong>Straight from the source</strong>
+            <span>Listings come directly from each bank&rsquo;s own careers system, so there are no fake or expired reposts, and every link goes to the official application.</span>
+          </div>
+          <div className="about-feature">
+            <strong>The last 48 hours at a glance</strong>
+            <span>The recent postings feed shows every new role from the past two days across all banks, so you can apply while applications are still being read.</span>
+          </div>
+          <div className="about-feature">
+            <strong>Email alerts too</strong>
+            <span>Prefer your inbox? Get the same alerts by email, or both.</span>
+          </div>
+          <div className="about-feature">
+            <strong>Saved jobs</strong>
+            <span>Bookmark roles as you go and keep track of what you&rsquo;ve applied to.</span>
+          </div>
+          <div className="about-feature">
+            <strong>Search and filters</strong>
+            <span>Filter by bank, location, analyst or internship, and category, such as investment banking, sales and trading, or research.</span>
+          </div>
+        </div>
+        <p className="about-text" style={{ marginTop: "1rem" }}>
+          Browsing is free with no account. Text and email alerts, recent postings, and saved jobs are part of <Link href="/pricing" className="text-link">Pro</Link>.
         </p>
       </section>
 
       <section className="about-section">
-        <h2 className="about-heading">Why it matters</h2>
+        <h2 className="about-heading">Why speed matters</h2>
         <p className="about-text">
-          Most applicants find out about new postings days late — through word of mouth or a LinkedIn post from someone else. Your odds of getting an interview drop massively if you don't apply within the first few hours or days. <strong>Pro subscribers see new roles the instant they post</strong>, before most people even know they exist.
+          Most applicants find out about new postings days late, through word of mouth or someone else&rsquo;s LinkedIn post. Banks review applications as they come in, and many roles fill quickly, so applying in the first hours puts you ahead of most of the pool. <strong>Pro members hear about new roles the instant they post.</strong>
         </p>
       </section>
 
-      <section className="about-section about-section-last" style={{ textAlign: "center", borderTop: "none", paddingTop: "0.5rem" }}>
-        <button className="hero-cta-primary" onClick={onBrowse}>Browse Active Postings</button>
+      <section className="about-section">
+        <h2 className="about-heading">Banks we track</h2>
+        <p className="about-text">Tap a bank to see its open analyst and internship roles.</p>
+        <div className="about-banks-grid">
+          {Object.entries(BANKS).map(([key, bank]) => (
+            <Link key={key} href={`/jobs?bank=${key}`} className="about-bank-card">
+              <span className="about-bank-name">{bank.name}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="about-section">
+        <h2 className="about-heading">Who it&rsquo;s for</h2>
+        <p className="about-text">
+          Students recruiting for summer analyst and investment banking internships, graduates applying for full-time analyst roles, and anyone breaking into finance who doesn&rsquo;t want to miss a posting because they checked the wrong site on the wrong day.
+        </p>
+      </section>
+
+      <section className="about-section">
+        <h2 className="about-heading">Frequently asked questions</h2>
+        <div className="about-faq">
+          {ABOUT_FAQ.map(([q, a]) => (
+            <div key={q} className="about-faq-item">
+              <h3 className="about-faq-q">{q}</h3>
+              <p className="about-text">{a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="about-section about-section-last" style={{ textAlign: "center" }}>
+        <h2 className="about-heading">Start with the jobs that are open right now</h2>
+        <div className="about-ctas">
+          <button className="hero-cta-primary" onClick={onBrowse}>Browse jobs</button>
+          <Link href="/pricing" className="about-cta-secondary">See Pro plans</Link>
+        </div>
       </section>
     </div>
   );
@@ -1546,7 +1649,9 @@ export default function Home() {
 
   if (!routeView) notFound();
 
-  if (!isLoaded) {
+  // App views wait for Clerk so Pro members never see a paywall flash. Home and About don't
+  // depend on the account, so they render immediately and their text is in the server HTML.
+  if (!isLoaded && !viewHome && !viewAbout) {
     return (
       <div className="loading-state">
         <div className="spinner" />
@@ -1576,7 +1681,7 @@ export default function Home() {
             {/* Everyone sees Alerts; without Pro it carries a lock and /notifications shows the paywall. */}
             <Link href="/notifications" className={`nav-link nav-link-alerts${viewNotifications ? " nav-link-active" : ""}`}>
               Alerts
-              {!isSubscribed && (
+              {isLoaded && !isSubscribed && (
                 <svg className="nav-link-lock" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Pro feature">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
@@ -1586,7 +1691,7 @@ export default function Home() {
             <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
           </div>
           <div className="nav-right">
-            {isSignedIn ? (
+            {!isLoaded ? null : isSignedIn ? (
               <UserButton>
                 {user?.publicMetadata?.stripeCustomerId && (
                   <UserButton.MenuItems>

@@ -53,9 +53,6 @@ export const metadata = {
     description: DESCRIPTION,
   },
   metadataBase: new URL("https://petespostings.com"),
-  alternates: {
-    canonical: "https://petespostings.com",
-  },
   robots: {
     index: true,
     follow: true,
@@ -148,6 +145,27 @@ export default function RootLayout({ children }) {
           </Script>
         </head>
         <body>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify([
+                {
+                  "@context": "https://schema.org",
+                  "@type": "Organization",
+                  name: "Pete\u2019s Postings",
+                  url: "https://petespostings.com",
+                  logo: "https://petespostings.com/logo-square.png",
+                  email: "pete@petespostings.com",
+                },
+                {
+                  "@context": "https://schema.org",
+                  "@type": "WebSite",
+                  name: "Pete\u2019s Postings",
+                  url: "https://petespostings.com",
+                },
+              ]),
+            }}
+          />
           <PostHogProvider>{children}</PostHogProvider>
         </body>
       </html>

@@ -66,9 +66,45 @@ export const metadata = {
   },
 };
 
+// Clerk's sign-in / sign-up / account pop-ups, styled to match the site (tokens from
+// globals.css and the design-system modal spec: white card, 16px radius, deep shadow).
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#2563eb",
+    colorPrimaryForeground: "#ffffff",
+    colorForeground: "#1a1a1a",
+    colorMutedForeground: "#64748b",
+    colorBackground: "#ffffff",
+    colorInput: "#ffffff",
+    colorInputForeground: "#1a1a1a",
+    colorBorder: "rgba(0, 0, 0, 0.1)",
+    colorRing: "rgba(37, 99, 235, 0.25)",
+    colorDanger: "#dc3535",
+    colorModalBackdrop: "rgba(0, 0, 0, 0.45)",
+    fontFamily: "var(--font-inter), system-ui, sans-serif",
+    borderRadius: "8px",
+  },
+  elements: {
+    cardBox: { borderRadius: "16px", boxShadow: "0 24px 80px rgba(0, 0, 0, 0.18)" },
+    headerTitle: { color: "#1e293b", fontWeight: 800, letterSpacing: "-0.3px" },
+    headerSubtitle: { color: "#64748b" },
+    formButtonPrimary: {
+      backgroundColor: "#2563eb",
+      backgroundImage: "none",
+      boxShadow: "none",
+      fontWeight: 600,
+      textTransform: "none",
+      "&:hover": { backgroundColor: "#1d4ed8" },
+    },
+    socialButtonsBlockButton: { borderColor: "rgba(0, 0, 0, 0.1)", boxShadow: "none" },
+    formFieldInput: { boxShadow: "none" },
+    footerActionLink: { color: "#2563eb", fontWeight: 600 },
+  },
+};
+
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={clerkAppearance}>
       <html lang="en" className={inter.variable}>
         <head>
           <Script

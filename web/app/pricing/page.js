@@ -421,13 +421,6 @@ export default function PricingPage() {
           <div className="footer-right">
             <p>Pulled live from bank career sites &middot; Updated instantly</p>
             <p>&copy; 2026 Pete's Postings</p>
-            <p className="footer-links">
-              <Link href="/about" className="text-link">About</Link>
-              <span aria-hidden="true"> &middot; </span>
-              <Link href="/privacy" className="text-link">Privacy Policy</Link>
-              <span aria-hidden="true"> &middot; </span>
-              <Link href="/terms" className="text-link">Terms of Service</Link>
-            </p>
           </div>
         </div>
       </footer>

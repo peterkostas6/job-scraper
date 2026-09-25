@@ -442,13 +442,9 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
         <h1 className="hero-photo-title">
           Get <mark className="hero-mark">a text</mark> the instant a bank posts a job.
         </h1>
-        {isSignedIn ? (
-          <button className="hero-photo-cta" onClick={onBrowse}>Browse jobs</button>
-        ) : (
-          <SignUpButton mode="modal">
-            <button className="hero-photo-cta">Get free access</button>
-          </SignUpButton>
-        )}
+        {/* Everyone goes straight to the jobs; visitors without an account get the sign-up
+            prompt after browsing for a bit (see the account-prompt timer in the main page). */}
+        <button className="hero-photo-cta" onClick={onBrowse}>Browse jobs</button>
         {/* Hidden (but holding its space) until the count arrives. */}
         <div className={`hero-spots${memberCount === null ? " hero-photo-link-pending" : ""}`}>
           <div className="hero-spots-bar" aria-hidden="true">

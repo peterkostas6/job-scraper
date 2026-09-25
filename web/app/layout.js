@@ -77,7 +77,7 @@ const clerkAppearance = {
     colorBackground: "#ffffff",
     colorInput: "#ffffff",
     colorInputForeground: "#1a1a1a",
-    colorBorder: "rgba(0, 0, 0, 0.1)",
+    colorBorder: "rgba(0, 0, 0, 0.14)",
     colorRing: "rgba(37, 99, 235, 0.25)",
     colorDanger: "#dc3535",
     colorModalBackdrop: "rgba(0, 0, 0, 0.45)",
@@ -96,8 +96,8 @@ const clerkAppearance = {
       textTransform: "none",
       "&:hover": { backgroundColor: "#1d4ed8" },
     },
-    socialButtonsBlockButton: { borderColor: "rgba(0, 0, 0, 0.1)", boxShadow: "none" },
-    formFieldInput: { boxShadow: "none" },
+    // Clerk draws input and social-button borders with box-shadow, so those keep Clerk's own
+    // shadow (tinted by colorBorder) rather than being overridden here.
     footerActionLink: { color: "#2563eb", fontWeight: 600 },
   },
 };

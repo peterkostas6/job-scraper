@@ -258,7 +258,7 @@ nav {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  margin-top: -56px;               /* runs under the transparent nav */
+  margin-top: -57px;               /* runs under the transparent nav (56px + 1px border) */
   min-height: 100dvh;
   display: grid;
   place-items: center;
@@ -288,17 +288,6 @@ nav {
   z-index: -1;
 }
 .hero-photo[data-photo="off"] .hero-photo-img { display: none; }
-
-/* Warm light between the buildings; one bloom, top centre, fixed. */
-.hero-photo-glow {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(60% 55% at 50% -5%, rgba(217, 119, 6, 0.22), transparent 70%),
-    radial-gradient(40% 40% at 50% 110%, rgba(37, 99, 235, 0.16), transparent 70%);
-  pointer-events: none;
-}
-.hero-photo[data-photo="on"] .hero-photo-glow { opacity: 0.6; }
 
 /* Grain so the canvas reads as paper, not a flat fill. */
 .hero-photo-grain {
@@ -620,12 +609,6 @@ nav {
   border-radius: 12px;
 }
 
-.testimonial-stars {
-  color: #f59e0b;
-  font-size: 0.85rem;
-  letter-spacing: 2px;
-}
-
 .testimonial-quote {
   font-size: 0.92rem;
   line-height: 1.55;
@@ -650,10 +633,11 @@ nav {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--forest-blue);
-  color: #fff;
+  background: var(--blue-8);
+  border: 1px solid var(--blue-20);
+  color: var(--forest-blue);
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 600;
   flex-shrink: 0;
 }
 
@@ -769,8 +753,8 @@ nav {
   max-width: 920px;
   background: var(--white);
   border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.09);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px var(--divider);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
   overflow: hidden;
   position: relative;
 }
@@ -791,6 +775,7 @@ nav {
   font-weight: 500;
   color: var(--text-muted);
   padding: 0.6rem 0.75rem;
+  border-bottom: 2px solid transparent;
   cursor: default;
   display: inline-flex;
   align-items: center;
@@ -799,8 +784,7 @@ nav {
 
 .app-preview-tab-active {
   color: var(--forest-blue);
-  border-bottom: 2px solid var(--forest-blue);
-  font-weight: 600;
+  border-bottom-color: var(--forest-blue);
 }
 
 .app-preview-body {
@@ -1089,7 +1073,7 @@ nav {
   font-size: 0.65rem;
   font-weight: 500;
   padding: 0.22rem 0.7rem;
-  border-radius: 20px;
+  border-radius: 4px;
   border: 1px solid #d1d5db;
   color: var(--text-muted);
   background: var(--white);
@@ -1100,7 +1084,6 @@ nav {
   border-color: var(--blue-25);
   color: var(--forest-blue);
   background: var(--blue-6);
-  font-weight: 600;
 }
 
 .demo-save-row {

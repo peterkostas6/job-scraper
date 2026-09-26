@@ -363,6 +363,12 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
   const [shownCount, setShownCount] = useState(0);
   const [countDone, setCountDone] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);
+  // The photo can fail before React attaches onError; catch that case on mount.
+  const photoRef = useRef(null);
+  useEffect(() => {
+    const img = photoRef.current;
+    if (img && img.complete && img.naturalWidth === 0) setPhotoOk(false);
+  }, []);
 
   // Live account count from Clerk for the member meter under the hero button.
   const [memberCount, setMemberCount] = useState(null);
@@ -428,6 +434,7 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
       <div className="hero-photo-bg" aria-hidden="true">
         {/* TODO: Replace with a real photograph — a Wall Street street at dawn works. Target 2400×1400, under 400 KB. */}
         <img
+          ref={photoRef}
           src="/hero.jpg"
           alt=""
           className="hero-photo-img"
@@ -435,7 +442,6 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
           decoding="async"
           onError={() => setPhotoOk(false)}
         />
-        <span className="hero-photo-glow" />
         <span className="hero-photo-grain" />
       </div>
       <div className="hero-photo-copy">
@@ -523,7 +529,6 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
         <div className="app-preview" ref={previewRef}>
           <div className="app-preview-tabs">
             <span className={`app-preview-tab${!inNotif ? ' app-preview-tab-active' : ''}`}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               Recent
             </span>
             <span className="app-preview-tab">Browse</span>
@@ -554,7 +559,7 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
               <div className="demo-notif-panel">
                 <div className="demo-notif-row">
                   <div>
-                    <div className="demo-notif-label">SMS Alerts</div>
+                    <div className="demo-notif-label">SMS alerts</div>
                     <div className="demo-notif-sublabel">Instant text messages</div>
                   </div>
                   <div className={`demo-toggle${smsOn ? ' demo-toggle-on' : ''}`} data-demo="toggle-sms">
@@ -586,7 +591,7 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
 
                 <div className="demo-save-row">
                   <button className={`demo-save-btn${saved ? ' demo-save-btn-saved' : ''}`} data-demo="btn-save">
-                    {saved ? 'Saved \u2713' : 'Save Settings'}
+                    {saved ? 'Saved \u2713' : 'Save settings'}
                   </button>
                 </div>
               </div>
@@ -633,7 +638,6 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
             <div className="marquee-track">
               {row.concat(row).map((t, i) => (
                 <div className="testimonial-card" key={`${t.name}-${i}`}>
-                  <div className="testimonial-stars" aria-hidden="true">★★★★★</div>
                   <blockquote className="testimonial-quote">&ldquo;{t.quote}&rdquo;</blockquote>
                   <div className="testimonial-attr">
                     <span className="testimonial-avatar">{t.name.split(" ").map((w) => w[0]).join("")}</span>
@@ -652,10 +656,10 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
 
       {/* CLOSE · one button */}
       <section className="close-cta">
-        <h2 className="close-title">Get Notified With A Text, Instantly</h2>
+        <h2 className="close-title">Get notified with a text, instantly</h2>
         <p className="close-desc">Stop refreshing job boards.</p>
         <SignUpButton mode="modal">
-          <button className="hero-cta-primary">Get Free Access</button>
+          <button className="hero-cta-primary">Get free access</button>
         </SignUpButton>
         <p className="close-fine">
           No credit card required &middot; Free account in 30 seconds &middot; <Link href="/pricing" className="text-link">See pricing</Link>

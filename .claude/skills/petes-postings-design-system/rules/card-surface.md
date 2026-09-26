@@ -52,12 +52,12 @@ A card is white on the cream page with a 1px hairline border and a 12 to 16px ra
 | Card | Radius | Padding | Extra | Classes |
 |---|---|---|---|---|
 | Feature | 12px | 1.75rem 1.5rem | blue icon, 0.95rem 700 title, 0.82rem desc | `feature-card` |
-| Testimonial | 12px | 1.25rem | column, 0.75rem gap, gold stars, 32px blue avatar circle | `testimonial-card` |
+| Testimonial | 12px | 1.25rem | column, 0.75rem gap, no star rating, 32px avatar circle in blue tint (`--blue-8` fill, `--blue-20` ring, blue initials) | `testimonial-card` |
 | Bank tile | 8px | 0.65rem 0.85rem | name + green status word, space-between | `about-bank-card` |
 | About feature | 10px | 1rem 1.15rem | strong + span | `about-feature` |
 | Plan (paywall) | 14px | 1.5rem 1.25rem | centered, hover border black 10% | `paywall-plan`, `paywall-plan-popular` |
 | Plan (pricing) | 16px | 1.75rem 1.5rem | column flex, features `flex: 1` so CTAs align | `pricing-card`, `pricing-card-popular` |
-| Preview frame | 12px | 0 | `rgba(0,0,0,0.09)` border, frame shadow, chrome bar | `app-preview` |
+| Preview frame | 12px | 0 | `--border-strong` border, list shadow, chrome bar | `app-preview` |
 | List container | 10px | 0 | list shadow, `overflow: hidden` | `jobs-list` (see `job-row`) |
 
 ### Featured treatment

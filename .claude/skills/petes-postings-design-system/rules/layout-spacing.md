@@ -80,8 +80,7 @@ The site reads as structured because it uses a few container widths, separates s
 | Name | Value | Use |
 |---|---|---|
 | none | | Cards, inputs, buttons at rest |
-| list | `0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)` | Jobs list container |
-| frame | `0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)` | App preview mock |
+| list | `0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)` | Jobs list container, app preview mock |
 | featured | `0 0 0 1px var(--forest-blue), 0 4px 20px rgba(37,99,235,0.1)` | Popular plan (pricing page uses `0 8px 32px` at 0.12) |
 | modal | `0 24px 80px rgba(0,0,0,0.18)` | Modal card |
 | knob | `0 1px 3px rgba(0,0,0,0.15)` | Toggle knob |

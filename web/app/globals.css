@@ -3438,6 +3438,21 @@ footer {
   line-height: 1.4;
 }
 
+.pricing-card-was {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 0.4rem;
+}
+
+.pricing-card-founding {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+.pricing-card-founding strong { color: var(--forest-blue); font-weight: 600; }
+
 .pricing-card-features {
   list-style: none;
   margin: 0 0 1.5rem;

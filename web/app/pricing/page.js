@@ -306,6 +306,7 @@ export default function PricingPage() {
                   </>
                 ) : (
                   <>
+                    <s className="pricing-card-was" aria-label="$19.99 a month after the first 2,000 subscribers">$19.99</s>
                     <span className="pricing-card-amount">$7.99</span>
                     <span className="pricing-card-period">/mo</span>
                   </>
@@ -317,7 +318,12 @@ export default function PricingPage() {
                   <span style={{ color: "var(--forest-blue)", fontWeight: 600 }}>$59.99/yr — save $35</span>
                 </p>
               ) : (
-                <p className="pricing-card-tagline">14-day free trial · then $7.99/mo</p>
+                <>
+                  <p className="pricing-card-founding">
+                    <strong>Founding price</strong> for the first 2,000 subscribers. Pro goes up to $19.99/mo after that.
+                  </p>
+                  <p className="pricing-card-tagline">14-day free trial · then $7.99/mo</p>
+                </>
               )}
             </div>
             <ul className="pricing-card-features">

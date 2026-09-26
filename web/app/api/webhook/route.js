@@ -4,6 +4,9 @@ import Stripe from "stripe";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sendMetaServerEvent } from "@/lib/meta-capi";
 import { sendRedditServerEvent } from "@/lib/reddit-capi";
+import { Resend } from "resend";
+import { sendEmail } from "@/lib/email";
+import { newMemberEmail, NEW_MEMBER_NOTICE_TO } from "@/lib/email-templates";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -49,6 +52,25 @@ export async function POST(req) {
     } else {
       await sendMetaServerEvent({ eventName: "StartTrial", eventId: `trial_${session.id}`, value: 7.99, ...who });
       await sendRedditServerEvent({ eventType: "Lead", conversionId: `trial_${session.id}`, value: 7.99, ...who });
+    }
+
+    // Tell the owners about every new subscription. A failed notice only goes to the logs.
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const plan = m.plan === "yearly" ? "Yearly" : "Monthly (14-day free trial)";
+      const notice = newMemberEmail({
+        subject: `New Pro subscriber: ${who.email || "no email"}`,
+        heading: "Someone subscribed to Pro",
+        rows: [
+          ["Name", session.customer_details?.name || "Not given"],
+          ["Email", who.email || "Not given"],
+          ["Plan", plan],
+          ["Paid today", `$${((session.amount_total || 0) / 100).toFixed(2)}`],
+        ],
+      });
+      await sendEmail(resend, { to: NEW_MEMBER_NOTICE_TO, ...notice, idempotencyKey: `owner-sub-${session.id}`, tags: [{ name: "type", value: "owner-subscription" }] });
+    } catch (err) {
+      console.error("Failed to send new subscriber notice:", err);
     }
   }
 

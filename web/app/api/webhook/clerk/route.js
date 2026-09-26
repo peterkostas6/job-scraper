@@ -1,7 +1,7 @@
 // POST /api/webhook/clerk — handles Clerk user lifecycle events
 // user.created: sends welcome email via Resend + grants student Pro access if qualifying .edu email
 // Secured with Svix signature verification using CLERK_WEBHOOK_SECRET
-import { welcomeEmail } from "@/lib/email-templates";
+import { welcomeEmail, newMemberEmail, NEW_MEMBER_NOTICE_TO } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
 import { Resend } from "resend";
 import { createHmac } from "crypto";
@@ -61,7 +61,8 @@ export async function POST(req) {
       .map((d) => d.trim().toLowerCase())
       .filter(Boolean);
 
-    if (domain.endsWith(".edu") && partnerDomains.includes(domain.toLowerCase())) {
+    const studentPro = domain.endsWith(".edu") && partnerDomains.includes(domain.toLowerCase());
+    if (studentPro) {
       try {
         const client = await clerkClient();
         await client.users.updateUserMetadata(userData.id, {
@@ -79,6 +80,20 @@ export async function POST(req) {
       await sendEmail(resend, { to: email, subject, html, text, idempotencyKey: `welcome-${userData.id}`, tags: [{ name: "type", value: "welcome" }] });
     } catch (err) {
       console.error("Failed to send welcome email:", err);
+    }
+
+    // Tell the owners about every new account.
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const name = [userData.first_name, userData.last_name].filter(Boolean).join(" ") || "Not given";
+      const notice = newMemberEmail({
+        subject: `New free account: ${email}`,
+        heading: "Someone signed up for a free account",
+        rows: [["Name", name], ["Email", email], ["Student Pro", studentPro ? "Yes (partner school)" : "No"]],
+      });
+      await sendEmail(resend, { to: NEW_MEMBER_NOTICE_TO, ...notice, idempotencyKey: `owner-signup-${userData.id}`, tags: [{ name: "type", value: "owner-signup" }] });
+    } catch (err) {
+      console.error("Failed to send new account notice:", err);
     }
 
     // Server copy of the browser's CompleteRegistration (same event ID).

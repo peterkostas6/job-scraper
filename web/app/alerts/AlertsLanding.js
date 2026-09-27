@@ -118,6 +118,7 @@ export default function AlertsLanding() {
       </header>
 
       <main className="lp-main">
+        <p className="lp-kicker">Be the <span className="pricing-hero-underline">first</span> to apply.</p>
         <h1 className="lp-title">Get a text the instant a bank posts a job.</h1>
         <p className="lp-sub">
           We watch the career sites of {BANK_COUNT} banks, including Goldman Sachs, JPMorgan and Morgan Stanley, and text you the moment a new analyst or internship role that matches what you want goes live.

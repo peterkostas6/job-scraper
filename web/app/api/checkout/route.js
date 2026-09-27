@@ -16,20 +16,24 @@ export async function POST(req) {
   let plan = "monthly";
   try {
     const body = await req.json();
-    if (body.plan === "yearly") plan = "yearly";
+    if (body.plan === "yearly" || body.plan === "weekly") plan = body.plan;
   } catch {}
 
-  const priceId =
-    plan === "yearly" && process.env.STRIPE_PRICE_ID_YEARLY
-      ? process.env.STRIPE_PRICE_ID_YEARLY
-      : process.env.STRIPE_PRICE_ID;
+  const priceId = {
+    weekly: process.env.STRIPE_PRICE_ID_WEEKLY,
+    monthly: process.env.STRIPE_PRICE_ID,
+    yearly: process.env.STRIPE_PRICE_ID_YEARLY,
+  }[plan];
+  if (!priceId) {
+    return Response.json({ error: "That plan isn't available right now." }, { status: 500 });
+  }
 
   // Get the user's email from Clerk
   const user = await (await clerkClient()).users.getUser(userId);
   const email = user.emailAddresses[0]?.emailAddress;
 
   // Meta browser identifiers and plan, stored on the session and subscription so the
-  // Stripe webhook can report trials and payments to Meta's Conversions API.
+  // Stripe webhook can report payments to the ad platforms' Conversions APIs.
   const meta = {
     plan,
     fbp: req.cookies?.get("_fbp")?.value || "",
@@ -48,10 +52,9 @@ export async function POST(req) {
         quantity: 1,
       },
     ],
-    // 14-day free trial on monthly plan only — card required upfront, auto-charges after trial
+    // Every plan is charged at checkout; there is no free trial.
     subscription_data: {
       metadata: meta,
-      ...(plan === "monthly" && { trial_period_days: 14 }),
     },
     metadata: {
       clerkUserId: userId,

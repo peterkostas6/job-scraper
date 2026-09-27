@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useUser, SignUpButton, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { track } from "@/lib/track";
+import { PLANS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 
 function ClubInquiryModal({ onClose }) {
@@ -164,7 +165,7 @@ export default function PricingPage() {
 
   function handleSubscribe() {
     const plan = billing;
-    track("InitiateCheckout", plan === "yearly" ? 59.99 : 7.99);
+    track("InitiateCheckout", planPrice(plan));
     setCheckoutLoading(plan);
     fetch("/api/checkout", {
       method: "POST",
@@ -232,6 +233,14 @@ export default function PricingPage() {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6rem", marginTop: "2rem" }}>
             <div style={{ display: "inline-flex", background: "#fff", border: "1px solid rgba(0,0,0,0.1)", borderRadius: "999px", padding: "4px", gap: "2px" }}>
               <button
+                onClick={() => setBilling("weekly")}
+                style={{
+                  padding: "0.45rem 1.4rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s",
+                  background: billing === "weekly" ? "var(--navy)" : "transparent",
+                  color: billing === "weekly" ? "#fff" : "var(--text-secondary)",
+                }}
+              >Weekly</button>
+              <button
                 onClick={() => setBilling("monthly")}
                 style={{
                   padding: "0.45rem 1.4rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s",
@@ -251,7 +260,7 @@ export default function PricingPage() {
             {billing === "yearly" ? (
               <span style={{ fontSize: "0.85rem", color: "var(--forest-blue)", fontWeight: 600 }}>Save $35/yr with annual billing</span>
             ) : (
-              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>14-day free trial included</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Cancel anytime</span>
             )}
           </div>
         </section>
@@ -304,6 +313,11 @@ export default function PricingPage() {
                     <span className="pricing-card-amount">$5.00</span>
                     <span className="pricing-card-period">/mo</span>
                   </>
+                ) : billing === "weekly" ? (
+                  <>
+                    <span className="pricing-card-amount">${PLANS.weekly.price}</span>
+                    <span className="pricing-card-period">/wk</span>
+                  </>
                 ) : (
                   <>
                     <s className="pricing-card-was" aria-label="$19.99 a month after the first 2,000 subscribers">$19.99</s>
@@ -317,12 +331,14 @@ export default function PricingPage() {
                   <span style={{ textDecoration: "line-through", color: "var(--text-muted)", marginRight: "0.35rem" }}>$95.88</span>
                   <span style={{ color: "var(--forest-blue)", fontWeight: 600 }}>$59.99/yr — save $35</span>
                 </p>
+              ) : billing === "weekly" ? (
+                <p className="pricing-card-tagline">Billed weekly · pay only for the weeks you need</p>
               ) : (
                 <>
                   <p className="pricing-card-founding">
                     <strong>Founding price</strong> for the first 2,000 subscribers. Pro goes up to $19.99/mo after that.
                   </p>
-                  <p className="pricing-card-tagline">14-day free trial · then $7.99/mo</p>
+                  <p className="pricing-card-tagline">Billed monthly</p>
                 </>
               )}
             </div>
@@ -341,17 +357,17 @@ export default function PricingPage() {
                   disabled={checkoutLoading !== null}
                   style={{ width: "100%" }}
                 >
-                  {checkoutLoading ? "Redirecting..." : billing === "yearly" ? "Get Pro — $59.99/yr" : "Start Free Trial"}
+                  {checkoutLoading ? "Redirecting..." : `Get Pro · $${PLANS[billing].price}/${PLANS[billing].period}`}
                 </button>
               ) : (
                 <SignUpButton mode="modal">
                   <button className="pricing-card-cta pricing-cta-primary" style={{ width: "100%" }}>
-                    {billing === "yearly" ? "Get Pro — $59.99/yr" : "Start Free Trial"}
+                    {`Get Pro · $${PLANS[billing].price}/${PLANS[billing].period}`}
                   </button>
                 </SignUpButton>
               )}
               <p style={{ textAlign: "center", fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.6rem" }}>
-                {billing === "yearly" ? "Billed annually · cancel anytime" : "No charge for 14 days · cancel anytime"}
+                {billing === "yearly" ? "Billed annually · cancel anytime" : "Cancel anytime"}
               </p>
             </div>
           </div>
@@ -395,8 +411,8 @@ export default function PricingPage() {
           <h2 className="pricing-faq-title">Common questions</h2>
           <div className="pricing-faq-list">
             <div className="pricing-faq-item">
-              <h3 className="pricing-faq-q">How does the free trial work?</h3>
-              <p className="pricing-faq-a">The monthly plan includes a 14-day free trial. You'll need a card on file to start — you won't be charged anything today. After 14 days, your card is automatically charged $7.99. Cancel anytime before the trial ends and you won't pay a thing.</p>
+              <h3 className="pricing-faq-q">Which plan should I pick?</h3>
+              <p className="pricing-faq-a">Weekly ($3.99) is best if you're only recruiting for a few weeks. Monthly ($7.99) is the most popular. Yearly ($59.99) works out to $5 a month if you're recruiting all year. Every plan includes the same Pro features and renews automatically until you cancel.</p>
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">Can I cancel anytime?</h3>

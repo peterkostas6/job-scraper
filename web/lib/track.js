@@ -7,7 +7,6 @@ const REDDIT_EVENT = {
   PageView: "PageVisit",
   CompleteRegistration: "SignUp",
   InitiateCheckout: "AddToCart", // Reddit has no checkout-started event
-  StartTrial: "Lead",            // nor a trial event; Lead is its closest standard one
   Purchase: "Purchase",
 };
 

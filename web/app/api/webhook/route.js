@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sendMetaServerEvent } from "@/lib/meta-capi";
 import { sendRedditServerEvent } from "@/lib/reddit-capi";
+import { PLANS } from "@/lib/plans";
 import { Resend } from "resend";
 import { sendEmail } from "@/lib/email";
 import { newMemberEmail, NEW_MEMBER_NOTICE_TO } from "@/lib/email-templates";
@@ -45,19 +46,15 @@ export async function POST(req) {
     // Same event IDs the browser uses on the welcome step, so Meta counts each once.
     const m = session.metadata || {};
     const who = { email: session.customer_details?.email || session.customer_email, externalId: clerkUserId, ip: m.ip, userAgent: m.ua, fbp: m.fbp, fbc: m.fbc };
-    if (m.plan === "yearly") {
-      const value = (session.amount_total || 0) / 100;
-      await sendMetaServerEvent({ eventName: "Purchase", eventId: `purchase_${session.id}`, value, ...who });
-      await sendRedditServerEvent({ eventType: "Purchase", conversionId: `purchase_${session.id}`, value, ...who });
-    } else {
-      await sendMetaServerEvent({ eventName: "StartTrial", eventId: `trial_${session.id}`, value: 7.99, ...who });
-      await sendRedditServerEvent({ eventType: "Lead", conversionId: `trial_${session.id}`, value: 7.99, ...who });
-    }
+    // Every plan is paid at checkout, so every new subscription is a Purchase.
+    const value = (session.amount_total || 0) / 100;
+    await sendMetaServerEvent({ eventName: "Purchase", eventId: `purchase_${session.id}`, value, ...who });
+    await sendRedditServerEvent({ eventType: "Purchase", conversionId: `purchase_${session.id}`, value, ...who });
 
     // Tell the owners about every new subscription. A failed notice only goes to the logs.
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const plan = m.plan === "yearly" ? "Yearly" : "Monthly (14-day free trial)";
+      const plan = PLANS[m.plan]?.name || "Monthly";
       const notice = newMemberEmail({
         subject: `New Pro subscriber: ${who.email || "no email"}`,
         heading: "Someone subscribed to Pro",
@@ -74,8 +71,8 @@ export async function POST(req) {
     }
   }
 
-  // A trial turning paid and every renewal. The first invoice of a subscription is
-  // skipped: it is $0 for a trial, and yearly's first payment was reported above.
+  // Renewals (and trials started before trials were removed turning paid). The first
+  // invoice of a subscription is skipped: it was reported at checkout above.
   if (event.type === "invoice.paid") {
     const invoice = event.data.object;
     if (invoice.amount_paid > 0 && invoice.billing_reason !== "subscription_create") {

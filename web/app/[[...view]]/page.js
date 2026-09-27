@@ -6,6 +6,7 @@ import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@cler
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
 import { track } from "@/lib/track";
+import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
@@ -677,7 +678,7 @@ function PaywallOverlay({ isSignedIn }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   function handleSubscribe(plan) {
-    track("InitiateCheckout", plan === "yearly" ? 59.99 : 7.99);
+    track("InitiateCheckout", planPrice(plan));
     setLoading(true);
     setSelectedPlan(plan);
     fetch("/api/checkout", {
@@ -738,26 +739,22 @@ function PaywallOverlay({ isSignedIn }) {
       </div>
 
       <div className="paywall-plans">
-        <div className="paywall-plan">
-          <h3 className="paywall-plan-name">Monthly</h3>
-          <div className="paywall-plan-price">
-            <span className="paywall-plan-amount">$7.99</span>
-            <span className="paywall-plan-period">/mo</span>
-          </div>
-          <p className="paywall-plan-billing">14-day free trial, then billed monthly</p>
-          {ctaBtn("monthly", "Get Monthly", false)}
-        </div>
-
-        <div className="paywall-plan paywall-plan-popular">
-          <div className="paywall-plan-tag">Best Value</div>
-          <h3 className="paywall-plan-name">Yearly</h3>
-          <div className="paywall-plan-price">
-            <span className="paywall-plan-amount">$5.00</span>
-            <span className="paywall-plan-period">/mo</span>
-          </div>
-          <p className="paywall-plan-billing">Billed $59.99/year</p>
-          {ctaBtn("yearly", "Get Yearly", true)}
-        </div>
+        {PLAN_KEYS.map((key) => {
+          const plan = PLANS[key];
+          const featured = key === "monthly";
+          return (
+            <div key={key} className={`paywall-plan${featured ? " paywall-plan-popular" : ""}`}>
+              {featured && <div className="paywall-plan-tag">Most popular</div>}
+              <h3 className="paywall-plan-name">{plan.name}</h3>
+              <div className="paywall-plan-price">
+                <span className="paywall-plan-amount">${plan.price}</span>
+                <span className="paywall-plan-period">/{plan.period}</span>
+              </div>
+              <p className="paywall-plan-billing">{plan.perMonth ? `$${plan.perMonth.toFixed(2)}/mo, billed yearly` : plan.billed}</p>
+              {ctaBtn(key, `Get ${plan.name}`, featured)}
+            </div>
+          );
+        })}
       </div>
 
       {!isSignedIn && (
@@ -779,7 +776,7 @@ function PaywallOverlay({ isSignedIn }) {
 // every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
 const ABOUT_FAQ = [
   ["Is Pete's Postings free?",
-    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free, with no account needed. Pro adds instant text and email alerts, the 48-hour recent postings feed, saved jobs, and company requests. See the pricing page for current plans; the monthly plan starts with a 14-day free trial.`],
+    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free, with no account needed. Pro adds instant text and email alerts, the 48-hour recent postings feed, saved jobs, and company requests. Pro is available weekly, monthly or yearly; see the pricing page for current prices.`],
   ["How fast will I hear about a new posting?",
     "Instantly. As soon as a bank posts a role that matches your alert settings, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
   ["Which banks do you track?",
@@ -1158,11 +1155,10 @@ export default function Home() {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (url.searchParams.get("subscribed") !== "true") return;
-    // Monthly starts a 14-day trial; yearly is charged now. Prices match the pricing page.
-    // Event IDs match the Stripe webhook's server copies (app/api/webhook/route.js).
+    // Every plan is paid at checkout. The event ID matches the Stripe webhook's server copy
+    // (app/api/webhook/route.js) so the ad platforms count it once.
     const sessionId = url.searchParams.get("session_id") || "";
-    if (url.searchParams.get("plan") === "yearly") track("Purchase", 59.99, sessionId && `purchase_${sessionId}`);
-    else track("StartTrial", 7.99, sessionId && `trial_${sessionId}`);
+    track("Purchase", planPrice(url.searchParams.get("plan")), sessionId && `purchase_${sessionId}`);
     url.searchParams.delete("subscribed");
     url.searchParams.delete("plan");
     url.searchParams.delete("session_id");

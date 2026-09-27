@@ -4145,3 +4145,183 @@ footer {
   .spec-val { text-align: left; }
   .close-cta { max-width: none; }
 }
+
+/* ---- AD LANDING PAGE (/alerts) ---- */
+/* One promise, one button: the page paid ads send people to. */
+.lp {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+}
+
+.lp-header {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 0;
+}
+
+.lp-main {
+  flex: 1;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.lp-hero {
+  text-align: center;
+  padding: 3rem 0 2.5rem;
+}
+
+.lp-title {
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--navy);
+}
+
+.lp-sub {
+  font-size: 1.02rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0.9rem auto 0;
+}
+
+/* Static copy of the homepage's iPhone notification. */
+.lp-notif {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 380px;
+  margin: 1.75rem auto;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.lp-cta {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.9rem 2rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--forest-blue);
+  color: var(--white);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lp-cta:hover { background: var(--forest-blue-hover); }
+.lp-cta:disabled { opacity: 0.7; cursor: default; }
+
+.lp-fine {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.7rem;
+}
+
+.lp-browse {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+  text-decoration: none;
+}
+
+.lp-browse:hover { color: var(--forest-blue); }
+
+.lp-section {
+  padding: 2rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.lp-heading {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 1rem;
+}
+
+.lp-benefits {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lp-benefit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.15rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.lp-benefit strong { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+.lp-benefit span { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+
+.lp-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.lp-steps li {
+  display: flex;
+  gap: 0.8rem;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.lp-steps strong { color: var(--text-primary); font-weight: 600; }
+
+.lp-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--blue-8);
+  color: var(--forest-blue);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.lp-close { text-align: center; }
+
+.lp-link {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--forest-blue);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.lp-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 2rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}

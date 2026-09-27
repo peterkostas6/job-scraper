@@ -16,6 +16,26 @@ const POINTS = [
   "Straight from bank career sites, not LinkedIn or Indeed",
 ];
 
+const STEPS = [
+  ["Pick what you want", "Choose your banks, analyst or internship roles, categories and city."],
+  ["We watch the banks for you", `We check the career sites of all ${BANK_COUNT} banks around the clock for new postings.`],
+  ["Get a text, apply first", "The moment a matching role goes live, you get a text with the title, bank and a direct link to apply."],
+];
+
+const INCLUDED = [
+  ["Instant text alerts", "for the banks, roles and cities you choose"],
+  ["Email alerts", "if you want them in your inbox too"],
+  ["The last 48 hours", `every new role across all ${BANK_COUNT} banks in one list`],
+  ["Saved jobs", "to keep track of what you\u2019ve applied to"],
+];
+
+const FAQ = [
+  ["How fast are the texts?", "Instantly. As soon as a bank posts a role that matches your settings, the text goes out."],
+  ["What kinds of roles?", "Analyst and internship roles, including summer analyst programs, across investment banking, sales and trading, research, wealth management, risk and more."],
+  ["Will I get spammed?", "No. You only hear about roles that match the banks, job type and city you pick. Reply STOP to any text to turn texts off."],
+  ["Can I cancel?", "Any time, in a few clicks from your account menu. You keep Pro until the end of the period you paid for."],
+];
+
 export default function AlertsLanding() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
@@ -55,7 +75,38 @@ export default function AlertsLanding() {
   }, [isLoaded, isSignedIn]);
 
   const p = PLANS[plan];
-  const ctaLabel = starting ? "Opening checkout…" : isSubscribed ? "Set up your text alerts" : `Get instant alerts · $${p.price}/${p.period}`;
+  const ctaLabel = starting ? "Opening checkout\u2026" : isSubscribed ? "Set up your text alerts" : `Get instant alerts \u00b7 $${p.price}/${p.period}`;
+
+  const picker = !isSubscribed && (
+    <div className="lp-plans" role="radiogroup" aria-label="Choose a plan">
+      {PLAN_KEYS.map((key) => {
+        const option = PLANS[key];
+        return (
+          <button
+            key={key}
+            type="button"
+            role="radio"
+            aria-checked={plan === key}
+            className={`lp-plan${plan === key ? " lp-plan-selected" : ""}`}
+            onClick={() => setPlan(key)}
+          >
+            {key === "monthly" && <span className="lp-plan-tag">Most popular</span>}
+            <span className="lp-plan-name">{option.name}</span>
+            <span className="lp-plan-price">${option.price}<small>/{option.period}</small></span>
+            {option.perMonth && <span className="lp-plan-note">${option.perMonth.toFixed(2)}/mo</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const button = isLoaded && !isSignedIn ? (
+    <SignUpButton mode="modal" forceRedirectUrl={returnTo} signInForceRedirectUrl={returnTo}>
+      <button className="lp-cta">{ctaLabel}</button>
+    </SignUpButton>
+  ) : (
+    <button className="lp-cta" onClick={() => checkout(plan)} disabled={!isLoaded || starting}>{ctaLabel}</button>
+  );
 
   return (
     <div className="lp">
@@ -68,6 +119,9 @@ export default function AlertsLanding() {
 
       <main className="lp-main">
         <h1 className="lp-title">Get a text the instant a bank posts a job.</h1>
+        <p className="lp-sub">
+          We watch the career sites of {BANK_COUNT} banks, including Goldman Sachs, JPMorgan and Morgan Stanley, and text you the moment a new analyst or internship role that matches what you want goes live.
+        </p>
 
         <div className="lp-notif" aria-hidden="true">
           <div className="hero-notif-icon">
@@ -92,37 +146,8 @@ export default function AlertsLanding() {
           ))}
         </ul>
 
-        {!isSubscribed && (
-          <div className="lp-plans" role="radiogroup" aria-label="Choose a plan">
-            {PLAN_KEYS.map((key) => {
-              const option = PLANS[key];
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  role="radio"
-                  aria-checked={plan === key}
-                  className={`lp-plan${plan === key ? " lp-plan-selected" : ""}`}
-                  onClick={() => setPlan(key)}
-                >
-                  {key === "monthly" && <span className="lp-plan-tag">Most popular</span>}
-                  <span className="lp-plan-name">{option.name}</span>
-                  <span className="lp-plan-price">${option.price}<small>/{option.period}</small></span>
-                  {option.perMonth && <span className="lp-plan-note">${option.perMonth.toFixed(2)}/mo</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {isLoaded && !isSignedIn ? (
-          <SignUpButton mode="modal" forceRedirectUrl={returnTo} signInForceRedirectUrl={returnTo}>
-            <button className="lp-cta">{ctaLabel}</button>
-          </SignUpButton>
-        ) : (
-          <button className="lp-cta" onClick={() => checkout(plan)} disabled={!isLoaded || starting}>{ctaLabel}</button>
-        )}
-
+        {picker}
+        {button}
         <p className="lp-fine">
           Cancel anytime.
           {isLoaded && !isSignedIn && (
@@ -135,6 +160,53 @@ export default function AlertsLanding() {
           )}
         </p>
         <Link href="/jobs?bank=all" className="lp-browse">or browse jobs free &rarr;</Link>
+
+        <section className="lp-section">
+          <h2 className="lp-heading">How it works</h2>
+          <ol className="lp-steps">
+            {STEPS.map(([name, desc], i) => (
+              <li key={name}>
+                <span className="lp-step-num">{i + 1}</span>
+                <span><strong>{name}</strong><br />{desc}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="lp-section">
+          <h2 className="lp-heading">What you get</h2>
+          <ul className="lp-included">
+            {INCLUDED.map(([name, desc]) => (
+              <li key={name}>
+                <span className="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span><strong>{name}</strong> {desc}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="lp-section">
+          <h2 className="lp-heading">{BANK_COUNT} banks, one place</h2>
+          <p className="lp-banks">{Object.values(BANKS).map((b) => b.name).join(" \u00b7 ")}</p>
+        </section>
+
+        <section className="lp-section">
+          <h2 className="lp-heading">Questions</h2>
+          <div className="lp-faq">
+            {FAQ.map(([q, a]) => (
+              <div key={q}>
+                <h3 className="lp-faq-q">{q}</h3>
+                <p className="lp-faq-a">{a}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="lp-section">
+          <h2 className="lp-heading">Stop refreshing 20 career sites.</h2>
+          {button}
+          <p className="lp-fine">{isSubscribed ? "" : `${p.name} plan \u00b7 cancel anytime`}</p>
+        </section>
       </main>
 
       <footer className="lp-footer">

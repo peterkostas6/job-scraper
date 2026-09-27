@@ -29,12 +29,6 @@ const INCLUDED = [
   ["Saved jobs", "to keep track of what you\u2019ve applied to"],
 ];
 
-const FAQ = [
-  ["How fast are the texts?", "Instantly. As soon as a bank posts a role that matches your settings, the text goes out."],
-  ["What kinds of roles?", "Analyst and internship roles, including summer analyst programs, across investment banking, sales and trading, research, wealth management, risk and more."],
-  ["Will I get spammed?", "No. You only hear about roles that match the banks, job type and city you pick. Reply STOP to any text to turn texts off."],
-  ["Can I cancel?", "Any time, in a few clicks from your account menu. You keep Pro until the end of the period you paid for."],
-];
 
 export default function AlertsLanding() {
   const router = useRouter();
@@ -120,9 +114,6 @@ export default function AlertsLanding() {
       <main className="lp-main">
         <p className="lp-kicker">Be the <span className="pricing-hero-underline">first</span> to apply.</p>
         <h1 className="lp-title">Get a text the instant a bank posts a job.</h1>
-        <p className="lp-sub">
-          We watch the career sites of {BANK_COUNT} banks, including Goldman Sachs, JPMorgan and Morgan Stanley, and text you the moment a new analyst or internship role that matches what you want goes live.
-        </p>
 
         <div className="lp-notif" aria-hidden="true">
           <div className="hero-notif-icon">
@@ -189,18 +180,6 @@ export default function AlertsLanding() {
         <section className="lp-section">
           <h2 className="lp-heading">{BANK_COUNT} banks, one place</h2>
           <p className="lp-banks">{Object.values(BANKS).map((b) => b.name).join(" \u00b7 ")}</p>
-        </section>
-
-        <section className="lp-section">
-          <h2 className="lp-heading">Questions</h2>
-          <div className="lp-faq">
-            {FAQ.map(([q, a]) => (
-              <div key={q}>
-                <h3 className="lp-faq-q">{q}</h3>
-                <p className="lp-faq-a">{a}</p>
-              </div>
-            ))}
-          </div>
         </section>
 
         <section className="lp-section">

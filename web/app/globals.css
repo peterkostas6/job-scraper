@@ -3720,6 +3720,13 @@ footer {
   line-height: 1.7;
 }
 
+/* Recent tab without Pro: only the Unlock Pro Features paywall, no stacked upsells above it. */
+.content-recent-locked .new-postings-header,
+.content-recent-locked .alerts-callout,
+.content-recent-locked .new-paywall {
+  display: none;
+}
+
 /* ---- RESPONSIVE ---- */
 @media (max-width: 1024px) {
   .sidebar {
@@ -4134,13 +4141,6 @@ footer {
 
   .new-postings-page-title {
     font-size: 1rem;
-  }
-
-  /* Recent tab without Pro: only the Unlock Pro Features paywall, no stacked upsells above it. */
-  .content-recent-locked .new-postings-header,
-  .content-recent-locked .alerts-callout,
-  .content-recent-locked .new-paywall {
-    display: none;
   }
 
   .content-recent-locked .paywall {

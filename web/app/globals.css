@@ -4192,7 +4192,7 @@ footer {
   .logo-text { display: none; }
   .hero-photo {
     min-height: 0;
-    padding: calc(var(--space-2xl) + 56px) var(--space-sm) var(--space-xl);
+    padding: calc(var(--space-2xl) + 56px + 2.5rem) var(--space-sm) var(--space-xl); /* clears the notification */
   }
   .hero-photo-title { max-width: 12ch; }
   .hero-notif { top: 64px; padding: 0.7rem 0.85rem; }

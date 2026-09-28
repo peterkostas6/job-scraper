@@ -4665,7 +4665,7 @@ footer {
     opacity: 0;
     visibility: hidden;
     transform: translateY(12px);
-    transition: opacity 320ms var(--ease-out), transform 420ms var(--spring), visibility 0s linear 320ms;
+    transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out), visibility 0s linear 150ms;
   }
   .hiw-at-1 > [data-panel="1"],
   .hiw-at-2 > [data-panel="2"],
@@ -4673,7 +4673,7 @@ footer {
     opacity: 1;
     visibility: visible;
     transform: none;
-    transition: opacity 320ms var(--ease-out), transform 420ms var(--spring), visibility 0s;
+    transition: opacity 300ms var(--ease-out) 150ms, transform 420ms var(--spring) 150ms, visibility 0s;
   }
 }
 

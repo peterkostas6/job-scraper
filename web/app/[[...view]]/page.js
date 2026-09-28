@@ -1804,7 +1804,7 @@ export default function Home() {
           {/* Sidebar — same as normal view */}
           {sidebar}
 
-          <main className="content">
+          <main className={`content${!isSubscribed ? " content-recent-locked" : ""}`}>
             <div className="new-postings-header">
               <h1 className="new-postings-page-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

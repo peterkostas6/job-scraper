@@ -4136,6 +4136,13 @@ footer {
     font-size: 1rem;
   }
 
+  /* Recent tab without Pro: only the Unlock Pro Features paywall, no stacked upsells above it. */
+  .content-recent-locked .new-postings-header,
+  .content-recent-locked .alerts-callout,
+  .content-recent-locked .new-paywall {
+    display: none;
+  }
+
   /* ---- LANDING PAGE NEW SECTIONS ---- */
 
 

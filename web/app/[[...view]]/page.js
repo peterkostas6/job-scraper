@@ -8,6 +8,7 @@ import { BANKS } from "@/lib/banks";
 import { track } from "@/lib/track";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
+import HowItWorksDemo from "./HowItWorksDemo";
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
 
@@ -492,6 +493,8 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
     </section>
 
     <div className="homepage">
+
+      <HowItWorksDemo />
 
       {/* WHAT YOU GET + DEMO · side by side on desktop */}
       <div className="spec-demo">

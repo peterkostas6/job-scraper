@@ -3979,10 +3979,10 @@ footer {
   .job-bookmark {
     display: flex;
     position: absolute;
-    right: 0.75rem;
+    right: 0.4rem;
     top: 50%;
     transform: translateY(-50%);
-    padding: 0.4rem;
+    padding: 0.75rem;
   }
 
   .job-arrow {
@@ -4170,6 +4170,7 @@ footer {
     top: 56px;
     left: 0;
     right: 0;
+    justify-self: stretch; /* the base rule centers it, which shrinks it to fit */
     padding: var(--space-2xs) var(--space-sm) var(--space-sm);
     background: var(--cream);
     border-bottom: 1px solid var(--border);
@@ -4190,8 +4191,8 @@ footer {
   .homepage { padding: 0 var(--space-sm); }
   .logo-text { display: none; }
   .hero-photo {
-    min-height: 72dvh;
-    padding: calc(var(--space-2xl) + 56px) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
+    min-height: 0;
+    padding: calc(var(--space-2xl) + 56px) var(--space-sm) var(--space-xl);
   }
   .hero-photo-title { max-width: 12ch; }
   .hero-notif { top: 64px; padding: 0.7rem 0.85rem; }

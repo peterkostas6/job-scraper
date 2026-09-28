@@ -1078,12 +1078,6 @@ nav {
   85% { opacity: 1; }
   100% { left: 100%; opacity: 0; }
 }
-@keyframes hiw-travel-y {
-  0% { top: 0; opacity: 0; }
-  15% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
-}
 @keyframes hiw-ripple {
   0% { opacity: 1; transform: scale(0.6); }
   100% { opacity: 0; transform: scale(2.2); }
@@ -4662,13 +4656,25 @@ footer {
   .hiw-title { font-size: 1.75rem; }
   .hiw-steps { grid-template-columns: 1fr; gap: 0.9rem; margin: 1.75rem 0 1.25rem; }
   .hiw-step-bar { display: none; }
-  .hiw-stage { grid-template-columns: minmax(0, 1fr); }
-  .hiw-link {
-    width: 2px; height: 32px; margin: 4px auto;
-    background: repeating-linear-gradient(180deg, var(--blue-25) 0 6px, transparent 6px 11px);
+  /* One stage: the active step's panel crossfades in, stacked in the same grid cell */
+  .hiw-stage { grid-template-columns: minmax(0, 1fr); min-height: 470px; }
+  .hiw-link { display: none; }
+  .hiw-stage > [data-panel] {
+    grid-area: 1 / 1;
+    align-self: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity 320ms var(--ease-out), transform 420ms var(--spring), visibility 0s linear 320ms;
   }
-  .hiw-packet { left: 50%; top: 0; margin: -6px 0 0 -6px; }
-  .hiw-link-live .hiw-packet { animation-name: hiw-travel-y; }
+  .hiw-at-1 > [data-panel="1"],
+  .hiw-at-2 > [data-panel="2"],
+  .hiw-at-3 > [data-panel="3"] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 320ms var(--ease-out), transform 420ms var(--spring), visibility 0s;
+  }
 }
 
 /* ---- AD LANDING PAGE (/alerts) ---- */

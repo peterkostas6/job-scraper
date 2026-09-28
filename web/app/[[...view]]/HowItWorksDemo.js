@@ -99,9 +99,9 @@ export default function HowItWorksDemo() {
         ))}
       </ol>
 
-      <div className="hiw-stage" aria-hidden="true">
+      <div className={`hiw-stage hiw-at-${Math.max(active, 1)}`} aria-hidden="true">
         {/* 1 · Bank API */}
-        <div className={`hiw-panel hiw-api${active === 1 ? " hiw-panel-active" : ""}`}>
+        <div className={`hiw-panel hiw-api${active === 1 ? " hiw-panel-active" : ""}`} data-panel="1">
           <div className="hiw-panel-head">
             <span className="hiw-dot" />
             <span className="hiw-panel-name">JPMorgan Chase &middot; careers API</span>
@@ -121,7 +121,7 @@ export default function HowItWorksDemo() {
         <div className={`hiw-link${step === 2 ? " hiw-link-live" : ""}`}><span className="hiw-packet" /></div>
 
         {/* 2 · Pete's Postings feed vs LinkedIn */}
-        <div className="hiw-mid">
+        <div className="hiw-mid" data-panel="2">
           <div className={`hiw-panel hiw-feed${active === 2 ? " hiw-panel-active" : ""}`}>
             <div className="hiw-panel-head">
               <img src="/logo-mark.png" alt="" className="hiw-logo" />
@@ -169,7 +169,7 @@ export default function HowItWorksDemo() {
         <div className={`hiw-link${step === 5 ? " hiw-link-live" : ""}`}><span className="hiw-packet" /></div>
 
         {/* 3 · Phone */}
-        <div className={`hiw-phone${step === 6 ? " hiw-buzz" : ""}${active === 3 ? " hiw-phone-active" : ""}`}>
+        <div className={`hiw-phone${step === 6 ? " hiw-buzz" : ""}${active === 3 ? " hiw-phone-active" : ""}`} data-panel="3">
           <div className="hiw-phone-screen">
             <div className="hiw-island" />
 

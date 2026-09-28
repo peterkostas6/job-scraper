@@ -1226,6 +1226,7 @@ export default function Home() {
   const [last48hCount, setLast48hCount] = useState(null);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
 
   // Load welcome state from localStorage
@@ -1665,13 +1666,13 @@ export default function Home() {
 
   return (
     <>
-      <nav className={viewHome && !scrolled ? "nav-on-dark" : ""}>
+      <nav className={viewHome && !scrolled && !navMenuOpen ? "nav-on-dark" : ""}>
         <div className="nav-inner">
           <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
             <img src="/logo-mark.png" alt="" className="logo-icon" width="22" height="28" />
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
-          <div className="nav-center">
+          <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
             <Link
               href="/recent"
@@ -1714,6 +1715,17 @@ export default function Home() {
               </>
             )}
           </div>
+          {/* Phones only: the nav links don't fit in the bar, so they open as a menu. */}
+          <button
+            className="nav-menu-btn"
+            onClick={() => setNavMenuOpen((v) => !v)}
+            aria-label={navMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={navMenuOpen}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {navMenuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M4 7h16M4 12h16M4 17h16"/>}
+            </svg>
+          </button>
         </div>
       </nav>
 

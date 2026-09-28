@@ -230,6 +230,21 @@ nav {
 .nav-cta:hover { background: var(--navy-hover); }
 .nav-cta:active { transform: translateY(1px); }
 
+/* Phones only (shown in the 900px block): opens the nav links as a dropdown. */
+.nav-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.nav-on-dark .nav-menu-btn { color: var(--cream); }
+
 /* ---- HOMEPAGE · Hallmark Stat-Led ---- */
 .homepage {
   max-width: 1040px;
@@ -3761,7 +3776,7 @@ footer {
   .mobile-bank-select {
     width: 100%;
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 1rem; /* 16px or more stops iOS Safari zooming in on tap */
     font-weight: 500;
     color: var(--text-primary);
     background: var(--cream);
@@ -3791,6 +3806,7 @@ footer {
     font-family: inherit;
     font-size: 0.72rem;
     font-weight: 600;
+    min-height: 40px;
     padding: 0.45rem 0.4rem;
     border-radius: 100px;
     border: 1px solid var(--border);
@@ -3817,9 +3833,15 @@ footer {
     color: var(--white);
   }
 
-  .mobile-pro-pill-locked {
-    opacity: 0.5;
-    border-style: dashed;
+  /* Pro-only pills: a small lock instead of a faded, disabled look. */
+  .mobile-pro-pill-locked::before {
+    content: "";
+    width: 11px;
+    height: 11px;
+    background: currentColor;
+    opacity: 0.6;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 
   /* ---- MOBILE UPGRADE BANNER ---- */
@@ -3879,11 +3901,17 @@ footer {
     max-width: 100%;
   }
 
+  .search-bar,
+  .bank-search-input,
+  .notif-phone-input {
+    font-size: 1rem;
+  }
+
   .filter-dropdown {
     flex: 1;
     width: auto;
     min-width: 0;
-    font-size: 0.8rem;
+    font-size: 1rem;
     padding: 0.5rem 0.7rem;
   }
 
@@ -3929,6 +3957,8 @@ footer {
     width: auto;
     white-space: normal;
     overflow: visible;
+    min-width: 0;
+    overflow-wrap: anywhere; /* multi-city strings with no spaces */
   }
 
   .job-posted {
@@ -3967,7 +3997,10 @@ footer {
   /* ---- WELCOME BANNER ---- */
   .welcome-banner {
     flex-direction: column;
-    text-align: center;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1rem;
   }
 
   .alerts-callout {
@@ -4039,6 +4072,11 @@ footer {
     text-align: left;
   }
 
+  .footer-links .text-link {
+    display: inline-block;
+    padding: 0.6rem 0;
+  }
+
   /* ---- MODAL ---- */
   .modal-card {
     padding: 1.75rem 1.25rem 1.5rem;
@@ -4055,6 +4093,10 @@ footer {
 
   .pricing-hero-title {
     font-size: 1.6rem;
+  }
+
+  .pricing-card-popular {
+    order: -1; /* Pro first on phones */
   }
 
   .pricing-cards {
@@ -4119,27 +4161,42 @@ footer {
     gap: var(--space-2xs);
     padding: 0 var(--space-sm);
   }
-  .nav-center {
-    flex: 1;
-    min-width: 0;
-    justify-content: flex-start;
-    overflow-x: auto;
-    scrollbar-width: none;
+  .nav-center { display: none; }
+  .nav-center-open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    padding: var(--space-2xs) var(--space-sm) var(--space-sm);
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
   }
-  .nav-center::-webkit-scrollbar { display: none; }
+  .nav-center-open .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 1rem;
+  }
+  .nav-right { margin-left: auto; }
+  .nav-signin { min-height: 44px; }
   .nav-cta { display: none; }
+  .nav-menu-btn { display: flex; }
 }
 
 @media (max-width: 768px) {
   .homepage { padding: 0 var(--space-sm); }
   .logo-text { display: none; }
   .hero-photo {
-    min-height: 88dvh;
+    min-height: 72dvh;
     padding: calc(var(--space-2xl) + 56px) var(--space-sm) calc(var(--space-2xl) + 1.5rem);
   }
   .hero-photo-title { max-width: 12ch; }
   .hero-notif { top: 64px; padding: 0.7rem 0.85rem; }
   .hero-notif-text { font-size: 0.78rem; }
+  .hero-photo-link { padding: 0.6rem 0; }
   .spec-demo { grid-template-columns: 1fr; gap: 2rem; }
   .proof-row, .spec-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
   .spec-val { text-align: left; }

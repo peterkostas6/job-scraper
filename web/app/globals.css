@@ -4143,6 +4143,10 @@ footer {
     display: none;
   }
 
+  .content-recent-locked .paywall {
+    padding-top: 0.5rem;
+  }
+
   /* ---- LANDING PAGE NEW SECTIONS ---- */
 
 

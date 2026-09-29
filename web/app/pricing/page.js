@@ -273,7 +273,7 @@ export default function PricingPage() {
               <div className="pricing-card-price">
                 <span className="pricing-card-amount">$0</span>
               </div>
-              <p className="pricing-card-tagline">No account needed</p>
+              <p className="pricing-card-tagline">Browse without an account</p>
             </div>
             <ul className="pricing-card-features">
               <li className="pricing-feature">{check} All banks — browse free</li>
@@ -282,18 +282,8 @@ export default function PricingPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 Recent postings feed
               </li>
-              <li className="pricing-feature pricing-feature-muted">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                SMS text alerts
-              </li>
-              <li className="pricing-feature pricing-feature-muted">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                Email alerts
-              </li>
-              <li className="pricing-feature pricing-feature-muted">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                Save &amp; bookmark jobs
-              </li>
+              <li className="pricing-feature">{check} 5 free text or email alerts (free account)</li>
+              <li className="pricing-feature">{check} Save &amp; bookmark jobs (free account)</li>
             </ul>
             <Link href="/" style={{ textDecoration: "none", display: "block" }}>
               <button className="pricing-card-cta pricing-cta-outline" style={{ width: "100%" }}>
@@ -344,10 +334,8 @@ export default function PricingPage() {
             </div>
             <ul className="pricing-card-features">
               <li className="pricing-feature">{check} Everything in Free</li>
-              <li className="pricing-feature">{check} Save &amp; bookmark jobs</li>
               <li className="pricing-feature pricing-feature-highlight">{check} <strong>Recent postings feed (last 48 hours)</strong></li>
-              <li className="pricing-feature pricing-feature-highlight">{check} <strong>Email notifications for new postings</strong></li>
-              <li className="pricing-feature pricing-feature-highlight">{check} <strong>SMS text alerts</strong></li>
+              <li className="pricing-feature pricing-feature-highlight">{check} <strong>Unlimited text &amp; email alerts</strong></li>
             </ul>
             <div className="pricing-cta-group">
               {isSignedIn ? (
@@ -420,7 +408,7 @@ export default function PricingPage() {
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">How do SMS alerts work?</h3>
-              <p className="pricing-faq-a">Pro users can add a phone number in their notification settings. The instant a new posting matches your preferences, you'll get a text with the role title, bank, and a direct link to apply.</p>
+              <p className="pricing-faq-a">Add a phone number in your alert settings. The instant a new posting matches your preferences, you'll get a text with the role title, bank, and a direct link to apply. Free accounts get 5 alerts; Pro is unlimited.</p>
             </div>
             <div className="pricing-faq-item">
               <h3 className="pricing-faq-q">What does the recent postings feed include?</h3>

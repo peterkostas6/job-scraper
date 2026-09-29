@@ -1,6 +1,6 @@
 import { prefsEmail } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
-import { smsConfig, sendSms, logNotification } from "@/lib/notif-send";
+import { smsConfig, sendSms, logNotification, freeAlertsUsed, FREE_ALERT_LIMIT } from "@/lib/notif-send";
 import { BANK_NAMES } from "@/lib/banks";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
@@ -30,7 +30,12 @@ export async function GET() {
       jobType: "all",
     };
 
-    return Response.json({ notifications });
+    // Free accounts: how much of the alert allowance is used (Pro has no limit).
+    const freeAlerts = user.publicMetadata?.subscribed === true
+      ? null
+      : { used: await freeAlertsUsed(userId, notifications.smsEnabled ? notifications.phoneNumber : ""), limit: FREE_ALERT_LIMIT };
+
+    return Response.json({ notifications, freeAlerts });
   } catch (err) {
     console.error("Notifications GET error:", err);
     return Response.json({ error: "Failed to fetch preferences" }, { status: 500 });

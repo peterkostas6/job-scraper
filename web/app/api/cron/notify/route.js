@@ -321,7 +321,8 @@ export async function GET(request) {
       }
     }
 
-    // 4. Notify subscribed users right away (one email + one SMS per user per run).
+    // 4. Notify users right away (one email + one SMS per user per run). Pro accounts are
+    //    unlimited; free accounts get FREE_ALERT_LIMIT alerts, enforced in sendUserNotification.
     //    Anything that fails to send is queued for the retry sweep.
     let queued = 0;
     let notifiedUsers = 0;
@@ -344,8 +345,7 @@ export async function GET(request) {
 
       const notifyUsers = allUsers.filter(
         (u) =>
-          u.publicMetadata?.subscribed === true &&
-          // Either channel counts: a texts-only subscriber has email off.
+          // Either channel counts: a texts-only user has email off.
           (u.unsafeMetadata?.notifications?.enabled === true || u.unsafeMetadata?.notifications?.smsEnabled === true)
       );
 
@@ -381,6 +381,7 @@ export async function GET(request) {
           firstName: user.firstName || "",
           prefs,
           jobs: matchingJobs,
+          isFree: user.publicMetadata?.subscribed !== true,
         });
         if (sent.emailSent) emailsSent++;
         if (sent.smsSent) smsSent++;

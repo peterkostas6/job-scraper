@@ -1,5 +1,5 @@
-// POST /api/company-request — a Pro member asks us to add a company. Saved to
-// company_requests and emailed to Pete. Pro only: checked here, not just in the page.
+// POST /api/company-request — a signed-in user asks us to add a company. Saved to
+// company_requests and emailed to Pete.
 import { sql } from "@vercel/postgres";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
@@ -14,9 +14,6 @@ export async function POST(request) {
 
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
-  if (user.publicMetadata?.subscribed !== true) {
-    return Response.json({ error: "Requests are a Pro feature." }, { status: 403 });
-  }
 
   const { company: raw } = await request.json().catch(() => ({}));
   const company = String(raw || "").trim().replace(/\s+/g, " ");

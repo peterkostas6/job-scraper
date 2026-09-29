@@ -727,11 +727,9 @@ function PaywallOverlay({ isSignedIn }) {
         <p className="paywall-includes-label">What you unlock</p>
         <ul className="paywall-unlocks-list">
           {[
-            ["Instant text alerts", "A text the moment a bank posts a role matching your banks, job type and city."],
-            ["Email alerts", "The same alerts in your inbox, if you want them there too."],
+            ["Unlimited text alerts", "A text the moment a bank posts a role matching your banks, job type and city. Free accounts get 5."],
+            ["Unlimited email alerts", "The same alerts in your inbox, if you want them there too."],
             ["Recent postings", `Every job posted in the last 48 hours across all ${BANK_COUNT} banks, in one list.`],
-            ["Saved jobs", "Bookmark roles and keep track of what you\u2019ve applied to."],
-            ["Request a company", "Tell us which firm to track next."],
           ].map(([name, desc]) => (
             <li key={name}>
               <span className="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -1143,6 +1141,8 @@ export default function Home() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", smsConsent: false, location: "" });
   const [notifLoading, setNotifLoading] = useState(false);
+  // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
+  const [freeAlerts, setFreeAlerts] = useState(null);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
   const [companyRequest, setCompanyRequest] = useState("");
@@ -1270,11 +1270,14 @@ export default function Home() {
 
   // Load notification preferences
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !isSubscribed) return;
+    if (!isLoaded || !isSignedIn) return;
     setNotifLoading(true);
     fetch("/api/notifications")
       .then((res) => res.json())
-      .then((data) => { if (data.notifications) setNotifPrefs(data.notifications); })
+      .then((data) => {
+        if (data.notifications) setNotifPrefs(data.notifications);
+        setFreeAlerts(data.freeAlerts || null);
+      })
       .catch(() => {})
       .finally(() => setNotifLoading(false));
   }, [isLoaded, isSignedIn, isSubscribed]);
@@ -1355,7 +1358,6 @@ export default function Home() {
     e.preventDefault();
     e.stopPropagation();
     if (!isSignedIn) { clerk.openSignUp(); return; }
-    if (!isSubscribed) { setViewingSaved(true); setViewNotifications(false); return; }
     const link = job.link;
     setBookmarks((prev) => {
       const next = new Set(prev);
@@ -1573,7 +1575,7 @@ export default function Home() {
 
       <div className="sidebar-divider" />
       <div className="sidebar-header">
-        <span>Pro</span>
+        <span>Your tools</span>
         {!isSubscribed && <Link href="/pricing" className="sidebar-pro-pill">Upgrade</Link>}
       </div>
       <button
@@ -1593,10 +1595,9 @@ export default function Home() {
         ) : last48hCount > 0 ? <span className="sidebar-count tnum">{last48hCount}</span> : null}
       </button>
       <button
-        className={`sidebar-item${viewingSaved && !viewNotifications ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        className={`sidebar-item${viewingSaved && !viewNotifications ? " sidebar-item-active" : ""}`}
         onClick={() => {
           if (!isSignedIn) { clerk.openSignUp(); return; }
-          if (!isSubscribed) { setViewingSaved(true); setViewNotifications(false); return; }
           setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
         }}
       >
@@ -1606,13 +1607,12 @@ export default function Home() {
           </svg>
           Saved jobs
         </span>
-        {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : savedJobs.length > 0 && <span className="sidebar-count tnum">{savedJobs.length}</span>}
+        {savedJobs.length > 0 && <span className="sidebar-count tnum">{savedJobs.length}</span>}
       </button>
       <button
-        className={`sidebar-item${viewNotifications ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        className={`sidebar-item${viewNotifications ? " sidebar-item-active" : ""}`}
         onClick={() => {
           if (!isSignedIn) { clerk.openSignUp(); return; }
-          if (!isSubscribed) { setViewNotifications(true); setViewingSaved(true); return; }
           setViewNotifications(true); setViewingSaved(true);
         }}
       >
@@ -1623,11 +1623,11 @@ export default function Home() {
           </svg>
           Notifications
         </span>
-        {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
+        {freeAlerts ? <span className="sidebar-count tnum">{Math.max(0, freeAlerts.limit - freeAlerts.used)} free</span> : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
       </button>
       <button
-        className={`sidebar-item${!isSubscribed ? " sidebar-item-locked" : ""}`}
-        onClick={() => { setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+        className="sidebar-item"
+        onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
       >
         <span className="sidebar-saved-label">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1635,7 +1635,6 @@ export default function Home() {
           </svg>
           Request a company
         </span>
-        {!isSubscribed ? <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> : null}
       </button>
       {user?.publicMetadata?.stripeCustomerId && (
         <button className="sidebar-item" onClick={openBillingPortal}>
@@ -1777,28 +1776,26 @@ export default function Home() {
                 Last 48h
               </button>
               <button
-                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                className="mobile-pro-pill"
                 onClick={() => {
                   if (!isSignedIn) { clerk.openSignUp(); return; }
-                  if (!isSubscribed) { router.push("/pricing"); return; }
                   setViewNewPostings(false); setViewingSaved(true); setViewNotifications(false); setViewHome(false);
                 }}
               >
                 Saved
               </button>
               <button
-                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                className="mobile-pro-pill"
                 onClick={() => {
                   if (!isSignedIn) { clerk.openSignUp(); return; }
-                  if (!isSubscribed) { router.push("/pricing"); return; }
                   setViewNewPostings(false); setViewingSaved(true); setViewNotifications(true); setViewHome(false);
                 }}
               >
                 Alerts
               </button>
               <button
-                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
-                onClick={() => { setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+                className="mobile-pro-pill"
+                onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
               >
                 Request
               </button>
@@ -1893,28 +1890,26 @@ export default function Home() {
                 Last 48h
               </button>
               <button
-                className={`mobile-pro-pill${viewingSaved && !viewNotifications ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                className={`mobile-pro-pill${viewingSaved && !viewNotifications ? " mobile-pro-pill-active" : ""}`}
                 onClick={() => {
                   if (!isSignedIn) { clerk.openSignUp(); return; }
-                  if (!isSubscribed) { router.push("/pricing"); return; }
                   setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
                 }}
               >
                 Saved
               </button>
               <button
-                className={`mobile-pro-pill${viewNotifications ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                className={`mobile-pro-pill${viewNotifications ? " mobile-pro-pill-active" : ""}`}
                 onClick={() => {
                   if (!isSignedIn) { clerk.openSignUp(); return; }
-                  if (!isSubscribed) { router.push("/pricing"); return; }
                   setViewingSaved(true); setViewNotifications(true);
                 }}
               >
                 Alerts
               </button>
               <button
-                className={`mobile-pro-pill${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
-                onClick={() => { setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+                className="mobile-pro-pill"
+                onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
               >
                 Request
               </button>
@@ -1926,13 +1921,38 @@ export default function Home() {
           {/* MAIN CONTENT */}
           <main className="content">
             {/* Notifications view */}
-            {viewNotifications && !isSubscribed && <PaywallOverlay isSignedIn={isSignedIn} />}
-            {viewNotifications && isSubscribed && (
+            {viewNotifications && !isSignedIn && (
+              <div className="notif-panel">
+                <div className="notif-header">
+                  <h2 className="notif-title">Get 5 free job alerts</h2>
+                  <p className="notif-desc">Create a free account and we&rsquo;ll text or email you the moment a matching role goes live. Your first 5 alerts are on us.</p>
+                </div>
+                <SignUpButton mode="modal"><button className="notif-save">Create free account</button></SignUpButton>
+              </div>
+            )}
+            {viewNotifications && isSignedIn && (
               <div className="notif-panel">
                 <div className="notif-header">
                   <h2 className="notif-title">Job alerts</h2>
                   <p className="notif-desc">When a role matching your filters goes live, you hear about it instantly.</p>
                 </div>
+                {freeAlerts && (
+                  <div className="welcome-banner alerts-callout">
+                    <div>
+                      <p className="welcome-title">
+                        {freeAlerts.used < freeAlerts.limit
+                          ? `${freeAlerts.limit - freeAlerts.used} of ${freeAlerts.limit} free alerts left`
+                          : `You've used your ${freeAlerts.limit} free alerts`}
+                      </p>
+                      <p className="welcome-desc">
+                        {freeAlerts.used < freeAlerts.limit
+                          ? "Free accounts get 5 text or email alerts. Go Pro for unlimited alerts the second a role goes live."
+                          : "Upgrade to Pro to keep getting a text or email the moment a matching role posts."}
+                      </p>
+                    </div>
+                    <Link href="/pricing" className="alerts-callout-cta">Upgrade</Link>
+                  </div>
+                )}
                 {notifLoading ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
                 ) : (
@@ -2081,8 +2101,16 @@ export default function Home() {
             )}
 
             {/* Saved jobs view */}
-            {viewingSaved && !viewNotifications && !isSubscribed && <PaywallOverlay isSignedIn={isSignedIn} />}
-            {viewingSaved && !viewNotifications && isSubscribed && (
+            {viewingSaved && !viewNotifications && !isSignedIn && (
+              <div className="notif-panel">
+                <div className="notif-header">
+                  <h2 className="notif-title">Save jobs for later</h2>
+                  <p className="notif-desc">Create a free account to bookmark roles and keep track of what you&rsquo;ve applied to.</p>
+                </div>
+                <SignUpButton mode="modal"><button className="notif-save">Create free account</button></SignUpButton>
+              </div>
+            )}
+            {viewingSaved && !viewNotifications && isSignedIn && (
               <>
                 <div className="results-bar">
                   <span className="results-text">{savedJobs.length} saved {savedJobs.length === 1 ? "job" : "jobs"}</span>
@@ -2256,7 +2284,14 @@ export default function Home() {
                       <span style={{ width: 14 }} />
                     </div>
                     {displayJobs.map((job, index) => (
-                      <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="job-row" key={index}>
+                      <a
+                        href={trackedLink(job.link)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="job-row"
+                        key={index}
+                        onClick={(e) => { if (!isSignedIn) { e.preventDefault(); clerk.openSignUp(); } }}
+                      >
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="job-title">{job.title}</span>
                         <span className="job-location">{job.location || "—"}</span>

@@ -4359,57 +4359,11 @@ footer {
 
 .lp-points .modal-check { margin-top: 0.1rem; }
 
-.lp-plans {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 0.9rem;
-}
-
-.lp-plan {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.85rem 0.4rem 0.75rem;
-  font-family: inherit;
-  background: var(--white);
-  border: 1px solid var(--border-strong);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.lp-plan:hover { border-color: var(--blue-30); }
-
-.lp-plan-selected {
-  background: var(--blue-6);
-  border-color: var(--forest-blue);
-  box-shadow: 0 0 0 1px var(--forest-blue);
-}
-
-.lp-plan-tag {
-  position: absolute;
-  top: -0.6rem;
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 0.15rem 0.45rem;
-  border-radius: 100px;
-  background: var(--forest-blue);
-  color: var(--white);
-  white-space: nowrap;
-}
-
-.lp-plan-name { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
-.lp-plan-price { font-size: 1.25rem; font-weight: 800; color: var(--navy); }
-.lp-plan-price small { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
-.lp-plan-note { font-size: 0.7rem; color: var(--forest-blue); font-weight: 600; }
-
 .lp-cta {
+  display: block;
   width: 100%;
+  text-align: center;
+  text-decoration: none;
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;
@@ -4477,37 +4431,7 @@ footer {
   margin-bottom: 0.9rem;
 }
 
-.lp-steps {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.lp-steps li {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.lp-steps strong,
 .lp-included strong { color: var(--text-primary); font-weight: 600; }
-
-.lp-step-num {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--blue-8);
-  color: var(--forest-blue);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
 
 .lp-included {
   list-style: none;

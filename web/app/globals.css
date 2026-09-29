@@ -1026,7 +1026,6 @@ nav {
   .spinner { animation-duration: 1.5s; }
   .modal-overlay, .modal-overlay[data-state="closing"] { animation: modal-scrim-in 120ms linear both; }
   .modal-card, .modal-overlay[data-state="closing"] .modal-card { animation: modal-scrim-in 120ms linear both; }
-  .modal-stagger { animation: none; }
 }
 
 .demo-notif-row {
@@ -1892,6 +1891,9 @@ nav {
 }
 
 .filter-dropdown {
+  max-width: 220px;
+  min-width: 0;
+  text-overflow: ellipsis;
   font-family: inherit;
   font-size: 0.85rem;
   padding: 0.55rem 0.9rem;
@@ -2871,16 +2873,6 @@ footer {
   animation: modal-card-out var(--dur-exit) var(--ease-in-out) both;
 }
 
-/* Content: each block fades and rises 220ms, staggered 40ms apart after an 80ms lead. */
-.modal-stagger {
-  animation: modal-content-in 220ms var(--ease-reveal) both;
-  animation-delay: calc(80ms + var(--i, 0) * 40ms);
-}
-
-.modal-overlay[data-state="closing"] .modal-stagger {
-  animation: none;
-}
-
 @keyframes modal-scrim-in  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-scrim-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes modal-card-in {
@@ -2890,10 +2882,6 @@ footer {
 @keyframes modal-card-out {
   from { opacity: 1; transform: none; }
   to   { opacity: 0; transform: translateY(8px) scale(0.985); }
-}
-@keyframes modal-content-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
 }
 
 .modal-card-wide {
@@ -2964,29 +2952,6 @@ footer {
   flex-shrink: 0;
 }
 
-/* Live-count chip · mini titling (10px, 0.08em) on a blue-6 pill */
-.modal-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--forest-blue);
-  background: var(--blue-6);
-  border: 1px solid var(--blue-12);
-  border-radius: 100px;
-  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
-  margin-bottom: 0.9rem;
-}
-.modal-stat strong { font-weight: 700; }
-.modal-stat-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 3px var(--green-fill);
-}
-
 /* Benefit rows · check in an 18px round tile, hairline between rows */
 .modal-benefits li {
   padding: 0.55rem 0;
@@ -3026,15 +2991,11 @@ footer {
 }
 
 /* Buttons · Pete colors, RA state model: 4px ring on focus, press dips, disabled fades */
-.modal-cta-primary,
-.modal-cta-secondary {
+.modal-cta-primary {
   transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out), box-shadow 140ms ease-out;
 }
-.modal-cta-primary:focus-visible,
-.modal-cta-secondary:focus-visible { outline: none; box-shadow: var(--ring); }
-.modal-cta-primary:active,
-.modal-cta-secondary:active { transform: translateY(1px); }
-.modal-cta-secondary:hover { background: var(--cream); border-color: var(--border-strong); }
+.modal-cta-primary:focus-visible { outline: none; box-shadow: var(--ring); }
+.modal-cta-primary:active { transform: translateY(1px); }
 .modal-dismiss-link:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 6px; }
 
 .modal-actions {
@@ -3067,27 +3028,6 @@ footer {
 .modal-cta-primary:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-.modal-cta-secondary {
-  display: block;
-  width: 100%;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 0.7rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--white);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: background 0.2s var(--ease-out), border-color 0.2s var(--ease-out), color 0.2s var(--ease-out), opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
-  text-align: center;
-}
-
-.modal-cta-secondary:hover {
-  border-color: rgba(0,0,0,0.15);
-  background: #fafafa;
 }
 
 .modal-dismiss-link {

@@ -54,98 +54,6 @@ function formatPostedAt(job) {
   return "—";
 }
 
-// ---- ACCOUNT PROMPT MODAL ----
-// Entrance: scrim fades, card rises + settles (280ms soft ease), content staggers in.
-// Exit: reverse over 180ms, then unmount. Esc closes. Body scroll is locked while open.
-function AccountPromptModal({ onClose, last48hCount = 0 }) {
-  const [closing, setClosing] = useState(false);
-  const primaryRef = useRef(null);
-
-  const close = () => {
-    if (closing) return;
-    setClosing(true);
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setTimeout(onClose, reduce ? 0 : 180);
-  };
-
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
-    document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const t = setTimeout(() => primaryRef.current && primaryRef.current.focus(), 320);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-      clearTimeout(t);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const benefits = [
-    'SMS and email alerts when new positions open',
-    'Every posting from the last 48 hours, free',
-    'Save and track jobs across all banks',
-  ];
-
-  return (
-    <div className="modal-overlay" data-state={closing ? 'closing' : 'open'} onClick={close}>
-      <div
-        className="modal-card modal-card-prompt"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="account-prompt-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="modal-close" onClick={close} aria-label="Close">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12"/>
-          </svg>
-        </button>
-
-        <div className="modal-stagger" style={{ '--i': 0 }}>
-          <div className="modal-prompt-icon">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </div>
-        </div>
-
-        {last48hCount > 0 && (
-          <p className="modal-stat modal-stagger" style={{ '--i': 1 }}>
-            <span className="modal-stat-dot" aria-hidden="true" />
-            <strong className="tnum">{last48hCount}</strong>&nbsp;roles posted in the last 48 hours
-          </p>
-        )}
-
-        <h2 id="account-prompt-title" className="modal-title modal-stagger" style={{ '--i': 2 }}>Don&rsquo;t miss the window</h2>
-        <p className="modal-subtitle modal-stagger" style={{ '--i': 3 }}>
-          Banks fill roles within days of posting. Create a free account and get notified when they go live.
-        </p>
-
-        <ul className="modal-benefits">
-          {benefits.map((text, i) => (
-            <li key={text} className="modal-stagger" style={{ '--i': 4 + i }}>
-              <span className="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
-              {text}
-            </li>
-          ))}
-        </ul>
-
-        <div className="modal-actions modal-stagger" style={{ '--i': 7 }}>
-          <SignUpButton mode="modal">
-            <button className="modal-cta-primary" ref={primaryRef}>Create free account</button>
-          </SignUpButton>
-          <SignInButton mode="modal">
-            <button className="modal-cta-secondary">Sign in</button>
-          </SignInButton>
-        </div>
-        <button className="modal-dismiss-link modal-stagger" style={{ '--i': 8 }} onClick={close}>Maybe later</button>
-      </div>
-    </div>
-  );
-}
 
 
 // Shown once when Stripe sends a new subscriber back with ?subscribed=true.
@@ -1148,7 +1056,6 @@ export default function Home() {
   const [companyRequest, setCompanyRequest] = useState("");
   const [companyRequestStatus, setCompanyRequestStatus] = useState(null); // null | "sending" | "sent" | error message
   const [showCompanyRequest, setShowCompanyRequest] = useState(false);
-  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [showProWelcome, setShowProWelcome] = useState(false);
   const [proWelcomeTimedOut, setProWelcomeTimedOut] = useState(false);
 
@@ -1237,17 +1144,6 @@ export default function Home() {
     const welcomed = localStorage.getItem("pp-welcomed");
     if (!welcomed) setShowWelcome(true);
   }, []);
-
-  // 8-second account prompt for anonymous users browsing outside the landing page
-  useEffect(() => {
-    if (!isLoaded || isSignedIn || viewHome) return;
-    const dismissed = sessionStorage.getItem("pp-prompt-dismissed");
-    if (dismissed) return;
-    const timer = setTimeout(() => {
-      if (!isSignedIn) setShowAccountPrompt(true);
-    }, 12000);
-    return () => clearTimeout(timer);
-  }, [isLoaded, isSignedIn, viewHome]);
 
   // Load saved jobs from Clerk unsafeMetadata
   useEffect(() => {
@@ -1379,11 +1275,6 @@ export default function Home() {
   function dismissWelcome() {
     setShowWelcome(false);
     localStorage.setItem("pp-welcomed", "true");
-  }
-
-  function dismissAccountPrompt() {
-    setShowAccountPrompt(false);
-    sessionStorage.setItem("pp-prompt-dismissed", "true");
   }
 
   function toggleNotifBank(bankKey) {
@@ -2171,7 +2062,7 @@ export default function Home() {
                     <div>
                       <p className="welcome-title">Welcome to Pete's Postings</p>
                       <p className="welcome-desc">
-                        Live postings from 20 banks. Hit <strong>Recent</strong> to see everything posted in the last 48 hours — or upgrade to Pro for SMS &amp; email alerts the moment a role goes live.
+                        Live postings from 20 banks. Create a free account to save jobs and get 5 free text or email alerts the moment a role goes live.
                       </p>
                     </div>
                     <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>
@@ -2386,9 +2277,6 @@ export default function Home() {
         />
       )}
 
-      {showAccountPrompt && !isSignedIn && !viewHome && (
-        <AccountPromptModal onClose={dismissAccountPrompt} last48hCount={last48hCount} />
-      )}
     </>
   );
 }

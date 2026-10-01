@@ -79,6 +79,7 @@ export async function POST(request) {
           banks: Array.isArray(banks) ? banks : [],
           categories: Array.isArray(categories) ? categories : [],
           jobType: jobType || "all",
+          location: typeof body.location === "string" ? body.location.trim().slice(0, 60) : "",
           smsEnabled,
           phoneNumber: phoneNumber || "",
           smsConsent,

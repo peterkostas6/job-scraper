@@ -6,6 +6,7 @@ import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@cler
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
 import { track } from "@/lib/track";
+import { useTrackSignup } from "@/lib/use-track-signup";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 import HowItWorksDemo from "./HowItWorksDemo";
@@ -1076,18 +1077,7 @@ export default function Home() {
     setShowProWelcome(true);
   }, []);
 
-  // Tell the ad platforms about a brand-new account once: signed in, created in the last 10 minutes,
-  // and not already reported from this browser.
-  useEffect(() => {
-    if (!user?.id || !user.createdAt) return;
-    if (Date.now() - new Date(user.createdAt).getTime() > 10 * 60 * 1000) return;
-    const key = `pp-signup-tracked-${user.id}`;
-    try {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(key, "1");
-    } catch {}
-    track("CompleteRegistration", undefined, `reg_${user.id}`);
-  }, [user?.id, user?.createdAt]);
+  useTrackSignup(user);
   useEffect(() => {
     if (!showProWelcome || !user || isSubscribed) return;
     let tries = 0;

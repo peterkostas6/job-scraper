@@ -4538,11 +4538,11 @@ footer {
   transition: border-color 0.15s, background 0.15s;
 }
 
-.st-option:hover { border-color: rgba(30, 41, 59, 0.3); }
+.st-option:hover { border-color: var(--blue-30); }
 
 .st-option[aria-pressed="true"] {
-  border-color: var(--navy);
-  box-shadow: inset 0 0 0 1px var(--navy);
+  background: var(--blue-6);
+  border-color: var(--blue-25);
 }
 
 .st-option-compact { padding: 0.85rem 1rem; }
@@ -4577,16 +4577,18 @@ footer {
   font-weight: 500;
   color: var(--text-primary);
   padding: 0.45rem 0.75rem;
-  background: transparent;
+  background: var(--white);
   border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 0.15s;
 }
 
+.st-chip:hover { border-color: var(--blue-30); }
+
 .st-chip[aria-pressed="true"] {
-  color: var(--white);
-  background: var(--navy);
-  border-color: var(--navy);
+  background: var(--blue-6);
+  border-color: var(--blue-25);
 }
 
 .st-next,
@@ -4701,9 +4703,6 @@ footer {
   margin-top: 0.4rem;
 }
 
-.st-pitch + .st-cta,
-.st-pitch + span > .st-cta { margin-top: 1.5rem; }
-
 .st-fine {
   text-align: center;
   font-size: 0.78rem;
@@ -4735,11 +4734,12 @@ footer {
   padding: 0.85rem 1rem;
   background: var(--white);
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.st-input:focus { outline: none; border-color: var(--navy); box-shadow: inset 0 0 0 1px var(--navy); }
+.st-input:focus { outline: none; border-color: var(--forest-blue); box-shadow: 0 0 0 3px var(--blue-10); }
 
 .st-consent,
 .st-email {
@@ -4751,7 +4751,7 @@ footer {
 }
 
 .st-consent input,
-.st-email input { margin-top: 0.2rem; flex-shrink: 0; }
+.st-email input { margin-top: 0.2rem; flex-shrink: 0; accent-color: var(--forest-blue); }
 
 .st-consent span {
   font-size: 0.75rem;
@@ -4784,4 +4784,17 @@ footer {
 
 @media (max-width: 380px) {
   .st-options-grid { grid-template-columns: 1fr; }
+}
+
+.st-pitch .st-options-tight { margin-top: 1rem; }
+.st-pitch .st-fine { margin-top: 0.9rem; }
+.st-option:disabled { opacity: 0.6; cursor: default; }
+.st-skip-button {
+  width: 100%;
+  font-family: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--navy);
+  font-weight: 600;
 }

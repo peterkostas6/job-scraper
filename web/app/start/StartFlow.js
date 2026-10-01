@@ -31,7 +31,13 @@ const CITIES = ["New York", "Charlotte", "Dallas", "Chicago", "San Francisco"];
 const STEPS = ["type", "area", "banks", "city", "results", "phone", "done"];
 const QUESTION_COUNT = 4;
 
-const EMPTY = { jobType: null, areas: [], banks: [], city: null };
+const EMPTY = { jobType: null, areas: [], banks: [], city: null, channel: null };
+
+const CHANNELS = [
+  { key: "sms", label: "Text me", sub: "Fastest. Most people pick this." },
+  { key: "both", label: "Text and email", sub: "A text plus the full list by email" },
+  { key: "email", label: "Email me", sub: "No phone number needed" },
+];
 
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
 
@@ -114,12 +120,12 @@ export default function StartFlow() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, step, pendingSignup })); } catch {}
   }, [restored, answers, step, pendingSignup]);
 
-  // Back from sign-up: go straight to the phone step.
+  // Back from sign-up: email-only alerts save right away; anything with texts asks for the number.
   useEffect(() => {
     if (!restored || !isLoaded || !isSignedIn || !pendingSignup) return;
     setPendingSignup(false);
-    setStep("phone");
-  }, [restored, isLoaded, isSignedIn, pendingSignup]);
+    afterChannel(answers.channel);
+  }, [restored, isLoaded, isSignedIn, pendingSignup]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch("/api/jobs-live")
@@ -149,10 +155,27 @@ export default function StartFlow() {
     [field]: a[field].includes(key) ? a[field].filter((k) => k !== key) : [...a[field], key],
   }));
 
-  async function saveAlerts() {
+  function afterChannel(channel) {
+    if (channel === "email") {
+      saveAlerts({ emailOnly: true });
+    } else {
+      setEmailOn(channel === "both");
+      setStep("phone");
+    }
+  }
+
+  function chooseChannel(channel) {
+    set({ channel });
+    capture("start_channel_chosen", { channel, signedIn: Boolean(isSignedIn) });
+    if (isSignedIn) afterChannel(channel);
+    else setPendingSignup(true);
+  }
+
+  async function saveAlerts({ emailOnly = false } = {}) {
     setError("");
-    const digits = phone.replace(/\D/g, "");
+    const digits = emailOnly ? "" : phone.replace(/\D/g, "");
     const wantsSms = digits.length > 0;
+    const wantsEmail = emailOnly || emailOn;
     if (wantsSms && !(digits.length === 10 || (digits.length === 11 && digits.startsWith("1")))) {
       setError("Enter a 10-digit US mobile number.");
       return;
@@ -161,7 +184,7 @@ export default function StartFlow() {
       setError("Check the box to agree to texts, or clear the number to get email only.");
       return;
     }
-    if (!wantsSms && !emailOn) {
+    if (!wantsSms && !wantsEmail) {
       setError("Add your number or turn on email so we can reach you.");
       return;
     }
@@ -171,7 +194,7 @@ export default function StartFlow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          enabled: emailOn,
+          enabled: wantsEmail,
           ...prefs,
           smsEnabled: wantsSms,
           smsConsent: wantsSms && smsConsent,
@@ -180,10 +203,11 @@ export default function StartFlow() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.error || "save failed");
-      capture("start_alerts_saved", { sms: wantsSms, email: emailOn, matches: matched?.length ?? null });
+      capture("start_alerts_saved", { sms: wantsSms, email: wantsEmail, matches: matched?.length ?? null });
       setStep("done");
     } catch {
       setError("Couldn’t save your alerts. Try again.");
+      if (emailOnly) setStep("phone");
     } finally {
       setSaving(false);
     }
@@ -278,18 +302,18 @@ export default function StartFlow() {
     );
   } else if (step === "results") {
     const shown = matched ? matched.slice(0, 5) : [];
-    const cta = isLoaded && isSignedIn ? (
-      <button className="st-cta" onClick={() => { capture("start_cta_clicked", { signedIn: true }); go("phone"); }}>
-        Text me when the next one posts
-      </button>
-    ) : (
-      <SignUpButton mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start">
-        <button className="st-cta" disabled={!isLoaded}
-          onClick={() => { setPendingSignup(true); capture("start_cta_clicked", { signedIn: false }); }}>
-          Text me when the next one posts
+    const channelOption = (c) => {
+      const option = (
+        <button key={c.key} className="st-option" aria-pressed={answers.channel === c.key}
+          disabled={!isLoaded || saving} onClick={() => chooseChannel(c.key)}>
+          <span className="st-option-label">{c.label}</span>
+          <span className="st-option-sub">{c.sub}</span>
         </button>
-      </SignUpButton>
-    );
+      );
+      return isSignedIn ? option : (
+        <SignUpButton key={c.key} mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start">{option}</SignUpButton>
+      );
+    };
     body = (
       <>
         <button className="st-back st-back-top" onClick={back}>&larr; Change answers</button>
@@ -326,18 +350,22 @@ export default function StartFlow() {
         )}
 
         <div className="st-pitch">
-          <h2 className="st-pitch-title">Banks fill these fast. Be first.</h2>
-          <p className="st-pitch-text">We check all {BANK_COUNT} bank career sites every 5 minutes. When a new role like these goes up, you get a text with the link.</p>
+          <h2 className="st-pitch-title">Want to hear about the next one first?</h2>
+          <p className="st-pitch-text">We check all {BANK_COUNT} bank career sites every 5 minutes. Pick how you want to hear about new roles like these.</p>
+          <div className="st-options st-options-tight">
+            {CHANNELS.map(channelOption)}
+          </div>
+          {saving && <p className="st-fine">Saving your alerts&hellip;</p>}
+          {error && <p className="st-error" role="alert">{error}</p>}
+          <p className="st-fine">Free account &middot; 5 free alerts &middot; No card needed</p>
         </div>
-
-        {cta}
-        <p className="st-fine">Free account &middot; 5 free alerts &middot; No card needed</p>
-        <Link href="/jobs" className="st-skip" onClick={() => capture("start_browse_clicked")}>Just browse jobs &rarr;</Link>
+        <Link href="/jobs" className="st-skip" onClick={() => capture("start_browse_clicked")}>No thanks, just browse jobs &rarr;</Link>
       </>
     );
   } else if (step === "phone") {
     body = (
       <>
+        <p className="st-kicker">Last step</p>
         <h1 className="st-q">Where should we text you?</h1>
         <p className="st-hint">You&rsquo;ll get a text when new {describe(answers)} post.</p>
         <label className="st-field-label" htmlFor="st-phone">Mobile number</label>
@@ -374,6 +402,7 @@ export default function StartFlow() {
         <Link href="/jobs" className="st-cta" onClick={() => { try { localStorage.removeItem(STORAGE_KEY); } catch {} }}>
           {matched?.length ? `Browse the ${matched.length} open now` : "Browse open jobs"}
         </Link>
+        {!texting && <button className="st-skip st-skip-button" onClick={() => { setEmailOn(true); setStep("phone"); }}>Get texts too. They&rsquo;re faster &rarr;</button>}
         <Link href="/notifications" className="st-skip">Change alert settings</Link>
       </>
     );

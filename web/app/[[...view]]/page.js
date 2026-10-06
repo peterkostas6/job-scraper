@@ -442,10 +442,6 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
             ))}
           </tbody>
         </table>
-        <p className="spec-stat">
-          <strong>+33%</strong>
-          <span>higher chance of landing an interview when you apply within 24&ndash;48 hours of a posting.</span>
-        </p>
       </section>
 
       {/* DEMO · captioned figure, no fake chrome */}

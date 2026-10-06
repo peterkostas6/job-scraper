@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser, SignUpButton, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { track } from "@/lib/track";
@@ -163,8 +163,7 @@ export default function PricingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(null);
   const [billing, setBilling] = useState("monthly");
 
-  function handleSubscribe() {
-    const plan = billing;
+  function handleSubscribe(plan = billing) {
     track("InitiateCheckout", planPrice(plan));
     setCheckoutLoading(plan);
     fetch("/api/checkout", {
@@ -178,6 +177,17 @@ export default function PricingPage() {
       })
       .catch(() => setCheckoutLoading(null));
   }
+
+  // Signed-out visitors who pick Pro come back here after creating an account with
+  // ?checkout=<plan>; send them straight on to Stripe instead of making them click again.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    const plan = new URLSearchParams(window.location.search).get("checkout");
+    if (!PLANS[plan]) return;
+    window.history.replaceState(null, "", "/pricing");
+    setBilling(plan);
+    handleSubscribe(plan);
+  }, [isLoaded, isSignedIn]);
 
   const check = (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -211,9 +221,7 @@ export default function PricingPage() {
                   <SignInButton mode="modal">
                     <button className="nav-signin">Sign in</button>
                   </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="nav-cta">Get free access</button>
-                  </SignUpButton>
+                  <Link href="/start" className="nav-cta">Get free alerts</Link>
                 </>
               )
             )}
@@ -226,7 +234,7 @@ export default function PricingPage() {
           <span className="hero-tag">Pricing</span>
           <h1 className="pricing-hero-title">Be the <span className="pricing-hero-underline">first</span> to apply</h1>
           <p className="pricing-hero-desc">
-            Upgrade to Pro to see new postings the moment they go live — plus SMS &amp; email alerts.
+            Start free with 5 alerts. Go Pro for unlimited alerts and every role posted in the last 48 hours.
           </p>
 
           {/* Billing toggle */}
@@ -273,22 +281,20 @@ export default function PricingPage() {
               <div className="pricing-card-price">
                 <span className="pricing-card-amount">$0</span>
               </div>
-              <p className="pricing-card-tagline">Browse without an account</p>
+              <p className="pricing-card-tagline">Free account &middot; no credit card</p>
             </div>
             <ul className="pricing-card-features">
-              <li className="pricing-feature">{check} All banks — browse free</li>
+              <li className="pricing-feature">{check} Every open role at all 20 banks</li>
+              <li className="pricing-feature">{check} 5 text or email alerts</li>
+              <li className="pricing-feature">{check} Save jobs and track applications</li>
               <li className="pricing-feature">{check} Search &amp; filter by location, type</li>
               <li className="pricing-feature pricing-feature-muted">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 Recent postings feed
               </li>
-              <li className="pricing-feature">{check} 5 free text or email alerts (free account)</li>
-              <li className="pricing-feature">{check} Save &amp; bookmark jobs (free account)</li>
             </ul>
-            <Link href="/" style={{ textDecoration: "none", display: "block" }}>
-              <button className="pricing-card-cta pricing-cta-outline" style={{ width: "100%" }}>
-                Browse Free
-              </button>
+            <Link href="/start" className="pricing-card-cta pricing-cta-outline" style={{ width: "100%", display: "block", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+              Get my free alerts
             </Link>
           </div>
 
@@ -341,14 +347,14 @@ export default function PricingPage() {
               {isSignedIn ? (
                 <button
                   className="pricing-card-cta pricing-cta-primary"
-                  onClick={handleSubscribe}
+                  onClick={() => handleSubscribe()}
                   disabled={checkoutLoading !== null}
                   style={{ width: "100%" }}
                 >
                   {checkoutLoading ? "Redirecting..." : `Get Pro · $${PLANS[billing].price}/${PLANS[billing].period}`}
                 </button>
               ) : (
-                <SignUpButton mode="modal">
+                <SignUpButton mode="modal" forceRedirectUrl={`/pricing?checkout=${billing}`} signInForceRedirectUrl={`/pricing?checkout=${billing}`}>
                   <button className="pricing-card-cta pricing-cta-primary" style={{ width: "100%" }}>
                     {`Get Pro · $${PLANS[billing].price}/${PLANS[billing].period}`}
                   </button>

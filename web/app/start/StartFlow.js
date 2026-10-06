@@ -5,6 +5,7 @@ import Link from "next/link";
 import posthog from "posthog-js";
 import { useUser, SignUpButton, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
+import { decodeEntities } from "@/lib/text";
 import { useTrackSignup } from "@/lib/use-track-signup";
 
 const BANK_COUNT = Object.keys(BANKS).length;
@@ -130,7 +131,7 @@ export default function StartFlow() {
   useEffect(() => {
     fetch("/api/jobs-live")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setJobs((data.jobs || []).map((j) => ({ ...j, location: cleanLocation(j.location) }))))
+      .then((data) => setJobs((data.jobs || []).map((j) => ({ ...j, title: decodeEntities(j.title), location: cleanLocation(j.location) }))))
       .catch(() => setJobs([]));
   }, []);
 

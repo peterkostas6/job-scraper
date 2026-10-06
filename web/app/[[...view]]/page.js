@@ -5,11 +5,12 @@ import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
+import { decodeEntities } from "@/lib/text";
 import { track } from "@/lib/track";
+import posthog from "posthog-js";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
-import HowItWorksDemo from "./HowItWorksDemo";
 
 const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
 
@@ -147,21 +148,6 @@ const COMPARE_ROWS = [
   ["Your applications", "Scattered across tabs and spreadsheets", "Saved jobs, all in one place"],
 ];
 
-const PREVIEW_JOBS = [
-  { title: "Investment Banking Analyst", bank: "Goldman Sachs", location: "New York, NY", time: "1h ago", isNew: true, type: "Analyst" },
-  { title: "Summer Analyst Program 2026", bank: "JPMorgan Chase", location: "New York, NY", time: "2h ago", isNew: true, type: "Internship" },
-  { title: "Credit Analyst, Fixed Income", bank: "Morgan Stanley", location: "Chicago, IL", time: "4h ago", isNew: false, type: "Analyst" },
-  { title: "M&A Analyst", bank: "Barclays", location: "New York, NY", time: "7h ago", isNew: false, type: "Analyst" },
-  { title: "Risk Analyst", bank: "Bank of America", location: "Charlotte, NC", time: "11h ago", isNew: false, type: "Analyst" },
-];
-
-const HERO_NOTIFS = [
-  { bank: "Goldman Sachs", title: "Investment Banking Analyst 2026" },
-  { bank: "JPMorgan Chase", title: "Summer Analyst Program 2026" },
-  { bank: "Morgan Stanley", title: "M&A Analyst, Fixed Income" },
-  { bank: "Barclays", title: "Investment Banking Analyst" },
-];
-
 const TESTIMONIALS = [
   {
     quote: "My school doesn’t get bulge-bracket recruiters on campus, so I used to hear about openings secondhand, usually too late. Now I see the same postings as everyone else, the same day they go up.",
@@ -195,231 +181,196 @@ const TESTIMONIALS = [
   },
 ];
 
-function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
-  const [animStep, setAnimStep] = useState(0);
-  const [phoneText, setPhoneText] = useState('');
+const HERO_NOTIFS = [
+  { bank: "Goldman Sachs", title: "2027 Investment Banking Summer Analyst" },
+  { bank: "JPMorgan Chase", title: "2026 Markets Analyst, New York" },
+  { bank: "Morgan Stanley", title: "M&A Analyst, New York" },
+  { bank: "Jefferies", title: "Equity Research Summer Analyst" },
+  { bank: "Barclays", title: "Investment Banking Analyst" },
+];
 
-  // Steps 0-2: scroll through job rows; step 3+: click Alerts and set up notifications
-  const DELAYS = [1000, 900, 900, 900, 800, 700, 500, 700, 350, 600, 1300, 700, 350, 700, 350, 700, 1600, 900, 2200];
+// The three quotes that do the most work, in the order a skeptical visitor needs them.
+const HOME_QUOTES = [TESTIMONIALS[5], TESTIMONIALS[3], TESTIMONIALS[1]];
 
+const HOME_FAQ = [
+  ["Is it really free?", `Yes. A free account gets you every open role at all ${BANK_COUNT} banks, saved jobs, and your first 5 text or email alerts. No credit card. Pro unlocks unlimited alerts and the feed of everything posted in the last 48 hours.`],
+  ["How fast are the alerts?", "We check every bank's career site every 5 minutes, around the clock. When a new role matches what you picked, your text or email goes out right away."],
+  ["Will I get spammed?", "No. You only hear about roles at the banks, job types and cities you choose. Change them or turn alerts off whenever you like."],
+  ["Where do the jobs come from?", "Straight from each bank's own careers site, not LinkedIn or Indeed, with a direct link to apply."],
+];
+
+function capture(event, props) {
+  try { posthog.capture(event, props); } catch {}
+}
+
+// Banks re-date old postings and some only give a date, so use whichever is newer and
+// fall back to a day label when all we have is a date.
+function feedAge(job) {
+  const posted = Date.parse(job.postedDate) || 0;
+  if (posted >= job.detectedAt && job.postedDate?.endsWith("T00:00:00.000Z")) {
+    const days = Math.floor((Date.now() - posted) / 86400000);
+    return days <= 0 ? "Today" : days === 1 ? "Yesterday" : `${days}d ago`;
+  }
+  return timeAgo(Math.max(posted, job.detectedAt));
+}
+
+function timeAgo(ms) {
+  const mins = Math.max(1, Math.round((Date.now() - ms) / 60000));
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
+}
+
+// The homepage feed shows the newest roles people come here for (banking, markets, research),
+// one per title, so it reads as "the jobs I want" rather than whatever posted last.
+const HOME_FEED_CATEGORIES = new Set(["Investment Banking", "Sales & Trading", "Research", "Quantitative", "Corporate Banking"]);
+function homeFeed(jobs) {
+  const seen = new Set();
+  const picked = [];
+  for (const job of jobs || []) {
+    if (!HOME_FEED_CATEGORIES.has(job.category) || /associate|\bvp\b|vice president|director/i.test(job.title)) continue;
+    if (seen.has(job.title)) continue;
+    seen.add(job.title);
+    picked.push(job);
+    if (picked.length === 6) break;
+  }
+  return picked;
+}
+
+// Every sign-up button on the homepage goes to the /start quiz: a few taps of
+// commitment and a list of real matches before we ask for an account.
+function StartCta({ where, isSignedIn, className = "h-cta" }) {
+  return (
+    <Link href="/start" className={className} onClick={() => capture("home_cta_clicked", { where })}>
+      {isSignedIn ? "Set up my alerts" : "Get my free alerts"}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </Link>
+  );
+}
+
+function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
+  const liveCount = liveJobs?.length || 0;
+  const latest = homeFeed(liveJobs);
+
+  // Hero phone: a new text lands on top every few seconds and pushes the others down.
+  const [notifStep, setNotifStep] = useState(0);
   useEffect(() => {
-    const timeouts = [];
-    const runCycle = () => {
-      setAnimStep(0);
-      setPhoneText('');
-      let t = 0;
-      DELAYS.forEach((d, i) => {
-        t += d;
-        const id = setTimeout(() => setAnimStep(i + 1), t);
-        timeouts.push(id);
-      });
-    };
-    runCycle();
-    const total = DELAYS.reduce((a, b) => a + b, 0);
-    const interval = setInterval(runCycle, total + 300);
-    return () => { timeouts.forEach(clearTimeout); clearInterval(interval); };
-  }, []);
-
-  const PHONE_NUM = '(212) 555-0147';
-  useEffect(() => {
-    if (animStep !== 10) return;
-    let i = 0;
-    setPhoneText('');
-    const id = setInterval(() => {
-      i++;
-      setPhoneText(PHONE_NUM.slice(0, i));
-      if (i >= PHONE_NUM.length) clearInterval(id);
-    }, 90);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => setNotifStep((s) => s + 1), 3200);
     return () => clearInterval(id);
-  }, [animStep]);
-
-  const inNotif = animStep >= 6;
-  const smsOn = animStep >= 8;
-  const phoneFocused = animStep >= 9;
-  const goldmanOn = animStep >= 12;
-  const internOn = animStep >= 14;
-  const saved = animStep >= 16;
-  const showIosNotif = animStep >= 17;
-  const clicking = [6, 8, 12, 14, 16].includes(animStep);
-
-  // Which element the cursor points at on each step. Positions are measured
-  // from the DOM so the cursor lands on the real target at any viewport width.
-  const TARGETS = [
-    'row-0', 'row-1', 'row-2', 'row-3', 'row-4',   // 0-4: hover each job row
-    'tab-alerts', 'tab-alerts',                    // 5-6: move to, click Alerts
-    'toggle-sms', 'toggle-sms',                    // 7-8: move to, click SMS toggle
-    'field-phone', 'field-phone',                  // 9-10: focus, type phone
-    'chip-goldman', 'chip-goldman',                // 11-12: move to, click Goldman
-    'radio-intern', 'radio-intern',                // 13-14: move to, click Internship
-    'btn-save', 'btn-save', 'btn-save', 'btn-save',// 15-18: move to, click Save, notif, pause
-  ];
-  const previewRef = useRef(null);
-  const [cursorXY, setCursorXY] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const measure = () => {
-      const root = previewRef.current;
-      if (!root) return;
-      const key = TARGETS[Math.min(animStep, TARGETS.length - 1)];
-      const el = root.querySelector(`[data-demo="${key}"]`);
-      if (!el) return;
-      const r = root.getBoundingClientRect();
-      const t = el.getBoundingClientRect();
-      // Rows: aim a little left of center so the arrow sits on the title.
-      const fx = key.startsWith('row-') ? 0.35 : 0.5;
-      setCursorXY({ x: t.left - r.left + t.width * fx, y: t.top - r.top + t.height * 0.55 });
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [animStep]);
-
-  const hoveredRow = animStep <= 4 ? animStep : -1;
-
-  // Stat-Led reveal: tick the hero figure from 0 to the live count over ~2.2s, then pop it.
-  const hasCount = last48hCount > 0;
-  const [shownCount, setShownCount] = useState(0);
-  const [countDone, setCountDone] = useState(false);
-  const [photoOk, setPhotoOk] = useState(true);
-  // The photo can fail before React attaches onError; catch that case on mount.
-  const photoRef = useRef(null);
-  useEffect(() => {
-    const img = photoRef.current;
-    if (img && img.complete && img.naturalWidth === 0) setPhotoOk(false);
   }, []);
+  const notifs = ["now", "4m ago", "1h ago"].map((ago, i) => {
+    const n = notifStep - i;
+    return { ...HERO_NOTIFS[((n % HERO_NOTIFS.length) + HERO_NOTIFS.length) % HERO_NOTIFS.length], ago, key: n };
+  });
 
-  // Live account count from Clerk for the member meter under the hero button.
-  const [memberCount, setMemberCount] = useState(null);
+  // Phones: a sign-up bar pinned to the bottom once the hero button scrolls away,
+  // hidden again when the closing section (which has its own button) is on screen.
+  const heroCtaRef = useRef(null);
+  const closeRef = useRef(null);
+  const [showSticky, setShowSticky] = useState(false);
   useEffect(() => {
-    fetch("/api/member-count")
-      .then((res) => res.json())
-      .then((data) => { if (typeof data.count === "number") setMemberCount(data.count); })
-      .catch(() => {});
+    let heroPast = false;
+    let closeIn = false;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.target === heroCtaRef.current) heroPast = !e.isIntersecting && e.boundingClientRect.top < 0;
+        else closeIn = e.isIntersecting || e.boundingClientRect.top < 0;
+      }
+      setShowSticky(heroPast && !closeIn);
+    });
+    [heroCtaRef.current, closeRef.current].forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
   }, []);
-
-  // Hero notification banner: loops through mock "you just got a text" alerts
-  const [heroNotifIndex, setHeroNotifIndex] = useState(0);
-  const [heroNotifVisible, setHeroNotifVisible] = useState(false);
-  useEffect(() => {
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let alive = true;
-    let timer;
-    if (reduceMotion) {
-      timer = setTimeout(() => { if (alive) setHeroNotifVisible(true); }, 900);
-      return () => { alive = false; clearTimeout(timer); };
-    }
-    const HOLD_MS = 4200;
-    const GAP_MS = 1400;
-    const cycle = () => {
-      if (!alive) return;
-      setHeroNotifVisible(true);
-      timer = setTimeout(() => {
-        if (!alive) return;
-        setHeroNotifVisible(false);
-        timer = setTimeout(() => {
-          if (!alive) return;
-          setHeroNotifIndex((i) => (i + 1) % HERO_NOTIFS.length);
-          cycle();
-        }, GAP_MS);
-      }, HOLD_MS);
-    };
-    timer = setTimeout(cycle, 1000);
-    return () => { alive = false; clearTimeout(timer); };
-  }, []);
-  const heroNotif = HERO_NOTIFS[heroNotifIndex];
-  useEffect(() => {
-    if (!hasCount) return;
-    setCountDone(false);
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { setShownCount(last48hCount); setCountDone(true); return; }
-    const start = performance.now();
-    let raf;
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / 2200);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setShownCount(Math.round(last48hCount * eased));
-      if (t < 1) raf = requestAnimationFrame(tick);
-      else setCountDone(true);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [last48hCount, hasCount]);
 
   return (
     <>
-    {/* HERO · photographic fold, marquee statement. Photo slot: public/hero.jpg (see caption below). */}
-    <section className="hero-photo" data-photo={photoOk ? "on" : "off"}>
-      <div className="hero-photo-bg" aria-hidden="true">
-        {/* TODO: Replace with a real photograph — a Wall Street street at dawn works. Target 2400×1400, under 400 KB. */}
-        <img
-          ref={photoRef}
-          src="/hero.jpg"
-          alt=""
-          className="hero-photo-img"
-          fetchpriority="high"
-          decoding="async"
-          onError={() => setPhotoOk(false)}
-        />
-        <span className="hero-photo-grain" />
-      </div>
-      <div className="hero-photo-copy">
-        <h1 className="hero-photo-title">
-          Get <mark className="hero-mark">a text</mark> the instant a bank posts a job.
-        </h1>
-        {/* Everyone goes straight to the jobs; visitors without an account get the sign-up
-            prompt after browsing for a bit (see the account-prompt timer in the main page). */}
-        <button className="hero-photo-cta" onClick={onBrowse}>Browse jobs</button>
-        {/* Hidden (but holding its space) until the count arrives. */}
-        <div className={`hero-spots${memberCount === null ? " hero-photo-link-pending" : ""}`}>
-          <div className="hero-spots-bar" aria-hidden="true">
-            <span style={{ width: `${Math.max(2, Math.min(100, ((memberCount || 0) / MEMBER_CAP) * 100))}%` }} />
-          </div>
-          <p className="hero-spots-text">
-            Accepting {MEMBER_CAP.toLocaleString()} members &middot; <strong className="tnum">{(memberCount || 0).toLocaleString()}</strong> joined
+    {/* HERO · the promise, one button, and the product doing its job on a phone */}
+    <section className="h-hero">
+      <div className="h-hero-inner">
+        <div className="h-hero-copy">
+          <p className="h-live"><span className="h-live-dot" aria-hidden="true" />Checking {BANK_COUNT} banks every 5 minutes</p>
+          <h1 className="h-title">Get a text the moment a bank posts a job.</h1>
+          <p className="h-sub">
+            Analyst and internship roles at {BANK_COUNT} banks, texted to you minutes after they go live.
+            Apply before everyone else.
           </p>
-        </div>
-        <p className="hero-photo-links">
-          {/* Hidden (but holding its space) until the count arrives, so the line never swaps text. */}
-          <button className={`hero-photo-link tnum${last48hCount === null ? " hero-photo-link-pending" : ""}`} onClick={onRecent}>
-            <span className={`count-pop${countDone ? " count-pop-done" : ""}`}>{shownCount}</span> new {last48hCount === 1 ? "role" : "roles"} in the last 48 hours
-          </button>
-          <span className="hero-photo-dot" aria-hidden="true">&middot;</span>
-          <Link href="/pricing" className="hero-photo-link">See pricing</Link>
-        </p>
-      </div>
-
-      {/* Animated "you just got a text" banner — styled as an iPhone Messages notification */}
-      <div className={`hero-notif${heroNotifVisible ? ' hero-notif-visible' : ''}`} aria-hidden="true">
-        <div className="hero-notif-icon">
-          <svg width="26" height="26" viewBox="0 0 64 64" fill="white" aria-hidden="true">
-            <path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/>
-          </svg>
-        </div>
-        <div className="hero-notif-body">
-          <div className="hero-notif-header">
-            <span className="hero-notif-app">Messages</span>
-            <span className="hero-notif-time">now</span>
+          <div className="h-cta-row" ref={heroCtaRef}>
+            <StartCta where="hero" isSignedIn={isSignedIn} />
+            <button className="h-hero-browse" onClick={onBrowse}>
+              Browse {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles
+            </button>
           </div>
-          <div className="hero-notif-title">Pete&rsquo;s Postings</div>
-          <div className="hero-notif-text">
-            {heroNotif.bank} just posted &mdash; {heroNotif.title}. Tap to apply &rarr;
+          <p className="h-fine">Free account &middot; No credit card &middot; Your first 5 alerts are on us</p>
+        </div>
+
+        <div className="h-phone" aria-hidden="true">
+          <div className="h-phone-screen">
+            <div className="h-phone-clock">9:41</div>
+            <div className="h-notifs">
+              {notifs.map((n) => (
+                <div className="h-notif" key={n.key}>
+                  <span className="h-notif-icon">
+                    <svg width="18" height="18" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
+                  </span>
+                  <div className="h-notif-body">
+                    <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>{n.ago}</span></div>
+                    <p>{n.bank} just posted: {n.title}. Apply &rarr;</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </section>
 
+    {/* BANKS · who we cover, before anyone has to ask */}
+    <section className="h-banks" aria-label="Banks we cover">
+      <p className="h-banks-label">Pulled straight from the career sites of</p>
+      <ul className="h-banks-list">
+        {Object.values(BANKS).map((b) => <li key={b.name}>{b.name}</li>)}
+      </ul>
+    </section>
+
     <div className="homepage">
 
-      <HowItWorksDemo />
+      {/* LIVE FEED · real postings, so the value is proven, not described */}
+      {latest.length > 0 && (
+        <section className="h-feed">
+          <p className="h-eyebrow"><span className="h-live-dot" aria-hidden="true" />Live right now</p>
+          <h2 className="h-h2"><span className="tnum">{liveCount.toLocaleString()}</span> open analyst and internship roles.</h2>
+          {last48hCount > 0 && (
+            <p className="h-lead"><strong className="tnum">{last48hCount}</strong> went up in the last 48 hours. Alerts would have told you about each one.</p>
+          )}
+          <ol className="h-feed-list">
+            {latest.map((job) => (
+              <li key={job.link}>
+                <button className="h-feed-row" onClick={onBrowse}>
+                  <span className="h-feed-main">
+                    <span className="h-feed-title">{job.title}</span>
+                    <span className="h-feed-meta">{job.bank} &middot; {job.location}</span>
+                  </span>
+                  <span className="h-feed-time tnum">{feedAge(job)}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+          <div className="h-feed-foot">
+            <StartCta where="feed" isSignedIn={isSignedIn} />
+            <button className="h-textlink" onClick={onBrowse}>See all {liveCount.toLocaleString()} roles &rarr;</button>
+          </div>
+        </section>
+      )}
 
-      {/* WHAT YOU GET + DEMO · side by side on desktop */}
-      <div className="spec-demo">
-      <section className="spec">
-        <h2 className="spec-title">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
-        <p className="spec-intro">
-          Banking role postings can surprise you at random hours across dozens of banks, then get pulled
-          again within days. If you&rsquo;re checking one site at a time, you&rsquo;re already behind.
-        </p>
+      {/* WHY · the cost of doing it yourself */}
+      <section className="h-why">
+        <div className="h-why-copy">
+          <p className="h-eyebrow">Why it matters</p>
+          <h2 className="h-h2">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
+          <p className="h-lead">Roles go up at random hours and get pulled within days. Checking one site at a time, you&rsquo;re already behind.</p>
+        </div>
         <table className="compare">
           <thead>
             <tr>
@@ -443,155 +394,156 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
         </table>
       </section>
 
-      {/* DEMO · captioned figure, no fake chrome */}
-      <figure className="app-demo">
-        <div className="app-preview" ref={previewRef}>
-          <div className="app-preview-tabs">
-            <span className={`app-preview-tab${!inNotif ? ' app-preview-tab-active' : ''}`}>
-              Recent
-            </span>
-            <span className="app-preview-tab">Browse</span>
-            <span className={`app-preview-tab${inNotif ? ' app-preview-tab-active' : ''}`} data-demo="tab-alerts">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              Alerts
-            </span>
-          </div>
+      {/* HOW IT WORKS · three steps, then the product video */}
+      <section className="h-steps">
+        <p className="h-eyebrow">How it works</p>
+        <h2 className="h-h2">Set it up once. Hear about every match.</h2>
+        <ol className="h-steps-list">
+          <li>
+            <span className="h-step-n">1</span>
+            <h3>Pick what you want</h3>
+            <p>Internship or full-time, plus the banks and cities you want.</p>
+          </li>
+          <li>
+            <span className="h-step-n">2</span>
+            <h3>We watch all {BANK_COUNT} banks</h3>
+            <p>Every career site, every 5 minutes, around the clock.</p>
+          </li>
+          <li>
+            <span className="h-step-n">3</span>
+            <h3>You get a text and apply</h3>
+            <p>The role, the bank and a direct link to apply.</p>
+          </li>
+        </ol>
+      </section>
 
-          <div className="app-preview-body">
-            {!inNotif ? (
-              PREVIEW_JOBS.map((job, i) => (
-                <div className={`app-preview-row${hoveredRow === i ? ' app-preview-row-hover' : ''}`} key={i}>
-                  <div className="app-preview-row-left">
-                    {job.isNew && <span className="app-preview-new">New</span>}
-                    <div>
-                      <div className="app-preview-job-title" data-demo={`row-${i}`}>{job.title}</div>
-                      <div className="app-preview-job-meta">{job.bank} &middot; {job.location}</div>
-                    </div>
-                  </div>
-                  <div className="app-preview-row-right">
-                    <span className={`app-preview-type ${job.type === "Internship" ? "app-preview-type-intern" : "app-preview-type-analyst"}`}>{job.type}</span>
-                    <span className="app-preview-time">{job.time}</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="demo-notif-panel">
-                <div className="demo-notif-row">
-                  <div>
-                    <div className="demo-notif-label">SMS alerts</div>
-                    <div className="demo-notif-sublabel">Instant text messages</div>
-                  </div>
-                  <div className={`demo-toggle${smsOn ? ' demo-toggle-on' : ''}`} data-demo="toggle-sms">
-                    <div className="demo-toggle-knob"></div>
-                  </div>
-                </div>
-
-                <div className="demo-phone-row">
-                  <div className={`demo-phone-field${phoneFocused ? ' focused' : ''}`} data-demo="field-phone">
-                    <span>{phoneText}</span>
-                    {phoneFocused && animStep <= 10 && <span className="demo-caret">|</span>}
-                  </div>
-                </div>
-
-                <div className="demo-section-label">Banks</div>
-                <div className="demo-chips-row">
-                  <span className={`demo-chip${goldmanOn ? ' demo-chip-on' : ''}`} data-demo="chip-goldman">Goldman</span>
-                  <span className="demo-chip">JPMorgan</span>
-                  <span className="demo-chip">Morgan Stanley</span>
-                  <span className="demo-chip">BofA</span>
-                </div>
-
-                <div className="demo-section-label">Job Type</div>
-                <div className="demo-radios-row">
-                  <span className={`demo-radio-option${!internOn ? ' demo-radio-on' : ''}`}>All</span>
-                  <span className="demo-radio-option">Analyst</span>
-                  <span className={`demo-radio-option${internOn ? ' demo-radio-on' : ''}`} data-demo="radio-intern">Internship</span>
-                </div>
-
-                <div className="demo-save-row">
-                  <button className={`demo-save-btn${saved ? ' demo-save-btn-saved' : ''}`} data-demo="btn-save">
-                    {saved ? 'Saved \u2713' : 'Save settings'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* iOS-style notification banner */}
-          <div className={`demo-ios-notif${showIosNotif ? ' demo-ios-notif-visible' : ''}`}>
-            <div className="demo-ios-notif-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-            </div>
-            <div className="demo-ios-notif-body">
-              <div className="demo-ios-notif-header">
-                <span className="demo-ios-notif-app">Pete&rsquo;s Postings</span>
-                <span className="demo-ios-notif-time">now</span>
-              </div>
-              <div className="demo-ios-notif-text">Goldman Sachs · Investment Banking Analyst 2026. Tap to apply →</div>
-            </div>
-          </div>
-
-          <div
-            className={`demo-cursor${clicking ? ' demo-cursor-clicking' : ''}`}
-            style={{ transform: `translate(${cursorXY.x}px, ${cursorXY.y}px)` }}
-            aria-hidden="true"
-          >
-            <span className="demo-cursor-ripple" />
-            <svg className="demo-cursor-arrow" width="20" height="24" viewBox="0 0 20 24" fill="none">
-              <path d="M3 2.2v16.3l4.3-3.9 2.9 6.6 3-1.3-2.9-6.5h6.1z"
-                fill="#fff" stroke="var(--navy)" strokeWidth="1.6" strokeLinejoin="round"/>
-            </svg>
-          </div>
-
+      {/* PROOF · three readable quotes */}
+      <section className="h-proof">
+        <h2 className="h-h2">Built for students without a pipeline.</h2>
+        <div className="h-quotes">
+          {HOME_QUOTES.map((t) => (
+            <figure className="h-quote" key={t.name}>
+              <blockquote>&ldquo;{t.quote}&rdquo;</blockquote>
+              <figcaption><strong>{t.name}</strong>{t.role}</figcaption>
+            </figure>
+          ))}
         </div>
-        <figcaption className="app-demo-caption">Browse the feed, then set alerts for the banks you follow.</figcaption>
-      </figure>
-      </div>
+      </section>
 
-      {/* PROOF · two-row auto-scrolling testimonial marquee */}
-      <section className="proof-marquee">
-        {[TESTIMONIALS.slice(0, 3), TESTIMONIALS.slice(3, 6)].map((row, rowIndex) => (
-          <div className={`marquee-row${rowIndex === 1 ? " marquee-row-reverse" : ""}`} key={rowIndex}>
-            <div className="marquee-track">
-              {row.concat(row).map((t, i) => (
-                <div className="testimonial-card" key={`${t.name}-${i}`}>
-                  <blockquote className="testimonial-quote">&ldquo;{t.quote}&rdquo;</blockquote>
-                  <div className="testimonial-attr">
-                    <span className="testimonial-avatar">{t.name.split(" ").map((w) => w[0]).join("")}</span>
-                    <span>
-                      <strong>{t.name}</strong>
-                      <br />
-                      {t.role}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* PRICING · answer "what does it cost" before it becomes a reason to leave */}
+      <section className="h-plans">
+        <div className="h-plans-copy">
+          <p className="h-eyebrow">Pricing</p>
+          <h2 className="h-h2">Start free. Upgrade when recruiting heats up.</h2>
+        </div>
+        <div className="h-plan">
+          <p className="h-plan-name">Free</p>
+          <p className="h-plan-price">$0</p>
+          <ul>
+            <li>Every open role at all {BANK_COUNT} banks</li>
+            <li>Your first 5 text or email alerts</li>
+            <li>Save jobs and track applications</li>
+          </ul>
+          <StartCta where="pricing" isSignedIn={isSignedIn} />
+        </div>
+        <div className="h-plan h-plan-pro">
+          <p className="h-plan-name">Pro</p>
+          <p className="h-plan-price">${PLANS.monthly.price}<span>/mo</span></p>
+          <p className="h-plan-note">Founding price for the first {MEMBER_CAP.toLocaleString()} members, then $19.99</p>
+          <ul>
+            <li>Unlimited text and email alerts</li>
+            <li>Everything posted in the last 48 hours</li>
+            <li>Cancel anytime</li>
+          </ul>
+          <Link href="/pricing" className="h-textlink" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>See Pro plans &rarr;</Link>
+        </div>
+      </section>
+
+      {/* FAQ · the objections, answered */}
+      <section className="h-faq">
+        <h2 className="h-h2">Questions</h2>
+        {HOME_FAQ.map(([q, a]) => (
+          <details key={q}>
+            <summary>{q}</summary>
+            <p>{a}</p>
+          </details>
         ))}
       </section>
 
-      {/* CLOSE · one button */}
-      <section className="close-cta">
-        <h2 className="close-title">Get notified with a text, instantly</h2>
-        <p className="close-desc">Stop refreshing job boards.</p>
-        <SignUpButton mode="modal">
-          <button className="hero-cta-primary">Get free access</button>
-        </SignUpButton>
-        <p className="close-fine">
-          No credit card required &middot; Free account in 30 seconds &middot; <Link href="/pricing" className="text-link">See pricing</Link>
-        </p>
-      </section>
+    </div>
 
+    {/* CLOSE · one last push */}
+    <section className="h-close" ref={closeRef}>
+      <h2 className="h-close-title">The next posting could go up tonight.</h2>
+      <p className="h-close-sub">Set up alerts in a minute. Hear about it first.</p>
+      <StartCta where="close" isSignedIn={isSignedIn} />
+      <p className="h-fine">Free account &middot; No credit card</p>
+    </section>
+
+    <div className={`h-sticky${showSticky ? " h-sticky-on" : ""}`}>
+      <StartCta where="sticky" isSignedIn={isSignedIn} className="h-cta h-cta-block" />
     </div>
     </>
   );
 }
 
+
+// ---- SIGN-UP GATE ----
+// A sentence of context before the Clerk form, so signing up never comes out of nowhere.
+// After signing up, a visitor who clicked a job goes straight to it.
+const SIGNUP_GATES = {
+  job: {
+    title: "Create a free account to open this job",
+    desc: "It takes 30 seconds. You also get 5 free alerts for new roles like this one.",
+    cta: "Continue to the job",
+  },
+  save: {
+    title: "Save jobs with a free account",
+    desc: `Keep track of what you\u2019ve saved and applied to across all ${BANK_COUNT} banks.`,
+    cta: "Create free account",
+  },
+  request: {
+    title: "Request a bank with a free account",
+    desc: "Tell us which bank to add next.",
+    cta: "Create free account",
+  },
+};
+
+function SignUpGate({ gate, onClose }) {
+  const clerk = useClerk();
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const redirect = gate.redirect ? { forceRedirectUrl: gate.redirect, signInForceRedirectUrl: gate.redirect } : {};
+
+  return (
+    <div className="modal-overlay" data-state="open" onClick={onClose}>
+      <div className="modal-card gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <h2 className="gate-title" id="gate-title">{gate.title}</h2>
+        {gate.job && (
+          <p className="gate-job">
+            <strong>{gate.job.title}</strong>
+            <span>{gate.job.bank || BANKS[gate.job.bankKey]?.name}{gate.job.location ? ` \u00b7 ${gate.job.location}` : ""}</span>
+          </p>
+        )}
+        <p className="gate-desc">{gate.desc}</p>
+        <button className="h-cta gate-cta" onClick={() => { onClose(); clerk.openSignUp(redirect); }}>{gate.cta}</button>
+        <p className="gate-fine">
+          Free &middot; No credit card &middot; Have an account?{" "}
+          <button className="gate-link" onClick={() => { onClose(); clerk.openSignIn(redirect); }}>Sign in</button>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ---- PAYWALL ----
-function PaywallOverlay({ isSignedIn }) {
+function PaywallOverlay({ isSignedIn, newCount }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
@@ -621,7 +573,8 @@ function PaywallOverlay({ isSignedIn }) {
         {loading && selectedPlan === plan ? "Redirecting..." : label}
       </button>
     ) : (
-      <SignUpButton mode="modal">
+      // After creating an account, carry on to checkout for the plan they picked.
+      <SignUpButton mode="modal" forceRedirectUrl={`/pricing?checkout=${plan}`} signInForceRedirectUrl={`/pricing?checkout=${plan}`}>
         <button className={`paywall-plan-cta${primary ? " paywall-plan-cta-primary" : ""}`}>
           {label}
         </button>
@@ -632,9 +585,11 @@ function PaywallOverlay({ isSignedIn }) {
     <div className="paywall">
       <div className="paywall-header">
         <div className="paywall-badge">Pro</div>
-        <h2 className="paywall-title">Unlock Pro Features</h2>
+        <h2 className="paywall-title">
+          {newCount > 0 ? `${newCount} new ${newCount === 1 ? "role" : "roles"} in the last 48 hours` : "Unlock Pro Features"}
+        </h2>
         <p className="paywall-desc">
-          Get SMS &amp; email alerts the moment new positions post, and save jobs across all banks.
+          Pro shows you every role posted in the last 48 hours and texts you the moment new ones go live.
         </p>
       </div>
 
@@ -674,6 +629,12 @@ function PaywallOverlay({ isSignedIn }) {
       </div>
 
       {!isSignedIn && (
+        <p className="paywall-free">
+          Not ready to pay? <Link href="/start" className="paywall-link">Start with 5 free alerts &rarr;</Link>
+        </p>
+      )}
+
+      {!isSignedIn && (
         <p className="paywall-signin">
           Already subscribed?{" "}
           <SignInButton mode="modal">
@@ -692,9 +653,9 @@ function PaywallOverlay({ isSignedIn }) {
 // every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
 const ABOUT_FAQ = [
   ["Is Pete's Postings free?",
-    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free, with no account needed. Pro adds instant text and email alerts, the 48-hour recent postings feed, saved jobs, and company requests. Pro is available weekly, monthly or yearly; see the pricing page for current prices.`],
+    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs and your first 5 text or email alerts, with no credit card. Pro adds unlimited alerts and the 48-hour recent postings feed, weekly, monthly or yearly; see the pricing page for current prices.`],
   ["How fast will I hear about a new posting?",
-    "Instantly. As soon as a bank posts a role that matches your alert settings, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
+    "Within minutes. We check every bank every 5 minutes, and as soon as a role that matches your alert settings goes live, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
   ["Which banks do you track?",
     `${BANK_COUNT} banks, including JPMorgan Chase, Goldman Sachs, Morgan Stanley, Bank of America, Citi, Deutsche Bank, Barclays, Wells Fargo, Jefferies, Blackstone, and BlackRock. The full list is above.`],
   ["Are the listings real and up to date?",
@@ -779,14 +740,14 @@ function AboutPage({ onBrowse }) {
           </div>
         </div>
         <p className="about-text" style={{ marginTop: "1rem" }}>
-          Browsing is free with no account. Text and email alerts, recent postings, and saved jobs are part of <Link href="/pricing" className="text-link">Pro</Link>.
+          Browsing is free. A free account adds saved jobs and 5 text or email alerts. Unlimited alerts and recent postings are part of <Link href="/pricing" className="text-link">Pro</Link>.
         </p>
       </section>
 
       <section className="about-section">
         <h2 className="about-heading">Why speed matters</h2>
         <p className="about-text">
-          Most applicants find out about new postings days late, through word of mouth or someone else&rsquo;s LinkedIn post. Banks review applications as they come in, and many roles fill quickly, so applying in the first hours puts you ahead of most of the pool. <strong>Pro members hear about new roles the instant they post.</strong>
+          Most applicants find out about new postings days late, through word of mouth or someone else&rsquo;s LinkedIn post. Banks review applications as they come in, and many roles fill quickly, so applying in the first hours puts you ahead of most of the pool. <strong>With alerts on, you hear about new roles minutes after they post.</strong>
         </p>
       </section>
 
@@ -822,10 +783,10 @@ function AboutPage({ onBrowse }) {
       </section>
 
       <section className="about-section about-section-last" style={{ textAlign: "center" }}>
-        <h2 className="about-heading">Start with the jobs that are open right now</h2>
+        <h2 className="about-heading">Hear about the next posting first</h2>
         <div className="about-ctas">
-          <button className="hero-cta-primary" onClick={onBrowse}>Browse jobs</button>
-          <Link href="/pricing" className="about-cta-secondary">See Pro plans</Link>
+          <Link href="/start" className="h-cta" onClick={() => capture("about_cta_clicked")}>Get my free alerts</Link>
+          <button className="about-cta-secondary" onClick={onBrowse}>Browse jobs</button>
         </div>
       </section>
     </div>
@@ -935,7 +896,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
               </p>
             </div>
           </div>
-          <PaywallOverlay isSignedIn={isSignedIn} />
+          <PaywallOverlay isSignedIn={isSignedIn} newCount={last48hCount} />
           </>
         ) : (
           <>
@@ -1023,7 +984,7 @@ export default function Home() {
   const router = useRouter();
   const isSubscribed = user?.publicMetadata?.subscribed === true;
 
-  const [activeBank, setActiveBank] = useState("jpmc");
+  const [activeBank, setActiveBank] = useState("all");
   // Keep ?bank= in sync on /jobs so a bank view can be linked to.
   useEffect(() => {
     if (typeof window === "undefined" || window.location.pathname !== "/jobs") return;
@@ -1054,6 +1015,12 @@ export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [availableCategories, setAvailableCategories] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
+  // Signed-out visitors who try something that needs an account see why first (see SignUpGate).
+  const [gate, setGate] = useState(null);
+  function askToSignUp(kind, job) {
+    capture("signup_gate_shown", { kind });
+    setGate({ ...SIGNUP_GATES[kind], job, redirect: job ? trackedLink(job.link) : undefined });
+  }
   const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", smsConsent: false, location: "" });
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
@@ -1193,7 +1160,7 @@ export default function Home() {
         return res.json();
       })
       .then((data) => {
-        const loaded = (data.jobs || []).map((job) => ({ ...job, location: cleanLocation(job.location) }));
+        const loaded = (data.jobs || []).map((job) => ({ ...job, title: decodeEntities(job.title), location: cleanLocation(job.location) }));
         setAllJobs(loaded);
         const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
         for (const job of loaded) if (job.bankKey in counts) counts[job.bankKey]++;
@@ -1249,7 +1216,7 @@ export default function Home() {
   function toggleBookmark(e, job) {
     e.preventDefault();
     e.stopPropagation();
-    if (!isSignedIn) { clerk.openSignUp(); return; }
+    if (!isSignedIn) { askToSignUp("save"); return; }
     const link = job.link;
     setBookmarks((prev) => {
       const next = new Set(prev);
@@ -1484,7 +1451,7 @@ export default function Home() {
       <button
         className={`sidebar-item${viewingSaved && !viewNotifications ? " sidebar-item-active" : ""}`}
         onClick={() => {
-          if (!isSignedIn) { clerk.openSignUp(); return; }
+          if (!isSignedIn) { askToSignUp("save"); return; }
           setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
         }}
       >
@@ -1499,7 +1466,7 @@ export default function Home() {
       <button
         className={`sidebar-item${viewNotifications ? " sidebar-item-active" : ""}`}
         onClick={() => {
-          if (!isSignedIn) { clerk.openSignUp(); return; }
+          if (!isSignedIn) { router.push("/start"); return; }
           setViewNotifications(true); setViewingSaved(true);
         }}
       >
@@ -1514,7 +1481,7 @@ export default function Home() {
       </button>
       <button
         className="sidebar-item"
-        onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+        onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
       >
         <span className="sidebar-saved-label">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1590,9 +1557,7 @@ export default function Home() {
                 <SignInButton mode="modal">
                   <button className="nav-signin">Sign in</button>
                 </SignInButton>
-                <SignUpButton mode="modal">
-                  <button className="nav-cta">Get free access</button>
-                </SignUpButton>
+                <Link href="/start" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav" })}>Get free alerts</Link>
               </>
             )}
           </div>
@@ -1613,9 +1578,9 @@ export default function Home() {
       {viewHome && !viewAbout && !viewNewPostings && (
         <HomePage
           onBrowse={() => router.push("/jobs")}
-          onRecent={() => router.push("/recent")}
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
+          liveJobs={allJobs}
         />
       )}
 
@@ -1657,7 +1622,7 @@ export default function Home() {
               <button
                 className="mobile-pro-pill"
                 onClick={() => {
-                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSignedIn) { askToSignUp("save"); return; }
                   setViewNewPostings(false); setViewingSaved(true); setViewNotifications(false); setViewHome(false);
                 }}
               >
@@ -1666,7 +1631,7 @@ export default function Home() {
               <button
                 className="mobile-pro-pill"
                 onClick={() => {
-                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSignedIn) { router.push("/start"); return; }
                   setViewNewPostings(false); setViewingSaved(true); setViewNotifications(true); setViewHome(false);
                 }}
               >
@@ -1674,7 +1639,7 @@ export default function Home() {
               </button>
               <button
                 className="mobile-pro-pill"
-                onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+                onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
               >
                 Request
               </button>
@@ -1771,7 +1736,7 @@ export default function Home() {
               <button
                 className={`mobile-pro-pill${viewingSaved && !viewNotifications ? " mobile-pro-pill-active" : ""}`}
                 onClick={() => {
-                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSignedIn) { askToSignUp("save"); return; }
                   setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
                 }}
               >
@@ -1780,7 +1745,7 @@ export default function Home() {
               <button
                 className={`mobile-pro-pill${viewNotifications ? " mobile-pro-pill-active" : ""}`}
                 onClick={() => {
-                  if (!isSignedIn) { clerk.openSignUp(); return; }
+                  if (!isSignedIn) { router.push("/start"); return; }
                   setViewingSaved(true); setViewNotifications(true);
                 }}
               >
@@ -1788,7 +1753,7 @@ export default function Home() {
               </button>
               <button
                 className="mobile-pro-pill"
-                onClick={() => { if (!isSignedIn) { clerk.openSignUp(); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+                onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
               >
                 Request
               </button>
@@ -1801,12 +1766,28 @@ export default function Home() {
           <main className="content">
             {/* Notifications view */}
             {viewNotifications && !isSignedIn && (
-              <div className="notif-panel">
-                <div className="notif-header">
-                  <h2 className="notif-title">Get 5 free job alerts</h2>
-                  <p className="notif-desc">Create a free account and we&rsquo;ll text or email you the moment a matching role goes live. Your first 5 alerts are on us.</p>
+              <div className="notif-panel alerts-intro">
+                <h2 className="alerts-intro-title">Get a text the moment a bank posts a role you want</h2>
+                <p className="alerts-intro-desc">We check all {BANK_COUNT} banks every 5 minutes. Your first 5 alerts are free.</p>
+                <div className="alerts-intro-sample" aria-hidden="true">
+                  <span className="h-notif-icon">
+                    <svg width="18" height="18" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
+                  </span>
+                  <div>
+                    <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>now</span></div>
+                    <p>Goldman Sachs just posted: 2027 Investment Banking Summer Analyst. Apply &rarr;</p>
+                  </div>
                 </div>
-                <SignUpButton mode="modal"><button className="notif-save">Create free account</button></SignUpButton>
+                <ol className="alerts-intro-steps">
+                  <li><strong>Answer 4 quick questions</strong> about the roles, banks and cities you want</li>
+                  <li><strong>See the open roles</strong> that already match</li>
+                  <li><strong>Choose text, email or both</strong> and you&rsquo;re set</li>
+                </ol>
+                <Link href="/start" className="h-cta" onClick={() => capture("alerts_tab_cta_clicked")}>
+                  Set up my free alerts
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </Link>
+                <p className="h-fine">Takes about a minute &middot; No credit card</p>
               </div>
             )}
             {viewNotifications && isSignedIn && (
@@ -2040,7 +2021,7 @@ export default function Home() {
             {/* Bank jobs view */}
             {!viewingSaved && !viewNotifications && (
               <>
-                {!isSubscribed && last48hCount > 0 && (
+                {isSignedIn && !isSubscribed && last48hCount > 0 && (
                   <div className="recent-teaser-strip">
                     <span className="recent-teaser-content">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -2053,15 +2034,16 @@ export default function Home() {
                     </button>
                   </div>
                 )}
-                {showWelcome && !isGatedBank && !isSubscribed && (
-                  <div className="welcome-banner">
+                {showWelcome && !isGatedBank && !isSignedIn && (
+                  <div className="welcome-banner alerts-callout">
                     <div>
-                      <p className="welcome-title">Welcome to Pete's Postings</p>
-                      <p className="welcome-desc">
-                        Live postings from 20 banks. Create a free account to save jobs and get 5 free text or email alerts the moment a role goes live.
-                      </p>
+                      <p className="welcome-title">Get a text when the next one posts</p>
+                      <p className="welcome-desc">Pick your banks and roles. Your first 5 alerts are free.</p>
                     </div>
-                    <button className="welcome-dismiss" onClick={dismissWelcome}>Got it</button>
+                    <div className="welcome-actions">
+                      <Link href="/start" className="alerts-callout-cta" onClick={() => capture("browse_alerts_cta_clicked")}>Get free alerts &rarr;</Link>
+                      <button className="welcome-dismiss" onClick={dismissWelcome} aria-label="Dismiss">&times;</button>
+                    </div>
                   </div>
                 )}
 
@@ -2118,7 +2100,7 @@ export default function Home() {
                       {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} {activeBank === "all" ? "across all banks" : `at ${BANKS[activeBank].name}`}
                     </span>
                     <button className={`saved-toggle ${viewingSaved ? "saved-toggle-active" : ""}`} onClick={() => {
-                      if (!isSignedIn) { clerk.openSignUp(); return; }
+                      if (!isSignedIn) { askToSignUp("save"); return; }
                       setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
                     }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill={viewingSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2169,7 +2151,7 @@ export default function Home() {
                         rel="noopener noreferrer"
                         className="job-row"
                         key={index}
-                        onClick={(e) => { if (!isSignedIn) { e.preventDefault(); clerk.openSignUp(); } }}
+                        onClick={(e) => { if (!isSignedIn) { e.preventDefault(); askToSignUp("job", job); } }}
                       >
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="job-title">{job.title}</span>
@@ -2263,6 +2245,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {gate && <SignUpGate gate={gate} onClose={() => setGate(null)} />}
 
       {showProWelcome && (
         <ProWelcomeModal

@@ -163,7 +163,7 @@ export default function PricingPage() {
   const { isSignedIn, isLoaded, user } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
-  const [billing, setBilling] = useState("monthly");
+  const [billing, setBilling] = useState("weekly");
 
   function handleSubscribe(plan = billing) {
     track("InitiateCheckout", planPrice(plan));

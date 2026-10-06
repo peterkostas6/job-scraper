@@ -124,7 +124,8 @@ export default function RootLayout({ children }) {
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
               fbq('init', '${META_PIXEL_ID}');
-              fbq('track', 'PageView');
+              // Skipped on Pete's own browsers (lib/internal.js).
+              if (!(function(){try{return /[?&]internal=on\\b/.test(location.search)||localStorage.getItem('pp-internal')==='1'}catch(e){return false}})()) fbq('track', 'PageView');
             `}
           </Script>
           {/* Reddit Pixel base code (first page visit; later ones come from providers.js). */}
@@ -132,7 +133,7 @@ export default function RootLayout({ children }) {
             {`
               !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js?pixel_id=${REDDIT_PIXEL_ID}",t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);
               rdt('init','${REDDIT_PIXEL_ID}');
-              rdt('track', 'PageVisit');
+              if (!(function(){try{return /[?&]internal=on\\b/.test(location.search)||localStorage.getItem('pp-internal')==='1'}catch(e){return false}})()) rdt('track', 'PageVisit');
             `}
           </Script>
         </head>

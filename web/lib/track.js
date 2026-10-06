@@ -3,6 +3,7 @@
 import { trackMeta } from "@/lib/meta-pixel";
 import { trackReddit } from "@/lib/reddit-pixel";
 import { capture } from "@/lib/analytics";
+import { isInternalBrowser } from "@/lib/internal";
 
 const REDDIT_EVENT = {
   PageView: "PageVisit",
@@ -21,6 +22,7 @@ const POSTHOG_EVENT = {
 
 // value is in USD. eventId lets each platform de-duplicate against server-side copies.
 export function track(event, value, eventId) {
+  if (isInternalBrowser()) return; // Pete's own browsers don't count as ad conversions
   if (POSTHOG_EVENT[event]) capture(POSTHOG_EVENT[event], value != null ? { value, currency: "USD" } : undefined);
   trackMeta(event, value != null ? { value, currency: "USD" } : undefined, eventId);
   const redditEvent = REDDIT_EVENT[event];

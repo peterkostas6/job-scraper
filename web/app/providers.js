@@ -6,10 +6,18 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { track } from "@/lib/track";
+import { isInternalBrowser } from "@/lib/internal";
 
 export function PostHogProvider({ children }) {
   useEffect(() => {
+    const internal = isInternalBrowser();
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+      // Pete's own browsers (see lib/internal.js) send nothing.
+      opt_out_capturing_by_default: internal,
+      loaded: (ph) => {
+        if (internal) ph.opt_out_capturing();
+        else if (ph.has_opted_out_capturing()) ph.opt_in_capturing();
+      },
       // Sent through our own domain (see /ingest in next.config.js) so ad blockers don't drop it.
       api_host: "/ingest",
       ui_host: "https://us.posthog.com",

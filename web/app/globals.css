@@ -119,7 +119,7 @@ nav {
   border-bottom-color: transparent;
 }
 .nav-on-dark .logo-text { color: var(--cream); }
-/* The logo is a navy PNG; over the dark hero it renders white so it stays visible. */
+/* Over a dark hero the charcoal rows would vanish, so the mark renders white. */
 .nav-on-dark .logo-icon { filter: brightness(0) invert(1); }
 .nav-on-dark .nav-link { color: var(--cream-80); }
 .nav-on-dark .nav-link:hover,
@@ -155,13 +155,13 @@ nav {
 
 .logo-icon {
   display: block;
-  height: 28px;
-  width: auto;
+  width: 24px;
+  height: 24px;
 }
 
 .logo-text {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.98rem;
+  font-weight: 650;
   color: var(--navy);
   letter-spacing: -0.2px;
   white-space: nowrap;
@@ -2985,8 +2985,8 @@ footer {
   }
 
   .logo-icon {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
   }
 
   /* ---- SIDEBAR: hidden on mobile (replaced by .mobile-top-bar) ---- */

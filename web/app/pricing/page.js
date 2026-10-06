@@ -194,7 +194,7 @@ export default function PricingPage() {
       <nav>
         <div className="nav-inner">
           <Link href="/" className="logo logo-link" style={{ textDecoration: "none" }}>
-            <img src="/logo-mark.png" alt="" className="logo-icon" width="22" height="28" />
+            <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           <div className="nav-center">

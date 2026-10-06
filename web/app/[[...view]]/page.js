@@ -1666,7 +1666,7 @@ export default function Home() {
       <nav>
         <div className="nav-inner">
           <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
-            <img src="/logo-mark.png" alt="" className="logo-icon" width="22" height="28" />
+            <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>

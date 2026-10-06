@@ -35,7 +35,7 @@ export default function AlertsLanding() {
     <div className="lp">
       <header className="lp-header">
         <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
-          <img src="/logo-mark.png" alt="" className="logo-icon" width="22" height="28" />
+          <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
           <span className="logo-text">Pete&rsquo;s Postings</span>
         </Link>
       </header>

@@ -767,36 +767,91 @@ nav {
   margin: 0 0 var(--space-md);
 }
 
-.spec-sheet { margin: 0; }
-
-.spec-row {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 7fr) minmax(0, 2fr);
-  gap: var(--space-lg);
-  padding: var(--space-md) 0;
-  border-top: 1px solid var(--border);
+/* Comparison chart · "On your own" vs Pete's Postings */
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
-.spec-row:last-child { border-bottom: 1px solid var(--border); }
 
-.spec-row dt {
-  font-size: 1rem;
+.compare th,
+.compare td {
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.compare thead th {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* table-layout: fixed takes column widths from the header row */
+.compare thead td { width: 24%; }
+.compare thead .compare-us { width: 40%; }
+
+.compare tbody th {
   font-weight: 700;
   color: var(--navy);
+  padding-left: 0;
 }
 
-.spec-row dd { margin: 0; }
+.compare td { color: var(--text-muted); }
 
-.spec-desc {
+/* The one emphasized column */
+.compare .compare-us {
+  background: var(--blue-6);
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.compare thead .compare-us {
+  color: var(--forest-blue);
+  border-radius: 10px 10px 0 0;
+}
+
+.compare tbody tr:last-child .compare-us { border-radius: 0 0 10px 10px; }
+.compare tbody tr:last-child th,
+.compare tbody tr:last-child td { border-bottom: none; }
+
+.compare-check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.compare-check svg {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  color: var(--forest-blue);
+}
+
+.spec-stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0 0;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-strong);
   font-size: 0.95rem;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--text-secondary);
 }
 
-.spec-val {
-  font-size: 0.9rem;
-  font-weight: 600;
+.spec-stat strong {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
   color: var(--navy);
-  text-align: right;
 }
 
 /* Close · one button */
@@ -4217,8 +4272,13 @@ footer {
   .hero-notif-text { font-size: 0.78rem; }
   .hero-photo-link { padding: 0.6rem 0; }
   .spec-demo { grid-template-columns: 1fr; gap: 2rem; }
-  .proof-row, .spec-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
-  .spec-val { text-align: left; }
+  .proof-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
+  .compare { font-size: 0.8rem; }
+  .compare th, .compare td { padding: 0.7rem 0.6rem; }
+  .compare thead td { width: 30%; }
+  .compare thead .compare-us { width: 36%; }
+  .compare-check svg { display: none; }
+  .spec-stat { flex-direction: column; gap: var(--space-2xs); }
   .close-cta { max-width: none; }
 
   /* How it works */

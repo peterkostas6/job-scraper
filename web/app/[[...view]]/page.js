@@ -140,6 +140,14 @@ const trackedLink = (link) => `/go?u=${encodeURIComponent(link)}`;
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
 const NOTIF_CATEGORIES = ["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"];
 
+// Homepage comparison chart: [row label, on your own, Pete's Postings]
+const COMPARE_ROWS = [
+  ["Where you look", "Dozens of bank career sites", "One feed, pulled from bank APIs"],
+  ["When you hear", "Whenever you remember to check", "Text or email the moment it posts"],
+  ["Pulled postings", "Gone before you saw them", "Still in your 48\u2011hour feed"],
+  ["Tracking", "A spreadsheet, if you kept one", "Saved jobs (Pro)"],
+];
+
 const PREVIEW_JOBS = [
   { title: "Investment Banking Analyst", bank: "Goldman Sachs", location: "New York, NY", time: "1h ago", isNew: true, type: "Analyst" },
   { title: "Summer Analyst Program 2026", bank: "JPMorgan Chase", location: "New York, NY", time: "2h ago", isNew: true, type: "Internship" },
@@ -413,28 +421,31 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
           Banking role postings can surprise you at random hours across dozens of banks, then get pulled
           again within days. If you&rsquo;re checking one site at a time, you&rsquo;re already behind.
         </p>
-        <dl className="spec-sheet">
-          <div className="spec-row">
-            <dt>One spot</dt>
-            <dd className="spec-desc">We pull every analyst and intern posting directly from banks&rsquo; APIs — no more checking dozens of career sites by hand.</dd>
-            <dd className="spec-val">Instant</dd>
-          </div>
-          <div className="spec-row">
-            <dt>48-hour feed</dt>
-            <dd className="spec-desc">See every role the moment it&rsquo;s posted, not just what&rsquo;s still live. Candidates who apply within 24&ndash;48 hours see a 33% higher chance of landing an interview.</dd>
-            <dd className="spec-val">+33% interview odds</dd>
-          </div>
-          <div className="spec-row">
-            <dt>Alerts</dt>
-            <dd className="spec-desc">Get a text or email the second a role goes live at a bank you&rsquo;re watching, customized to what you&rsquo;re looking for — before it shows up on LinkedIn.</dd>
-            <dd className="spec-val">Text and email</dd>
-          </div>
-          <div className="spec-row">
-            <dt>Saved jobs</dt>
-            <dd className="spec-desc">Bookmark roles as you find them so you always know what you&rsquo;ve applied to and what&rsquo;s still open.</dd>
-            <dd className="spec-val">Pro</dd>
-          </div>
-        </dl>
+        <table className="compare">
+          <thead>
+            <tr>
+              <td></td>
+              <th scope="col">On your own</th>
+              <th scope="col" className="compare-us">Pete&rsquo;s Postings</th>
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARE_ROWS.map(([label, them, us]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td>{them}</td>
+                <td className="compare-us"><div className="compare-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span>{us}</span>
+                </div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="spec-stat">
+          <strong>+33%</strong>
+          <span>higher chance of landing an interview when you apply within 24&ndash;48 hours of a posting.</span>
+        </p>
       </section>
 
       {/* DEMO · captioned figure, no fake chrome */}

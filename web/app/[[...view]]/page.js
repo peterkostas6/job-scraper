@@ -6,6 +6,7 @@ import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@cler
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
 import { decodeEntities } from "@/lib/text";
+import { JOB_TYPES as ALERT_JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { track } from "@/lib/track";
 import posthog from "posthog-js";
 import { useTrackSignup } from "@/lib/use-track-signup";
@@ -139,7 +140,6 @@ const MEMBER_CAP = 2000;
 // Job links go through /go so clicks are counted before the visitor reaches the bank's site.
 const trackedLink = (link) => `/go?u=${encodeURIComponent(link)}`;
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
-const NOTIF_CATEGORIES = ["Investment Banking", "Sales & Trading", "Risk & Compliance", "Technology", "Wealth Management", "Research", "Operations", "Corporate Banking", "Finance", "Human Resources", "Legal", "Quantitative", "Other"];
 
 // Homepage comparison chart: [row label, on your own, Pete's Postings]
 const COMPARE_ROWS = [
@@ -1027,6 +1027,7 @@ export default function Home() {
   const [freeAlerts, setFreeAlerts] = useState(null);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
+  const [pickBanks, setPickBanks] = useState(false);
   const [companyRequest, setCompanyRequest] = useState("");
   const [companyRequestStatus, setCompanyRequestStatus] = useState(null); // null | "sending" | "sent" | error message
   const [showCompanyRequest, setShowCompanyRequest] = useState(false);
@@ -1255,6 +1256,26 @@ export default function Home() {
     }));
     setNotifSaved(false);
   }
+
+  function updateNotif(patch) {
+    setNotifPrefs((prev) => ({ ...prev, ...patch }));
+    setNotifSaved(false);
+  }
+
+  // An area is on when all of its categories are; tapping it adds or removes them together.
+  function toggleNotifArea(area) {
+    setNotifPrefs((prev) => {
+      const on = area.categories.every((c) => prev.categories.includes(c));
+      const rest = prev.categories.filter((c) => !area.categories.includes(c));
+      return { ...prev, categories: on ? rest : [...rest, ...area.categories] };
+    });
+    setNotifSaved(false);
+  }
+
+  // Banks: "All banks" unless someone chose to pick, or already saved specific banks.
+  const showBankPicker = pickBanks || notifPrefs.banks.length > 0;
+  const notifCity = (notifPrefs.location || "").trim();
+  const notifMatchCount = allJobs.filter((job) => matchesAlertPrefs(job, { ...notifPrefs, location: notifCity })).length;
 
   // Why Save is disabled, in words, so the button never looks broken.
   const notifBlocker = notifPrefs.smsEnabled && !(notifPrefs.phoneNumber || "").trim()
@@ -1794,7 +1815,7 @@ export default function Home() {
               <div className="notif-panel">
                 <div className="notif-header">
                   <h2 className="notif-title">Job alerts</h2>
-                  <p className="notif-desc">When a role matching your filters goes live, you hear about it instantly.</p>
+                  <p className="notif-desc">Pick the roles you want and how to hear about them. We check every bank every 5 minutes.</p>
                 </div>
                 {freeAlerts && (
                   <div className="welcome-banner alerts-callout">
@@ -1817,6 +1838,69 @@ export default function Home() {
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
                 ) : (
                   <>
+                    <div className="notif-section">
+                      <h3 className="notif-section-title">What should we alert you about?</h3>
+                      {allJobs.length > 0 && (
+                        <p className="al-match"><strong className="tnum">{notifMatchCount}</strong> open {notifMatchCount === 1 ? "role matches" : "roles match"} these settings right now</p>
+                      )}
+
+                      <div className="notif-group">
+                        <div className="notif-field-label">Recruiting for</div>
+                        <div className="st-chips">
+                          {ALERT_JOB_TYPES.map((t) => (
+                            <button key={t.key} className="st-chip" aria-pressed={notifPrefs.jobType === t.key} onClick={() => updateNotif({ jobType: t.key })}>{t.label}</button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="notif-group">
+                        <div className="notif-field-label">Areas</div>
+                        <div className="st-chips">
+                          <button className="st-chip" aria-pressed={notifPrefs.categories.length === 0} onClick={() => updateNotif({ categories: [] })}>Open to anything</button>
+                          {AREAS.map((a) => (
+                            <button key={a.key} className="st-chip" aria-pressed={a.categories.every((c) => notifPrefs.categories.includes(c))} onClick={() => toggleNotifArea(a)}>{a.label}</button>
+                          ))}
+                          {/* Older settings can hold categories no area covers; show them so nothing is hidden. */}
+                          {notifPrefs.categories.filter((c) => !AREAS.some((a) => a.categories.includes(c))).map((c) => (
+                            <button key={c} className="st-chip" aria-pressed onClick={() => toggleNotifCategory(c)}>{c}</button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="notif-group">
+                        <div className="notif-field-label">Banks</div>
+                        <div className="st-chips">
+                          <button className="st-chip" aria-pressed={!showBankPicker} onClick={() => { setPickBanks(false); updateNotif({ banks: [] }); }}>All {BANK_COUNT} banks</button>
+                          <button className="st-chip" aria-pressed={showBankPicker} onClick={() => setPickBanks(true)}>Choose banks</button>
+                        </div>
+                        {showBankPicker && (
+                          <div className="st-chips al-bank-chips">
+                            {Object.entries(BANKS).map(([key, bank]) => (
+                              <button key={key} className="st-chip" aria-pressed={notifPrefs.banks.includes(key)} onClick={() => toggleNotifBank(key)}>{bank.shortName}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="notif-group">
+                        <div className="notif-field-label">City</div>
+                        <div className="st-chips">
+                          <button className="st-chip" aria-pressed={!notifCity} onClick={() => updateNotif({ location: "" })}>Anywhere</button>
+                          {CITIES.map((c) => (
+                            <button key={c} className="st-chip" aria-pressed={notifCity.toLowerCase() === c.toLowerCase()} onClick={() => updateNotif({ location: c })}>{c}</button>
+                          ))}
+                        </div>
+                        <input
+                          className="notif-phone-input al-city-input"
+                          type="text"
+                          aria-label="Another city"
+                          placeholder="Or type another city"
+                          value={CITIES.some((c) => c.toLowerCase() === notifCity.toLowerCase()) ? "" : notifCity}
+                          onChange={(e) => updateNotif({ location: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
                     <div className="notif-section">
                       <h3 className="notif-section-title">How should we reach you?</h3>
 
@@ -1882,68 +1966,6 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-
-                    {(notifPrefs.enabled || notifPrefs.smsEnabled) && (
-                      <div className="notif-section">
-                        <h3 className="notif-section-title">Which jobs?</h3>
-
-                        <div className="notif-group">
-                          <div className="notif-field-label">Job type</div>
-                          <div className="notif-radio-group">
-                            {[["all", "Analyst & internship"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([val, label]) => (
-                              <label className="notif-radio" key={val}>
-                                <input type="radio" name="notifJobType" value={val} checked={notifPrefs.jobType === val} onChange={() => { setNotifPrefs((p) => ({ ...p, jobType: val })); setNotifSaved(false); }} />
-                                <span>{label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="notif-group">
-                          <div className="notif-field-label">Banks</div>
-                          <div className="notif-checkboxes">
-                            <label className="notif-checkbox">
-                              <input type="checkbox" checked={notifPrefs.banks.length === 0} onChange={() => { setNotifPrefs((p) => ({ ...p, banks: [] })); setNotifSaved(false); }} />
-                              <span>All banks</span>
-                            </label>
-                            {Object.entries(BANKS).map(([key, bank]) => (
-                              <label className="notif-checkbox" key={key}>
-                                <input type="checkbox" checked={notifPrefs.banks.includes(key)} onChange={() => toggleNotifBank(key)} />
-                                <span>{bank.name}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="notif-group">
-                          <div className="notif-field-label">Categories</div>
-                          <div className="notif-checkboxes">
-                            <label className="notif-checkbox">
-                              <input type="checkbox" checked={notifPrefs.categories.length === 0} onChange={() => { setNotifPrefs((p) => ({ ...p, categories: [] })); setNotifSaved(false); }} />
-                              <span>All categories</span>
-                            </label>
-                            {NOTIF_CATEGORIES.map((cat) => (
-                              <label className="notif-checkbox" key={cat}>
-                                <input type="checkbox" checked={notifPrefs.categories.includes(cat)} onChange={() => toggleNotifCategory(cat)} />
-                                <span>{cat}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="notif-group">
-                          <label className="notif-field-label" htmlFor="notif-location">City</label>
-                          <input
-                            id="notif-location"
-                            className="notif-phone-input"
-                            type="text"
-                            placeholder="Any city"
-                            value={notifPrefs.location || ""}
-                            onChange={(e) => { setNotifPrefs((p) => ({ ...p, location: e.target.value })); setNotifSaved(false); }}
-                          />
-                        </div>
-                      </div>
-                    )}
 
                     <div className="notif-actions">
                       <p className={`notif-summary${notifBlocker ? " notif-summary-blocked" : ""}`}>{notifBlocker || notifSummary}</p>

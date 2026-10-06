@@ -6,28 +6,11 @@ import posthog from "posthog-js";
 import { useUser, SignUpButton, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import { decodeEntities } from "@/lib/text";
+import { JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { useTrackSignup } from "@/lib/use-track-signup";
 
 const BANK_COUNT = Object.keys(BANKS).length;
 const STORAGE_KEY = "pp-start-v1";
-
-const JOB_TYPES = [
-  { key: "internship", label: "Summer internship", sub: "Sophomores and juniors" },
-  { key: "fulltime", label: "Full-time analyst", sub: "Seniors and recent grads" },
-  { key: "all", label: "Both", sub: "Show me everything" },
-];
-
-// Each option maps to the job categories the scraper assigns.
-const AREAS = [
-  { key: "ib", label: "Investment Banking", categories: ["Investment Banking"] },
-  { key: "st", label: "Sales & Trading", categories: ["Sales & Trading"] },
-  { key: "cb", label: "Corporate Banking", categories: ["Corporate Banking"] },
-  { key: "wm", label: "Wealth Management", categories: ["Wealth Management"] },
-  { key: "rq", label: "Research & Quant", categories: ["Research", "Quantitative"] },
-  { key: "rot", label: "Risk, Ops & Tech", categories: ["Risk & Compliance", "Operations", "Technology"] },
-];
-
-const CITIES = ["New York", "Charlotte", "Dallas", "Chicago", "San Francisco"];
 
 const STEPS = ["type", "area", "banks", "city", "results", "phone", "done"];
 const QUESTION_COUNT = 4;
@@ -42,11 +25,6 @@ const CHANNELS = [
 
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
 
-function isInternship(title) {
-  const t = title.toLowerCase();
-  return /\bintern\b/.test(t) || t.includes("internship") || t.includes("summer") || t.includes("co-op") || t.includes("coop");
-}
-
 // The alert settings these answers become; the same shape the notify cron matches on.
 function toPrefs(a) {
   return {
@@ -55,16 +33,6 @@ function toPrefs(a) {
     banks: a.banks,
     location: a.city || "",
   };
-}
-
-// Mirrors the notify cron's filter so the preview shows what alerts would send.
-function matches(job, prefs) {
-  if (prefs.banks.length > 0 && !prefs.banks.includes(job.bankKey)) return false;
-  if (prefs.categories.length > 0 && !prefs.categories.includes(job.category)) return false;
-  if (prefs.jobType === "internship" && !isInternship(job.title)) return false;
-  if (prefs.jobType === "fulltime" && isInternship(job.title)) return false;
-  if (prefs.location && !(job.location || "").toLowerCase().includes(prefs.location.toLowerCase())) return false;
-  return true;
 }
 
 function ago(ms) {
@@ -143,7 +111,7 @@ export default function StartFlow() {
   const prefs = useMemo(() => toPrefs(answers), [answers]);
   const matched = useMemo(() => {
     if (!jobs) return null;
-    return jobs.filter((j) => matches(j, prefs)).sort((a, b) => b.detectedAt - a.detectedAt);
+    return jobs.filter((j) => matchesAlertPrefs(j, prefs)).sort((a, b) => b.detectedAt - a.detectedAt);
   }, [jobs, prefs]);
   const newThisWeek = matched ? matched.filter((j) => Date.now() - j.detectedAt < 7 * 86400000).length : 0;
 

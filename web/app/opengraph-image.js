@@ -41,11 +41,12 @@ export default async function Image() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, fontWeight: 800 }}>
-          {/* The logo mark: three lines of postings, the newest in blue. */}
-          <svg width="48" height="48" viewBox="4 6 52 52">
-            <rect x="8" y="16" width="44" height="6" rx="3" fill="#60a5fa" />
-            <rect x="8" y="29" width="34" height="6" rx="3" fill="#faf8f5" />
-            <rect x="8" y="42" width="24" height="6" rx="3" fill="#faf8f5" opacity="0.35" />
+          {/* The logo mark: a stack of coins (postings), the newest on top in blue. */}
+          <svg width="50" height="50" viewBox="3 6.5 56 56">
+            <rect x="14" y="10" width="36" height="10" rx="5" fill="#60a5fa" />
+            <rect x="8" y="23" width="44" height="10" rx="5" fill="#faf8f5" />
+            <rect x="12" y="36" width="44" height="10" rx="5" fill="#faf8f5" opacity="0.6" />
+            <rect x="6" y="49" width="44" height="10" rx="5" fill="#faf8f5" opacity="0.3" />
           </svg>
           Pete&rsquo;s Postings
         </div>

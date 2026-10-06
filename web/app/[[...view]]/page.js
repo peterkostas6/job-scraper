@@ -133,6 +133,10 @@ function ProWelcomeModal({ onClose, onSetupAlerts, activated, timedOut }) {
   );
 }
 
+// Alert settings before anything is loaded; saved settings are merged over these.
+const NOTIF_DEFAULTS = { enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", smsConsent: false, location: "" };
+const alertSettingsKey = (p) => JSON.stringify(Object.keys(NOTIF_DEFAULTS).map((k) => p?.[k] ?? null));
+
 // ---- HOMEPAGE ----
 const BANK_COUNT = Object.keys(BANKS).length;
 const MEMBER_CAP = 2000;
@@ -1021,13 +1025,17 @@ export default function Home() {
     capture("signup_gate_shown", { kind });
     setGate({ ...SIGNUP_GATES[kind], job, redirect: job ? trackedLink(job.link) : undefined });
   }
-  const [notifPrefs, setNotifPrefs] = useState({ enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", smsConsent: false, location: "" });
+  const [notifPrefs, setNotifPrefs] = useState(NOTIF_DEFAULTS);
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
   const [freeAlerts, setFreeAlerts] = useState(null);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
   const [pickBanks, setPickBanks] = useState(false);
+  // Settings as last saved (null until loaded), and which alert setting row is open.
+  const [savedNotifPrefs, setSavedNotifPrefs] = useState(null);
+  const [openAlertRow, setOpenAlertRow] = useState(null);
+  const [editingPhone, setEditingPhone] = useState(false);
   const [companyRequest, setCompanyRequest] = useState("");
   const [companyRequestStatus, setCompanyRequestStatus] = useState(null); // null | "sending" | "sent" | error message
   const [showCompanyRequest, setShowCompanyRequest] = useState(false);
@@ -1135,10 +1143,12 @@ export default function Home() {
     fetch("/api/notifications")
       .then((res) => res.json())
       .then((data) => {
-        if (data.notifications) setNotifPrefs(data.notifications);
+        const loaded = { ...NOTIF_DEFAULTS, ...(data.notifications || {}) };
+        setNotifPrefs(loaded);
+        setSavedNotifPrefs(loaded);
         setFreeAlerts(data.freeAlerts || null);
       })
-      .catch(() => {})
+      .catch(() => setSavedNotifPrefs((prev) => prev ?? NOTIF_DEFAULTS))
       .finally(() => setNotifLoading(false));
   }, [isLoaded, isSignedIn, isSubscribed]);
 
@@ -1275,7 +1285,35 @@ export default function Home() {
   // Banks: "All banks" unless someone chose to pick, or already saved specific banks.
   const showBankPicker = pickBanks || notifPrefs.banks.length > 0;
   const notifCity = (notifPrefs.location || "").trim();
-  const notifMatchCount = allJobs.filter((job) => matchesAlertPrefs(job, { ...notifPrefs, location: notifCity })).length;
+
+  const notifMatches = allJobs
+    .filter((job) => matchesAlertPrefs(job, { ...notifPrefs, location: (notifPrefs.location || "").trim() }))
+    .sort((x, y) => Math.max(Date.parse(y.postedDate) || 0, y.detectedAt) - Math.max(Date.parse(x.postedDate) || 0, x.detectedAt));
+  const notifDirty = savedNotifPrefs !== null && alertSettingsKey(notifPrefs) !== alertSettingsKey(savedNotifPrefs);
+  const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled));
+  const maskedPhone = (num) => { const d = (num || "").replace(/\D/g, "").slice(-4); return d ? `(•••) •••-${d}` : "your phone"; };
+  const alertAreasLabel = notifPrefs.categories.length === 0
+    ? "Open to anything"
+    : [...AREAS.filter((a) => a.categories.every((c) => notifPrefs.categories.includes(c))).map((a) => a.label),
+       ...notifPrefs.categories.filter((c) => !AREAS.some((a) => a.categories.includes(c)))].join(", ") || "Open to anything";
+  const alertBanksLabel = notifPrefs.banks.length === 0
+    ? `All ${BANK_COUNT} banks`
+    : notifPrefs.banks.length <= 2 ? notifPrefs.banks.map((k) => BANKS[k]?.shortName || k).join(", ") : `${notifPrefs.banks.length} banks`;
+
+  // One expandable settings row: label and current value; tapping opens its choices.
+  const alertRow = (key, label, value, body) => {
+    const open = openAlertRow === key;
+    return (
+      <div className={`al-row${open ? " al-row-open" : ""}`} key={key}>
+        <button className="al-row-head" aria-expanded={open} onClick={() => setOpenAlertRow(open ? null : key)}>
+          <span className="al-row-label">{label}</span>
+          <span className="al-row-value">{value}</span>
+          <svg className="al-row-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        {open && <div className="al-row-body">{body}</div>}
+      </div>
+    );
+  };
 
   // Why Save is disabled, in words, so the button never looks broken.
   const notifBlocker = notifPrefs.smsEnabled && !(notifPrefs.phoneNumber || "").trim()
@@ -1284,17 +1322,6 @@ export default function Home() {
       ? "Check the consent box to turn on texts."
       : "";
 
-  // One plain sentence describing exactly what the current settings will send.
-  const notifSummary = (() => {
-    const channels = [notifPrefs.smsEnabled && "a text", notifPrefs.enabled && "an email"].filter(Boolean);
-    if (channels.length === 0) return "Alerts are off.";
-    const list = (items) => items.length === 2 ? items.join(" or ") : items.join(", ");
-    const type = { internship: "internship", fulltime: "analyst" }[notifPrefs.jobType] || "analyst and internship";
-    const cats = notifPrefs.categories.length === 0 ? "" : notifPrefs.categories.length <= 2 ? ` in ${list(notifPrefs.categories)}` : ` in ${notifPrefs.categories.length} categories`;
-    const banks = notifPrefs.banks.length === 0 ? `at all ${BANK_COUNT} banks` : notifPrefs.banks.length <= 2 ? `at ${list(notifPrefs.banks.map((k) => BANKS[k]?.name || k))}` : `at ${notifPrefs.banks.length} banks`;
-    const city = (notifPrefs.location || "").trim() ? ` in ${notifPrefs.location.trim()}` : "";
-    return `You'll get ${channels.join(" and ")} for new ${type} roles${cats} ${banks}${city}.`;
-  })();
 
   async function sendCompanyRequest(e) {
     e.preventDefault();
@@ -1323,7 +1350,7 @@ export default function Home() {
       body: JSON.stringify(notifPrefs),
     })
       .then((res) => res.json())
-      .then((data) => { if (data.success) setNotifSaved(true); })
+      .then((data) => { if (data.success) { setNotifSaved(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); } })
       .catch(() => {})
       .finally(() => setNotifSaving(false));
   }
@@ -1812,170 +1839,215 @@ export default function Home() {
               </div>
             )}
             {viewNotifications && isSignedIn && (
-              <div className="notif-panel">
-                <div className="notif-header">
-                  <h2 className="notif-title">Job alerts</h2>
-                  <p className="notif-desc">Pick the roles you want and how to hear about them. We check every bank every 5 minutes.</p>
+              <div className="al-page">
+                <div className="al-head">
+                  <h2 className="al-title">Job alerts</h2>
+                  <p className="al-sub">We check every bank every 5 minutes and tell you when a match goes live.</p>
                 </div>
-                {freeAlerts && (
-                  <div className="welcome-banner alerts-callout">
-                    <div>
-                      <p className="welcome-title">
-                        {freeAlerts.used < freeAlerts.limit
-                          ? `${freeAlerts.limit - freeAlerts.used} of ${freeAlerts.limit} free alerts left`
-                          : `You've used your ${freeAlerts.limit} free alerts`}
-                      </p>
-                      <p className="welcome-desc">
-                        {freeAlerts.used < freeAlerts.limit
-                          ? "Free accounts get 5 text or email alerts. Go Pro for unlimited alerts the second a role goes live."
-                          : "Upgrade to Pro to keep getting a text or email the moment a matching role posts."}
-                      </p>
-                    </div>
-                    <Link href="/pricing" className="alerts-callout-cta">Upgrade</Link>
-                  </div>
-                )}
-                {notifLoading ? (
+
+                {notifLoading || savedNotifPrefs === null ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
                 ) : (
                   <>
-                    <div className="notif-section">
-                      <h3 className="notif-section-title">What should we alert you about?</h3>
-                      {allJobs.length > 0 && (
-                        <p className="al-match"><strong className="tnum">{notifMatchCount}</strong> open {notifMatchCount === 1 ? "role matches" : "roles match"} these settings right now</p>
+                    {/* STATUS · what is on right now, as saved */}
+                    <section className={`al-status${alertsOn ? " al-status-on" : ""}`}>
+                      <span className="al-status-dot" aria-hidden="true" />
+                      <div className="al-status-main">
+                        <p className="al-status-title">{alertsOn ? "Your alerts are on" : "Your alerts are off"}</p>
+                        <p className="al-status-sub">
+                          {alertsOn
+                            ? [savedNotifPrefs.smsEnabled && `Texting ${maskedPhone(savedNotifPrefs.phoneNumber)}`, savedNotifPrefs.enabled && `emailing ${user?.primaryEmailAddress?.emailAddress || "you"}`].filter(Boolean).join(" and ")
+                            : "Choose what you want, turn on texts or email, then save."}
+                        </p>
+                      </div>
+                      {freeAlerts && (
+                        <div className="al-quota">
+                          <div className="al-quota-dots" aria-hidden="true">
+                            {Array.from({ length: freeAlerts.limit }).map((_, i) => <span key={i} className={i < freeAlerts.used ? "al-quota-used" : ""} />)}
+                          </div>
+                          <p>
+                            {freeAlerts.used < freeAlerts.limit ? `${freeAlerts.limit - freeAlerts.used} of ${freeAlerts.limit} free alerts left` : "Free alerts used up"}
+                            {" "}&middot; <Link href="/pricing" className="al-link">Go unlimited</Link>
+                          </p>
+                        </div>
                       )}
+                    </section>
 
-                      <div className="notif-group">
-                        <div className="notif-field-label">Recruiting for</div>
-                        <div className="st-chips">
-                          {ALERT_JOB_TYPES.map((t) => (
-                            <button key={t.key} className="st-chip" aria-pressed={notifPrefs.jobType === t.key} onClick={() => updateNotif({ jobType: t.key })}>{t.label}</button>
+                    <div className="al-grid">
+                      <div className="al-settings">
+                        {/* WHAT · one row per question; tap to change */}
+                        <div className="al-card">
+                          <p className="al-card-label">What you&rsquo;ll hear about</p>
+                          {alertRow("type", "Recruiting for", ALERT_JOB_TYPES.find((t) => t.key === notifPrefs.jobType)?.label || "Both", (
+                            <div className="st-chips">
+                              {ALERT_JOB_TYPES.map((t) => (
+                                <button key={t.key} className="st-chip" aria-pressed={notifPrefs.jobType === t.key} onClick={() => updateNotif({ jobType: t.key })}>{t.label}</button>
+                              ))}
+                            </div>
                           ))}
-                        </div>
-                      </div>
-
-                      <div className="notif-group">
-                        <div className="notif-field-label">Areas</div>
-                        <div className="st-chips">
-                          <button className="st-chip" aria-pressed={notifPrefs.categories.length === 0} onClick={() => updateNotif({ categories: [] })}>Open to anything</button>
-                          {AREAS.map((a) => (
-                            <button key={a.key} className="st-chip" aria-pressed={a.categories.every((c) => notifPrefs.categories.includes(c))} onClick={() => toggleNotifArea(a)}>{a.label}</button>
+                          {alertRow("areas", "Areas", alertAreasLabel, (
+                            <div className="st-chips">
+                              <button className="st-chip" aria-pressed={notifPrefs.categories.length === 0} onClick={() => updateNotif({ categories: [] })}>Open to anything</button>
+                              {AREAS.map((a) => (
+                                <button key={a.key} className="st-chip" aria-pressed={a.categories.every((c) => notifPrefs.categories.includes(c))} onClick={() => toggleNotifArea(a)}>{a.label}</button>
+                              ))}
+                              {/* Older settings can hold categories no area covers; show them so nothing is hidden. */}
+                              {notifPrefs.categories.filter((c) => !AREAS.some((a) => a.categories.includes(c))).map((c) => (
+                                <button key={c} className="st-chip" aria-pressed onClick={() => toggleNotifCategory(c)}>{c}</button>
+                              ))}
+                            </div>
                           ))}
-                          {/* Older settings can hold categories no area covers; show them so nothing is hidden. */}
-                          {notifPrefs.categories.filter((c) => !AREAS.some((a) => a.categories.includes(c))).map((c) => (
-                            <button key={c} className="st-chip" aria-pressed onClick={() => toggleNotifCategory(c)}>{c}</button>
+                          {alertRow("banks", "Banks", alertBanksLabel, (
+                            <>
+                              <div className="st-chips">
+                                <button className="st-chip" aria-pressed={!showBankPicker} onClick={() => { setPickBanks(false); updateNotif({ banks: [] }); }}>All {BANK_COUNT} banks</button>
+                                <button className="st-chip" aria-pressed={showBankPicker} onClick={() => setPickBanks(true)}>Choose banks</button>
+                              </div>
+                              {showBankPicker && (
+                                <div className="st-chips al-bank-chips">
+                                  {Object.entries(BANKS).map(([key, bank]) => (
+                                    <button key={key} className="st-chip" aria-pressed={notifPrefs.banks.includes(key)} onClick={() => toggleNotifBank(key)}>{bank.shortName}</button>
+                                  ))}
+                                </div>
+                              )}
+                            </>
                           ))}
-                        </div>
-                      </div>
-
-                      <div className="notif-group">
-                        <div className="notif-field-label">Banks</div>
-                        <div className="st-chips">
-                          <button className="st-chip" aria-pressed={!showBankPicker} onClick={() => { setPickBanks(false); updateNotif({ banks: [] }); }}>All {BANK_COUNT} banks</button>
-                          <button className="st-chip" aria-pressed={showBankPicker} onClick={() => setPickBanks(true)}>Choose banks</button>
-                        </div>
-                        {showBankPicker && (
-                          <div className="st-chips al-bank-chips">
-                            {Object.entries(BANKS).map(([key, bank]) => (
-                              <button key={key} className="st-chip" aria-pressed={notifPrefs.banks.includes(key)} onClick={() => toggleNotifBank(key)}>{bank.shortName}</button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="notif-group">
-                        <div className="notif-field-label">City</div>
-                        <div className="st-chips">
-                          <button className="st-chip" aria-pressed={!notifCity} onClick={() => updateNotif({ location: "" })}>Anywhere</button>
-                          {CITIES.map((c) => (
-                            <button key={c} className="st-chip" aria-pressed={notifCity.toLowerCase() === c.toLowerCase()} onClick={() => updateNotif({ location: c })}>{c}</button>
-                          ))}
-                        </div>
-                        <input
-                          className="notif-phone-input al-city-input"
-                          type="text"
-                          aria-label="Another city"
-                          placeholder="Or type another city"
-                          value={CITIES.some((c) => c.toLowerCase() === notifCity.toLowerCase()) ? "" : notifCity}
-                          onChange={(e) => updateNotif({ location: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="notif-section">
-                      <h3 className="notif-section-title">How should we reach you?</h3>
-
-                      <div className="notif-channel">
-                        <div className="notif-toggle-row">
-                          <div>
-                            <span className="notif-toggle-label">Text message</span>
-                            <p className="notif-toggle-sub">The fastest way to hear about a new role.</p>
-                          </div>
-                          <button
-                            className={`notif-toggle ${notifPrefs.smsEnabled ? "notif-toggle-on" : ""}`}
-                            role="switch"
-                            aria-checked={notifPrefs.smsEnabled}
-                            aria-label="Text message alerts"
-                            onClick={() => { setNotifPrefs((p) => ({ ...p, smsEnabled: !p.smsEnabled })); setNotifSaved(false); }}
-                          >
-                            <span className="notif-toggle-knob" />
-                          </button>
-                        </div>
-                        {notifPrefs.smsEnabled && (
-                          <div className="notif-sms-setup">
-                            <label className="notif-field-label" htmlFor="notif-phone">Mobile number</label>
-                            <input
-                              id="notif-phone"
-                              className="notif-phone-input"
-                              type="tel"
-                              autoComplete="tel"
-                              placeholder="(555) 000-0000"
-                              value={notifPrefs.phoneNumber || ""}
-                              onChange={(e) => { setNotifPrefs((p) => ({ ...p, phoneNumber: e.target.value })); setNotifSaved(false); }}
-                            />
-                            <label className="notif-consent">
+                          {alertRow("city", "City", notifCity || "Anywhere", (
+                            <>
+                              <div className="st-chips">
+                                <button className="st-chip" aria-pressed={!notifCity} onClick={() => updateNotif({ location: "" })}>Anywhere</button>
+                                {CITIES.map((c) => (
+                                  <button key={c} className="st-chip" aria-pressed={notifCity.toLowerCase() === c.toLowerCase()} onClick={() => updateNotif({ location: c })}>{c}</button>
+                                ))}
+                              </div>
                               <input
-                                type="checkbox"
-                                checked={notifPrefs.smsConsent}
-                                onChange={(e) => { setNotifPrefs((p) => ({ ...p, smsConsent: e.target.checked })); setNotifSaved(false); }}
+                                className="notif-phone-input al-city-input"
+                                type="text"
+                                aria-label="Another city"
+                                placeholder="Or type another city"
+                                value={CITIES.some((c) => c.toLowerCase() === notifCity.toLowerCase()) ? "" : notifCity}
+                                onChange={(e) => updateNotif({ location: e.target.value })}
                               />
-                              <span>
+                            </>
+                          ))}
+                        </div>
+
+                        {/* HOW · channels with their switches right on the row */}
+                        <div className="al-card">
+                          <p className="al-card-label">How we reach you</p>
+                          <div className="al-channel">
+                            <div className="al-channel-head">
+                              <span className="al-channel-icon al-channel-icon-sms" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
+                              </span>
+                              <div className="al-channel-text">
+                                <span className="al-row-label">Text message</span>
+                                <span className="al-channel-sub">
+                                  {notifPrefs.smsEnabled && notifPrefs.phoneNumber ? maskedPhone(notifPrefs.phoneNumber) : "Fastest. Most people use this."}
+                                  {notifPrefs.smsEnabled && savedNotifPrefs.smsEnabled && savedNotifPrefs.phoneNumber && !editingPhone && (
+                                    <> &middot; <button className="gate-link" onClick={() => setEditingPhone(true)}>Change</button></>
+                                  )}
+                                </span>
+                              </div>
+                              <button
+                                className={`notif-toggle ${notifPrefs.smsEnabled ? "notif-toggle-on" : ""}`}
+                                role="switch"
+                                aria-checked={notifPrefs.smsEnabled}
+                                aria-label="Text message alerts"
+                                onClick={() => updateNotif({ smsEnabled: !notifPrefs.smsEnabled })}
+                              >
+                                <span className="notif-toggle-knob" />
+                              </button>
+                            </div>
+                            {notifPrefs.smsEnabled && (editingPhone || !(savedNotifPrefs.smsEnabled && savedNotifPrefs.phoneNumber)) && (
+                              <div className="al-channel-body">
+                                <label className="notif-field-label" htmlFor="notif-phone">Mobile number</label>
+                                <input
+                                  id="notif-phone"
+                                  className="notif-phone-input"
+                                  type="tel"
+                                  autoComplete="tel"
+                                  placeholder="(555) 000-0000"
+                                  value={notifPrefs.phoneNumber || ""}
+                                  onChange={(e) => updateNotif({ phoneNumber: e.target.value })}
+                                />
+                                <label className="notif-consent al-consent">
+                                  <input
+                                    type="checkbox"
+                                    checked={notifPrefs.smsConsent}
+                                    onChange={(e) => updateNotif({ smsConsent: e.target.checked })}
+                                  />
+                                  <span>
                                 I agree to receive recurring automated text messages from Pete's Postings about new job postings matching my preferences. Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete's Postings. See our{" "}
                                 <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
                                 <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
                               </span>
-                            </label>
+                                </label>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
+                          <div className="al-channel">
+                            <div className="al-channel-head">
+                              <span className="al-channel-icon al-channel-icon-email" aria-hidden="true">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                              </span>
+                              <div className="al-channel-text">
+                                <span className="al-row-label">Email</span>
+                                <span className="al-channel-sub">{user?.primaryEmailAddress?.emailAddress || "Your account email"}</span>
+                              </div>
+                              <button
+                                className={`notif-toggle ${notifPrefs.enabled ? "notif-toggle-on" : ""}`}
+                                role="switch"
+                                aria-checked={notifPrefs.enabled}
+                                aria-label="Email alerts"
+                                onClick={() => updateNotif({ enabled: !notifPrefs.enabled })}
+                              >
+                                <span className="notif-toggle-knob" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
 
-                      <div className="notif-channel">
-                        <div className="notif-toggle-row">
-                          <div>
-                            <span className="notif-toggle-label">Email</span>
-                            <p className="notif-toggle-sub">{user?.primaryEmailAddress?.emailAddress ? `Sent to ${user.primaryEmailAddress.emailAddress}` : "Sent to your account email."}</p>
-                          </div>
-                          <button
-                            className={`notif-toggle ${notifPrefs.enabled ? "notif-toggle-on" : ""}`}
-                            role="switch"
-                            aria-checked={notifPrefs.enabled}
-                            aria-label="Email alerts"
-                            onClick={() => { setNotifPrefs((p) => ({ ...p, enabled: !p.enabled })); setNotifSaved(false); }}
-                          >
-                            <span className="notif-toggle-knob" />
+                        <div className="al-save">
+                          <p className={`al-save-note${notifBlocker ? " notif-summary-blocked" : ""}`}>
+                            {notifBlocker || (notifDirty ? "You have unsaved changes." : notifSaved ? "Saved." : "All changes saved.")}
+                          </p>
+                          <button className="h-cta al-save-btn" onClick={saveNotifPrefs} disabled={notifSaving || !!notifBlocker || !notifDirty}>
+                            {notifSaving ? "Saving\u2026" : "Save changes"}
                           </button>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="notif-actions">
-                      <p className={`notif-summary${notifBlocker ? " notif-summary-blocked" : ""}`}>{notifBlocker || notifSummary}</p>
-                      <button
-                        className="notif-save"
-                        onClick={saveNotifPrefs}
-                        disabled={notifSaving || !!notifBlocker}
-                      >
-                        {notifSaving ? "Saving..." : notifSaved ? "Saved" : "Save"}
-                      </button>
+                      {/* PREVIEW · what these settings would send, from real postings */}
+                      <aside className="al-preview" aria-label="Preview">
+                        <p className="al-card-label">Preview</p>
+                        <div className="al-preview-msg">
+                          <span className={`al-channel-icon ${notifPrefs.smsEnabled || !notifPrefs.enabled ? "al-channel-icon-sms" : "al-channel-icon-email"}`} aria-hidden="true">
+                            {notifPrefs.smsEnabled || !notifPrefs.enabled
+                              ? <svg width="16" height="16" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
+                              : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>}
+                          </span>
+                          <div>
+                            <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>now</span></div>
+                            <p>
+                              {notifMatches[0]
+                                ? <>{notifMatches[0].bank} just posted: {notifMatches[0].title}. Apply &rarr;</>
+                                : "No open roles match right now. You'll hear the moment one posts."}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="al-preview-count"><strong className="tnum">{notifMatches.length}</strong> open {notifMatches.length === 1 ? "role matches" : "roles match"} right now</p>
+                        {notifMatches.length > 0 && (
+                          <ol className="al-preview-list">
+                            {notifMatches.slice(0, 4).map((job) => (
+                              <li key={job.link}>
+                                <span className="al-preview-title">{job.title}</span>
+                                <span className="al-preview-meta">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                      </aside>
                     </div>
                   </>
                 )}

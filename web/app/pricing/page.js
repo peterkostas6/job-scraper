@@ -189,12 +189,6 @@ export default function PricingPage() {
     handleSubscribe(plan);
   }, [isLoaded, isSignedIn]);
 
-  const check = (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  );
-
   return (
     <>
       <nav>
@@ -205,6 +199,10 @@ export default function PricingPage() {
           </Link>
           <div className="nav-center">
             <Link href="/jobs" className="nav-link">Browse Jobs</Link>
+            <Link href="/recent" className="nav-link">Recent Postings</Link>
+            <Link href="/notifications" className="nav-link">Alerts</Link>
+            <Link href="/pricing" className="nav-link nav-link-active">Pricing</Link>
+            <Link href="/about" className="nav-link">About</Link>
           </div>
           <div className="nav-right">
             {isLoaded && (
@@ -229,202 +227,101 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      <div className="pricing-page">
-        <section className="pricing-hero">
-          <span className="hero-tag">Pricing</span>
-          <h1 className="pricing-hero-title">Be the <span className="pricing-hero-underline">first</span> to apply</h1>
-          <p className="pricing-hero-desc">
-            Start free with 5 alerts. Go Pro for unlimited alerts and every role posted in the last 48 hours.
-          </p>
+      <div className="pp">
+        <section className="pp-head">
+          <p className="ss-eyebrow">Pricing</p>
+          <h1 className="ss-h2 pp-title">Start free. Go Pro when recruiting heats up.</h1>
+          <p className="ss-lead">Every plan covers all 20 banks. Pro adds unlimited alerts and every role posted in the last 48 hours.</p>
 
-          {/* Billing toggle */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6rem", marginTop: "2rem" }}>
-            <div style={{ display: "inline-flex", background: "#fff", border: "1px solid rgba(0,0,0,0.1)", borderRadius: "999px", padding: "4px", gap: "2px" }}>
-              <button
-                onClick={() => setBilling("weekly")}
-                style={{
-                  padding: "0.45rem 1.4rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s",
-                  background: billing === "weekly" ? "var(--navy)" : "transparent",
-                  color: billing === "weekly" ? "#fff" : "var(--text-secondary)",
-                }}
-              >Weekly</button>
-              <button
-                onClick={() => setBilling("monthly")}
-                style={{
-                  padding: "0.45rem 1.4rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s",
-                  background: billing === "monthly" ? "var(--navy)" : "transparent",
-                  color: billing === "monthly" ? "#fff" : "var(--text-secondary)",
-                }}
-              >Monthly</button>
-              <button
-                onClick={() => setBilling("yearly")}
-                style={{
-                  padding: "0.45rem 1.4rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s",
-                  background: billing === "yearly" ? "var(--navy)" : "transparent",
-                  color: billing === "yearly" ? "#fff" : "var(--text-secondary)",
-                }}
-              >Annual</button>
+          <div className="pp-toggle" role="tablist" aria-label="Billing period">
+            {[["weekly", "Weekly"], ["monthly", "Monthly"], ["yearly", "Yearly"]].map(([key, label]) => (
+              <button key={key} role="tab" aria-selected={billing === key} className={billing === key ? "on" : ""} onClick={() => setBilling(key)}>
+                {label}
+                {key === "yearly" && <span className="pp-save">Save 37%</span>}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="pp-plans">
+          <div className="pp-plan">
+            <p className="pp-plan-name">Free</p>
+            <p className="pp-price">$0</p>
+            <p className="pp-billed">Free forever. No credit card.</p>
+            <Link href="/start" className="ss-btn ss-btn-light ss-btn-block">Get my free alerts</Link>
+            <ul className="pp-list">
+              <li>Every open role at all 20 banks</li>
+              <li>5 text or email alerts</li>
+              <li>Save jobs and track applications</li>
+              <li>Search and filter by city and type</li>
+            </ul>
+          </div>
+
+          <div className="pp-plan pp-plan-pro">
+            <div className="pp-plan-top">
+              <p className="pp-plan-name">Pro</p>
+              <span className="pp-badge">Most popular</span>
             </div>
-            {billing === "yearly" ? (
-              <span style={{ fontSize: "0.85rem", color: "var(--forest-blue)", fontWeight: 600 }}>Save $35/yr with annual billing</span>
+            <p className="pp-price">
+              ${billing === "yearly" ? "5.00" : PLANS[billing].price}
+              <span>/{billing === "weekly" ? "week" : "month"}</span>
+            </p>
+            <p className="pp-billed">
+              {billing === "yearly" ? `$${PLANS.yearly.price} billed once a year` : billing === "weekly" ? "Billed weekly. Pay only for the weeks you need." : "Billed monthly. Cancel anytime."}
+            </p>
+            {isSignedIn ? (
+              <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
+                {checkoutLoading ? "Redirecting…" : `Get Pro`}
+              </button>
             ) : (
-              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Cancel anytime</span>
+              <SignUpButton mode="modal" forceRedirectUrl={`/pricing?checkout=${billing}`} signInForceRedirectUrl={`/pricing?checkout=${billing}`}>
+                <button className="ss-btn ss-btn-blue ss-btn-block">Get Pro</button>
+              </SignUpButton>
+            )}
+            <ul className="pp-list">
+              <li><strong>Unlimited</strong> text and email alerts</li>
+              <li><strong>Recent postings:</strong> every role from the last 48 hours</li>
+              <li>Everything in Free</li>
+            </ul>
+            {billing === "monthly" && (
+              <p className="pp-founding">Founding price for the first 2,000 members. Goes to $19.99/month after that.</p>
             )}
           </div>
         </section>
 
-        <section className="pricing-cards">
-          {/* Free */}
-          <div className="pricing-card">
-            <div className="pricing-card-header">
-              <h3 className="pricing-card-name">Free</h3>
-              <div className="pricing-card-price">
-                <span className="pricing-card-amount">$0</span>
-              </div>
-              <p className="pricing-card-tagline">Free account &middot; no credit card</p>
-            </div>
-            <ul className="pricing-card-features">
-              <li className="pricing-feature">{check} Every open role at all 20 banks</li>
-              <li className="pricing-feature">{check} 5 text or email alerts</li>
-              <li className="pricing-feature">{check} Save jobs and track applications</li>
-              <li className="pricing-feature">{check} Search &amp; filter by location, type</li>
-              <li className="pricing-feature pricing-feature-muted">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                Recent postings feed
-              </li>
-            </ul>
-            <Link href="/start" className="pricing-card-cta pricing-cta-outline" style={{ width: "100%", display: "block", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
-              Get my free alerts
-            </Link>
+        <p className="pp-trust">
+          <span>Cancel anytime</span>
+          <span>Secure checkout with Stripe</span>
+          <span>Keep access until your period ends</span>
+        </p>
+
+        <section className="pp-club">
+          <div className="pp-club-copy">
+            <p className="pp-plan-name">For finance clubs</p>
+            <h2 className="pp-club-title">Pro for your whole club.</h2>
+            <p className="pp-club-desc">Every member gets full Pro access and verifies with their school email. One invoice for the club.</p>
           </div>
-
-          {/* Pro */}
-          <div className="pricing-card pricing-card-popular">
-            <div className="pricing-card-popular-badge">Most Popular</div>
-            <div className="pricing-card-header">
-              <h3 className="pricing-card-name">Pro</h3>
-              <div className="pricing-card-price">
-                {billing === "yearly" ? (
-                  <>
-                    <span className="pricing-card-amount">$5.00</span>
-                    <span className="pricing-card-period">/mo</span>
-                  </>
-                ) : billing === "weekly" ? (
-                  <>
-                    <span className="pricing-card-amount">${PLANS.weekly.price}</span>
-                    <span className="pricing-card-period">/wk</span>
-                  </>
-                ) : (
-                  <>
-                    <s className="pricing-card-was" aria-label="$19.99 a month after the first 2,000 subscribers">$19.99</s>
-                    <span className="pricing-card-amount">$7.99</span>
-                    <span className="pricing-card-period">/mo</span>
-                  </>
-                )}
-              </div>
-              {billing === "yearly" ? (
-                <p className="pricing-card-tagline">
-                  <span style={{ textDecoration: "line-through", color: "var(--text-muted)", marginRight: "0.35rem" }}>$95.88</span>
-                  <span style={{ color: "var(--forest-blue)", fontWeight: 600 }}>$59.99/yr — save $35</span>
-                </p>
-              ) : billing === "weekly" ? (
-                <p className="pricing-card-tagline">Billed weekly · pay only for the weeks you need</p>
-              ) : (
-                <>
-                  <p className="pricing-card-founding">
-                    <strong>Founding price</strong> for the first 2,000 subscribers. Pro goes up to $19.99/mo after that.
-                  </p>
-                  <p className="pricing-card-tagline">Billed monthly</p>
-                </>
-              )}
-            </div>
-            <ul className="pricing-card-features">
-              <li className="pricing-feature">{check} Everything in Free</li>
-              <li className="pricing-feature pricing-feature-highlight">{check} <strong>Recent postings feed (last 48 hours)</strong></li>
-              <li className="pricing-feature pricing-feature-highlight">{check} <strong>Unlimited text &amp; email alerts</strong></li>
-            </ul>
-            <div className="pricing-cta-group">
-              {isSignedIn ? (
-                <button
-                  className="pricing-card-cta pricing-cta-primary"
-                  onClick={() => handleSubscribe()}
-                  disabled={checkoutLoading !== null}
-                  style={{ width: "100%" }}
-                >
-                  {checkoutLoading ? "Redirecting..." : `Get Pro · $${PLANS[billing].price}/${PLANS[billing].period}`}
-                </button>
-              ) : (
-                <SignUpButton mode="modal" forceRedirectUrl={`/pricing?checkout=${billing}`} signInForceRedirectUrl={`/pricing?checkout=${billing}`}>
-                  <button className="pricing-card-cta pricing-cta-primary" style={{ width: "100%" }}>
-                    {`Get Pro · $${PLANS[billing].price}/${PLANS[billing].period}`}
-                  </button>
-                </SignUpButton>
-              )}
-              <p style={{ textAlign: "center", fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.6rem" }}>
-                {billing === "yearly" ? "Billed annually · cancel anytime" : "Cancel anytime"}
-              </p>
-            </div>
-          </div>
-
-        </section>
-
-        {/* Club Partnership Section */}
-        <section className="pricing-club">
-          <div className="pricing-club-inner">
-            <div className="pricing-club-text">
-              <span className="pricing-club-tag">For Finance Clubs &amp; IB Organizations</span>
-              <h2 className="pricing-club-title">Give your whole club an edge</h2>
-              <p className="pricing-club-desc">
-                For $50/month, every member of your club gets full Pro access — SMS &amp; email alerts,
-                job saving, and the 48-hour feed. Members verify with their school email. One invoice for the club.
-              </p>
-              <ul className="pricing-club-features">
-                <li className="pricing-club-feature">{check} SMS &amp; email alerts for every member</li>
-                <li className="pricing-club-feature">{check} Student email verification per member</li>
-                <li className="pricing-club-feature">{check} One monthly invoice for the club</li>
-                <li className="pricing-club-feature">{check} Cancel anytime</li>
-              </ul>
-            </div>
-            <div className="pricing-club-card">
-              <div className="pricing-club-price-display">
-                <span className="pricing-club-amount">$50</span>
-                <span className="pricing-club-period">/month</span>
-              </div>
-              <p className="pricing-club-price-sub">For the entire club</p>
-              <button className="pricing-card-cta pricing-cta-primary" style={{ width: "100%" }} onClick={() => setShowInquiry(true)}>
-                Inquire About Club Membership
-              </button>
-              <p className="pricing-club-fine">
-                Reach out to discuss pricing for larger organizations.
-              </p>
-            </div>
+          <div className="pp-club-side">
+            <p className="pp-club-label">Club plan</p>
+            <p className="pp-price">$50<span>/month</span></p>
+            <button className="ss-btn ss-btn-block" onClick={() => setShowInquiry(true)}>Talk to us</button>
           </div>
         </section>
 
-        <section className="pricing-faq">
-          <h2 className="pricing-faq-title">Common questions</h2>
-          <div className="pricing-faq-list">
-            <div className="pricing-faq-item">
-              <h3 className="pricing-faq-q">Which plan should I pick?</h3>
-              <p className="pricing-faq-a">Weekly ($3.99) is best if you're only recruiting for a few weeks. Monthly ($7.99) is the most popular. Yearly ($59.99) works out to $5 a month if you're recruiting all year. Every plan includes the same Pro features and renews automatically until you cancel.</p>
-            </div>
-            <div className="pricing-faq-item">
-              <h3 className="pricing-faq-q">Can I cancel anytime?</h3>
-              <p className="pricing-faq-a">Yes. You can cancel your Pro subscription at any time from your account settings. You'll keep access until the end of your billing period.</p>
-            </div>
-            <div className="pricing-faq-item">
-              <h3 className="pricing-faq-q">How do SMS alerts work?</h3>
-              <p className="pricing-faq-a">Add a phone number in your alert settings. The instant a new posting matches your preferences, you'll get a text with the role title, bank, and a direct link to apply. Free accounts get 5 alerts; Pro is unlimited.</p>
-            </div>
-            <div className="pricing-faq-item">
-              <h3 className="pricing-faq-q">What does the recent postings feed include?</h3>
-              <p className="pricing-faq-a">Pro subscribers see every job posted in the last 48 hours across all banks, updated instantly. You'll also get SMS or email alerts so you don't have to check manually.</p>
-            </div>
-            <div className="pricing-faq-item">
-              <h3 className="pricing-faq-q">How do club memberships work?</h3>
-              <p className="pricing-faq-a">The club pays $50/month. Members verify with their school email and get Pro access automatically. You don't need to manage individual subscriptions.</p>
-            </div>
-          </div>
+        <section className="ss-faq pp-faq">
+          <h2 className="ss-h2">Questions</h2>
+          {[
+            ["Which plan should I pick?", "Weekly ($3.99) is best if you're only recruiting for a few weeks. Monthly ($7.99) is the most popular. Yearly ($59.99) works out to $5 a month if you're recruiting all year. Every plan includes the same Pro features and renews automatically until you cancel."],
+            ["Can I cancel anytime?", "Yes. Cancel from your account settings at any time. You keep access until the end of your billing period."],
+            ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Free accounts get 5 alerts; Pro is unlimited."],
+            ["What does the recent postings feed include?", "Every role posted in the last 48 hours across all 20 banks, updated every 5 minutes."],
+            ["How do club memberships work?", "The club pays $50 a month. Members verify with their school email and get Pro automatically, so nobody manages individual subscriptions."],
+          ].map(([q, a]) => (
+            <details key={q}>
+              <summary>{q}</summary>
+              <p>{a}</p>
+            </details>
+          ))}
         </section>
       </div>
 

@@ -282,7 +282,7 @@ function CountUp({ value, format = (n) => n.toLocaleString() }) {
 const ARROW = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
 const MSG_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="white" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
-function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
+function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
   const liveCount = liveJobs?.length || 0;
   const latest = homeFeed(liveJobs);
   const bankNames = Object.values(BANKS).map((b) => b.name);
@@ -294,18 +294,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
     .sort((a, b) => b.n - a.n)
     .slice(0, 14);
   const maxPerBank = Math.max(1, ...perBank.map((b) => b.n));
-
-  // Product shot: a new text lands on top every few seconds.
-  const [notifStep, setNotifStep] = useState(0);
-  useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const id = setInterval(() => setNotifStep((s) => s + 1), 3200);
-    return () => clearInterval(id);
-  }, []);
-  const notifs = ["now", "4m ago"].map((ago, i) => {
-    const n = notifStep - i;
-    return { ...HERO_NOTIFS[((n % HERO_NOTIFS.length) + HERO_NOTIFS.length) % HERO_NOTIFS.length], ago, key: n };
-  });
 
   // Sections fade up as they scroll in.
   const rootRef = useRef(null);
@@ -365,7 +353,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
         </div>
       </section>
 
-      {/* PRODUCT SHOT · the real feed with texts landing on top */}
+      {/* PRODUCT SHOT · the real feed; each role opens its posting */}
       <section className="ss-shot" data-reveal>
         <div className="ss-window">
           <div className="ss-window-bar">
@@ -375,26 +363,24 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
           <ol className="ss-window-list">
             {(latest.length ? latest : HERO_NOTIFS.map((n, i) => ({ link: i, title: n.title, bank: n.bank, location: "New York, NY", detectedAt: Date.now() - (i + 1) * 3600000 }))).slice(0, 6).map((job, i) => (
               <li key={job.link}>
-                {i < 2 && <span className="ss-new">New</span>}
-                <span className="ss-window-main">
-                  <span className="ss-window-title">{job.title}</span>
-                  <span className="ss-window-meta">{job.bank} &middot; {job.location}</span>
-                </span>
-                <span className="ss-window-time">{latest.length ? feedAge(job) : `${i + 1}h ago`}</span>
+                <a
+                  className="ss-window-row"
+                  href={latest.length ? trackedLink(job.link) : "/jobs"}
+                  target={latest.length ? "_blank" : undefined}
+                  rel="noopener noreferrer"
+                  onClick={(e) => { capture("home_job_clicked", { where: "shot" }); if (latest.length && onJob(job)) e.preventDefault(); }}
+                >
+                  {i < 2 && <span className="ss-new">New</span>}
+                  <span className="ss-window-main">
+                    <span className="ss-window-title">{job.title}</span>
+                    <span className="ss-window-meta">{job.bank} &middot; {job.location}</span>
+                  </span>
+                  <span className="ss-window-time">{latest.length ? feedAge(job) : `${i + 1}h ago`}</span>
+                  <svg className="ss-window-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+                </a>
               </li>
             ))}
           </ol>
-          <div className="ss-notifs" aria-hidden="true">
-            {notifs.map((n) => (
-              <div className="ss-notif" key={n.key}>
-                <span className="h-notif-icon">{MSG_ICON}</span>
-                <div className="h-notif-body">
-                  <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>{n.ago}</span></div>
-                  <p>{n.bank} just posted: {n.title}. Apply &rarr;</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -1733,6 +1719,7 @@ export default function Home() {
       {viewHome && !viewAbout && !viewNewPostings && (
         <HomePage
           onBrowse={() => router.push("/jobs")}
+          onJob={(job) => { if (isSignedIn) return false; askToSignUp("job", job); return true; }}
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
           liveJobs={allJobs}

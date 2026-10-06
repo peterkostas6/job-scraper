@@ -5015,13 +5015,21 @@ input, select { border-radius: 12px; }
 .ss-window-tabs { display: flex; gap: 1.25rem; font-size: 0.85rem; color: var(--text-muted); }
 .ss-window-tabs b { color: var(--forest-blue); font-weight: 600; }
 .ss-window-list { list-style: none; margin: 0; padding: 0 0.5rem; }
-.ss-window-list li {
+.ss-window-list li { border-bottom: 1px solid var(--border); }
+.ss-window-row {
   display: flex;
   align-items: center;
   gap: 0.8rem;
   padding: 0.9rem 0.85rem;
-  border-bottom: 1px solid var(--border);
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 160ms var(--ease-out);
 }
+.ss-window-row:hover { background: #f4f7fd; }
+.ss-window-row:hover .ss-window-title { color: var(--forest-blue); }
+.ss-window-arrow { flex-shrink: 0; color: var(--text-muted); opacity: 0; transform: translate(-3px, 3px); transition: opacity 160ms, transform 160ms var(--ease-out); }
+.ss-window-row:hover .ss-window-arrow { opacity: 1; transform: none; color: var(--forest-blue); }
 .ss-window-list li:last-child { border-bottom: none; }
 .ss-new { flex-shrink: 0; padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--green-fill); color: var(--green); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 .ss-window-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; text-align: left; }
@@ -5029,7 +5037,6 @@ input, select { border-radius: 12px; }
 .ss-window-meta { font-size: 0.78rem; color: var(--text-muted); }
 .ss-window-time { flex-shrink: 0; font-size: 0.78rem; color: var(--text-muted); }
 
-.ss-notifs { position: absolute; top: 4.5rem; right: -1.5rem; width: 330px; display: flex; flex-direction: column; text-align: left; }
 .ss-notif {
   display: flex;
   gap: 0.6rem;
@@ -5194,7 +5201,6 @@ input, select { border-radius: 12px; }
 @keyframes ss-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 @media (max-width: 900px) {
-  .ss-notifs { position: static; width: auto; padding: 0 1rem 0.5rem; }
   .ss-stats, .ss-proof { grid-template-columns: minmax(0, 1fr); }
   .ss-step { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
   .ss-step-flip .ss-step-copy { order: 0; }

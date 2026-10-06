@@ -3,6 +3,7 @@
 // GET shows a confirmation page after turning alerts off; POST (mailbox one-click) returns 200.
 import { clerkClient } from "@clerk/nextjs/server";
 import { verifyUnsubscribeToken } from "@/lib/email";
+import { captureServer } from "@/lib/posthog-server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ async function handle(request) {
   }
   try {
     await disableAlerts(userId);
+    await captureServer(userId, "alerts_unsubscribed", { via: request.method === "POST" ? "one_click_header" : "email_link", $set: { alert_email: false, alert_sms: false } });
   } catch (err) {
     console.error("Unsubscribe failed:", err?.message || err);
     return page("Something went wrong", `<p>We could not update your settings. Please try again or turn alerts off from your <a href="https://petespostings.com/notifications">notification settings</a>.</p>`);

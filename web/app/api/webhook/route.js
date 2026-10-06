@@ -8,6 +8,7 @@ import { PLANS } from "@/lib/plans";
 import { Resend } from "resend";
 import { sendEmail } from "@/lib/email";
 import { newMemberEmail, NEW_MEMBER_NOTICE_TO } from "@/lib/email-templates";
+import { captureServer } from "@/lib/posthog-server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -50,6 +51,7 @@ export async function POST(req) {
     const value = (session.amount_total || 0) / 100;
     await sendMetaServerEvent({ eventName: "Purchase", eventId: `purchase_${session.id}`, value, ...who });
     await sendRedditServerEvent({ eventType: "Purchase", conversionId: `purchase_${session.id}`, value, ...who });
+    await captureServer(clerkUserId, "subscription_started", { plan: m.plan || "monthly", value, currency: "USD", $set: { subscribed: true, plan: m.plan || "monthly" } });
 
     // Tell the owners about every new subscription. A failed notice only goes to the logs.
     try {
@@ -85,6 +87,7 @@ export async function POST(req) {
         email: invoice.customer_email,
         ip: m.ip, userAgent: m.ua, fbp: m.fbp, fbc: m.fbc,
       });
+      await captureServer(m.clerkUserId, "subscription_renewed", { plan: m.plan, value: invoice.amount_paid / 100, currency: "USD" });
       await sendRedditServerEvent({
         eventType: "Purchase",
         conversionId: `purchase_${invoice.id}`,
@@ -109,6 +112,7 @@ export async function POST(req) {
         await clerk.users.updateUserMetadata(user.id, {
           publicMetadata: { subscribed: false },
         });
+        await captureServer(user.id, "subscription_payment_failed", { status, $set: { subscribed: false } });
       }
     }
   }
@@ -130,6 +134,7 @@ export async function POST(req) {
           stripeSubscriptionId: null,
         },
       });
+      await captureServer(user.id, "subscription_canceled", { $set: { subscribed: false, plan: "free" } });
     }
   }
 

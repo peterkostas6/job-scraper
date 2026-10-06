@@ -2,6 +2,7 @@
 // visitor on to the job posting on the bank's site.
 import { sql } from "@vercel/postgres";
 import { BOT_UA } from "@/lib/notif-helpers";
+import { captureServer } from "@/lib/posthog-server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,12 @@ export async function GET(request, { params }) {
           UPDATE short_links
           SET clicks = clicks + 1, first_clicked_at = COALESCE(first_clicked_at, NOW()), last_clicked_at = NOW()
           WHERE code = ${params.code}
-          RETURNING link
+          RETURNING link, user_id, source
         `
       : await sql`SELECT link FROM short_links WHERE code = ${params.code}`;
-    return Response.redirect(rows[0]?.link || home, 302);
+    const row = rows[0];
+    if (counted && row) await captureServer(row.user_id, "job_link_clicked", { source: row.source || "sms", link: row.link, bank_site: new URL(row.link).hostname, from_alert: true });
+    return Response.redirect(row?.link || home, 302);
   } catch (err) {
     console.error("short link error:", err);
     return Response.redirect(home, 302);

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useUser, SignUpButton, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { track } from "@/lib/track";
+import { capture } from "@/lib/analytics";
 import { PLANS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 
@@ -39,6 +40,7 @@ function ClubInquiryModal({ onClose }) {
       });
       const data = await res.json();
       if (data.success) {
+        capture("club_inquiry_sent", { member_count: form.memberCount || null });
         setSuccess(true);
       } else {
         setError("Something went wrong. Please try again.");
@@ -235,7 +237,7 @@ export default function PricingPage() {
 
           <div className="pp-toggle" role="tablist" aria-label="Billing period">
             {[["weekly", "Weekly"], ["monthly", "Monthly"], ["yearly", "Yearly"]].map(([key, label]) => (
-              <button key={key} role="tab" aria-selected={billing === key} className={billing === key ? "on" : ""} onClick={() => setBilling(key)}>
+              <button key={key} role="tab" aria-selected={billing === key} className={billing === key ? "on" : ""} onClick={() => { setBilling(key); capture("pricing_billing_changed", { billing: key }); }}>
                 {label}
                 {key === "yearly" && <span className="pp-save">Save 37%</span>}
               </button>
@@ -275,7 +277,7 @@ export default function PricingPage() {
               </button>
             ) : (
               <SignUpButton mode="modal" forceRedirectUrl={`/pricing?checkout=${billing}`} signInForceRedirectUrl={`/pricing?checkout=${billing}`}>
-                <button className="ss-btn ss-btn-blue ss-btn-block">Get Pro</button>
+                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing, signed_in: false })}>Get Pro</button>
               </SignUpButton>
             )}
             <ul className="pp-list">
@@ -304,7 +306,7 @@ export default function PricingPage() {
           <div className="pp-club-side">
             <p className="pp-club-label">Club plan</p>
             <p className="pp-price">$50<span>/month</span></p>
-            <button className="ss-btn ss-btn-block" onClick={() => setShowInquiry(true)}>Talk to us</button>
+            <button className="ss-btn ss-btn-block" onClick={() => { setShowInquiry(true); capture("club_inquiry_opened"); }}>Talk to us</button>
           </div>
         </section>
 
@@ -317,7 +319,7 @@ export default function PricingPage() {
             ["What does the recent postings feed include?", "Every role posted in the last 48 hours across all 20 banks, updated every 5 minutes."],
             ["How do club memberships work?", "The club pays $50 a month. Members verify with their school email and get Pro automatically, so nobody manages individual subscriptions."],
           ].map(([q, a]) => (
-            <details key={q}>
+            <details key={q} onToggle={(e) => { if (e.currentTarget.open) capture("faq_opened", { question: q, page: "pricing" }); }}>
               <summary>{q}</summary>
               <p>{a}</p>
             </details>

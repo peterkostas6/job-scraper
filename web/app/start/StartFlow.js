@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import posthog from "posthog-js";
+import { capture } from "@/lib/analytics";
 import { useUser, SignUpButton, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import { decodeEntities } from "@/lib/text";
@@ -49,10 +49,6 @@ function describe(a) {
   const type = a.jobType === "internship" ? "internships" : a.jobType === "fulltime" ? "analyst roles" : "roles";
   const banks = a.banks.length === 0 ? `all ${BANK_COUNT} banks` : a.banks.length === 1 ? BANKS[a.banks[0]].name : `${a.banks.length} banks`;
   return `${area}${type} at ${banks}${a.city ? ` in ${a.city}` : ""}`;
-}
-
-function capture(event, props) {
-  try { posthog.capture(event, props); } catch {}
 }
 
 export default function StartFlow() {

@@ -54,7 +54,8 @@ export async function POST(req) {
     ],
     // Every plan is charged at checkout; there is no free trial.
     subscription_data: {
-      metadata: meta,
+      // clerkUserId lets renewals and cancellations be tied back to the account.
+      metadata: { ...meta, clerkUserId: userId },
     },
     metadata: {
       clerkUserId: userId,

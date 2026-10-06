@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { sql } from "@vercel/postgres";
 import { alertEmail } from "@/lib/email-templates";
 import { sendEmail, unsubscribeUrl, BRAND } from "@/lib/email";
+import { captureServer } from "@/lib/posthog-server";
 
 // Sends go through the Twilio Messaging Service that the approved A2P campaign is attached to.
 export function smsConfig() {
@@ -171,6 +172,20 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
 
   if (isFree && (result.emailSent || result.smsSent)) {
     await logNotification({ userId, channel: "free-alert", status: "sent", recipient: smsTo || email || null, jobLinks });
+  }
+
+  // One event per person per alert, with what went out and what failed.
+  if (userId && (result.emailSent || result.smsSent || result.emailError || result.smsError)) {
+    await captureServer(userId, "alert_sent", {
+      email_sent: result.emailSent,
+      sms_sent: result.smsSent,
+      email_failed: Boolean(result.emailError),
+      sms_failed: Boolean(result.smsError),
+      jobs: jobs.length,
+      banks: [...new Set(jobs.map((j) => j.bank).filter(Boolean))],
+      free_alert: isFree,
+      last_free_alert: lastFree,
+    });
   }
 
   return result;

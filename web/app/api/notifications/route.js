@@ -4,6 +4,7 @@ import { smsConfig, sendSms, logNotification, freeAlertsUsed, FREE_ALERT_LIMIT }
 import { BANK_NAMES } from "@/lib/banks";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
+import { captureServer } from "@/lib/posthog-server";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,23 @@ export async function POST(request) {
 
     const email = user.emailAddresses?.[0]?.emailAddress;
     const firstName = user.firstName || "";
+
+    // Settings as properties on the person too, so you can filter users by what they track.
+    // The phone number is never sent.
+    const alertProps = {
+      email_alerts: Boolean(enabled),
+      sms_alerts: smsEnabled,
+      job_type: jobType || "all",
+      banks: Array.isArray(banks) && banks.length ? banks : ["all"],
+      categories: Array.isArray(categories) && categories.length ? categories : ["all"],
+      city: typeof body.location === "string" && body.location.trim() ? body.location.trim().slice(0, 60) : "anywhere",
+    };
+    await captureServer(userId, isFirstSetup ? "alerts_set_up" : "alert_settings_changed", {
+      ...alertProps,
+      sms_turned_on: smsEnabled && !oldSmsEnabled,
+      sms_turned_off: !smsEnabled && oldSmsEnabled,
+      $set: { alert_email: alertProps.email_alerts, alert_sms: alertProps.sms_alerts, alert_job_type: alertProps.job_type, alert_bank_count: Array.isArray(banks) && banks.length ? banks.length : 20 },
+    });
 
     // Send preferences confirmation email
     if (email) {

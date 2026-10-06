@@ -8,7 +8,7 @@ import { BANKS } from "@/lib/banks";
 import { decodeEntities } from "@/lib/text";
 import { JOB_TYPES as ALERT_JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { track } from "@/lib/track";
-import posthog from "posthog-js";
+import { capture } from "@/lib/analytics";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
@@ -203,9 +203,6 @@ const HOME_FAQ = [
   ["Where do the jobs come from?", "Straight from each bank's own careers site, not LinkedIn or Indeed, with a direct link to apply."],
 ];
 
-function capture(event, props) {
-  try { posthog.capture(event, props); } catch {}
-}
 
 // Banks re-date old postings and some only give a date, so use whichever is newer and
 // fall back to a day label when all we have is a date.
@@ -562,7 +559,7 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
         <h2 className="ss-h2" data-reveal>Questions</h2>
         <div data-reveal>
           {HOME_FAQ.map(([q, a]) => (
-            <details key={q}>
+            <details key={q} onToggle={(e) => { if (e.currentTarget.open) capture("faq_opened", { question: q, page: "home" }); }}>
               <summary>{q}</summary>
               <p>{a}</p>
             </details>
@@ -629,7 +626,7 @@ function SignUpGate({ gate, onClose }) {
           </p>
         )}
         <p className="gate-desc">{gate.desc}</p>
-        <button className="h-cta gate-cta" onClick={() => { onClose(); clerk.openSignUp(redirect); }}>{gate.cta}</button>
+        <button className="h-cta gate-cta" onClick={() => { capture("signup_gate_continued", { kind: gate.kind }); onClose(); clerk.openSignUp(redirect); }}>{gate.cta}</button>
         <p className="gate-fine">
           Free &middot; No credit card &middot; Have an account?{" "}
           <button className="gate-link" onClick={() => { onClose(); clerk.openSignIn(redirect); }}>Sign in</button>
@@ -641,6 +638,7 @@ function SignUpGate({ gate, onClose }) {
 
 // ---- PAYWALL ----
 function PaywallOverlay({ isSignedIn, newCount }) {
+  useEffect(() => { capture("paywall_viewed", { new_roles: newCount ?? null, signed_in: Boolean(isSignedIn) }); }, []);
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
@@ -936,7 +934,8 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
     const timeLabel = formatRelativeDate(effectiveTime, job.hasActualDate);
 
     return (
-      <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="job-row">
+      <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="job-row"
+        onClick={() => capture("job_opened", { view: "recent", bank: job.bank, category: job.category, title: job.title, position: index + 1 })}>
         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
         <span className="job-title">{job.title}</span>
         <span className="job-location">{cleanLocation(job.location) || "—"}</span>
@@ -1110,13 +1109,29 @@ export default function Home() {
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [availableLocations, setAvailableLocations] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState("");
+  // Browse analytics: one event per search (after typing pauses), filter change, and bank switch.
+  const browseTracked = useRef(false);
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    const id = setTimeout(() => capture("jobs_searched", { query: q.slice(0, 80), bank: activeBank }), 1000);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+  useEffect(() => {
+    if (!browseTracked.current) return;
+    capture("jobs_filtered", { location: locationFilter || "any", job_type: jobType, category: categoryFilter || "any", bank: activeBank });
+  }, [locationFilter, jobType, categoryFilter]);
+  useEffect(() => {
+    if (!browseTracked.current) { browseTracked.current = true; return; }
+    capture("bank_selected", { bank: activeBank, bank_name: BANKS[activeBank]?.name || "All banks" });
+  }, [activeBank]);
   const [availableCategories, setAvailableCategories] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
   // Signed-out visitors who try something that needs an account see why first (see SignUpGate).
   const [gate, setGate] = useState(null);
   function askToSignUp(kind, job) {
     capture("signup_gate_shown", { kind });
-    setGate({ ...SIGNUP_GATES[kind], job, redirect: job ? trackedLink(job.link) : undefined });
+    setGate({ ...SIGNUP_GATES[kind], kind, job, redirect: job ? trackedLink(job.link) : undefined });
   }
   const [notifPrefs, setNotifPrefs] = useState(NOTIF_DEFAULTS);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -1322,6 +1337,7 @@ export default function Home() {
     e.stopPropagation();
     if (!isSignedIn) { askToSignUp("save"); return; }
     const link = job.link;
+    capture(bookmarks.has(link) ? "job_unsaved" : "job_saved", { bank: job.bank || BANKS[activeBank]?.name, title: job.title, category: job.category });
     setBookmarks((prev) => {
       const next = new Set(prev);
       if (next.has(link)) next.delete(link); else next.add(link);
@@ -1340,6 +1356,7 @@ export default function Home() {
   }
 
   function dismissWelcome() {
+    capture("browse_alerts_banner_dismissed");
     setShowWelcome(false);
     localStorage.setItem("pp-welcomed", "true");
   }
@@ -1427,6 +1444,7 @@ export default function Home() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setCompanyRequestStatus(data.error || "Couldn't send your request. Try again."); return; }
+      capture("bank_requested", { company: companyRequest.trim() });
       setCompanyRequest("");
       setCompanyRequestStatus("sent");
     } catch {
@@ -2345,7 +2363,10 @@ export default function Home() {
                         rel="noopener noreferrer"
                         className="job-row"
                         key={index}
-                        onClick={(e) => { if (!isSignedIn) { e.preventDefault(); askToSignUp("job", job); } }}
+                        onClick={(e) => {
+                          capture("job_opened", { view: viewingSaved ? "saved" : "browse", bank: job.bank || BANKS[job.bankKey]?.name, category: job.category, title: job.title, position: index + 1, signed_in: Boolean(isSignedIn) });
+                          if (!isSignedIn) { e.preventDefault(); askToSignUp("job", job); }
+                        }}
                       >
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="job-title">{job.title}</span>

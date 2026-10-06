@@ -250,7 +250,7 @@ export default function PricingPage() {
             <p className="pp-plan-name">Free</p>
             <p className="pp-price">$0</p>
             <p className="pp-billed">Free forever. No credit card.</p>
-            <Link href="/start" className="ss-btn ss-btn-light ss-btn-block">Get my free alerts</Link>
+            <Link href="/start" className="ss-btn ss-btn-light ss-btn-block">Set up alerts</Link>
             <ul className="pp-list">
               <li>Every open role at all 20 banks</li>
               <li>5 text or email alerts</li>

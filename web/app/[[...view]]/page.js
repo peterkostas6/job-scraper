@@ -241,10 +241,10 @@ function homeFeed(jobs) {
 
 // Every sign-up button on the homepage goes to the /start quiz: a few taps of
 // commitment and a list of real matches before we ask for an account.
-function StartCta({ where, isSignedIn, className = "h-cta" }) {
+function StartCta({ where, className = "h-cta" }) {
   return (
     <Link href="/start" className={className} onClick={() => capture("home_cta_clicked", { where })}>
-      {isSignedIn ? "Set up my alerts" : "Get my free alerts"}
+      Set up alerts
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </Link>
   );
@@ -880,7 +880,7 @@ function AboutPage({ onBrowse }) {
       <section className="about-section about-section-last" style={{ textAlign: "center" }}>
         <h2 className="about-heading">Hear about the next posting first</h2>
         <div className="about-ctas">
-          <Link href="/start" className="h-cta" onClick={() => capture("about_cta_clicked")}>Get my free alerts</Link>
+          <Link href="/start" className="h-cta" onClick={() => capture("about_cta_clicked")}>Set up alerts</Link>
           <button className="about-cta-secondary" onClick={onBrowse}>Browse jobs</button>
         </div>
       </section>
@@ -1944,7 +1944,7 @@ export default function Home() {
                   <li><strong>Choose text, email or both</strong> and you&rsquo;re set</li>
                 </ol>
                 <Link href="/start" className="h-cta" onClick={() => capture("alerts_tab_cta_clicked")}>
-                  Set up my free alerts
+                  Set up alerts
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </Link>
                 <p className="h-fine">Takes about a minute &middot; No credit card</p>

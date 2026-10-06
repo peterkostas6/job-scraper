@@ -49,11 +49,13 @@ export function buildSmsText(jobs, withOptOut, shortUrls, lastFree) {
 }
 
 // Returns petespostings.com/j/<code> for this user + job, or null if it can't be saved.
-// The code comes from a hash, so a resend of the same job reuses the same link.
-async function shortLink(userId, link) {
-  const code = crypto.createHash("sha256").update(`${userId}|${link}`).digest("base64url").slice(0, 8);
+// The code comes from a hash, so a resend of the same job reuses the same link. Email links
+// get their own code (source 'email') so clicks show which channel they came from.
+async function shortLink(userId, link, source = "sms") {
+  const key = source === "sms" ? `${userId}|${link}` : `${source}|${userId}|${link}`;
+  const code = crypto.createHash("sha256").update(key).digest("base64url").slice(0, 8);
   try {
-    await sql`INSERT INTO short_links (code, link, user_id) VALUES (${code}, ${link}, ${userId}) ON CONFLICT (code) DO NOTHING`;
+    await sql`INSERT INTO short_links (code, link, user_id, source) VALUES (${code}, ${link}, ${userId}, ${source}) ON CONFLICT (code) DO NOTHING`;
     return `petespostings.com/j/${code}`;
   } catch (err) {
     console.error("short link insert failed:", err?.message || err);
@@ -127,7 +129,12 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
   // prefs.enabled is the email switch; undefined (the admin test) still emails.
   if (email && prefs?.enabled !== false) {
     try {
-      const { subject, html, text } = alertEmail({ jobs, firstName, userId: uid });
+      // Job links go through /j/<code> so email clicks are counted like text clicks.
+      const emailJobs = await Promise.all(jobs.map(async (j) => {
+        const short = await shortLink(uid, j.link, "email");
+        return short ? { ...j, link: `https://${short}` } : j;
+      }));
+      const { subject, html, text } = alertEmail({ jobs: emailJobs, firstName, userId: uid });
       // Same user + same set of links = same key, so a retry never double-sends.
       const linkHash = crypto.createHash("sha256").update(jobs.map((j) => j.link).sort().join("|")).digest("hex").slice(0, 16);
       const sent = await sendEmail(resend, {

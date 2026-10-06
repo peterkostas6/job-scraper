@@ -107,7 +107,7 @@ export async function POST(request) {
         source TEXT NOT NULL DEFAULT 'sms'
       )
     `;
-    // source: 'sms' for links in alert texts, 'web' for job links clicked on the site.
+    // source: 'sms' for links in alert texts, 'email' for links in alert emails, 'web' for job links clicked on the site.
     await sql`ALTER TABLE short_links ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'sms'`;
 
     // Companies Pro members ask us to add.

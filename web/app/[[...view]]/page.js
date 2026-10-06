@@ -142,10 +142,9 @@ const NOTIF_CATEGORIES = ["Investment Banking", "Sales & Trading", "Risk & Compl
 
 // Homepage comparison chart: [row label, on your own, Pete's Postings]
 const COMPARE_ROWS = [
-  ["Where you look", "Dozens of bank career sites", "One feed, pulled from bank APIs"],
-  ["When you hear", "Whenever you remember to check", "Text or email the moment it posts"],
-  ["Pulled postings", "Gone before you saw them", "Still in your 48\u2011hour feed"],
-  ["Tracking", "A spreadsheet, if you kept one", "Saved jobs (Pro)"],
+  ["Coverage", "20 career sites, checked one by one", "All 20 banks in one feed"],
+  ["Speed", "You find out whenever you happen to check", "A text or email within 5 minutes of posting"],
+  ["Your applications", "Scattered across tabs and spreadsheets", "Saved jobs, all in one place"],
 ];
 
 const PREVIEW_JOBS = [
@@ -425,7 +424,7 @@ function HomePage({ onBrowse, onRecent, isSignedIn, last48hCount }) {
           <thead>
             <tr>
               <td></td>
-              <th scope="col">On your own</th>
+              <th scope="col">Checking yourself</th>
               <th scope="col" className="compare-us">Pete&rsquo;s Postings</th>
             </tr>
           </thead>

@@ -41,14 +41,11 @@ export default async function Image() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, fontWeight: 800 }}>
-          {/* The J1 logo mark: a list of job postings, the newest in blue. */}
-          <svg width="52" height="52" viewBox="2 3.5 57 57">
-            <rect x="4" y="9" width="12" height="12" rx="3.5" fill="#60a5fa" />
-            <rect x="21" y="10.5" width="36" height="9" rx="3" fill="#60a5fa" />
-            <rect x="4" y="26" width="12" height="12" rx="3.5" fill="#faf8f5" />
-            <rect x="21" y="27.5" width="28" height="9" rx="3" fill="#faf8f5" />
-            <rect x="4" y="43" width="12" height="12" rx="3.5" fill="#faf8f5" opacity="0.35" />
-            <rect x="21" y="44.5" width="20" height="9" rx="3" fill="#faf8f5" opacity="0.35" />
+          {/* The logo mark: three lines of postings, the newest in blue. */}
+          <svg width="48" height="48" viewBox="4 6 52 52">
+            <rect x="8" y="16" width="44" height="6" rx="3" fill="#60a5fa" />
+            <rect x="8" y="29" width="34" height="6" rx="3" fill="#faf8f5" />
+            <rect x="8" y="42" width="24" height="6" rx="3" fill="#faf8f5" opacity="0.35" />
           </svg>
           Pete&rsquo;s Postings
         </div>

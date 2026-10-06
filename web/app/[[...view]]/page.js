@@ -253,24 +253,73 @@ function StartCta({ where, isSignedIn, className = "h-cta" }) {
   );
 }
 
+// Counts up from 0 the first time it scrolls into view.
+function CountUp({ value, format = (n) => n.toLocaleString() }) {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !value) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { setShown(value); return; }
+    let raf = 0;
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / 1100);
+        setShown(Math.round(value * (1 - Math.pow(1 - t, 3))));
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, { threshold: 0.4 });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [value]);
+  return <span ref={ref} className="tnum">{format(shown)}</span>;
+}
+
+const ARROW = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
+const MSG_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="white" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
+
 function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
   const liveCount = liveJobs?.length || 0;
   const latest = homeFeed(liveJobs);
+  const bankNames = Object.values(BANKS).map((b) => b.name);
 
-  // Hero phone: a new text lands on top every few seconds and pushes the others down.
+  // Open roles per bank, biggest first, for the bar chart.
+  const perBank = Object.entries(BANKS)
+    .map(([key, b]) => ({ name: b.shortName, n: (liveJobs || []).filter((j) => j.bankKey === key).length }))
+    .filter((b) => b.n > 0)
+    .sort((a, b) => b.n - a.n)
+    .slice(0, 14);
+  const maxPerBank = Math.max(1, ...perBank.map((b) => b.n));
+
+  // Product shot: a new text lands on top every few seconds.
   const [notifStep, setNotifStep] = useState(0);
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const id = setInterval(() => setNotifStep((s) => s + 1), 3200);
     return () => clearInterval(id);
   }, []);
-  const notifs = ["now", "4m ago", "1h ago"].map((ago, i) => {
+  const notifs = ["now", "4m ago"].map((ago, i) => {
     const n = notifStep - i;
     return { ...HERO_NOTIFS[((n % HERO_NOTIFS.length) + HERO_NOTIFS.length) % HERO_NOTIFS.length], ago, key: n };
   });
 
-  // Phones: a sign-up bar pinned to the bottom once the hero button scrolls away,
-  // hidden again when the closing section (which has its own button) is on screen.
+  // Sections fade up as they scroll in.
+  const rootRef = useRef(null);
+  useEffect(() => {
+    const els = rootRef.current?.querySelectorAll("[data-reveal]") || [];
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { els.forEach((el) => el.classList.add("is-in")); return; }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); } });
+    }, { threshold: 0.15, rootMargin: "0px 0px -40px 0px" });
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [latest.length]);
+
+  // Phones: sign-up bar pinned to the bottom between the hero button and the closing section.
   const heroCtaRef = useRef(null);
   const closeRef = useRef(null);
   const [showSticky, setShowSticky] = useState(false);
@@ -289,208 +338,266 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
   }, []);
 
   return (
-    <>
-    {/* HERO · the promise, one button, and the product doing its job on a phone */}
-    <section className="h-hero">
-      <div className="h-hero-inner">
-        <div className="h-hero-copy">
-          <p className="h-live"><span className="h-live-dot" aria-hidden="true" />Checking {BANK_COUNT} banks every 5 minutes</p>
-          <h1 className="h-title">Get a text the moment a bank posts a job.</h1>
-          <p className="h-sub">
-            Analyst and internship roles at {BANK_COUNT} banks, texted to you minutes after they go live.
-            Apply before everyone else.
-          </p>
-          <div className="h-cta-row" ref={heroCtaRef}>
-            <StartCta where="hero" isSignedIn={isSignedIn} />
-            <button className="h-hero-browse" onClick={onBrowse}>
-              Browse {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles
-            </button>
-          </div>
-          <p className="h-fine">Free account &middot; No credit card &middot; Your first 5 alerts are on us</p>
+    <div className="ss" ref={rootRef}>
+      {/* HERO */}
+      <section className="ss-hero">
+        <p className="ss-pill" data-reveal><span className="h-live-dot" aria-hidden="true" />Checking {BANK_COUNT} banks every 5 minutes</p>
+        <h1 className="ss-title" data-reveal>Get a text the moment a bank posts a job.</h1>
+        <p className="ss-sub" data-reveal>
+          Analyst and internship roles at {BANK_COUNT} banks, texted to you minutes after they go live.
+          Apply before everyone else.
+        </p>
+        <div className="ss-cta-row" ref={heroCtaRef} data-reveal>
+          <StartCta where="hero" isSignedIn={isSignedIn} className="ss-btn" />
+          <button className="ss-btn ss-btn-light" onClick={onBrowse}>
+            Browse {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles
+          </button>
         </div>
+        <p className="ss-note" data-reveal>Free account. No credit card. Your first 5 alerts are on us.</p>
 
-        <div className="h-phone" aria-hidden="true">
-          <div className="h-phone-screen">
-            <div className="h-phone-clock">9:41</div>
-            <div className="h-notifs">
-              {notifs.map((n) => (
-                <div className="h-notif" key={n.key}>
-                  <span className="h-notif-icon">
-                    <svg width="18" height="18" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
-                  </span>
-                  <div className="h-notif-body">
-                    <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>{n.ago}</span></div>
-                    <p>{n.bank} just posted: {n.title}. Apply &rarr;</p>
-                  </div>
-                </div>
-              ))}
+        <div className="ss-logos" data-reveal>
+          <p className="ss-logos-label">Pulled straight from the career sites of</p>
+          <div className="ss-marquee" aria-label={bankNames.join(", ")}>
+            <div className="ss-marquee-track" aria-hidden="true">
+              {[...bankNames, ...bankNames].map((n, i) => <span key={i}>{n}</span>)}
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* BANKS · who we cover, before anyone has to ask */}
-    <section className="h-banks" aria-label="Banks we cover">
-      <p className="h-banks-label">Pulled straight from the career sites of</p>
-      <ul className="h-banks-list">
-        {Object.values(BANKS).map((b) => <li key={b.name}>{b.name}</li>)}
-      </ul>
-    </section>
-
-    <div className="homepage">
-
-      {/* LIVE FEED · real postings, so the value is proven, not described */}
-      {latest.length > 0 && (
-        <section className="h-feed">
-          <p className="h-eyebrow"><span className="h-live-dot" aria-hidden="true" />Live right now</p>
-          <h2 className="h-h2"><span className="tnum">{liveCount.toLocaleString()}</span> open analyst and internship roles.</h2>
-          {last48hCount > 0 && (
-            <p className="h-lead"><strong className="tnum">{last48hCount}</strong> went up in the last 48 hours. Alerts would have told you about each one.</p>
-          )}
-          <ol className="h-feed-list">
-            {latest.map((job) => (
+      {/* PRODUCT SHOT · the real feed with texts landing on top */}
+      <section className="ss-shot" data-reveal>
+        <div className="ss-window">
+          <div className="ss-window-bar">
+            <span className="ss-dots" aria-hidden="true"><i /><i /><i /></span>
+            <span className="ss-window-tabs"><b>Recent</b><span>Browse</span><span>Alerts</span></span>
+          </div>
+          <ol className="ss-window-list">
+            {(latest.length ? latest : HERO_NOTIFS.map((n, i) => ({ link: i, title: n.title, bank: n.bank, location: "New York, NY", detectedAt: Date.now() - (i + 1) * 3600000 }))).slice(0, 6).map((job, i) => (
               <li key={job.link}>
-                <button className="h-feed-row" onClick={onBrowse}>
-                  <span className="h-feed-main">
-                    <span className="h-feed-title">{job.title}</span>
-                    <span className="h-feed-meta">{job.bank} &middot; {job.location}</span>
-                  </span>
-                  <span className="h-feed-time tnum">{feedAge(job)}</span>
-                </button>
+                {i < 2 && <span className="ss-new">New</span>}
+                <span className="ss-window-main">
+                  <span className="ss-window-title">{job.title}</span>
+                  <span className="ss-window-meta">{job.bank} &middot; {job.location}</span>
+                </span>
+                <span className="ss-window-time">{latest.length ? feedAge(job) : `${i + 1}h ago`}</span>
               </li>
             ))}
           </ol>
-          <div className="h-feed-foot">
-            <StartCta where="feed" isSignedIn={isSignedIn} />
-            <button className="h-textlink" onClick={onBrowse}>See all {liveCount.toLocaleString()} roles &rarr;</button>
-          </div>
-        </section>
-      )}
-
-      {/* WHY · the cost of doing it yourself */}
-      <section className="h-why">
-        <div className="h-why-copy">
-          <p className="h-eyebrow">Why it matters</p>
-          <h2 className="h-h2">Recruiting doesn&rsquo;t wait for you to refresh a career site.</h2>
-          <p className="h-lead">Roles go up at random hours and get pulled within days. Checking one site at a time, you&rsquo;re already behind.</p>
-        </div>
-        <table className="compare">
-          <thead>
-            <tr>
-              <td></td>
-              <th scope="col">Checking yourself</th>
-              <th scope="col" className="compare-us">Pete&rsquo;s Postings</th>
-            </tr>
-          </thead>
-          <tbody>
-            {COMPARE_ROWS.map(([label, them, us]) => (
-              <tr key={label}>
-                <th scope="row">{label}</th>
-                <td>{them}</td>
-                <td className="compare-us"><div className="compare-check">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                  <span>{us}</span>
-                </div></td>
-              </tr>
+          <div className="ss-notifs" aria-hidden="true">
+            {notifs.map((n) => (
+              <div className="ss-notif" key={n.key}>
+                <span className="h-notif-icon">{MSG_ICON}</span>
+                <div className="h-notif-body">
+                  <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>{n.ago}</span></div>
+                  <p>{n.bank} just posted: {n.title}. Apply &rarr;</p>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </section>
 
-      {/* HOW IT WORKS · three steps, then the product video */}
-      <section className="h-steps">
-        <p className="h-eyebrow">How it works</p>
-        <h2 className="h-h2">Set it up once. Hear about every match.</h2>
-        <ol className="h-steps-list">
-          <li>
-            <span className="h-step-n">1</span>
-            <h3>Pick what you want</h3>
-            <p>Internship or full-time, plus the banks and cities you want.</p>
-          </li>
-          <li>
-            <span className="h-step-n">2</span>
-            <h3>We watch all {BANK_COUNT} banks</h3>
-            <p>Every career site, every 5 minutes, around the clock.</p>
-          </li>
-          <li>
-            <span className="h-step-n">3</span>
-            <h3>You get a text and apply</h3>
-            <p>The role, the bank and a direct link to apply.</p>
-          </li>
-        </ol>
+      {/* STATS · live numbers with small visuals */}
+      <section className="ss-section">
+        <h2 className="ss-h2" data-reveal>Every bank, one feed.</h2>
+        <p className="ss-lead" data-reveal>Live totals across the {BANK_COUNT} banks we track.</p>
+        <div className="ss-stats">
+          <div className="ss-card ss-stat" data-reveal>
+            <p className="ss-stat-num"><CountUp value={liveCount} /></p>
+            <p className="ss-stat-label">Open analyst and internship roles right now</p>
+            <div className="ss-bars" aria-hidden="true">
+              {perBank.map((b, i) => (
+                <span key={b.name} title={`${b.name}: ${b.n}`} style={{ "--h": `${Math.max(8, (b.n / maxPerBank) * 100)}%`, "--d": `${i * 45}ms` }} />
+              ))}
+            </div>
+          </div>
+          <div className="ss-card ss-stat" data-reveal>
+            <p className="ss-stat-num"><CountUp value={last48hCount || 0} /></p>
+            <p className="ss-stat-label">New roles posted in the last 48 hours</p>
+            <ul className="ss-mini-list">
+              {latest.slice(0, 3).map((job) => (
+                <li key={job.link}>
+                  <span><b>{job.bank}</b>{job.title}</span>
+                  <em className="ss-chip-green">New</em>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="ss-card ss-stat" data-reveal>
+            <p className="ss-stat-num">5 min</p>
+            <p className="ss-stat-label">Between checks, around the clock</p>
+            <ul className="ss-mini-list">
+              {["Goldman Sachs", "JPMorgan Chase", "Morgan Stanley"].map((n, i) => (
+                <li key={n}>
+                  <span><b>{n}</b><i className="ss-progress" style={{ "--d": `${i * 300}ms` }} /></span>
+                  <em className="ss-chip-green">Checked</em>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <p className="ss-snapshot" data-reveal>Live data, refreshed every 5 minutes</p>
+        <div className="ss-center" data-reveal><StartCta where="stats" isSignedIn={isSignedIn} className="ss-btn" /></div>
       </section>
 
-      {/* PROOF · three readable quotes */}
-      <section className="h-proof">
-        <h2 className="h-h2">Built for students without a pipeline.</h2>
-        <div className="h-quotes">
-          {HOME_QUOTES.map((t) => (
-            <figure className="h-quote" key={t.name}>
-              <blockquote>&ldquo;{t.quote}&rdquo;</blockquote>
-              <figcaption><strong>{t.name}</strong>{t.role}</figcaption>
-            </figure>
+      {/* HOW IT WORKS · alternating rows with small product visuals */}
+      <section className="ss-section">
+        <p className="ss-eyebrow" data-reveal>How it works</p>
+        <h2 className="ss-h2" data-reveal>Set it up once.<br />Hear about every match.</h2>
+        <div className="ss-steps">
+          <div className="ss-step" data-reveal>
+            <div className="ss-step-copy">
+              <p className="ss-step-n">01 <span>Pick what you want</span></p>
+              <h3>Tell us what you&rsquo;re recruiting for.</h3>
+              <p>Internship or full-time, the areas you care about, and the banks and cities you&rsquo;d take. Four quick questions.</p>
+            </div>
+            <div className="ss-visual">
+              <div className="ss-chips">
+                {[["Summer internship", true], ["Investment Banking", true], ["Sales & Trading", true], ["Research & Quant", false], ["New York", true], ["Chicago", false]].map(([label, on]) => (
+                  <span key={label} className={on ? "on" : ""}>{label}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="ss-step ss-step-flip" data-reveal>
+            <div className="ss-step-copy">
+              <p className="ss-step-n">02 <span>We watch every bank</span></p>
+              <h3>{BANK_COUNT} career sites, checked every 5 minutes.</h3>
+              <p>Straight from each bank&rsquo;s own careers system, not LinkedIn or Indeed. You never refresh a page again.</p>
+            </div>
+            <div className="ss-visual">
+              <div className="ss-bankgrid">
+                {bankNames.slice(0, 12).map((n, i) => (
+                  <span key={n} style={{ "--d": `${(i % 6) * 0.35}s` }}><i />{n}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="ss-step" data-reveal>
+            <div className="ss-step-copy">
+              <p className="ss-step-n">03 <span>Get a text</span></p>
+              <h3>Hear about it in minutes, not days.</h3>
+              <p>The role, the bank and a direct link to apply, by text, email or both.</p>
+            </div>
+            <div className="ss-visual">
+              <div className="ss-notif ss-notif-static">
+                <span className="h-notif-icon">{MSG_ICON}</span>
+                <div className="h-notif-body">
+                  <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>now</span></div>
+                  <p>Goldman Sachs just posted: 2027 Investment Banking Summer Analyst. Apply &rarr;</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="ss-step ss-step-flip" data-reveal>
+            <div className="ss-step-copy">
+              <p className="ss-step-n">04 <span>Apply first</span></p>
+              <h3>Be early in the pile, not late.</h3>
+              <p>Roles go up at random hours and get pulled within days. Applying in the first hours puts you ahead.</p>
+            </div>
+            <div className="ss-visual">
+              <div className="ss-applied">
+                <div>
+                  <p className="ss-applied-title">2027 Investment Banking Summer Analyst</p>
+                  <p className="ss-applied-meta">Goldman Sachs &middot; Posted 6 min ago</p>
+                </div>
+                <em className="ss-chip-green">Applied</em>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="ss-center" data-reveal><StartCta where="steps" isSignedIn={isSignedIn} className="ss-btn" /></div>
+      </section>
+
+      {/* PROOF · quotes mixed with tinted stat cards */}
+      <section className="ss-section">
+        <p className="ss-eyebrow" data-reveal>From students using it</p>
+        <h2 className="ss-h2" data-reveal>Built for students without a pipeline.</h2>
+        <div className="ss-proof">
+          <div className="ss-card ss-card-tint" data-reveal>
+            <p className="ss-proof-num">{BANK_COUNT} <small>banks</small></p>
+            <p className="ss-proof-sub">Bulge brackets, elite boutiques and asset managers in one feed.</p>
+          </div>
+          <figure className="ss-card ss-quote" data-reveal>
+            <blockquote>&ldquo;{HOME_QUOTES[0].quote}&rdquo;</blockquote>
+            <figcaption><span className="ss-avatar">{HOME_QUOTES[0].name.split(" ").map((w) => w[0]).join("")}</span><span><strong>{HOME_QUOTES[0].name}</strong>{HOME_QUOTES[0].role}</span></figcaption>
+          </figure>
+          <figure className="ss-card ss-quote" data-reveal>
+            <blockquote>&ldquo;{HOME_QUOTES[1].quote}&rdquo;</blockquote>
+            <figcaption><span className="ss-avatar">{HOME_QUOTES[1].name.split(" ").map((w) => w[0]).join("")}</span><span><strong>{HOME_QUOTES[1].name}</strong>{HOME_QUOTES[1].role}</span></figcaption>
+          </figure>
+          <div className="ss-card ss-card-tint" data-reveal>
+            <p className="ss-proof-num">5 <small>min</small></p>
+            <p className="ss-proof-sub">From a bank posting a role to the text on your phone.</p>
+          </div>
+          <div className="ss-card ss-card-tint" data-reveal>
+            <p className="ss-proof-num"><CountUp value={liveCount} /> <small>roles</small></p>
+            <p className="ss-proof-sub">Open analyst and internship postings right now.</p>
+          </div>
+          <figure className="ss-card ss-quote" data-reveal>
+            <blockquote>&ldquo;{HOME_QUOTES[2].quote}&rdquo;</blockquote>
+            <figcaption><span className="ss-avatar">{HOME_QUOTES[2].name.split(" ").map((w) => w[0]).join("")}</span><span><strong>{HOME_QUOTES[2].name}</strong>{HOME_QUOTES[2].role}</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section className="ss-section">
+        <p className="ss-eyebrow" data-reveal>Pricing</p>
+        <h2 className="ss-h2" data-reveal>Start free. Upgrade when recruiting heats up.</h2>
+        <div className="ss-plans">
+          <div className="ss-card ss-plan" data-reveal>
+            <p className="ss-plan-name">Free</p>
+            <p className="ss-plan-price">$0</p>
+            <ul>
+              <li>Every open role at all {BANK_COUNT} banks</li>
+              <li>Your first 5 text or email alerts</li>
+              <li>Save jobs and track applications</li>
+            </ul>
+            <StartCta where="pricing" isSignedIn={isSignedIn} className="ss-btn ss-btn-light ss-btn-block" />
+          </div>
+          <div className="ss-card ss-plan ss-plan-dark" data-reveal>
+            <p className="ss-plan-name">Pro</p>
+            <p className="ss-plan-price">${PLANS.monthly.price}<span>/mo</span></p>
+            <p className="ss-plan-note">Founding price for the first {MEMBER_CAP.toLocaleString()} members, then $19.99</p>
+            <ul>
+              <li>Unlimited text and email alerts</li>
+              <li>Everything posted in the last 48 hours</li>
+              <li>Cancel anytime</li>
+            </ul>
+            <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>See Pro plans {ARROW}</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="ss-section ss-faq">
+        <h2 className="ss-h2" data-reveal>Questions</h2>
+        <div data-reveal>
+          {HOME_FAQ.map(([q, a]) => (
+            <details key={q}>
+              <summary>{q}</summary>
+              <p>{a}</p>
+            </details>
           ))}
         </div>
       </section>
 
-      {/* PRICING · answer "what does it cost" before it becomes a reason to leave */}
-      <section className="h-plans">
-        <div className="h-plans-copy">
-          <p className="h-eyebrow">Pricing</p>
-          <h2 className="h-h2">Start free. Upgrade when recruiting heats up.</h2>
-        </div>
-        <div className="h-plan">
-          <p className="h-plan-name">Free</p>
-          <p className="h-plan-price">$0</p>
-          <ul>
-            <li>Every open role at all {BANK_COUNT} banks</li>
-            <li>Your first 5 text or email alerts</li>
-            <li>Save jobs and track applications</li>
-          </ul>
-          <StartCta where="pricing" isSignedIn={isSignedIn} />
-        </div>
-        <div className="h-plan h-plan-pro">
-          <p className="h-plan-name">Pro</p>
-          <p className="h-plan-price">${PLANS.monthly.price}<span>/mo</span></p>
-          <p className="h-plan-note">Founding price for the first {MEMBER_CAP.toLocaleString()} members, then $19.99</p>
-          <ul>
-            <li>Unlimited text and email alerts</li>
-            <li>Everything posted in the last 48 hours</li>
-            <li>Cancel anytime</li>
-          </ul>
-          <Link href="/pricing" className="h-textlink" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>See Pro plans &rarr;</Link>
-        </div>
+      {/* CLOSE */}
+      <section className="ss-close" ref={closeRef} data-reveal>
+        <h2 className="ss-h2">The next posting could go up tonight.</h2>
+        <p className="ss-lead">Set up alerts in a minute. Hear about it first.</p>
+        <div className="ss-center"><StartCta where="close" isSignedIn={isSignedIn} className="ss-btn" /></div>
+        <p className="ss-note">Free account. No credit card.</p>
       </section>
 
-      {/* FAQ · the objections, answered */}
-      <section className="h-faq">
-        <h2 className="h-h2">Questions</h2>
-        {HOME_FAQ.map(([q, a]) => (
-          <details key={q}>
-            <summary>{q}</summary>
-            <p>{a}</p>
-          </details>
-        ))}
-      </section>
-
+      <div className={`h-sticky${showSticky ? " h-sticky-on" : ""}`}>
+        <StartCta where="sticky" isSignedIn={isSignedIn} className="ss-btn ss-btn-block" />
+      </div>
     </div>
-
-    {/* CLOSE · one last push */}
-    <section className="h-close" ref={closeRef}>
-      <h2 className="h-close-title">The next posting could go up tonight.</h2>
-      <p className="h-close-sub">Set up alerts in a minute. Hear about it first.</p>
-      <StartCta where="close" isSignedIn={isSignedIn} />
-      <p className="h-fine">Free account &middot; No credit card</p>
-    </section>
-
-    <div className={`h-sticky${showSticky ? " h-sticky-on" : ""}`}>
-      <StartCta where="sticky" isSignedIn={isSignedIn} className="h-cta h-cta-block" />
-    </div>
-    </>
   );
 }
-
 
 // ---- SIGN-UP GATE ----
 // A sentence of context before the Clerk form, so signing up never comes out of nowhere.
@@ -1369,7 +1476,7 @@ export default function Home() {
 
   // Homepage: the root background goes dark so overscroll above the hero shows navy, not cream.
   useEffect(() => {
-    document.documentElement.toggleAttribute("data-dark-top", viewHome);
+    document.documentElement.removeAttribute("data-dark-top");
     return () => document.documentElement.removeAttribute("data-dark-top");
   }, [viewHome]);
 
@@ -1570,7 +1677,7 @@ export default function Home() {
 
   return (
     <>
-      <nav className={viewHome && !scrolled && !navMenuOpen ? "nav-on-dark" : ""}>
+      <nav>
         <div className="nav-inner">
           <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
             <img src="/logo-mark.png" alt="" className="logo-icon" width="22" height="28" />

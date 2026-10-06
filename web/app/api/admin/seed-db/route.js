@@ -10,7 +10,7 @@
 //
 // Secured with CRON_SECRET header.
 import { sql } from "@vercel/postgres";
-import { isGraduateProgram, isBankingEntryLevel } from "@/lib/notif-helpers";
+import { isGraduateProgram, isMbaOrSenior, isBankingEntryLevel } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -93,6 +93,7 @@ export async function POST(request) {
         let kept = 0;
         for (const job of jobs) {
           if (isGraduateProgram(job.title)) continue;
+          if (isMbaOrSenior(job.title)) continue;
           if (!isBankingEntryLevel(job.title)) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
           kept++;

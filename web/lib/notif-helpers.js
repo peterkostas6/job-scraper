@@ -185,6 +185,13 @@ export function isGraduateProgram(title) {
   return /\bgraduate\b/.test(t) || /\bgrad\s+program/.test(t) || /\bgrad\s+programme/.test(t);
 }
 
+// Associate, MBA, VP and Director roles that pass the entry-level check through words like
+// "summer" or "analyst" (Summer Associate programs, "Analyst/Associate", "Quant Analyst, VP").
+// The site is for undergrads and recent grads, so any of these words drops the role.
+export function isMbaOrSenior(title) {
+  return /\bassociates?\b|\bmba\b|\bvice president\b|\bvp\b|\b(managing )?director\b/i.test(title);
+}
+
 // Returns true for entry-level banking roles worth showing.
 // Catches analyst/intern titles as well as common variations that don't use those exact words.
 export function isBankingEntryLevel(title) {

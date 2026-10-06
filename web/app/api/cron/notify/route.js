@@ -5,7 +5,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
-import { isGraduateProgram, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
+import { isGraduateProgram, isMbaOrSenior, isInternship, isBankingEntryLevel, isFinanceRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
 import { BANKS, BANK_NAMES } from "@/lib/banks";
@@ -182,6 +182,7 @@ export async function GET(request) {
         let kept = 0;
         for (const job of jobs) {
           if (isGraduateProgram(job.title)) continue;
+          if (isMbaOrSenior(job.title)) continue;
           if (!isBankingEntryLevel(job.title)) continue;
           if (!isFinanceRole(job.title)) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });

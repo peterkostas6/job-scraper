@@ -2,6 +2,8 @@
 // The browse page reads this one route instead of scraping each bank on every load.
 // The cron refreshes the table every 5 minutes; the CDN may serve this for up to a minute.
 import { sql } from "@vercel/postgres";
+import { decodeEntities } from "@/lib/text";
+import { isMbaOrSenior } from "@/lib/notif-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +18,12 @@ export async function GET() {
       ORDER BY posted_date DESC NULLS LAST, detected_at DESC
     `;
 
-    const jobs = rows.map((row) => ({
+    // Rows saved before the cron dropped Associate/VP roles are closed on its next run;
+    // filtering here too keeps them off the site in the meantime (and on preview builds,
+    // where the cron never runs).
+    const jobs = rows.filter((row) => !isMbaOrSenior(row.title)).map((row) => ({
       link: row.link,
-      title: row.title,
+      title: decodeEntities(row.title),
       location: row.location,
       bank: row.bank,
       bankKey: row.bank_key,

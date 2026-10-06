@@ -3,7 +3,7 @@
 import { sql } from "@vercel/postgres";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
-import { isBankingEntryLevel } from "@/lib/notif-helpers";
+import { isBankingEntryLevel, isMbaOrSenior } from "@/lib/notif-helpers";
 
 function isUSLocation(loc) {
   if (!loc) return true;
@@ -72,6 +72,7 @@ export async function GET() {
 
       // Only show banking entry-level roles — filter out ops, admin, etc.
       if (!isBankingEntryLevel(row.title)) continue;
+      if (isMbaOrSenior(row.title)) continue;
 
       // Only show US jobs
       if (!isUSLocation(row.location || "")) continue;

@@ -93,7 +93,9 @@ select:focus-visible {
 }
 
 body {
-  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* The device's own UI font: SF Pro on Apple devices, Segoe UI on Windows, Roboto on Android.
+     (SF Pro's license doesn't allow serving it as a web font, so we ask for the system font.) */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: var(--cream);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -361,8 +363,8 @@ nav {
 
 .hiw-title {
   font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: -0.018em;
   line-height: 1.1;
   color: var(--navy);
 }
@@ -527,9 +529,9 @@ nav {
 
 .about-title {
   font-size: 2rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
   margin-bottom: 0.75rem;
 }
 
@@ -1216,10 +1218,10 @@ nav {
 
 .paywall-title {
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
   margin-bottom: 0.5rem;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .paywall-desc {
@@ -1292,9 +1294,9 @@ nav {
 
 .paywall-plan-amount {
   font-size: 2.25rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
-  letter-spacing: -1px;
+  letter-spacing: -0.6px;
 }
 
 .paywall-plan-period {
@@ -2151,7 +2153,7 @@ footer {
 
 .modal-title {
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
   margin-bottom: 0.5rem;
   letter-spacing: -0.3px;
@@ -2406,7 +2408,7 @@ footer {
   align-items: center;
   gap: 0.5rem;
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
   margin-bottom: 0.3rem;
 }
@@ -2591,9 +2593,9 @@ footer {
 
 .pricing-hero-title {
   font-size: 2.25rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
-  letter-spacing: -1px;
+  letter-spacing: -0.6px;
   margin-bottom: 0.75rem;
 }
 
@@ -2674,9 +2676,9 @@ footer {
 
 .pricing-card-amount {
   font-size: 2.5rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
-  letter-spacing: -2px;
+  letter-spacing: -1.2px;
 }
 
 .pricing-card-period {
@@ -2838,9 +2840,9 @@ footer {
 
 .pricing-club-title {
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--white);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
   margin-bottom: 0.75rem;
 }
 
@@ -2892,9 +2894,9 @@ footer {
 
 .pricing-club-amount {
   font-size: 3rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--white);
-  letter-spacing: -2px;
+  letter-spacing: -1.2px;
 }
 
 .pricing-club-period {
@@ -2923,7 +2925,7 @@ footer {
 
 .pricing-faq-title {
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--navy);
   margin-bottom: 1.5rem;
   text-align: center;
@@ -3456,9 +3458,9 @@ footer {
 
 .lp-title {
   font-size: clamp(1.9rem, 7vw, 2.5rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.018em;
   color: var(--navy);
 }
 
@@ -3546,9 +3548,9 @@ footer {
 
 .lp-kicker {
   font-size: clamp(1.3rem, 5vw, 1.6rem);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--forest-blue);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   margin-bottom: 0.5rem;
 }
 
@@ -3692,9 +3694,9 @@ footer {
 
 .st-q {
   font-size: clamp(1.75rem, 6.5vw, 2.25rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.12;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.018em;
   color: var(--navy);
   margin-bottom: 0.5rem;
 }
@@ -3821,9 +3823,9 @@ footer {
 
 .st-result-title {
   font-size: clamp(1.9rem, 7vw, 2.5rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.018em;
   color: var(--navy);
 }
 
@@ -4054,9 +4056,9 @@ footer {
 
 .h-title {
   font-size: clamp(2.5rem, 5vw, 3.9rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.03;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.021em;
   color: var(--white);
   max-width: 13ch;
   margin: 0;
@@ -4146,7 +4148,7 @@ footer {
   text-align: center;
   font-size: 4.25rem;
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.018em;
   line-height: 1;
   color: var(--white);
   margin-bottom: 2rem;
@@ -4251,9 +4253,9 @@ footer {
   margin: 0;
   max-width: 22ch;
   font-size: 2.1rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.12;
-  letter-spacing: -0.028em;
+  letter-spacing: -0.017em;
   color: var(--navy);
 }
 
@@ -4421,8 +4423,8 @@ footer {
 .h-plan-price {
   margin: 0.4rem 0 0;
   font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: -0.018em;
   color: var(--navy);
 }
 .h-plan-price span { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
@@ -4493,9 +4495,9 @@ footer {
   margin: 0 auto;
   max-width: 18ch;
   font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.08;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.018em;
   color: var(--white);
 }
 .h-close-sub {
@@ -4566,9 +4568,9 @@ footer {
 .gate-title {
   margin: 0 2rem 0.75rem 0;
   font-size: 1.3rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   color: var(--navy);
 }
 .gate-job {
@@ -4615,9 +4617,9 @@ footer {
   margin: 0;
   max-width: 20ch;
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.015em;
   color: var(--navy);
 }
 .alerts-intro-desc { margin: 0.6rem 0 1.5rem; font-size: 0.95rem; color: var(--text-secondary); }
@@ -4657,3 +4659,13 @@ button.about-cta-secondary { font-family: inherit; cursor: pointer; }
   .alerts-intro-title { font-size: 1.5rem; }
   .alerts-intro .h-cta { width: 100%; }
 }
+
+/* Alerts tab (signed in): same choices as /start */
+.al-match {
+  margin: -0.35rem 0 1.25rem;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+.al-match strong { color: var(--forest-blue); font-weight: 700; }
+.al-bank-chips { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed var(--border-strong); }
+.al-city-input { margin-top: 0.6rem; max-width: 260px; }

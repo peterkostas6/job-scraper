@@ -1,13 +1,5 @@
 import "./globals.css";
 import Script from "next/script";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-  variable: "--font-inter",
-});
 import { ClerkProvider } from "@clerk/nextjs";
 import { PostHogProvider } from "./providers";
 import { BANKS } from "@/lib/banks";
@@ -77,12 +69,12 @@ const clerkAppearance = {
     colorRing: "rgba(37, 99, 235, 0.25)",
     colorDanger: "#dc3535",
     colorModalBackdrop: "rgba(0, 0, 0, 0.45)",
-    fontFamily: "var(--font-inter), system-ui, sans-serif",
+    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     borderRadius: "8px",
   },
   elements: {
     cardBox: { borderRadius: "16px", boxShadow: "0 24px 80px rgba(0, 0, 0, 0.18)" },
-    headerTitle: { color: "#1e293b", fontWeight: 800, letterSpacing: "-0.3px" },
+    headerTitle: { color: "#1e293b", fontWeight: 700, letterSpacing: "-0.2px" },
     headerSubtitle: { color: "#64748b" },
     formButtonPrimary: {
       backgroundColor: "#2563eb",
@@ -106,7 +98,7 @@ const clerkAppearance = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider appearance={clerkAppearance}>
-      <html lang="en" className={inter.variable}>
+      <html lang="en">
         <head>
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-4RWTGXJJQP"

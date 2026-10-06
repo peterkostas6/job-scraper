@@ -2053,6 +2053,12 @@ export default function Home() {
                                 <span className="notif-toggle-knob" />
                               </button>
                             </div>
+                            {savedNotifPrefs.smsEnabled && savedNotifPrefs.phoneNumber && notifPrefs.smsEnabled && !editingPhone && (
+                              <div className="al-contact">
+                                <span>Save our number so alerts show up as Pete&rsquo;s Postings.</span>
+                                <a href="/petes-postings.vcf" className="al-link" onClick={() => capture("contact_card_saved", { where: "alerts_tab" })}>Save contact</a>
+                              </div>
+                            )}
                             {notifPrefs.smsEnabled && (editingPhone || !(savedNotifPrefs.smsEnabled && savedNotifPrefs.phoneNumber)) && (
                               <div className="al-channel-body">
                                 <label className="notif-field-label" htmlFor="notif-phone">Mobile number</label>

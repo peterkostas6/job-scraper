@@ -51,9 +51,13 @@ export function button(label, url) {
  * - one <h1>, 16px body text, 4.5:1 contrast on light and cream
  * - footer with sender identity, optional postal address, and unsubscribe / preferences links
  */
+// The contact card texted to new subscribers; linked in alert emails so anyone can save or refresh it.
+export const CONTACT_CARD_URL = `${BRAND.site}/petes-postings.vcf`;
+
 export function layout({ title, preheader = "", heading, intro = "", body = "", cta = null, outro = "", footer = {}, lang = "en" }) {
-  const { reason = "", unsubscribeUrl = "", preferencesUrl = "" } = footer;
+  const { reason = "", unsubscribeUrl = "", preferencesUrl = "", contactCard = false } = footer;
   const footerLinks = [
+    contactCard ? `<a href="${CONTACT_CARD_URL}" style="color:${C.muted};text-decoration:underline;">Save our contact</a>` : "",
     preferencesUrl ? `<a href="${escapeHtml(preferencesUrl)}" style="color:${C.muted};text-decoration:underline;">Manage your alert preferences</a>` : "",
     unsubscribeUrl ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color:${C.muted};text-decoration:underline;">Unsubscribe from alerts</a>` : "",
   ].filter(Boolean).join(` &nbsp;&middot;&nbsp; `);
@@ -112,6 +116,7 @@ function decodeEntities(s) {
 export function textVersion(lines, footer = {}) {
   const out = [...lines, ""];
   if (footer.reason) out.push(decodeEntities(footer.reason.replace(/<[^>]+>/g, "")));
+  if (footer.contactCard) out.push(`Save our contact: ${CONTACT_CARD_URL}`);
   if (footer.preferencesUrl) out.push(`Manage your alert preferences: ${footer.preferencesUrl}`);
   if (footer.unsubscribeUrl) out.push(`Unsubscribe from alerts: ${footer.unsubscribeUrl}`);
   out.push(`Pete's Postings${BRAND.postalAddress ? ` · ${BRAND.postalAddress}` : ""} · Not affiliated with any listed bank.`);

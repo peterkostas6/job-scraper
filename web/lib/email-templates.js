@@ -44,6 +44,7 @@ export function alertEmail({ jobs: allJobs, firstName, userId }) {
     reason: "You get this email because you turned on job alerts in your Pete&rsquo;s Postings dashboard.",
     unsubscribeUrl: unsubscribeUrl(userId),
     preferencesUrl,
+    contactCard: true,
   };
   const html = layout({
     title: subject,
@@ -117,7 +118,7 @@ export function prefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phone
     ${rows.map(([k, v]) => `<tr><th scope="row" style="text-align:left;padding:10px 12px 10px 0;font-size:15px;line-height:20px;font-weight:500;color:${C.muted};border-top:1px solid ${C.hairline};width:40%;">${escapeHtml(k)}</th><td style="padding:10px 0;font-size:15px;line-height:20px;font-weight:600;color:${C.navy};border-top:1px solid ${C.hairline};">${escapeHtml(v)}</td></tr>`).join("")}
   </tbody>
 </table>`;
-  const footer = { reason: "You get this email because you changed your alert settings on Pete&rsquo;s Postings.", unsubscribeUrl: unsubscribeUrl(userId), preferencesUrl };
+  const footer = { reason: "You get this email because you changed your alert settings on Pete&rsquo;s Postings.", unsubscribeUrl: unsubscribeUrl(userId), preferencesUrl, contactCard: true };
   const html = layout({
     title: subject,
     preheader: enabled || smsEnabled ? "Alerts arrive within minutes of a matching posting." : "Alerts are off. Turn them back on any time.",

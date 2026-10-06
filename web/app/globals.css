@@ -4777,6 +4777,20 @@ button.about-cta-secondary { font-family: inherit; cursor: pointer; }
 .al-channel-icon-email { background: var(--forest-blue); }
 .al-channel-body { padding: 0 1.1rem 1.1rem 3.6rem; }
 .al-consent { margin-top: 0.75rem; }
+.al-contact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 1.1rem 0.9rem 3.6rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  background: var(--blue-4);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.al-contact .al-link { flex-shrink: 0; }
+@media (max-width: 768px) { .al-contact { margin-left: 1.1rem; } }
 
 .al-save {
   position: sticky;

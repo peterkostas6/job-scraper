@@ -327,16 +327,16 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
       {/* HERO */}
       <section className="ss-hero">
         <p className="ss-pill" data-reveal><span className="h-live-dot" aria-hidden="true" />Checking {BANK_COUNT} banks every 5 minutes</p>
-        <h1 className="ss-title" data-reveal>Get a text the moment a bank posts a job.</h1>
+        <h1 className="ss-title" data-reveal>All live banking roles posted in one spot.</h1>
         <p className="ss-sub" data-reveal>
           Analyst and internship roles at {BANK_COUNT} banks, texted to you minutes after they go live.
           Apply before everyone else.
         </p>
         <div className="ss-cta-row" ref={heroCtaRef} data-reveal>
-          <StartCta where="hero" isSignedIn={isSignedIn} className="ss-btn" />
-          <button className="ss-btn ss-btn-light" onClick={onBrowse}>
+          <button className="ss-btn ss-btn-browse" onClick={() => { capture("home_cta_clicked", { where: "hero_browse" }); onBrowse(); }}>
             Browse {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles
           </button>
+          <StartCta where="hero" isSignedIn={isSignedIn} className="ss-btn ss-btn-light" />
         </div>
         <p className="ss-note" data-reveal>Free account. No credit card. Your first 5 alerts are on us.</p>
 

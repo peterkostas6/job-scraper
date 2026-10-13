@@ -5256,7 +5256,7 @@ input, select { border-radius: 12px; }
   .ss-new { padding: 0.1rem 0.4rem; font-size: 0.6rem; }
   .ss-window-all { padding: 0.8rem; font-size: 0.84rem; }
   .ss-marquee-track span { font-size: 0.95rem; }
-  .ss-cta-row .ss-btn-light { flex-grow: 1.25; }
+  .ss-cta-row .ss-btn-browse { flex-grow: 1.25; }
   .ss-bars { height: 72px; }
   .ss-mini-list li { padding: 0.45rem 0.65rem; }
   .ss-proof, .ss-plans { gap: 0.6rem; margin-top: 1.5rem; }

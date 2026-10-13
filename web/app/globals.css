@@ -5045,6 +5045,8 @@ input, select { border-radius: 12px; }
 .ss-window-arrow { flex-shrink: 0; color: var(--text-muted); opacity: 0; transform: translate(-3px, 3px); transition: opacity 160ms, transform 160ms var(--ease-out); }
 .ss-window-row:hover .ss-window-arrow { opacity: 1; transform: none; color: var(--forest-blue); }
 .ss-window-list li:last-child { border-bottom: none; }
+.ss-window-all { display: block; width: 100%; padding: 0.95rem; border: none; border-top: 1px solid var(--border); background: none; font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--forest-blue); cursor: pointer; }
+.ss-window-all:hover { background: #f4f7fd; }
 .ss-new { flex-shrink: 0; padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--green-fill); color: var(--green); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 .ss-window-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; text-align: left; }
 .ss-window-title { font-size: 0.92rem; font-weight: 600; color: var(--ss-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -5231,6 +5233,70 @@ input, select { border-radius: 12px; }
   .ss-close { margin: 5rem 1rem 6rem; padding: 3rem 1.25rem; }
   .ss-stat { min-height: 0; }
   .ss-stat .ss-bars { margin-top: 1rem; }
+
+  /* Phones: editorial, left-aligned and dense (same style as launchthen.com): smaller
+     tight headlines, body copy in small monospace, less padding, so more fits on a screen. */
+  .ss { --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; }
+  .ss-hero, .ss-section { text-align: left; }
+  .ss-hero { padding: 1.75rem 1.25rem 1rem; }
+  .ss-pill { margin: 0 0 1rem; padding: 0; background: none; box-shadow: none; font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ss-ink); }
+  .ss-title { margin: 0; max-width: 14ch; font-size: 2.2rem; line-height: 1.04; letter-spacing: -0.035em; }
+  .ss-sub { margin: 0.9rem 0 0; font-family: var(--mono); font-size: 0.82rem; line-height: 1.65; }
+  .ss-cta-row { flex-direction: row; justify-content: flex-start; gap: 0.5rem; margin-top: 1.25rem; }
+  .ss-cta-row .ss-btn { flex: 1 1 0; padding: 0.75rem 0.6rem; font-size: 0.84rem; }
+  .ss-note { margin-top: 0.7rem; font-family: var(--mono); font-size: 0.7rem; }
+  .ss-logos { margin-top: 1.75rem; }
+  .ss-logos-label { margin-bottom: 0.6rem; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .ss-shot { margin-top: 1.25rem; padding: 0 0.75rem; }
+  .ss-window-list li:nth-child(n + 5) { display: list-item; }
+  .ss-window-bar { padding: 0.7rem 1rem; }
+  .ss-window-row { gap: 0.6rem; padding: 0.6rem 0.5rem; }
+  .ss-window-title { font-size: 0.86rem; }
+  .ss-window-meta, .ss-window-time { font-size: 0.72rem; }
+  .ss-new { padding: 0.1rem 0.4rem; font-size: 0.6rem; }
+  .ss-window-all { padding: 0.8rem; font-size: 0.84rem; }
+  .ss-marquee-track span { font-size: 0.95rem; }
+  .ss-cta-row .ss-btn-light { flex-grow: 1.25; }
+  .ss-bars { height: 72px; }
+  .ss-mini-list li { padding: 0.45rem 0.65rem; }
+  .ss-proof, .ss-plans { gap: 0.6rem; margin-top: 1.5rem; }
+  .ss-proof > * { padding: 1.1rem; }
+  .ss-proof p:not(.ss-proof-num) { font-size: 0.86rem; }
+  .ss-quote { gap: 0.9rem; }
+  .ss-quote blockquote { font-size: 0.88rem; line-height: 1.55; }
+  .ss-plan { padding: 1.2rem; }
+  .ss-plan-price { font-size: 2.1rem; }
+  .ss-plan ul { margin: 0.8rem 0 1.1rem; }
+  .ss-plan li { padding: 0.3rem 0 0.3rem 1.6rem; font-size: 0.85rem; }
+  .ss-plan li::before { top: 0.35rem; }
+  .ss-section { padding: 3.5rem 1.25rem 0; }
+  .ss-eyebrow { margin-bottom: 0.6rem; font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--forest-blue); }
+  .ss-eyebrow::before { display: none; }
+  .ss-h2 { margin: 0; max-width: 16ch; font-size: 1.7rem; line-height: 1.08; letter-spacing: -0.03em; }
+  .ss-lead { margin: 0.6rem 0 0; font-family: var(--mono); font-size: 0.8rem; }
+  .ss-stats { gap: 0.6rem; margin-top: 1.5rem; }
+  .ss-stat { padding: 1.1rem 1.1rem 1rem; }
+  .ss-stat-num, .ss-proof-num { font-size: 2rem; }
+  .ss-stat-label { margin: 0.4rem 0 0.8rem; font-size: 0.84rem; }
+  .ss-snapshot { font-family: var(--mono); font-size: 0.7rem; }
+  .ss-center { justify-content: flex-start; margin-top: 1.5rem; }
+  .ss-steps { gap: 2.25rem; margin-top: 1.75rem; }
+  .ss-step { gap: 1rem; }
+  .ss-step-n { margin-bottom: 0.5rem; font-family: var(--mono); font-size: 0.72rem; }
+  .ss-step h3 { font-size: 1.3rem; }
+  .ss-step-copy > p:last-child { margin-top: 0.6rem; font-family: var(--mono); font-size: 0.8rem; }
+  .ss-visual { min-height: 0; }
+  .ss-faq summary { padding: 1rem 0; font-size: 0.95rem; }
+  .ss-faq details p { font-family: var(--mono); font-size: 0.8rem; }
+  .ss-close { margin: 3.5rem 0.75rem 6rem; padding: 2.25rem 1.25rem; text-align: left; }
+
+  /* Jobs list: the alerts banner shrinks to one line so the jobs start higher up. */
+  .welcome-banner.alerts-callout { flex-direction: row; align-items: center; gap: 0.6rem; padding: 0.6rem 0.6rem 0.6rem 0.9rem; border-radius: 14px; }
+  .alerts-callout .welcome-title { margin: 0; font-size: 0.82rem; line-height: 1.3; }
+  .alerts-callout .welcome-desc { display: none; }
+  .alerts-callout .welcome-actions { flex-shrink: 0; display: flex; align-items: center; gap: 0.25rem; }
+  .alerts-callout .alerts-callout-cta { padding: 0.5rem 0.8rem; font-size: 0.78rem; }
+  .welcome-actions .welcome-dismiss { position: static; padding: 0.25rem 0.35rem; background: none; box-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ss [data-reveal] { opacity: 1; transform: none; transition: none; }

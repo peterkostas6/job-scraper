@@ -378,6 +378,9 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
               </li>
             ))}
           </ol>
+          <button className="ss-window-all" onClick={() => { capture("home_cta_clicked", { where: "shot_all" }); onBrowse(); }}>
+            See all {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles &rarr;
+          </button>
         </div>
       </section>
 

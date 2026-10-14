@@ -5479,3 +5479,12 @@ input, select { border-radius: 12px; }
   .jobs-list-browse .job-bookmark { position: static; transform: none; grid-column: 3; grid-row: 1 / span 2; padding: 0.5rem; }
   .jobs-list-browse .job-logo { top: 50%; transform: translateY(-50%); }
 }
+
+/* Latest roles: same width as the launchthen.com leaderboard (1100px container; on wide
+   screens it spans the container plus about a fifth of the remaining space to each edge). */
+@media (min-width: 769px) {
+  .ss-shot { max-width: 1100px; }
+}
+@media (min-width: 1280px) {
+  .ss-shot .lb { width: calc(22vw + 78%); margin-left: calc(11% - 11vw); }
+}

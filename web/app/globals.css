@@ -4871,10 +4871,13 @@ button.about-cta-secondary { font-family: inherit; cursor: pointer; }
 }
 
 body {
+  /* Blueprint grid (same as launchthen.com): faint 28px graph-paper lines under the soft blue glow at the top. */
+  --grid-line: rgba(16, 24, 40, 0.055);
   background:
-    radial-gradient(1100px 520px at 50% -160px, var(--ss-glow), transparent 70%),
+    radial-gradient(1100px 520px at 50% -160px, var(--ss-glow), transparent 70%) no-repeat,
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px) 0 0 / 28px 28px,
     var(--cream);
-  background-repeat: no-repeat;
 }
 
 nav { background: rgba(248, 249, 251, 0.72); border-bottom-color: rgba(16, 24, 40, 0.05); }

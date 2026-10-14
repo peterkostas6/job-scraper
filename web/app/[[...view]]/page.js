@@ -339,14 +339,6 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
           </button>
         </div>
 
-        <div className="ss-logos" data-reveal>
-          <p className="ss-logos-label">Pulled straight from the career sites of</p>
-          <div className="ss-marquee" aria-label={bankNames.join(", ")}>
-            <div className="ss-marquee-track" aria-hidden="true">
-              {[...bankNames, ...bankNames].map((n, i) => <span key={i}>{n}</span>)}
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* LATEST ROLES · leaderboard-style table of the real feed; each role opens its posting */}
@@ -391,6 +383,14 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
           <button className="lb-viewall" onClick={() => { capture("home_cta_clicked", { where: "shot_all" }); onBrowse(); }}>
             See all {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles &rarr;
           </button>
+        </div>
+        <div className="ss-logos" data-reveal>
+          <p className="ss-logos-label">Pulled straight from the career sites of</p>
+          <div className="ss-marquee" aria-label={bankNames.join(", ")}>
+            <div className="ss-marquee-track" aria-hidden="true">
+              {[...bankNames, ...bankNames].map((n, i) => <span key={i}>{n}</span>)}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1231,6 +1231,9 @@ export default function Home() {
   const [last48hCount, setLast48hCount] = useState(null);
   const [newPostingsLoading, setNewPostingsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  // Phones: the /jobs filter panel (bank, type, city) that slides up from the bottom.
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [sheetAllBanks, setSheetAllBanks] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
 
@@ -1716,6 +1719,7 @@ export default function Home() {
             <Link href="/notifications" className={`nav-link nav-link-alerts${viewNotifications ? " nav-link-active" : ""}`}>Alerts</Link>
             <Link href="/pricing" className="nav-link">Pricing</Link>
             <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
+            <button className="nav-link nav-link-mobile-only" onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
           </div>
           <div className="nav-right">
             {!isLoaded ? null : isSignedIn ? (
@@ -1880,8 +1884,8 @@ export default function Home() {
 
       {!viewHome && !viewAbout && !viewNewPostings && (
         <div className="app-layout">
-          {/* Mobile top bar — replaces sidebar on mobile */}
-          <div className="mobile-top-bar">
+          {/* Mobile top bar — replaces sidebar on mobile (on /jobs itself, the filter bar below replaces it) */}
+          <div className={`mobile-top-bar${!viewingSaved ? " mobile-top-bar-replaced" : ""}`}>
             <div className="mobile-top-bar-bank-row">
               <select
                 className="mobile-bank-select"
@@ -1934,6 +1938,63 @@ export default function Home() {
               </button>
             </div>
           </div>
+          {/* Phones, /jobs: one filter bar that sums up bank · type · city and opens the filter panel */}
+          {!viewingSaved && (
+            <div className="mfb">
+              <button className="mfb-bar" onClick={() => setFilterSheetOpen(true)} aria-haspopup="dialog">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/>
+                </svg>
+                <span className="mfb-summary">
+                  <b>{activeBank === "all" ? "All banks" : BANKS[activeBank]?.name}</b>
+                  {" \u00b7 "}{jobType === "all" ? "All types" : JOB_TYPES[jobType]}
+                  {" \u00b7 "}{locationFilter || "All cities"}
+                </span>
+                <svg className="mfb-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </div>
+          )}
+          {filterSheetOpen && !viewingSaved && (
+            <div className="mfs-wrap" role="dialog" aria-modal="true" aria-label="Filter roles">
+              <button className="mfs-shade" aria-label="Close filters" onClick={() => setFilterSheetOpen(false)} />
+              <div className="mfs">
+                <div className="mfs-sec">
+                  <p className="mfs-h">Bank</p>
+                  <div className="mfs-banks">
+                    <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All {BANK_COUNT}</button>
+                    {(sheetAllBanks ? Object.keys(BANKS) : Object.keys(BANKS).slice(0, 6)).map((key) => (
+                      <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
+                        <BankLogo bankKey={key} size={18} />{BANKS[key].shortName}
+                      </button>
+                    ))}
+                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>+{Object.keys(BANKS).length - 6} more</button>}
+                  </div>
+                </div>
+                <div className="mfs-sec">
+                  <p className="mfs-h">Type</p>
+                  <div className="mfs-seg">
+                    {[["all", "All"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([key, label]) => (
+                      <button key={key} className={jobType === key ? "is-on" : ""} onClick={() => setJobType(key)}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mfs-sec">
+                  <label className="mfs-h" htmlFor="mfs-city">City</label>
+                  <select id="mfs-city" className="mfs-select" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                    <option value="">All cities</option>
+                    {availableLocations.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                  </select>
+                </div>
+                <div className="mfs-foot">
+                  <button className="mfs-clear" onClick={() => { setActiveBank("all"); setJobType("all"); setLocationFilter(""); setCategoryFilter(""); setSearchQuery(""); }}>Clear</button>
+                  <button className="mfs-go" onClick={() => setFilterSheetOpen(false)}>
+                    {isGatedBank ? "Show roles" : `Show ${displayJobs.length} ${displayJobs.length === 1 ? "role" : "roles"}`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* SIDEBAR */}
           {sidebar}
 
@@ -2362,7 +2423,7 @@ export default function Home() {
                 )}
 
                 {!isGatedBank && !loading && !error && displayJobs.length > 0 && (
-                  <div className="jobs-list fade-in">
+                  <div className="jobs-list jobs-list-browse fade-in">
                     <div className="job-row-header">
                       <span className="job-index">#</span>
                       <span className="job-logo-spacer" aria-hidden="true" />
@@ -2389,6 +2450,7 @@ export default function Home() {
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
                         <span className="job-title">{job.title}</span>
+                        <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
                         <span className="job-location">{job.location || "—"}</span>
                         <span className="job-posted tnum">{formatPostedAt(job)}</span>
                         <div className="job-badges">

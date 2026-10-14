@@ -287,7 +287,7 @@ function CountUp({ value, format = (n) => n.toLocaleString() }) {
 const ARROW = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
 const MSG_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="white" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
-function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
+function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
   const liveCount = liveJobs?.length || 0;
   const latest = homeFeed(liveJobs);
   const bankNames = Object.values(BANKS).map((b) => b.name);
@@ -372,7 +372,7 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
                         href={latest.length ? trackedLink(job.link) : "/jobs"}
                         target={latest.length ? "_blank" : undefined}
                         rel="noopener noreferrer"
-                        onClick={(e) => { capture("home_job_clicked", { where: "shot" }); if (latest.length && onJob(job)) e.preventDefault(); }}
+                        onClick={() => capture("home_job_clicked", { where: "shot" })}
                       >
                         <BankLogo bankKey={job.bankKey} bank={job.bank} size={40} className="lb-logo" />
                         <span className="lb-startup-text">
@@ -1742,7 +1742,7 @@ export default function Home() {
                 <SignInButton mode="modal">
                   <button className="nav-signin">Sign in</button>
                 </SignInButton>
-                <Link href="/start" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav" })}>Get free alerts</Link>
+                <Link href="/start" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav" })}>Get SMS alerts</Link>
               </>
             )}
           </div>
@@ -1763,7 +1763,6 @@ export default function Home() {
       {viewHome && !viewAbout && !viewNewPostings && (
         <HomePage
           onBrowse={() => router.push("/jobs")}
-          onJob={(job) => { if (isSignedIn) return false; askToSignUp("job", job); return true; }}
           isSignedIn={isSignedIn}
           last48hCount={last48hCount}
           liveJobs={allJobs}
@@ -2350,7 +2349,7 @@ export default function Home() {
                       <p className="welcome-desc">Pick your banks and roles. Your first 5 alerts are free.</p>
                     </div>
                     <div className="welcome-actions">
-                      <Link href="/start" className="alerts-callout-cta" onClick={() => capture("browse_alerts_cta_clicked")}>Get free alerts &rarr;</Link>
+                      <Link href="/start" className="alerts-callout-cta" onClick={() => capture("browse_alerts_cta_clicked")}>Get SMS alerts &rarr;</Link>
                       <button className="welcome-dismiss" onClick={dismissWelcome} aria-label="Dismiss">&times;</button>
                     </div>
                   </div>

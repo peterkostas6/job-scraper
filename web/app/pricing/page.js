@@ -221,7 +221,7 @@ export default function PricingPage() {
                   <SignInButton mode="modal">
                     <button className="nav-signin">Sign in</button>
                   </SignInButton>
-                  <Link href="/start" className="nav-cta">Get free alerts</Link>
+                  <Link href="/start" className="nav-cta">Get SMS alerts</Link>
                 </>
               )
             )}

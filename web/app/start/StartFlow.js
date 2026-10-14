@@ -5,6 +5,7 @@ import Link from "next/link";
 import { capture } from "@/lib/analytics";
 import { useUser, SignUpButton, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
+import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { useTrackSignup } from "@/lib/use-track-signup";
@@ -240,7 +241,7 @@ export default function StartFlow() {
         <div className="st-chips">
           {Object.entries(BANKS).map(([key, b]) => (
             <button key={key} className="st-chip" aria-pressed={answers.banks.includes(key)} onClick={() => toggle("banks", key)}>
-              {b.shortName}
+              <BankLogo bankKey={key} size={16} />{b.shortName}
             </button>
           ))}
         </div>

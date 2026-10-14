@@ -5,6 +5,7 @@ import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
+import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { JOB_TYPES as ALERT_JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { track } from "@/lib/track";
@@ -206,16 +207,6 @@ const HOME_FAQ = [
 
 // Banks re-date old postings and some only give a date, so use whichever is newer and
 // fall back to a day label when all we have is a date.
-// Bank logo tile (TrustMRR-style): the bank's icon from public/banks, or its first letter on a
-// dark tile when we don't have a sharp icon (BlackRock) or don't know the bank.
-const BANK_LOGOS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "jefferies"]);
-
-function BankLogo({ bankKey, bank }) {
-  const key = bankKey || Object.keys(BANKS).find((k) => BANKS[k].name === bank);
-  if (BANK_LOGOS.has(key)) return <img className="lb-logo lb-logo-img" src={`/banks/${key}.png`} alt="" width={40} height={40} loading="lazy" />;
-  return <span className="lb-logo" aria-hidden="true">{(bank || BANKS[key]?.name || "?").slice(0, 1)}</span>;
-}
-
 function feedAge(job) {
   const posted = Date.parse(job.postedDate) || 0;
   if (posted >= job.detectedAt && job.postedDate?.endsWith("T00:00:00.000Z")) {
@@ -384,7 +375,7 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
                         rel="noopener noreferrer"
                         onClick={(e) => { capture("home_job_clicked", { where: "shot" }); if (latest.length && onJob(job)) e.preventDefault(); }}
                       >
-                        <BankLogo bankKey={job.bankKey} bank={job.bank} />
+                        <BankLogo bankKey={job.bankKey} bank={job.bank} size={40} className="lb-logo" />
                         <span className="lb-startup-text">
                           <span className="lb-name"><span className="lb-name-text">{job.title}</span>{i < 2 && <span className="ss-new">New</span>}</span>
                           <span className="lb-desc">{job.bank} &middot; {job.location}</span>
@@ -423,7 +414,7 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
             <ul className="ss-mini-list">
               {latest.slice(0, 3).map((job) => (
                 <li key={job.link}>
-                  <span><b>{job.bank}</b>{job.title}</span>
+                  <span><b><BankLogo bankKey={job.bankKey} bank={job.bank} size={16} />{job.bank}</b>{job.title}</span>
                   <em className="ss-chip-green">New</em>
                 </li>
               ))}
@@ -435,7 +426,7 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
             <ul className="ss-mini-list">
               {["Goldman Sachs", "JPMorgan Chase", "Morgan Stanley"].map((n, i) => (
                 <li key={n}>
-                  <span><b>{n}</b><i className="ss-progress" style={{ "--d": `${i * 300}ms` }} /></span>
+                  <span><b><BankLogo bank={n} size={16} />{n}</b><i className="ss-progress" style={{ "--d": `${i * 300}ms` }} /></span>
                   <em className="ss-chip-green">Checked</em>
                 </li>
               ))}
@@ -644,7 +635,7 @@ function SignUpGate({ gate, onClose }) {
         {gate.job && (
           <p className="gate-job">
             <strong>{gate.job.title}</strong>
-            <span>{gate.job.bank || BANKS[gate.job.bankKey]?.name}{gate.job.location ? ` \u00b7 ${gate.job.location}` : ""}</span>
+            <span><BankLogo bankKey={gate.job.bankKey} bank={gate.job.bank} size={16} />{gate.job.bank || BANKS[gate.job.bankKey]?.name}{gate.job.location ? ` \u00b7 ${gate.job.location}` : ""}</span>
           </p>
         )}
         <p className="gate-desc">{gate.desc}</p>
@@ -874,7 +865,7 @@ function AboutPage({ onBrowse }) {
         <div className="about-banks-grid">
           {Object.entries(BANKS).map(([key, bank]) => (
             <Link key={key} href={`/jobs?bank=${key}`} className="about-bank-card">
-              <span className="about-bank-name">{bank.name}</span>
+              <BankLogo bankKey={key} size={28} /><span className="about-bank-name">{bank.name}</span>
             </Link>
           ))}
         </div>
@@ -959,6 +950,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
       <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="job-row"
         onClick={() => capture("job_opened", { view: "recent", bank: job.bank, category: job.category, title: job.title, position: index + 1 })}>
         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+        <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
         <span className="job-title">{job.title}</span>
         <span className="job-location">{cleanLocation(job.location) || "—"}</span>
         <div className="job-badges job-badges-wide">
@@ -978,6 +970,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
   const tableHeader = (
     <div className="job-row-header">
       <span className="job-index">#</span>
+      <span className="job-logo-spacer" aria-hidden="true" />
       <span className="job-title">Title</span>
       <span className="job-location">Location</span>
       <span className="job-badges job-badges-wide">Type / Posted</span>
@@ -1550,7 +1543,7 @@ export default function Home() {
         onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}
         aria-current={isActive ? "page" : undefined}
       >
-        <span><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
+        <span className="sidebar-bank"><BankLogo bankKey={key} size={18} /><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
         {needsAuth ? (
           <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         ) : count === undefined ? (
@@ -2040,7 +2033,7 @@ export default function Home() {
                               {showBankPicker && (
                                 <div className="st-chips al-bank-chips">
                                   {Object.entries(BANKS).map(([key, bank]) => (
-                                    <button key={key} className="st-chip" aria-pressed={notifPrefs.banks.includes(key)} onClick={() => toggleNotifBank(key)}>{bank.shortName}</button>
+                                    <button key={key} className="st-chip" aria-pressed={notifPrefs.banks.includes(key)} onClick={() => toggleNotifBank(key)}><BankLogo bankKey={key} size={16} />{bank.shortName}</button>
                                   ))}
                                 </div>
                               )}
@@ -2222,6 +2215,7 @@ export default function Home() {
                   <div className="jobs-list fade-in">
                     <div className="job-row-header">
                       <span className="job-index">#</span>
+                      <span className="job-logo-spacer" aria-hidden="true" />
                       <span className="job-title">Title</span>
                       <span className="job-location">Bank</span>
                       <span className="job-badges">Location</span>
@@ -2231,6 +2225,7 @@ export default function Home() {
                     {savedJobs.map((job, index) => (
                       <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className={`job-row${job.expiredAt ? " job-row-expired" : ""}`} key={job.link}>
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+                        <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
                         <span className="job-title">{job.title}</span>
                         <span className="job-location"><span className="saved-bank-badge">{job.bank}</span></span>
                         <div className="job-badges">
@@ -2370,6 +2365,7 @@ export default function Home() {
                   <div className="jobs-list fade-in">
                     <div className="job-row-header">
                       <span className="job-index">#</span>
+                      <span className="job-logo-spacer" aria-hidden="true" />
                       <span className="job-title">Title</span>
                       <span className="job-location">Location</span>
                       <span className="job-posted">Posted</span>
@@ -2391,6 +2387,7 @@ export default function Home() {
                         }}
                       >
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+                        <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
                         <span className="job-title">{job.title}</span>
                         <span className="job-location">{job.location || "—"}</span>
                         <span className="job-posted tnum">{formatPostedAt(job)}</span>

@@ -5410,3 +5410,17 @@ input, select { border-radius: 12px; }
   .pp-club-side { padding: 1.5rem 0 0; border-left: none; border-top: 1px solid rgba(16, 24, 40, 0.08); }
   .pp-faq { padding-top: 4rem; }
 }
+
+/* ---- Bank logos (TrustMRR-style), lib/bank-logo.js ---- */
+.bank-logo { flex-shrink: 0; display: inline-grid; place-items: center; width: var(--s); height: var(--s); border-radius: calc(var(--s) * 0.25); background: #fff; box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.1); object-fit: contain; vertical-align: middle; font-size: calc(var(--s) * 0.45); font-weight: 700; line-height: 1; }
+.bank-logo-letter { background: #1a1d23; color: #fff; box-shadow: none; }
+.lb-logo.bank-logo { border-radius: 10px; }
+.job-logo-spacer { width: 28px; flex-shrink: 0; }
+.ss-mini-list b, .sidebar-bank, .gate-job span, .st-chip { display: inline-flex; align-items: center; gap: 0.4rem; }
+.sidebar-bank { gap: 0.55rem; min-width: 0; }
+.about-bank-card { justify-content: flex-start; gap: 0.65rem; }
+@media (max-width: 768px) {
+  .job-row { padding-left: 3.5rem; }
+  .job-logo { position: absolute; left: 1rem; top: 0.9rem; }
+  .lb-logo.bank-logo { border-radius: 9px; }
+}

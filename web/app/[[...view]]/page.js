@@ -206,6 +206,16 @@ const HOME_FAQ = [
 
 // Banks re-date old postings and some only give a date, so use whichever is newer and
 // fall back to a day label when all we have is a date.
+// Bank logo tile (TrustMRR-style): the bank's icon from public/banks, or its first letter on a
+// dark tile when we don't have a sharp icon (BlackRock) or don't know the bank.
+const BANK_LOGOS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "jefferies"]);
+
+function BankLogo({ bankKey, bank }) {
+  const key = bankKey || Object.keys(BANKS).find((k) => BANKS[k].name === bank);
+  if (BANK_LOGOS.has(key)) return <img className="lb-logo lb-logo-img" src={`/banks/${key}.png`} alt="" width={40} height={40} loading="lazy" />;
+  return <span className="lb-logo" aria-hidden="true">{(bank || BANKS[key]?.name || "?").slice(0, 1)}</span>;
+}
+
 function feedAge(job) {
   const posted = Date.parse(job.postedDate) || 0;
   if (posted >= job.detectedAt && job.postedDate?.endsWith("T00:00:00.000Z")) {
@@ -332,13 +342,11 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
           Analyst and internship roles at {BANK_COUNT} banks, texted to you minutes after they go live.
           Apply before everyone else.
         </p>
-        <div className="ss-cta-row" ref={heroCtaRef} data-reveal>
-          <button className="ss-btn ss-btn-browse" onClick={() => { capture("home_cta_clicked", { where: "hero_browse" }); onBrowse(); }}>
-            Browse {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles
+        <div className="ss-discover-row" ref={heroCtaRef} data-reveal>
+          <button className="ss-discover" onClick={() => { capture("home_cta_clicked", { where: "hero_browse" }); onBrowse(); }}>
+            Browse {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles <span aria-hidden="true">&rarr;</span>
           </button>
-          <StartCta where="hero" isSignedIn={isSignedIn} className="ss-btn ss-btn-light" />
         </div>
-        <p className="ss-note" data-reveal>Free account. No credit card. Your first 5 alerts are on us.</p>
 
         <div className="ss-logos" data-reveal>
           <p className="ss-logos-label">Pulled straight from the career sites of</p>
@@ -350,35 +358,46 @@ function HomePage({ onBrowse, onJob, isSignedIn, last48hCount, liveJobs }) {
         </div>
       </section>
 
-      {/* PRODUCT SHOT · the real feed; each role opens its posting */}
+      {/* LATEST ROLES · leaderboard-style table of the real feed; each role opens its posting */}
       <section className="ss-shot" data-reveal>
-        <div className="ss-window">
-          <div className="ss-window-bar">
-            <span className="ss-dots" aria-hidden="true"><i /><i /><i /></span>
-            <span className="ss-window-tabs"><b>Recent</b><span>Browse</span><span>Alerts</span></span>
+        <div className="lb">
+          <div className="lb-head">
+            <h2>Latest roles</h2>
+            <span className="lb-live"><span className="h-live-dot" aria-hidden="true" />Updated every 5 min</span>
           </div>
-          <ol className="ss-window-list">
-            {(latest.length ? latest : HERO_NOTIFS.map((n, i) => ({ link: i, title: n.title, bank: n.bank, location: "New York, NY", detectedAt: Date.now() - (i + 1) * 3600000 }))).slice(0, 6).map((job, i) => (
-              <li key={job.link}>
-                <a
-                  className="ss-window-row"
-                  href={latest.length ? trackedLink(job.link) : "/jobs"}
-                  target={latest.length ? "_blank" : undefined}
-                  rel="noopener noreferrer"
-                  onClick={(e) => { capture("home_job_clicked", { where: "shot" }); if (latest.length && onJob(job)) e.preventDefault(); }}
-                >
-                  {i < 2 && <span className="ss-new">New</span>}
-                  <span className="ss-window-main">
-                    <span className="ss-window-title">{job.title}</span>
-                    <span className="ss-window-meta">{job.bank} &middot; {job.location}</span>
-                  </span>
-                  <span className="ss-window-time">{latest.length ? feedAge(job) : `${i + 1}h ago`}</span>
-                  <svg className="ss-window-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
-                </a>
-              </li>
-            ))}
-          </ol>
-          <button className="ss-window-all" onClick={() => { capture("home_cta_clicked", { where: "shot_all" }); onBrowse(); }}>
+          <div className="lb-scroll">
+            <table className="lb-table">
+              <thead>
+                <tr>
+                  <th>Role</th>
+                  <th className="lb-num">Posted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(latest.length ? latest : HERO_NOTIFS.map((n, i) => ({ link: i, title: n.title, bank: n.bank, location: "New York, NY", detectedAt: Date.now() - (i + 1) * 3600000 }))).slice(0, 6).map((job, i) => (
+                  <tr key={job.link}>
+                    <td>
+                      <a
+                        className="lb-startup"
+                        href={latest.length ? trackedLink(job.link) : "/jobs"}
+                        target={latest.length ? "_blank" : undefined}
+                        rel="noopener noreferrer"
+                        onClick={(e) => { capture("home_job_clicked", { where: "shot" }); if (latest.length && onJob(job)) e.preventDefault(); }}
+                      >
+                        <BankLogo bankKey={job.bankKey} bank={job.bank} />
+                        <span className="lb-startup-text">
+                          <span className="lb-name"><span className="lb-name-text">{job.title}</span>{i < 2 && <span className="ss-new">New</span>}</span>
+                          <span className="lb-desc">{job.bank} &middot; {job.location}</span>
+                        </span>
+                      </a>
+                    </td>
+                    <td className="lb-num lb-time">{latest.length ? feedAge(job) : `${i + 1}h ago`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button className="lb-viewall" onClick={() => { capture("home_cta_clicked", { where: "shot_all" }); onBrowse(); }}>
             See all {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles &rarr;
           </button>
         </div>

@@ -14,7 +14,7 @@ const BANK_COUNT = Object.keys(BANKS).length;
 const STORAGE_KEY = "pp-start-v1";
 
 const STEPS = ["type", "area", "banks", "city", "results", "phone", "done"];
-const QUESTION_COUNT = 4;
+const QUESTION_COUNT = 5;
 
 const EMPTY = { jobType: null, areas: [], banks: [], city: null, channel: null };
 
@@ -34,14 +34,6 @@ function toPrefs(a) {
     banks: a.banks,
     location: a.city || "",
   };
-}
-
-function ago(ms) {
-  const hours = Math.floor((Date.now() - ms) / 3600000);
-  if (hours < 1) return "just now";
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return days < 30 ? `${days}d ago` : `${Math.floor(days / 30)}mo ago`;
 }
 
 // "Investment Banking internships at all 20 banks in New York"
@@ -110,7 +102,6 @@ export default function StartFlow() {
     if (!jobs) return null;
     return jobs.filter((j) => matchesAlertPrefs(j, prefs)).sort((a, b) => b.detectedAt - a.detectedAt);
   }, [jobs, prefs]);
-  const newThisWeek = matched ? matched.filter((j) => Date.now() - j.detectedAt < 7 * 86400000).length : 0;
 
   const go = (next) => setStep(next);
   const back = () => setStep(STEPS[Math.max(0, STEPS.indexOf(step) - 1)]);
@@ -255,19 +246,19 @@ export default function StartFlow() {
         <div className="st-options st-options-grid">
           {CITIES.map((c) => (
             <button key={c} className="st-option st-option-compact" aria-pressed={answers.city === c}
-              onClick={() => { set({ city: c }); go("results"); }}>
+              onClick={() => set({ city: c })}>
               <span className="st-option-label">{c}</span>
             </button>
           ))}
           <button className="st-option st-option-compact" aria-pressed={answers.city === ""}
-            onClick={() => { set({ city: "" }); go("results"); }}>
+            onClick={() => set({ city: "" })}>
             <span className="st-option-label">Anywhere</span>
           </button>
         </div>
+        {answers.city !== null && <button className="st-next" onClick={() => go("results")}>Continue</button>}
       </>
     );
   } else if (step === "results") {
-    const shown = matched ? matched.slice(0, 5) : [];
     const channelOption = (c) => {
       const option = (
         <button key={c.key} className="st-option" aria-pressed={answers.channel === c.key}
@@ -282,50 +273,15 @@ export default function StartFlow() {
     };
     body = (
       <>
-        <button className="st-back st-back-top" onClick={back}>&larr; Change answers</button>
-        {matched === null ? (
-          <h1 className="st-q">Finding your matches&hellip;</h1>
-        ) : matched.length > 0 ? (
-          <>
-            <h1 className="st-result-title"><span className="tnum">{matched.length}</span> {matched.length === 1 ? "role matches" : "roles match"} you right now</h1>
-            <p className="st-result-sub">
-              {describe(answers)}.{newThisWeek > 0 && <> <strong>{newThisWeek} posted this week.</strong></>}
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="st-result-title">Nothing open right now</h1>
-            <p className="st-result-sub">No {describe(answers)} are posted today. That&rsquo;s when alerts matter most: the next one could go up tonight.</p>
-          </>
-        )}
-
-        {shown.length > 0 && (
-          <div className="st-matches">
-            {shown.map((j) => (
-              <div className="st-match" key={j.link}>
-                <div className="st-match-title">{j.title}</div>
-                <div className="st-match-meta">
-                  <span>{j.bank}</span>
-                  {j.location && <><span aria-hidden="true">&middot;</span><span>{j.location}</span></>}
-                  <span className="st-match-time">{ago(j.detectedAt)}</span>
-                </div>
-              </div>
-            ))}
-            {matched.length > shown.length && <div className="st-match-more">+ {matched.length - shown.length} more</div>}
-          </div>
-        )}
-
-        <div className="st-pitch">
-          <h2 className="st-pitch-title">Want to hear about the next one first?</h2>
-          <p className="st-pitch-text">We check all {BANK_COUNT} bank career sites every 5 minutes. Pick how you want to hear about new roles like these.</p>
-          <div className="st-options st-options-tight">
-            {CHANNELS.map(channelOption)}
-          </div>
-          {saving && <p className="st-fine">Saving your alerts&hellip;</p>}
-          {error && <p className="st-error" role="alert">{error}</p>}
-          <p className="st-fine">Free account &middot; 5 free alerts &middot; No card needed</p>
+        <h1 className="st-q">How would you like to be alerted?</h1>
+        <p className="st-hint">We check every 5 minutes and tell you the moment new {describe(answers)} post.</p>
+        <div className="st-options">
+          {CHANNELS.map(channelOption)}
         </div>
-        <Link href="/jobs" className="st-skip" onClick={() => capture("start_browse_clicked")}>No thanks, just browse jobs &rarr;</Link>
+        {saving && <p className="st-fine">Saving your alerts&hellip;</p>}
+        {error && <p className="st-error" role="alert">{error}</p>}
+        <p className="st-fine">Free account &middot; 5 free alerts &middot; No card needed</p>
+        <Link href="/jobs" className="st-skip" onClick={() => capture("start_browse_clicked")}>No thanks, just browse &rarr;</Link>
       </>
     );
   } else if (step === "phone") {

@@ -207,6 +207,13 @@ const HOME_FAQ = [
 
 // Banks re-date old postings and some only give a date, so use whichever is newer and
 // fall back to a day label when all we have is a date.
+// Phone filter panel: the main banking areas first, everything else after (alphabetical).
+const AREA_ORDER = ["Investment Banking", "Sales & Trading", "Corporate Banking", "Wealth Management", "Research", "Quantitative", "Alternative Investments"];
+function areaRank(cat) {
+  const i = AREA_ORDER.indexOf(cat);
+  return i === -1 ? AREA_ORDER.length : i;
+}
+
 function feedAge(job) {
   const posted = Date.parse(job.postedDate) || 0;
   if (posted >= job.detectedAt && job.postedDate?.endsWith("T00:00:00.000Z")) {
@@ -1947,6 +1954,7 @@ export default function Home() {
                 </svg>
                 <span className="mfb-summary">
                   <b>{activeBank === "all" ? "All banks" : BANKS[activeBank]?.name}</b>
+                  {categoryFilter && <>{" \u00b7 "}{categoryFilter}</>}
                   {" \u00b7 "}{jobType === "all" ? "All types" : JOB_TYPES[jobType]}
                   {" \u00b7 "}{locationFilter || "All cities"}
                 </span>
@@ -1970,6 +1978,17 @@ export default function Home() {
                     {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>+{Object.keys(BANKS).length - 6} more</button>}
                   </div>
                 </div>
+                {availableCategories.length > 0 && (
+                  <div className="mfs-sec">
+                    <p className="mfs-h">Area</p>
+                    <div className="mfs-banks">
+                      <button className={`mfs-bank mfs-bank-all${categoryFilter === "" ? " is-on" : ""}`} onClick={() => setCategoryFilter("")}>All</button>
+                      {[...availableCategories].sort((x, y) => areaRank(x) - areaRank(y) || x.localeCompare(y)).map((cat) => (
+                        <button key={cat} className={`mfs-bank mfs-bank-all${categoryFilter === cat ? " is-on" : ""}`} onClick={() => setCategoryFilter(cat)}>{cat}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="mfs-sec">
                   <p className="mfs-h">Type</p>
                   <div className="mfs-seg">

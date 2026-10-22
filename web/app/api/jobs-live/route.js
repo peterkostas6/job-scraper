@@ -7,6 +7,7 @@ import { isGraduateProgram, isMbaOrSenior, isBankingEntryLevel, isFinanceRole } 
 import { BANKS, BANK_NAMES } from "@/lib/banks";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export async function GET() {
   try {

@@ -385,7 +385,7 @@ export default function StartFlow() {
     const payButton = <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>{saving ? "Opening checkout…" : `Start my ${PLANS.monthly.trialDays}-day free trial`}</button>;
     body = (
       <>
-        <h1 className="st-q">You&rsquo;re on your way to landing more interviews.</h1>
+        <h1 className="st-q">Land more interviews.</h1>
         <p className="st-hint">
           Try it free for {PLANS.monthly.trialDays} days. {emailOnly ? `We’ll email you every time new ${describe(answers)} post.` : `We’ll text ${formatPhone(phone)} every time new ${describe(answers)} post.`}
         </p>

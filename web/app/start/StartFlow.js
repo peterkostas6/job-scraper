@@ -26,6 +26,12 @@ const CHANNELS = [
   { key: "email", label: "Email me", sub: "No phone number needed" },
 ];
 
+// "2125550123" -> "(212) 555-0123"; anything else is shown as typed.
+const formatPhone = (raw) => {
+  const d = raw.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+  return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : raw;
+};
+
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
 
 // The alert settings these answers become; the same shape the notify cron matches on.
@@ -377,7 +383,7 @@ export default function StartFlow() {
     body = (
       <>
         <h1 className="st-q">Unlimited texts for ${PLANS.monthly.price}/month</h1>
-        <p className="st-hint">A text every time new {describe(answers)} post, sent to {phone}.</p>
+        <p className="st-hint">A text every time new {describe(answers)} post, sent to {formatPhone(phone)}.</p>
         <ul className="st-plan-list">
           <li>Unlimited text alerts, nights and weekends included</li>
           <li>Every role posted in the last 48 hours</li>

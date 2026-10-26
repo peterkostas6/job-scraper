@@ -10,6 +10,7 @@ const REDDIT_EVENT = {
   CompleteRegistration: "SignUp",
   InitiateCheckout: "AddToCart", // Reddit has no checkout-started event
   Purchase: "Purchase",
+  StartTrial: "Lead", // Reddit has no trial event
 };
 
 // The same moments in PostHog (page views are captured there automatically).

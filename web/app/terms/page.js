@@ -7,7 +7,7 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1e293b" }}>
-      <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: September 26, 2026</p>
+      <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: October 26, 2026</p>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Terms of Service</h1>
       <p style={{ fontSize: 15, color: "#475569", marginBottom: 40 }}>Pete's Postings · petespostings.com</p>
 
@@ -26,7 +26,7 @@ export default function TermsPage() {
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>Pro is available weekly, monthly or yearly at the prices shown on our <a href="/pricing" style={{ color: "#2563eb" }}>pricing page</a> when you subscribe. Payments are processed by Stripe.</p>
         <ul style={{ fontSize: 15, color: "#334155", lineHeight: 2, paddingLeft: 20, marginBottom: 12 }}>
           <li><strong>Billing:</strong> your card is charged the plan&rsquo;s price when you subscribe, then again at the start of each billing period (every week, month or year, depending on your plan).</li>
-          <li><strong>Free trials:</strong> we no longer offer free trials. If you started a free trial before September 26, 2026, your card is charged the monthly price when your trial ends unless you cancel before then.</li>
+          <li><strong>Free trials:</strong> Pro starts with a 7-day free trial. You add a payment method when you start it, and it is charged $4.99 when the trial ends unless you cancel before then. After that, Pro renews every month until you cancel.</li>
           <li><strong>Automatic renewal:</strong> subscriptions renew automatically at the end of each billing period until you cancel.</li>
           <li><strong>How to cancel:</strong> open the menu under your profile picture and choose <strong>Manage subscription</strong>, or use <strong>Manage subscription</strong> in the Pro section of the sidebar. You can also email <a href="mailto:pete@petespostings.com" style={{ color: "#2563eb" }}>pete@petespostings.com</a>. Cancelling stops future charges; you keep Pro until the end of the period you already paid for.</li>
           <li><strong>Refunds:</strong> handled case by case. Contact <a href="mailto:pete@petespostings.com" style={{ color: "#2563eb" }}>pete@petespostings.com</a>.</li>

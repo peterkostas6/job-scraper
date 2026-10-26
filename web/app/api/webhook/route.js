@@ -47,16 +47,17 @@ export async function POST(req) {
     // Same event IDs the browser uses on the welcome step, so Meta counts each once.
     const m = session.metadata || {};
     const who = { email: session.customer_details?.email || session.customer_email, externalId: clerkUserId, ip: m.ip, userAgent: m.ua, fbp: m.fbp, fbc: m.fbc };
-    // Every plan is paid at checkout, so every new subscription is a Purchase.
-    const value = (session.amount_total || 0) / 100;
-    await sendMetaServerEvent({ eventName: "Purchase", eventId: `purchase_${session.id}`, value, ...who });
-    await sendRedditServerEvent({ eventType: "Purchase", conversionId: `purchase_${session.id}`, value, ...who });
-    await captureServer(clerkUserId, "subscription_started", { plan: m.plan || "monthly", value, currency: "USD", $set: { subscribed: true, plan: m.plan || "monthly" } });
+    // New subscriptions start as a free trial: a StartTrial now, a Purchase when the first
+    // invoice is paid (invoice.paid below). The value is what the trial turns into.
+    const value = PLANS.monthly.price;
+    await sendMetaServerEvent({ eventName: "StartTrial", eventId: `trial_${session.id}`, value, ...who });
+    await sendRedditServerEvent({ eventType: "Lead", conversionId: `trial_${session.id}`, value, ...who });
+    await captureServer(clerkUserId, "subscription_started", { plan: m.plan || "monthly", trial: true, value, currency: "USD", $set: { subscribed: true, plan: m.plan || "monthly" } });
 
     // Tell the owners about every new subscription. A failed notice only goes to the logs.
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const plan = PLANS[m.plan]?.name || "Monthly";
+      const plan = `${PLANS[m.plan]?.name || "Monthly"} (${PLANS.monthly.trialDays}-day free trial)`;
       const notice = newMemberEmail({
         subject: `New Pro subscriber: ${who.email || "no email"}`,
         heading: "Someone subscribed to Pro",
@@ -73,7 +74,7 @@ export async function POST(req) {
     }
   }
 
-  // Renewals (and trials started before trials were removed turning paid). The first
+  // Trials turning paid, and renewals. The first
   // invoice of a subscription is skipped: it was reported at checkout above.
   if (event.type === "invoice.paid") {
     const invoice = event.data.object;

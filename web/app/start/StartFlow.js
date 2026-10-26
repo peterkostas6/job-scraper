@@ -114,7 +114,7 @@ export default function StartFlow() {
     if (url.searchParams.get("paid") !== "true") return;
     const sessionId = url.searchParams.get("session_id") || "";
     // Same event ID as the Stripe webhook's server copy, so the ad platforms count it once.
-    track("Purchase", PLANS.monthly.price, sessionId && `purchase_${sessionId}`);
+    track("StartTrial", PLANS.monthly.price, sessionId && `trial_${sessionId}`);
     window.history.replaceState(null, "", "/start");
     saveAlerts();
   }, [restored, isLoaded, isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -379,15 +379,15 @@ export default function StartFlow() {
       </>
     );
   } else if (step === "plan") {
-    const payButton = <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>{saving ? "Opening checkout…" : "Continue to checkout"}</button>;
+    const payButton = <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>{saving ? "Opening checkout…" : `Start my ${PLANS.monthly.trialDays}-day free trial`}</button>;
     body = (
       <>
-        <h1 className="st-q">Unlimited texts for ${PLANS.monthly.price}/month</h1>
+        <h1 className="st-q">Try unlimited texts free for {PLANS.monthly.trialDays} days</h1>
         <p className="st-hint">A text every time new {describe(answers)} post, sent to {formatPhone(phone)}.</p>
         <ul className="st-plan-list">
           <li>Unlimited text alerts, nights and weekends included</li>
           <li>Every role posted in the last 48 hours</li>
-          <li>Cancel anytime</li>
+          <li>$0 today, then ${PLANS.monthly.price}/month. Cancel anytime.</li>
         </ul>
         {error && <p className="st-error" role="alert">{error}</p>}
         {isSignedIn ? payButton : (

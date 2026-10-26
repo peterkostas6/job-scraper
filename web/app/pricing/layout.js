@@ -2,7 +2,7 @@
 export const metadata = {
   title: "Pricing — Pete’s Postings Pro",
   description:
-    "Browse every banking analyst and internship posting free. Pro adds instant text and email alerts, the 48-hour recent postings feed and saved jobs, for $4.99 a month.",
+    "Browse every banking analyst and internship posting free. Pro adds instant text and email alerts, the 48-hour recent postings feed and saved jobs, for $4.99 a month after a 7-day free trial.",
   alternates: { canonical: "https://petespostings.com/pricing" },
 };
 

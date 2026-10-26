@@ -1,7 +1,7 @@
-// The Pro plan, in one place. The price here must match the Stripe price that
+// The Pro plan, in one place. New subscriptions start with a free trial of trialDays. The price here must match the Stripe price that
 // STRIPE_PRICE_ID points to. Subscribers on the old weekly/yearly plans keep them in Stripe.
 export const PLANS = {
-  monthly: { name: "Monthly", price: 4.99, period: "mo", billed: "Billed monthly" },
+  monthly: { name: "Monthly", price: 4.99, period: "mo", billed: "Billed monthly", trialDays: 7 },
 };
 
 export const PLAN_KEYS = ["monthly"];

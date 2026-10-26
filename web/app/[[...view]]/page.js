@@ -564,7 +564,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
             <ul>
               <li>Unlimited text and email alerts</li>
               <li>Everything posted in the last 48 hours</li>
-              <li>Cancel anytime</li>
+              <li>{PLANS.monthly.trialDays}-day free trial, cancel anytime</li>
             </ul>
             <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>Get Pro {ARROW}</Link>
           </div>
@@ -734,7 +734,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
                 <span className="paywall-plan-period">/{plan.period}</span>
               </div>
               <p className="paywall-plan-billing">{plan.perMonth ? `$${plan.perMonth.toFixed(2)}/mo, billed yearly` : plan.billed}</p>
-              {ctaBtn(key, `Get ${plan.name}`, featured)}
+              {ctaBtn(key, plan.trialDays ? `Start ${plan.trialDays}-day free trial` : `Get ${plan.name}`, featured)}
             </div>
           );
         })}
@@ -765,7 +765,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
 // every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
 const ABOUT_FAQ = [
   ["Is Pete's Postings free?",
-    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs and your first 5 text or email alerts, with no credit card. Pro adds unlimited alerts and the 48-hour recent postings feed for $4.99 a month.`],
+    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs and your first 5 text or email alerts, with no credit card. Pro adds unlimited alerts and the 48-hour recent postings feed for $4.99 a month after a 7-day free trial.`],
   ["How fast will I hear about a new posting?",
     "Within minutes. We check every bank every 5 minutes, and as soon as a role that matches your alert settings goes live, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
   ["Which banks do you track?",
@@ -1175,10 +1175,10 @@ export default function Home() {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (url.searchParams.get("subscribed") !== "true") return;
-    // Every plan is paid at checkout. The event ID matches the Stripe webhook's server copy
-    // (app/api/webhook/route.js) so the ad platforms count it once.
+    // New subscriptions start as a free trial. The event ID matches the Stripe webhook's server
+    // copy (app/api/webhook/route.js) so the ad platforms count it once.
     const sessionId = url.searchParams.get("session_id") || "";
-    track("Purchase", planPrice(url.searchParams.get("plan")), sessionId && `purchase_${sessionId}`);
+    track("StartTrial", planPrice(url.searchParams.get("plan")), sessionId && `trial_${sessionId}`);
     url.searchParams.delete("subscribed");
     url.searchParams.delete("plan");
     url.searchParams.delete("session_id");

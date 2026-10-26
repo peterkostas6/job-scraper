@@ -2,6 +2,7 @@
 import Stripe from "stripe";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
+import { PLANS } from "@/lib/plans";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -51,8 +52,9 @@ export async function POST(req) {
         quantity: 1,
       },
     ],
-    // Every plan is charged at checkout; there is no free trial.
+    // The card is taken now and charged when the free trial ends, then monthly.
     subscription_data: {
+      trial_period_days: PLANS.monthly.trialDays,
       // clerkUserId lets renewals and cancellations be tied back to the account.
       metadata: { ...meta, clerkUserId: userId },
     },

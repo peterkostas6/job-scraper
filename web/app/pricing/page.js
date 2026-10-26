@@ -257,15 +257,15 @@ export default function PricingPage() {
               <span>/month</span>
             </p>
             <p className="pp-billed">
-              Billed monthly. Cancel anytime.
+              {PLANS.monthly.trialDays}-day free trial, then billed monthly. Cancel anytime.
             </p>
             {isSignedIn ? (
               <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
-                {checkoutLoading ? "Redirecting…" : `Get Pro`}
+                {checkoutLoading ? "Redirecting…" : "Start free trial"}
               </button>
             ) : (
               <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
-                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Get Pro</button>
+                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free trial</button>
               </SignUpButton>
             )}
             <ul className="pp-list">
@@ -298,7 +298,7 @@ export default function PricingPage() {
         <section className="ss-faq pp-faq">
           <h2 className="ss-h2">Questions</h2>
           {[
-            ["How much is Pro?", "$4.99 a month for unlimited text and email alerts and the 48-hour recent postings feed. It renews monthly until you cancel."],
+            ["How much is Pro?", "$4.99 a month for unlimited text and email alerts and the 48-hour recent postings feed, after a 7-day free trial. Your card is charged when the trial ends unless you cancel before then, and it renews monthly until you cancel."],
             ["Can I cancel anytime?", "Yes. Cancel from your account settings at any time. You keep access until the end of your billing period."],
             ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Free accounts get 5 alerts; Pro is unlimited."],
             ["What does the recent postings feed include?", "Every role posted in the last 48 hours across all 20 banks, updated every 5 minutes."],

@@ -40,7 +40,8 @@ export async function POST(req) {
     ua: (req.headers.get("user-agent") || "").slice(0, 400),
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com";
+  // Back to the site the visitor came from, so a dev.petespostings.com checkout returns to dev.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     // Apple Pay and Google Pay appear here as card wallets when they are on in the Stripe dashboard.

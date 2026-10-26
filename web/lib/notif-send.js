@@ -19,7 +19,8 @@ export function smsConfig() {
 // shortUrls (optional) holds one short link per job; when every job has one, each job
 // gets its own link instead of the Recent page link.
 // Free accounts get this many alerts (a text and/or an email for one batch counts once).
-export const FREE_ALERT_LIMIT = 5;
+// Alerts are Pro-only (with a 7-day free trial), so free accounts get none.
+export const FREE_ALERT_LIMIT = 0;
 
 // Free alerts already sent to this account, or to this phone number from any account, so a
 // second sign-up with the same number doesn't reset the allowance. Counted from the log, not

@@ -103,7 +103,7 @@ export default function StartFlow() {
   useEffect(() => {
     if (!restored || !isLoaded || !isSignedIn || !pendingCheckout) return;
     setPendingCheckout(false);
-    if (isSubscribed) saveAlerts();
+    if (isSubscribed) saveAlerts({ emailOnly: answers.channel === "email" });
     else startCheckout();
   }, [restored, isLoaded, isSignedIn, pendingCheckout]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -116,7 +116,7 @@ export default function StartFlow() {
     // Same event ID as the Stripe webhook's server copy, so the ad platforms count it once.
     track("StartTrial", PLANS.monthly.price, sessionId && `trial_${sessionId}`);
     window.history.replaceState(null, "", "/start");
-    saveAlerts();
+    saveAlerts({ emailOnly: answers.channel === "email" });
   }, [restored, isLoaded, isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -146,9 +146,11 @@ export default function StartFlow() {
     [field]: a[field].includes(key) ? a[field].filter((k) => k !== key) : [...a[field], key],
   }));
 
+  // Alerts are Pro-only, so email-only also goes to the price step unless already Pro.
   function afterChannel(channel) {
     if (channel === "email") {
-      saveAlerts({ emailOnly: true });
+      if (isSubscribed) saveAlerts({ emailOnly: true });
+      else go("plan");
     } else {
       setEmailOn(channel === "both");
       setStep("phone");
@@ -379,13 +381,16 @@ export default function StartFlow() {
       </>
     );
   } else if (step === "plan") {
+    const emailOnly = answers.channel === "email";
     const payButton = <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>{saving ? "Opening checkout…" : `Start my ${PLANS.monthly.trialDays}-day free trial`}</button>;
     body = (
       <>
-        <h1 className="st-q">Try unlimited texts free for {PLANS.monthly.trialDays} days</h1>
-        <p className="st-hint">A text every time new {describe(answers)} post, sent to {formatPhone(phone)}.</p>
+        <h1 className="st-q">Try unlimited {emailOnly ? "alerts" : "texts"} free for {PLANS.monthly.trialDays} days</h1>
+        <p className="st-hint">
+          {emailOnly ? `An email every time new ${describe(answers)} post.` : `A text every time new ${describe(answers)} post, sent to ${formatPhone(phone)}.`}
+        </p>
         <ul className="st-plan-list">
-          <li>Unlimited text alerts, nights and weekends included</li>
+          <li>Unlimited {emailOnly ? "email" : "text"} alerts, nights and weekends included</li>
           <li>Every role posted in the last 48 hours</li>
           <li>$0 today, then ${PLANS.monthly.price}/month. Cancel anytime.</li>
         </ul>
@@ -394,7 +399,7 @@ export default function StartFlow() {
           <SignUpButton mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start">{payButton}</SignUpButton>
         )}
         <p className="st-fine">Pay with Apple Pay or card &middot; Secure checkout by Stripe</p>
-        <button className="st-skip st-skip-button" onClick={back}>&larr; Change number</button>
+        <button className="st-skip st-skip-button" onClick={() => go(emailOnly ? "results" : "phone")}>&larr; {emailOnly ? "Back" : "Change number"}</button>
       </>
     );
   } else {

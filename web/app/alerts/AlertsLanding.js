@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useUser, SignUpButton, SignInButton } from "@clerk/nextjs";
+import { useUser, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import HowItWorksDemo from "../[[...view]]/HowItWorksDemo";
 
@@ -22,14 +22,8 @@ const INCLUDED = [
 export default function AlertsLanding() {
   const { isLoaded, isSignedIn } = useUser();
 
-  // One action: a free account, then straight to the alert settings.
-  const button = isLoaded && isSignedIn ? (
-    <Link href="/notifications" className="lp-cta">Set up your alerts</Link>
-  ) : (
-    <SignUpButton mode="modal" forceRedirectUrl="/notifications" signInForceRedirectUrl="/notifications">
-      <button className="lp-cta" disabled={!isLoaded}>Get 5 free alerts</button>
-    </SignUpButton>
-  );
+  // One action: the /start quiz, which sets up alerts and starts the free trial.
+  const button = <Link href="/start" className="lp-cta">Start your 7-day free trial</Link>;
 
   return (
     <div className="lp">
@@ -69,7 +63,7 @@ export default function AlertsLanding() {
 
         {button}
         <p className="lp-fine">
-          Free account. No card needed.
+          Free for 7 days, then $4.99/month. Cancel anytime.
           {isLoaded && !isSignedIn && (
             <>
               {" "}Have an account?{" "}

@@ -4649,8 +4649,6 @@ footer {
 .alerts-intro-steps strong { color: var(--navy); }
 
 /* Paywall: a free way in for people not ready to pay */
-.paywall-free { margin: 1.25rem 0 0.4rem; font-size: 0.88rem; color: var(--text-secondary); }
-.paywall-free .paywall-link { font-weight: 600; text-decoration: none; }
 
 /* About: secondary button is a <button> now */
 button.about-cta-secondary { font-family: inherit; cursor: pointer; }

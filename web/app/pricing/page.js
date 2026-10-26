@@ -238,10 +238,9 @@ export default function PricingPage() {
             <p className="pp-plan-name">Free</p>
             <p className="pp-price">$0</p>
             <p className="pp-billed">Free forever. No credit card.</p>
-            <Link href="/start" className="ss-btn ss-btn-light ss-btn-block">Set up alerts</Link>
+            <Link href="/jobs" className="ss-btn ss-btn-light ss-btn-block">Browse jobs</Link>
             <ul className="pp-list">
               <li>Every open role at all 20 banks</li>
-              <li>5 text or email alerts</li>
               <li>Save jobs and track applications</li>
               <li>Search and filter by city and type</li>
             </ul>
@@ -300,7 +299,7 @@ export default function PricingPage() {
           {[
             ["How much is Pro?", "$4.99 a month for unlimited text and email alerts and the 48-hour recent postings feed, after a 7-day free trial. Your card is charged when the trial ends unless you cancel before then, and it renews monthly until you cancel."],
             ["Can I cancel anytime?", "Yes. Cancel from your account settings at any time. You keep access until the end of your billing period."],
-            ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Free accounts get 5 alerts; Pro is unlimited."],
+            ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Alerts are part of Pro, which is free for the first 7 days."],
             ["What does the recent postings feed include?", "Every role posted in the last 48 hours across all 20 banks, updated every 5 minutes."],
             ["How do club memberships work?", "The club pays $50 a month. Members verify with their school email and get Pro automatically, so nobody manages individual subscriptions."],
           ].map(([q, a]) => (

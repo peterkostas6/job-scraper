@@ -197,7 +197,7 @@ const HERO_NOTIFS = [
 const HOME_QUOTES = [TESTIMONIALS[5], TESTIMONIALS[3], TESTIMONIALS[1]];
 
 const HOME_FAQ = [
-  ["Is it really free?", `Yes. A free account gets you every open role at all ${BANK_COUNT} banks, saved jobs, and your first 5 text or email alerts. No credit card. Pro unlocks unlimited alerts and the feed of everything posted in the last 48 hours.`],
+  ["Is it really free?", `Browsing is. A free account gets you every open role at all ${BANK_COUNT} banks and saved jobs, with no credit card. Text and email alerts and the feed of everything posted in the last 48 hours are part of Pro: free for 7 days, then $4.99 a month.`],
   ["How fast are the alerts?", "We check every bank's career site every 5 minutes, around the clock. When a new role matches what you picked, your text or email goes out right away."],
   ["Will I get spammed?", "No. You only hear about roles at the banks, job types and cities you choose. Change them or turn alerts off whenever you like."],
   ["Where do the jobs come from?", "Straight from each bank's own careers site, not LinkedIn or Indeed, with a direct link to apply."],
@@ -553,10 +553,9 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
             <p className="ss-plan-price">$0</p>
             <ul>
               <li>Every open role at all {BANK_COUNT} banks</li>
-              <li>Your first 5 text or email alerts</li>
               <li>Save jobs and track applications</li>
             </ul>
-            <StartCta where="pricing" isSignedIn={isSignedIn} className="ss-btn ss-btn-light ss-btn-block" />
+            <Link href="/jobs" className="ss-btn ss-btn-light ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_free" })}>Browse jobs {ARROW}</Link>
           </div>
           <div className="ss-card ss-plan ss-plan-dark" data-reveal>
             <p className="ss-plan-name">Pro</p>
@@ -605,7 +604,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
 const SIGNUP_GATES = {
   job: {
     title: "Create a free account to open this job",
-    desc: "It takes 30 seconds. You also get 5 free alerts for new roles like this one.",
+    desc: "It takes 30 seconds.",
     cta: "Continue to the job",
   },
   save: {
@@ -709,7 +708,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
         <p className="paywall-includes-label">What you unlock</p>
         <ul className="paywall-unlocks-list">
           {[
-            ["Unlimited text alerts", "A text the moment a bank posts a role matching your banks, job type and city. Free accounts get 5."],
+            ["Unlimited text alerts", "A text the moment a bank posts a role matching your banks, job type and city."],
             ["Unlimited email alerts", "The same alerts in your inbox, if you want them there too."],
             ["Recent postings", `Every job posted in the last 48 hours across all ${BANK_COUNT} banks, in one list.`],
           ].map(([name, desc]) => (
@@ -741,12 +740,6 @@ function PaywallOverlay({ isSignedIn, newCount }) {
       </div>
 
       {!isSignedIn && (
-        <p className="paywall-free">
-          Not ready to pay? <Link href="/start" className="paywall-link">Start with 5 free alerts &rarr;</Link>
-        </p>
-      )}
-
-      {!isSignedIn && (
         <p className="paywall-signin">
           Already subscribed?{" "}
           <SignInButton mode="modal">
@@ -765,7 +758,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
 // every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
 const ABOUT_FAQ = [
   ["Is Pete's Postings free?",
-    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs and your first 5 text or email alerts, with no credit card. Pro adds unlimited alerts and the 48-hour recent postings feed for $4.99 a month after a 7-day free trial.`],
+    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs, with no credit card. Pro adds text and email alerts and the 48-hour recent postings feed for $4.99 a month after a 7-day free trial.`],
   ["How fast will I hear about a new posting?",
     "Within minutes. We check every bank every 5 minutes, and as soon as a role that matches your alert settings goes live, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
   ["Which banks do you track?",
@@ -852,7 +845,7 @@ function AboutPage({ onBrowse }) {
           </div>
         </div>
         <p className="about-text" style={{ marginTop: "1rem" }}>
-          Browsing is free. A free account adds saved jobs and 5 text or email alerts. Unlimited alerts and recent postings are part of <Link href="/pricing" className="text-link">Pro</Link>.
+          Browsing is free. A free account adds saved jobs. Text and email alerts and recent postings are part of <Link href="/pricing" className="text-link">Pro</Link>.
         </p>
       </section>
 
@@ -1658,7 +1651,7 @@ export default function Home() {
           </svg>
           Notifications
         </span>
-        {freeAlerts ? <span className="sidebar-count tnum">{Math.max(0, freeAlerts.limit - freeAlerts.used)} free</span> : notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
+        {!freeAlerts && notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
       </button>
       <button
         className="sidebar-item"
@@ -2019,7 +2012,7 @@ export default function Home() {
             {viewNotifications && !isSignedIn && (
               <div className="notif-panel alerts-intro">
                 <h2 className="alerts-intro-title">Get a text the moment a bank posts a role you want</h2>
-                <p className="alerts-intro-desc">We check all {BANK_COUNT} banks every 5 minutes. Your first 5 alerts are free.</p>
+                <p className="alerts-intro-desc">We check all {BANK_COUNT} banks every 5 minutes. Free for 7 days, then $4.99 a month.</p>
                 <div className="alerts-intro-sample" aria-hidden="true">
                   <span className="h-notif-icon">
                     <svg width="18" height="18" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
@@ -2065,12 +2058,9 @@ export default function Home() {
                       </div>
                       {freeAlerts && (
                         <div className="al-quota">
-                          <div className="al-quota-dots" aria-hidden="true">
-                            {Array.from({ length: freeAlerts.limit }).map((_, i) => <span key={i} className={i < freeAlerts.used ? "al-quota-used" : ""} />)}
-                          </div>
                           <p>
-                            {freeAlerts.used < freeAlerts.limit ? `${freeAlerts.limit - freeAlerts.used} of ${freeAlerts.limit} free alerts left` : "Free alerts used up"}
-                            {" "}&middot; <Link href="/pricing" className="al-link">Go unlimited</Link>
+                            Alerts are sent on Pro.{" "}
+                            <Link href="/pricing" className="al-link">Start your 7-day free trial</Link>
                           </p>
                         </div>
                       )}
@@ -2343,7 +2333,7 @@ export default function Home() {
                   <div className="welcome-banner alerts-callout">
                     <div>
                       <p className="welcome-title">Get a text when the next one posts</p>
-                      <p className="welcome-desc">Pick your banks and roles. Your first 5 alerts are free.</p>
+                      <p className="welcome-desc">Pick your banks and roles. Free for 7 days.</p>
                     </div>
                     <div className="welcome-actions">
                       <Link href="/start" className="alerts-callout-cta" onClick={() => capture("browse_alerts_cta_clicked")}>Get SMS alerts &rarr;</Link>

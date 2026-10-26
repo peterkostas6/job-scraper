@@ -1,6 +1,6 @@
 // /alerts — landing page for paid ad traffic. It repeats the ad's promise (a text the
-// instant a bank posts), shows the product video, and has one action: a free account that
-// comes with 5 free alerts. No plans or prices here. Kept out of search results so it
+// instant a bank posts), shows the product video, and has one action: the /start quiz, which
+// ends in the 7-day free trial. Kept out of search results so it
 // doesn't compete with the homepage.
 import AlertsLanding from "./AlertsLanding";
 

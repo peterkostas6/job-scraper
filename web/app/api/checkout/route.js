@@ -12,18 +12,15 @@ export async function POST(req) {
     return Response.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  // Determine which plan the user selected
-  let plan = "monthly";
+  // One plan. The /start quiz asks to come back to itself so it can finish turning on texts.
+  const plan = "monthly";
+  let returnTo = "";
   try {
     const body = await req.json();
-    if (body.plan === "yearly" || body.plan === "weekly") plan = body.plan;
+    if (body.returnTo === "/start") returnTo = body.returnTo;
   } catch {}
 
-  const priceId = {
-    weekly: process.env.STRIPE_PRICE_ID_WEEKLY,
-    monthly: process.env.STRIPE_PRICE_ID,
-    yearly: process.env.STRIPE_PRICE_ID_YEARLY,
-  }[plan];
+  const priceId = process.env.STRIPE_PRICE_ID;
   if (!priceId) {
     return Response.json({ error: "That plan isn't available right now." }, { status: 500 });
   }
@@ -42,8 +39,10 @@ export async function POST(req) {
     ua: (req.headers.get("user-agent") || "").slice(0, 400),
   };
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com";
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
+    // Apple Pay and Google Pay appear here as card wallets when they are on in the Stripe dashboard.
     payment_method_types: ["card"],
     customer_email: email,
     line_items: [
@@ -61,8 +60,10 @@ export async function POST(req) {
       clerkUserId: userId,
       ...meta,
     },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}?subscribed=true&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com"}`,
+    success_url: returnTo
+      ? `${siteUrl}${returnTo}?paid=true&session_id={CHECKOUT_SESSION_ID}`
+      : `${siteUrl}?subscribed=true&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl}${returnTo}`,
   });
 
   return Response.json({ url: session.url });

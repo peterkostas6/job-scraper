@@ -3909,6 +3909,11 @@ footer {
   margin-top: 0.7rem;
 }
 
+/* Price step: what $4.99 a month gets you, as a checked list. */
+.st-plan-list { list-style: none; margin: 1.1rem 0 1.4rem; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
+.st-plan-list li { position: relative; padding-left: 1.7rem; font-size: 0.98rem; line-height: 1.4; }
+.st-plan-list li::before { content: ""; position: absolute; left: 0.15rem; top: 0.3rem; width: 0.55rem; height: 0.3rem; border-left: 2.5px solid var(--forest-blue); border-bottom: 2.5px solid var(--forest-blue); transform: rotate(-45deg); }
+
 .st-skip {
   display: block;
   text-align: center;
@@ -5377,7 +5382,6 @@ input, select { border-radius: 12px; }
   font-weight: 700;
 }
 .pp-list strong { font-weight: 600; }
-.pp-founding { margin: auto 0 0; padding-top: 1.4rem; font-size: 0.8rem; line-height: 1.45; color: var(--text-muted); }
 
 .pp-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.75rem; margin: 2rem 0 0; font-size: 0.85rem; color: var(--text-secondary); }
 .pp-trust span { display: inline-flex; align-items: center; gap: 0.45rem; }

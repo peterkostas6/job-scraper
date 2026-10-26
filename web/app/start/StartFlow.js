@@ -9,11 +9,13 @@ import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { useTrackSignup } from "@/lib/use-track-signup";
+import { track } from "@/lib/track";
+import { PLANS } from "@/lib/plans";
 
 const BANK_COUNT = Object.keys(BANKS).length;
 const STORAGE_KEY = "pp-start-v1";
 
-const STEPS = ["type", "area", "banks", "city", "results", "phone", "done"];
+const STEPS = ["type", "area", "banks", "city", "results", "phone", "plan", "done"];
 const QUESTION_COUNT = 5;
 
 const EMPTY = { jobType: null, areas: [], banks: [], city: null, channel: null };
@@ -46,11 +48,13 @@ function describe(a) {
 
 export default function StartFlow() {
   const { isLoaded, isSignedIn, user } = useUser();
+  const isSubscribed = user?.publicMetadata?.subscribed === true;
   useTrackSignup(user);
 
   const [step, setStep] = useState("type");
   const [answers, setAnswers] = useState(EMPTY);
   const [pendingSignup, setPendingSignup] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState(false);
   const [restored, setRestored] = useState(false);
   const [jobs, setJobs] = useState(null);
 
@@ -68,6 +72,10 @@ export default function StartFlow() {
         setAnswers({ ...EMPTY, ...saved.answers });
         if (STEPS.includes(saved.step) && saved.step !== "done") setStep(saved.step);
         setPendingSignup(Boolean(saved.pendingSignup));
+        setPendingCheckout(Boolean(saved.pendingCheckout));
+        if (saved.phone) setPhone(saved.phone);
+        if (saved.smsConsent) setSmsConsent(true);
+        if (typeof saved.emailOn === "boolean") setEmailOn(saved.emailOn);
       }
     } catch {}
     setRestored(true);
@@ -75,8 +83,8 @@ export default function StartFlow() {
 
   useEffect(() => {
     if (!restored) return;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, step, pendingSignup })); } catch {}
-  }, [restored, answers, step, pendingSignup]);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, step, pendingSignup, pendingCheckout, phone, smsConsent, emailOn })); } catch {}
+  }, [restored, answers, step, pendingSignup, pendingCheckout, phone, smsConsent, emailOn]);
 
   // Back from sign-up: email-only alerts save right away; anything with texts asks for the number.
   useEffect(() => {
@@ -84,6 +92,26 @@ export default function StartFlow() {
     setPendingSignup(false);
     afterChannel(answers.channel);
   }, [restored, isLoaded, isSignedIn, pendingSignup]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Back from sign-up on the price step: carry straight on to Stripe.
+  useEffect(() => {
+    if (!restored || !isLoaded || !isSignedIn || !pendingCheckout) return;
+    setPendingCheckout(false);
+    if (isSubscribed) saveAlerts();
+    else startCheckout();
+  }, [restored, isLoaded, isSignedIn, pendingCheckout]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Back from Stripe (/start?paid=true): count the purchase, then turn the texts on.
+  useEffect(() => {
+    if (!restored || !isLoaded || !isSignedIn) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("paid") !== "true") return;
+    const sessionId = url.searchParams.get("session_id") || "";
+    // Same event ID as the Stripe webhook's server copy, so the ad platforms count it once.
+    track("Purchase", PLANS.monthly.price, sessionId && `purchase_${sessionId}`);
+    window.history.replaceState(null, "", "/start");
+    saveAlerts();
+  }, [restored, isLoaded, isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch("/api/jobs-live")
@@ -124,8 +152,45 @@ export default function StartFlow() {
   function chooseChannel(channel) {
     set({ channel });
     capture("start_channel_chosen", { channel, signedIn: Boolean(isSignedIn) });
-    if (isSignedIn) afterChannel(channel);
+    // Texts ask for the number first and the account just before paying; email needs the account now.
+    if (isSignedIn || channel !== "email") afterChannel(channel);
     else setPendingSignup(true);
+  }
+
+  // The phone step checks the number here, then shows the price. Pro accounts skip it.
+  function confirmPhone() {
+    setError("");
+    const digits = phone.replace(/\D/g, "");
+    if (!(digits.length === 10 || (digits.length === 11 && digits.startsWith("1")))) {
+      setError("Enter a 10-digit US mobile number.");
+      return;
+    }
+    if (!smsConsent) {
+      setError("Check the box to agree to texts.");
+      return;
+    }
+    if (isSubscribed) saveAlerts();
+    else go("plan");
+  }
+
+  async function startCheckout() {
+    setError("");
+    setSaving(true);
+    track("InitiateCheckout", PLANS.monthly.price);
+    capture("start_checkout_started");
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "monthly", returnTo: "/start" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!data.url) throw new Error(data.error || "checkout failed");
+      window.location.href = data.url;
+    } catch {
+      setError("Couldn’t open checkout. Try again.");
+      setSaving(false);
+    }
   }
 
   async function saveAlerts({ emailOnly = false } = {}) {
@@ -267,7 +332,7 @@ export default function StartFlow() {
           <span className="st-option-sub">{c.sub}</span>
         </button>
       );
-      return isSignedIn ? option : (
+      return isSignedIn || c.key !== "email" ? option : (
         <SignUpButton key={c.key} mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start">{option}</SignUpButton>
       );
     };
@@ -280,14 +345,12 @@ export default function StartFlow() {
         </div>
         {saving && <p className="st-fine">Saving your alerts&hellip;</p>}
         {error && <p className="st-error" role="alert">{error}</p>}
-        <p className="st-fine">Free account &middot; 5 free alerts &middot; No card needed</p>
         <Link href="/jobs" className="st-skip" onClick={() => capture("start_browse_clicked")}>No thanks, just browse &rarr;</Link>
       </>
     );
   } else if (step === "phone") {
     body = (
       <>
-        <p className="st-kicker">Last step</p>
         <h1 className="st-q">Where should we text you?</h1>
         <p className="st-hint">You&rsquo;ll get a text when new {describe(answers)} post.</p>
         <label className="st-field-label" htmlFor="st-phone">Mobile number</label>
@@ -306,7 +369,26 @@ export default function StartFlow() {
           <span>Also email me{user?.primaryEmailAddress?.emailAddress ? ` at ${user.primaryEmailAddress.emailAddress}` : ""}</span>
         </label>
         {error && <p className="st-error" role="alert">{error}</p>}
-        <button className="st-cta" onClick={saveAlerts} disabled={saving}>{saving ? "Saving…" : "Turn on my alerts"}</button>
+        <button className="st-cta" onClick={confirmPhone} disabled={saving}>{saving ? "Saving…" : "Continue"}</button>
+      </>
+    );
+  } else if (step === "plan") {
+    const payButton = <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>{saving ? "Opening checkout…" : "Continue to checkout"}</button>;
+    body = (
+      <>
+        <h1 className="st-q">Unlimited texts for ${PLANS.monthly.price}/month</h1>
+        <p className="st-hint">A text every time new {describe(answers)} post, sent to {phone}.</p>
+        <ul className="st-plan-list">
+          <li>Unlimited text alerts, nights and weekends included</li>
+          <li>Every role posted in the last 48 hours</li>
+          <li>Cancel anytime</li>
+        </ul>
+        {error && <p className="st-error" role="alert">{error}</p>}
+        {isSignedIn ? payButton : (
+          <SignUpButton mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start">{payButton}</SignUpButton>
+        )}
+        <p className="st-fine">Pay with Apple Pay or card &middot; Secure checkout by Stripe</p>
+        <button className="st-skip st-skip-button" onClick={back}>&larr; Change number</button>
       </>
     );
   } else {

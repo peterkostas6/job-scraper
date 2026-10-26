@@ -140,7 +140,6 @@ const alertSettingsKey = (p) => JSON.stringify(Object.keys(NOTIF_DEFAULTS).map((
 
 // ---- HOMEPAGE ----
 const BANK_COUNT = Object.keys(BANKS).length;
-const MEMBER_CAP = 2000;
 // Every posting is US-based, so ", United States" only pushes the city out of view.
 // Job links go through /go so clicks are counted before the visitor reaches the bank's site.
 const trackedLink = (link) => `/go?u=${encodeURIComponent(link)}`;
@@ -562,13 +561,12 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
           <div className="ss-card ss-plan ss-plan-dark" data-reveal>
             <p className="ss-plan-name">Pro</p>
             <p className="ss-plan-price">${PLANS.monthly.price}<span>/mo</span></p>
-            <p className="ss-plan-note">Founding price for the first {MEMBER_CAP.toLocaleString()} members, then $19.99</p>
             <ul>
               <li>Unlimited text and email alerts</li>
               <li>Everything posted in the last 48 hours</li>
               <li>Cancel anytime</li>
             </ul>
-            <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>See Pro plans {ARROW}</Link>
+            <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>Get Pro {ARROW}</Link>
           </div>
         </div>
       </section>
@@ -729,7 +727,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
           const featured = key === "monthly";
           return (
             <div key={key} className={`paywall-plan${featured ? " paywall-plan-popular" : ""}`}>
-              {featured && <div className="paywall-plan-tag">Most popular</div>}
+              {featured && PLAN_KEYS.length > 1 && <div className="paywall-plan-tag">Most popular</div>}
               <h3 className="paywall-plan-name">{plan.name}</h3>
               <div className="paywall-plan-price">
                 <span className="paywall-plan-amount">${plan.price}</span>
@@ -767,7 +765,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
 // every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
 const ABOUT_FAQ = [
   ["Is Pete's Postings free?",
-    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs and your first 5 text or email alerts, with no credit card. Pro adds unlimited alerts and the 48-hour recent postings feed, weekly, monthly or yearly; see the pricing page for current prices.`],
+    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs and your first 5 text or email alerts, with no credit card. Pro adds unlimited alerts and the 48-hour recent postings feed for $4.99 a month.`],
   ["How fast will I hear about a new posting?",
     "Within minutes. We check every bank every 5 minutes, and as soon as a role that matches your alert settings goes live, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
   ["Which banks do you track?",

@@ -163,9 +163,7 @@ export default function PricingPage() {
   const { isSignedIn, isLoaded, user } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
-  const [billing, setBilling] = useState("weekly");
-
-  function handleSubscribe(plan = billing) {
+  function handleSubscribe(plan = "monthly") {
     track("InitiateCheckout", planPrice(plan));
     setCheckoutLoading(plan);
     fetch("/api/checkout", {
@@ -187,7 +185,6 @@ export default function PricingPage() {
     const plan = new URLSearchParams(window.location.search).get("checkout");
     if (!PLANS[plan]) return;
     window.history.replaceState(null, "", "/pricing");
-    setBilling(plan);
     handleSubscribe(plan);
   }, [isLoaded, isSignedIn]);
 
@@ -234,15 +231,6 @@ export default function PricingPage() {
           <p className="ss-eyebrow">Pricing</p>
           <h1 className="ss-h2 pp-title">Start free. Go Pro when recruiting heats up.</h1>
           <p className="ss-lead">Every plan covers all 20 banks. Pro adds unlimited alerts and every role posted in the last 48 hours.</p>
-
-          <div className="pp-toggle" role="tablist" aria-label="Billing period">
-            {[["weekly", "Weekly"], ["monthly", "Monthly"], ["yearly", "Yearly"]].map(([key, label]) => (
-              <button key={key} role="tab" aria-selected={billing === key} className={billing === key ? "on" : ""} onClick={() => { setBilling(key); capture("pricing_billing_changed", { billing: key }); }}>
-                {label}
-                {key === "yearly" && <span className="pp-save">Save 37%</span>}
-              </button>
-            ))}
-          </div>
         </section>
 
         <section className="pp-plans">
@@ -265,19 +253,19 @@ export default function PricingPage() {
               <span className="pp-badge">Most popular</span>
             </div>
             <p className="pp-price">
-              ${billing === "yearly" ? "5.00" : PLANS[billing].price}
-              <span>/{billing === "weekly" ? "week" : "month"}</span>
+              ${PLANS.monthly.price}
+              <span>/month</span>
             </p>
             <p className="pp-billed">
-              {billing === "yearly" ? `$${PLANS.yearly.price} billed once a year` : billing === "weekly" ? "Billed weekly. Pay only for the weeks you need." : "Billed monthly. Cancel anytime."}
+              Billed monthly. Cancel anytime.
             </p>
             {isSignedIn ? (
               <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
                 {checkoutLoading ? "Redirecting…" : `Get Pro`}
               </button>
             ) : (
-              <SignUpButton mode="modal" forceRedirectUrl={`/pricing?checkout=${billing}`} signInForceRedirectUrl={`/pricing?checkout=${billing}`}>
-                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing, signed_in: false })}>Get Pro</button>
+              <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
+                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Get Pro</button>
               </SignUpButton>
             )}
             <ul className="pp-list">
@@ -285,9 +273,6 @@ export default function PricingPage() {
               <li><strong>Recent postings:</strong> every role from the last 48 hours</li>
               <li>Everything in Free</li>
             </ul>
-            {billing === "monthly" && (
-              <p className="pp-founding">Founding price for the first 2,000 members. Goes to $19.99/month after that.</p>
-            )}
           </div>
         </section>
 
@@ -313,7 +298,7 @@ export default function PricingPage() {
         <section className="ss-faq pp-faq">
           <h2 className="ss-h2">Questions</h2>
           {[
-            ["Which plan should I pick?", "Weekly ($3.99) is best if you're only recruiting for a few weeks. Monthly ($7.99) is the most popular. Yearly ($59.99) works out to $5 a month if you're recruiting all year. Every plan includes the same Pro features and renews automatically until you cancel."],
+            ["How much is Pro?", "$4.99 a month for unlimited text and email alerts and the 48-hour recent postings feed. It renews monthly until you cancel."],
             ["Can I cancel anytime?", "Yes. Cancel from your account settings at any time. You keep access until the end of your billing period."],
             ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Free accounts get 5 alerts; Pro is unlimited."],
             ["What does the recent postings feed include?", "Every role posted in the last 48 hours across all 20 banks, updated every 5 minutes."],

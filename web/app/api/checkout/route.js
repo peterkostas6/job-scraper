@@ -26,6 +26,12 @@ export async function POST(req) {
     return Response.json({ error: "That plan isn't available right now." }, { status: 500 });
   }
 
+  // The trial length is set in Stripe, as metadata trial_days on the price (0 = no trial).
+  // Until it is set there, the site's default applies.
+  const price = await stripe.prices.retrieve(priceId);
+  const fromStripe = parseInt(price.metadata?.trial_days, 10);
+  const trialDays = Number.isInteger(fromStripe) && fromStripe >= 0 && fromStripe <= 90 ? fromStripe : PLANS.monthly.trialDays;
+
   // Get the user's email from Clerk
   const user = await (await clerkClient()).users.getUser(userId);
   const email = user.emailAddresses[0]?.emailAddress;
@@ -55,7 +61,7 @@ export async function POST(req) {
     ],
     // The card is taken now and charged when the free trial ends, then monthly.
     subscription_data: {
-      trial_period_days: PLANS.monthly.trialDays,
+      ...(trialDays > 0 && { trial_period_days: trialDays }),
       // clerkUserId lets renewals and cancellations be tied back to the account.
       metadata: { ...meta, clerkUserId: userId },
     },

@@ -5517,3 +5517,12 @@ input, select { border-radius: 12px; }
 .edge-choice-primary .edge-chevron { color: #fff; }
 .edge-choice:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
 .edge-footer { border: 0; background: none; margin-top: auto; padding-top: 28px; text-align: center; font-size: 13px; line-height: 1.45; color: #5b5f6b; }
+/* Laptops and desktops: drop the phone-width strip, sit on the site's grid background, and
+   center the content in the window with the footer right under it. Phones are unchanged. */
+@media (min-width: 720px) {
+  .edge { max-width: 520px; background: transparent; padding-bottom: 40px; }
+  .edge-main { margin: auto 0; }
+  .edge-title { font-size: 56px; }
+  .edge-sub { font-size: 18px; }
+  .edge-footer { margin-top: 0; padding-top: 36px; }
+}

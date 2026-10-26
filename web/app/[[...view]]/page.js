@@ -334,7 +334,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
     <div className="ss" ref={rootRef}>
       {/* HERO */}
       <section className="ss-hero">
-        <p className="ss-pill" data-reveal><span className="h-live-dot" aria-hidden="true" />Checking {BANK_COUNT} banks every 5 minutes</p>
         <h1 className="ss-title" data-reveal>The database of live banking roles</h1>
         <p className="ss-sub" data-reveal>
           Analyst and internship roles at {BANK_COUNT} banks, texted to you minutes after they go live.

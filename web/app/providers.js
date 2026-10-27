@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { track } from "@/lib/track";
 import { isInternalBrowser } from "@/lib/internal";
+import { setRedditMatchKeys } from "@/lib/reddit-pixel";
 
 export function PostHogProvider({ children }) {
   useEffect(() => {
@@ -67,6 +68,7 @@ function IdentifyUser() {
         plan: meta.plan || (meta.subscribed ? "pro" : "free"),
         signed_up_at: user.createdAt ? new Date(user.createdAt).toISOString() : undefined,
       });
+      if (!isInternalBrowser()) setRedditMatchKeys({ email: user.primaryEmailAddress?.emailAddress, externalId: user.id }).catch(() => {});
       identified.current = user.id;
     } else if (!isSignedIn && identified.current) {
       posthog.reset();

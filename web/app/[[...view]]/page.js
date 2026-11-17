@@ -2144,8 +2144,8 @@ export default function Home() {
 
       {!viewHome && !viewAbout && !viewNewPostings && (
         <div className="app-layout">
-          {/* Mobile top bar — replaces sidebar on mobile (on /jobs itself, the filter bar below replaces it) */}
-          <div className={`mobile-top-bar${!viewingSaved ? " mobile-top-bar-replaced" : ""}`}>
+          {/* Mobile top bar — replaces sidebar on mobile (on /jobs the filter bar replaces it; on Alerts it isn't shown) */}
+          <div className={`mobile-top-bar${!viewingSaved || viewNotifications ? " mobile-top-bar-replaced" : ""}`}>
             <div className="mobile-top-bar-bank-row">
               <select
                 className="mobile-bank-select"

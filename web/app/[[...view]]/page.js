@@ -767,23 +767,12 @@ function SignUpGate({ gate, onClose }) {
 }
 
 // ---- PAYWALL ----
-// Recent Postings for non-Pro visitors: the feed is the pitch. The newest roles drop in at the
-// top one by one, the first two stay readable, the rest blur under one centered unlock card.
-const LOCKED_ROWS = 7;
+// Recent Postings for non-Pro visitors: every role from the last 48 hours is listed with its bank
+// logo, bank, city and age in plain sight; only the job title is blurred. Pro unlocks the titles.
 function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
   useEffect(() => { capture("paywall_viewed", { new_roles: count ?? null, signed_in: Boolean(isSignedIn), where: "recent_feed" }); }, []);
-  const cutoff = Date.now() - 48 * 3600 * 1000;
-  const recent = [...(liveJobs || [])].filter((j) => (j.detectedAt || 0) > cutoff).sort((a, b) => b.detectedAt - a.detectedAt).slice(0, LOCKED_ROWS);
-  const total = count || recent.length;
-  const [shown, setShown] = useState(0);
-  useEffect(() => {
-    if (!recent.length) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { setShown(recent.length); return; }
-    setShown(0);
-    const id = setInterval(() => setShown((n) => { if (n + 1 >= recent.length) clearInterval(id); return Math.min(recent.length, n + 1); }), 380);
-    return () => clearInterval(id);
-  }, [recent.length]);
-  const rows = recent.slice(recent.length - shown); // oldest drops in first, newest lands on top last
+  const recent = [...(liveJobs || [])].filter(isLast48h).sort((a, b) => b.detectedAt - a.detectedAt);
+  const total = recent.length || count;
   const [loading, setLoading] = useState(false);
   function checkout() {
     track("InitiateCheckout", planPrice("monthly"));
@@ -797,41 +786,39 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
   const ctaLabel = plan.trialDays ? `Start ${plan.trialDays}-day free trial` : "Get Pro";
   return (
     <div className="rl">
-      <div className="rl-top">
-        <h2 className="rl-title">{total > 0 ? `${total} new ${total === 1 ? "role" : "roles"} in the last 48 hours` : "New roles from the last 48 hours"}</h2>
-      </div>
+      <h2 className="rl-title">{total > 0 ? `${total} new ${total === 1 ? "role" : "roles"} in the last 48 hours` : "New roles from the last 48 hours"}</h2>
       <div className="rl-feed">
-        <div className="rl-list" aria-hidden="true">
-          {rows.length ? rows.map((job, i) => (
-            <div key={job.link} className={`rl-row${i >= 2 ? " is-locked" : ""}${i === 0 ? " is-enter" : ""}`}>
+        <div className="rl-lock">
+          <div className="rl-lock-copy">
+            <h3>See every title, and get a text for the next one</h3>
+            <p className="rl-fine">Every role from the last 48 hours plus unlimited text and email alerts. Then ${plan.price}/{plan.period}, cancel anytime.</p>
+          </div>
+          <div className="rl-lock-actions">
+            {isSignedIn ? (
+              <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Redirecting..." : ctaLabel}</button>
+            ) : (
+              <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
+                <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta">{ctaLabel}</button>
+              </SignUpButton>
+            )}
+            {!isSignedIn && (
+              <p className="rl-fine">Already Pro?{" "}<SignInButton mode="modal"><button className="paywall-link">Sign in</button></SignInButton></p>
+            )}
+          </div>
+        </div>
+        <div className="rl-list">
+          {recent.length ? recent.map((job) => (
+            <div key={job.link} className="rl-row">
               <BankLogo bankKey={job.bankKey} bank={job.bank} size={34} className="rl-logo" />
               <div className="rl-text">
-                <div className="rl-name"><span className="rl-name-text">{job.title}</span>{(Date.now() - job.detectedAt) < 3 * 3600 * 1000 && <span className="ss-new">New</span>}</div>
+                <div className="rl-name"><span className="rl-name-text" aria-hidden="true">{job.title}</span><span className="sr-only">Title unlocks with Pro</span><span className="ss-new">New</span></div>
                 <div className="rl-meta">{job.bank}{job.cities?.[0] ? ` \u00b7 ${job.cities[0]}` : ""}</div>
               </div>
               <span className="rl-age">{feedAge(job)}</span>
             </div>
           )) : [0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="rl-row is-locked"><div className="skeleton skeleton-title" /></div>
+            <div key={i} className="rl-row"><div className="skeleton skeleton-title" /></div>
           ))}
-        </div>
-        <div className="rl-lock">
-          <h3>{total > 0 ? `See all ${total}, and get a text for the next one` : "See every new role, and get a text for the next one"}</h3>
-          <ul>
-            <li>Every role posted in the last 48 hours</li>
-            <li>Unlimited text and email alerts</li>
-          </ul>
-          {isSignedIn ? (
-            <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Redirecting..." : ctaLabel}</button>
-          ) : (
-            <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
-              <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta">{ctaLabel}</button>
-            </SignUpButton>
-          )}
-          <p className="rl-fine">Then ${plan.price}/{plan.period}. Cancel anytime.</p>
-          {!isSignedIn && (
-            <p className="rl-fine">Already Pro?{" "}<SignInButton mode="modal"><button className="paywall-link">Sign in</button></SignInButton></p>
-          )}
         </div>
       </div>
       <p className="rl-browse">Or <Link href="/jobs?bank=all" className="text-link">browse every open role</Link> for free.</p>

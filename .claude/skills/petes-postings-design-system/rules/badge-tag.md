@@ -4,6 +4,8 @@ impact: MEDIUM-HIGH
 impactDescription: Badges classify rows and cards at a glance. Colors carry meaning and must not drift.
 tags: badge, tag, pill, analyst, intern, new, count, popular, label
 ---
+> **Nov 2026 theme:** colors in this file predate the navy/cream/coral palette. Keep the structure and sizes here, but take colors from `colors.md`: cream surfaces on a navy page, navy for active states, coral only for the browse-roles and SMS-alerts actions.
+
 
 ## Badges & Tags
 

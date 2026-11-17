@@ -2,98 +2,72 @@
 title: Color Tokens
 impact: HIGH
 impactDescription: The palette every other rule references. New colors are not allowed without being added here.
-tags: color, palette, tokens, navy, blue, cream, grey, success, amber, danger, tint
+tags: color, palette, tokens, navy, cream, coral, 60-30-10, grey, success, amber, danger
 ---
 
-## Color Tokens
+## Color Tokens (navy / cream / coral, 60-30-10)
 
-Every color on the site comes from a short list. Brand colors are custom properties in `:root`. Blue tints are the accent at a fixed opacity step, never a second lighter blue. Semantic colors are text / fill / stroke triplets.
+Since Nov 2026 the site uses three brand colors in a fixed ratio:
 
-**Incorrect (new hex values, Tailwind-style blues, opaque tints):**
-
-```css
-.my-card { background: #f5f7ff; border: 1px solid #e0e7ff; color: #3b82f6; }
-.my-title { color: #0f172a; }
-```
-
-**Correct (tokens and the tint ladder):**
-
-```css
-.my-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-}
-.my-card-selected {
-  background: rgba(37, 99, 235, 0.06);
-  border-color: rgba(37, 99, 235, 0.25);
-  color: var(--forest-blue);
-}
-.my-title { color: var(--navy); }
-```
-
-### Brand tokens (`:root`)
-
-| Token | Hex | Role |
-|---|---|---|
-| `--cream` | `#faf8f5` | Page background. Also the nav at 85% and paywall overlays at 92%. |
-| `--white` | `#ffffff` | Every card, list, input, sidebar, modal. |
-| `--navy` | `#1e293b` | Headings, display numbers, logo tile, active sidebar item, mobile active pill, the dark pricing block. |
-| `--forest-blue` | `#2563eb` | The single accent: primary buttons, links, focus, active tab underline, analyst badge, feature icons, bookmark. |
-| hover blue | `#1d4ed8` | Filled button hover only. Not a token; write it literally. |
-| `--text-primary` | `#1a1a1a` | Body copy, card titles, job titles, input text. |
-| `--text-secondary` | `#64748b` | Descriptions, nav links, sidebar items, secondary labels. |
-| `--text-muted` | `#94a3b8` | Meta, placeholders, counts, eyebrows, fine print, inactive icons. |
-| `--border` | `rgba(0,0,0,0.06)` | Every hairline: cards, inputs, dividers, section tops. |
-
-### Blue tint ladder (accent at opacity)
-
-Always `rgba(37, 99, 235, X)`. Pick the step by role, do not invent a new one.
-
-| Opacity | Used for |
-|---|---|
-| `0.03` | Job row hover background |
-| `0.04` | Ghost/outline button hover, sidebar item hover, welcome banner fill |
-| `0.06` | Hero tag fill, selected chip/checkbox fill, modal icon tile, nav bell active |
-| `0.07` | "New" time badge fill |
-| `0.08` | Analyst badge fill, paywall badge, saved-toggle active |
-| `0.10` | Focus ring (3px), mobile upgrade pill |
-| `0.12` | Welcome banner stroke, featured plan glow |
-| `0.20` | Nav sign-in border, saved-toggle active border |
-| `0.25` | Outlined CTA border, selected checkbox border |
-| `0.30` | Chip hover border |
-| `0.40` | Outlined CTA hover border, phone input focus border |
-
-### Semantic families
-
-| Family | Text | Fill | Stroke | Where |
+| Share | Color | Hex | Token | Job |
 |---|---|---|---|---|
-| success (green) | `#16a34a` | `#dcfce7` or `rgba(22,163,74,0.08)` | none | New badge, live status, notification dots, saved toggle, success icon. Check-mark icons use `#22c55e`. |
-| attention (amber) | `#d97706` text, `#92400e` on tinted bg | `rgba(217,119,6,0.07-0.12)` | `rgba(217,119,6,0.2-0.25)` | Intern badge, 48h teaser strip and pill, sidebar teaser count. |
-| danger (red) | `#dc3535` | `rgba(220,53,53,0.06)` | `rgba(220,53,53,0.12)` | Error banner, required marks, form errors. |
-| rating gold | `#f59e0b` | none | none | Testimonial stars only. |
+| **60%** | Navy | `#14213D` | `--pp-navy` | The page itself: background, nav, sidebar (`--pp-navy-2` `#1C2C4F` for raised navy), footer. |
+| **30%** | Cream | `#F4EDE0` | `--pp-cream` | Every surface that holds content: cards, the job table, Latest roles, pricing plans, quiz answers, modals, inputs, filter panel. Also all text that sits directly on navy. |
+| **10%** | Coral | `#FF6B5B` | `--pp-coral` (hover `--pp-coral-hover` `#FF8273`) | ONLY the actions we want people to take: **Browse open roles** and **Get SMS alerts / Set up alerts / Start free trial / Get Pro**. |
 
-### Neutral controls
+The theme lives in the `NAVY / CREAM / CORAL THEME` block near the end of `web/app/globals.css`. It re-points the older tokens, so legacy rules follow along:
 
-| Hex | Use |
+| Legacy token | Now means |
 |---|---|
-| `#f1f5f9` | Neutral badge fill |
-| `#f8fafc` / `#e2e8f0` | Sidebar bank-search field bg / border |
-| `#d1d5db` | Toggle off, chip borders in demo |
-| `#cbd5e1` | Scrollbar thumb |
-| `#ddd` | Inactive bookmark and arrow icons |
-| `#fafafa` | Neutral outline button hover bg |
-| `#f1f0ee` | Browser-chrome bar in app preview |
-| `rgba(0,0,0,0.015)` / `0.04` | List header band / count pill fill |
-| `rgba(0,0,0,0.08)` | List header bottom border |
-| `rgba(0,0,0,0.12)` / `0.15` | Neutral outline button hover border |
+| `--cream` | navy page background (name kept for old rules) |
+| `--navy`, `--forest-blue`, `--ss-ink` (inside cream surfaces) | navy |
+| `--ss-ink` (on the page) | cream |
+| `--white` | cream on the page; `#FBF7EF` inside cream surfaces |
+| `--text-primary / -secondary / -muted` | cream at 100 / 78 / 60% on the page; navy at 100 / 74 / 60% inside cream surfaces |
+| `--border`, `--border-strong` | cream at 12 / 18% on the page; navy at 10 / 16% inside cream surfaces |
+
+**How text color flips:** text tokens default to cream. Every cream surface class (`.ss-card`, `.lb`, `.jobs-list`, `.modal-card`, `.st-option`, `.pp-plan`, ...) resets the same tokens to navy. A new card component must be added to that list (or set the tokens itself), otherwise its text will be cream on cream.
+
+**Incorrect:**
+
+```css
+.my-card { background: #fff; color: #1a1a1a; }          /* white is not in the palette */
+.my-link { color: var(--pp-coral); }                      /* coral is not for links or decoration */
+.my-btn  { background: var(--pp-coral); color: #fff; }    /* white on coral fails contrast (2.9:1) */
+```
+
+**Correct:**
+
+```css
+.my-card { background: var(--pp-cream); color: var(--pp-navy); }  /* and add it to the cream-surface list */
+.my-link { color: var(--pp-cream); text-decoration: underline; }   /* on navy; navy inside cards */
+.my-cta  { background: var(--pp-coral); color: var(--pp-navy); }   /* one per view, pointing at browse or alerts */
+```
+
+### Contrast (checked)
+
+| Pair | Ratio |
+|---|---|
+| Cream on navy | 13.7:1 |
+| Navy on cream | 13.7:1 |
+| Navy on coral | 5.7:1 (button text) |
+| Coral on navy | 5.7:1 (the "Browse open roles" text link) |
+| White on coral | 2.9:1 — never use |
+
+### Semantic families (unchanged)
+
+| Family | Text | Fill | Where |
+|---|---|---|---|
+| success (green) | `#16a34a` | `rgba(22,163,74,0.08)` | New badge, live dot, checked marks. Check icons `#22c55e`. |
+| attention (amber) | `#92400e` on tint | `rgba(217,119,6,0.07-0.12)` | Intern badge, 48h teaser. |
+| danger (red) | `#dc3535` | `rgba(220,53,53,0.06)` | Errors only. Red is not coral; never swap them. |
 
 ### Key rules
 
-- **One blue.** `#2563eb` and its tints. `#1d4ed8` only on filled-button hover.
-- **Headings are navy, body is `#1a1a1a`.** Never navy for paragraphs, never near-black for headings.
-- **Tints are opacity, not new hexes.** `rgba(37,99,235,0.06)`, not `#eff6ff`. (Exception: the landing app-preview mock uses `#eff6ff` / `#fffbeb` / `#dcfce7` for its tiny badges. Do not spread that pattern.)
-- **Hairline is `var(--border)`.** Heavier borders only on the list header and hover states listed above.
-- **`--bg-subtle` is referenced by `.nav-bell:hover` but never defined.** Treat it as `rgba(37,99,235,0.04)` and define it if you touch that rule.
+- **Coral is 10%, and only for the two goals.** If a coral element doesn't lead to browsing roles or signing up for alerts, it should be navy or cream. Secondary buttons are outlines.
+- **No blue.** `#2563eb` and its tint ladder are retired. Active states, badges and selected chips use navy on cream, or cream on navy.
+- **No pure white surfaces.** Cards are cream; nested inputs inside cards may use `#FBF7EF`.
+- **Tints are opacity of navy or cream**, e.g. `rgba(20,33,61,0.08)` for a badge fill on cream, `rgba(244,237,224,0.08)` for a hover on navy. `#EADFCB` is the one darker cream (row hover, tinted stat cards).
+- **Logo mark** still has its original blue top bar; update it with the brand, not ad hoc.
 
-Source: `web/app/globals.css` lines 3-12 and every `rgba(37, 99, 235, ...)` usage
+Source: `web/app/globals.css`, block `NAVY / CREAM / CORAL THEME`

@@ -22,6 +22,28 @@ const JOB_TYPES = {
   fulltime: "Analyst",
 };
 
+// Postel's law: accept the way people actually type a search. Case, punctuation,
+// "&" vs "and", word order and common shorthand ("gs", "s&t", "nyc") all match.
+const SEARCH_ALIASES = {
+  gs: "goldman", goldman: "goldman", jpm: "jpmorgan", jp: "jpmorgan", chase: "jpmorgan", ms: "morgan stanley",
+  bofa: "bank of america", boa: "bank of america", baml: "bank of america", db: "deutsche", wf: "wells",
+  hl: "houlihan", ib: "investment banking", ibd: "investment banking", st: "sales trading", snt: "sales trading",
+  er: "research", pwm: "wealth", wm: "wealth", am: "asset management", pe: "private equity", quant: "quant",
+  nyc: "new york", ny: "new york", sf: "san francisco", la: "los angeles", intern: "intern", internship: "intern",
+};
+function normalizeText(s) {
+  return (s || "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\band\b/g, " ").replace(/\s+/g, " ").trim();
+}
+function matchesQuery(job, query) {
+  const raw = (query || "").toLowerCase().replace(/s\s*&\s*t/g, "st");
+  const tokens = normalizeText(raw).split(" ").filter(Boolean);
+  if (!tokens.length) return true;
+  // Each word typed must start a word in the job ("trad" finds "Trading"; "st" won't hit "analyst").
+  const words = normalizeText(`${job.title} ${job.bank || ""} ${job.location || ""} ${job.category || ""}`).split(" ");
+  const has = (t) => words.some((w) => w.startsWith(t));
+  return tokens.every((t) => has(t) || (SEARCH_ALIASES[t] && SEARCH_ALIASES[t].split(" ").every(has)));
+}
+
 function isInternship(title) {
   const t = title.toLowerCase();
   return (
@@ -144,6 +166,37 @@ const BANK_COUNT = Object.keys(BANKS).length;
 // Job links go through /go so clicks are counted before the visitor reaches the bank's site.
 const trackedLink = (link) => `/go?u=${encodeURIComponent(link)}`;
 const cleanLocation = (loc) => (loc || "").replace(/,\s*United States( of America)?/gi, "").trim();
+
+// Banks write the same city many ways ("New York", "New York, NY, USA", "NEW YORK, New York (1271 6th Ave)").
+// cityKeys turns a raw location into clean "City, ST" names so the Location filter lists each city once.
+const US_STATES = { alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO", connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID", illinois: "IL", indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME", maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO", montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY", "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR", pennsylvania: "PA", "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT", vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV", wisconsin: "WI", wyoming: "WY", "district of columbia": "DC" };
+const STATE_CODES = new Set(Object.values(US_STATES));
+// Cities banks often list without a state.
+const CITY_STATE = { "new york": "NY", charlotte: "NC", jacksonville: "FL", atlanta: "GA", houston: "TX", dallas: "TX", phoenix: "AZ", chandler: "AZ", chicago: "IL", "san francisco": "CA", "los angeles": "CA", scranton: "PA", boston: "MA", miami: "FL", tampa: "FL", "salt lake city": "UT", "jersey city": "NJ", wilmington: "DE", pennington: "NJ", columbus: "OH", denver: "CO", seattle: "WA", irving: "TX", plano: "TX", whippany: "NJ", purchase: "NY", cary: "NC", hialeah: "FL", richmond: "VA", baltimore: "MD", philadelphia: "PA", "west palm beach": "FL" };
+const MULTI_CITY = "Multiple locations";
+const titleCase = (s) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
+function cityKeys(raw) {
+  const out = [];
+  for (let part of (raw || "").split(";")) {
+    part = part.replace(/\(.*?\)/g, "").replace(/,?\s*(United States( of America)?|USA|US)\s*$/i, "").trim();
+    if (!part) continue;
+    if (/^\d+\s+locations?$|^multiple locations$/i.test(part)) { out.push(MULTI_CITY); continue; }
+    const bits = part.split(",").map((b) => b.trim()).filter(Boolean);
+    // Drop building numbers and suffixes: "Charlotte #2", "New York 601 Lex", "Va – U.S.", "Tx-Main Street".
+    let city = bits[0].replace(/\s*#?\d.*$/, "").replace(/^new york city$/i, "New York");
+    let state = (bits[1] || "").replace(/\s*[-–].*$/, "").trim();
+    if (STATE_CODES.has(city.toUpperCase()) && !state) { state = city.toUpperCase(); city = Object.keys(US_STATES).find((k) => US_STATES[k] === state); }
+    const code = STATE_CODES.has(state.toUpperCase()) ? state.toUpperCase() : US_STATES[state.toLowerCase()] || (state ? "" : CITY_STATE[city.toLowerCase()]);
+    out.push(code ? `${titleCase(city)}, ${code}` : bits.length > 1 && !code ? `${titleCase(city)}, ${titleCase(state)}` : titleCase(city));
+  }
+  return [...new Set(out)];
+}
+// [value, count] pairs, biggest first; "Other" / "Multiple locations" always last.
+function rankCounts(values, last) {
+  const counts = {};
+  for (const v of values) if (v) counts[v] = (counts[v] || 0) + 1;
+  return Object.entries(counts).sort((a, b) => (a[0] === last) - (b[0] === last) || b[1] - a[1] || a[0].localeCompare(b[0]));
+}
 
 // Homepage comparison chart: [row label, on your own, Pete's Postings]
 const COMPARE_ROWS = [
@@ -1116,10 +1169,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bankCounts, setBankCounts] = useState({});
+  const [justSaved, setJustSaved] = useState(null);
+  const justSavedTimer = useRef(null);
   const [bookmarks, setBookmarks] = useState(new Set());
   const [savedJobs, setSavedJobs] = useState([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
-  const [availableLocations, setAvailableLocations] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState("");
   // Browse analytics: one event per search (after typing pauses), filter change, and bank switch.
   const browseTracked = useRef(false);
@@ -1230,6 +1284,13 @@ export default function Home() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   // Phones: the /jobs filter panel (bank, type, city) that slides up from the bottom.
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  // Jakob's law: Escape closes the filter panel like every other sheet on the web.
+  useEffect(() => {
+    if (!filterSheetOpen) return;
+    const onKey = (e) => { if (e.key === "Escape") setFilterSheetOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [filterSheetOpen]);
   const [sheetAllBanks, setSheetAllBanks] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
@@ -1294,7 +1355,7 @@ export default function Home() {
         return res.json();
       })
       .then((data) => {
-        const loaded = (data.jobs || []).map((job) => ({ ...job, title: decodeEntities(job.title), location: cleanLocation(job.location) }));
+        const loaded = (data.jobs || []).map((job) => ({ ...job, title: decodeEntities(job.title), location: cleanLocation(job.location), cities: cityKeys(job.location) }));
         setAllJobs(loaded);
         const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
         for (const job of loaded) if (job.bankKey in counts) counts[job.bankKey]++;
@@ -1338,11 +1399,6 @@ export default function Home() {
       : allJobs.filter((job) => job.bankKey === activeBank);
     setJobs(bankJobs);
 
-    const locs = [...new Set(
-      bankJobs.flatMap((job) => (job.location || "").split(";").map((l) => l.trim())).filter(Boolean)
-    )].sort();
-    setAvailableLocations(locs);
-
     const cats = [...new Set(bankJobs.map((job) => job.category).filter(Boolean))].sort();
     setAvailableCategories(cats);
   }, [activeBank, allJobs, isSignedIn, isSubscribed]);
@@ -1353,6 +1409,12 @@ export default function Home() {
     if (!isSignedIn) { askToSignUp("save"); return; }
     const link = job.link;
     capture(bookmarks.has(link) ? "job_unsaved" : "job_saved", { bank: job.bank || BANKS[activeBank]?.name, title: job.title, category: job.category });
+    // Exaggerated feedback: saving plays a squash-and-stretch pop with a small burst.
+    if (!bookmarks.has(link)) {
+      setJustSaved(link);
+      clearTimeout(justSavedTimer.current);
+      justSavedTimer.current = setTimeout(() => setJustSaved(null), 650);
+    }
     setBookmarks((prev) => {
       const next = new Set(prev);
       if (next.has(link)) next.delete(link); else next.add(link);
@@ -1481,13 +1543,17 @@ export default function Home() {
       .finally(() => setNotifSaving(false));
   }
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesType = jobType === "all" ? true : jobType === "internship" ? isInternship(job.title) : !isInternship(job.title);
-    const matchesSearch = searchQuery === "" || job.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesLocation = locationFilter === "" || (job.location || "").toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesCategory = categoryFilter === "" || (job.category || "") === categoryFilter;
-    return matchesType && matchesSearch && matchesLocation && matchesCategory;
-  });
+  const typeOf = (job) => (isInternship(job.title) ? "internship" : "fulltime");
+  const okType = (job) => jobType === "all" || typeOf(job) === jobType;
+  const okLocation = (job) => locationFilter === "" || (job.cities || []).includes(locationFilter);
+  const okCategory = (job) => categoryFilter === "" || (job.category || "") === categoryFilter;
+  const searched = jobs.filter((job) => searchQuery === "" || matchesQuery(job, searchQuery));
+  const filteredJobs = searched.filter((job) => okType(job) && okLocation(job) && okCategory(job));
+  // Each dropdown counts the jobs left after the OTHER filters, so its numbers always add up to what you'd see.
+  const locationOptions = rankCounts(searched.filter((j) => okType(j) && okCategory(j)).flatMap((j) => j.cities || []), MULTI_CITY);
+  const typeCounts = Object.fromEntries(rankCounts(searched.filter((j) => okLocation(j) && okCategory(j)).map(typeOf)));
+  const categoryOptions = rankCounts(searched.filter((j) => okType(j) && okLocation(j)).map((j) => j.category), "Other");
+  const withSelected = (opts, sel) => (sel && !opts.some(([v]) => v === sel) ? [[sel, 0], ...opts] : opts);
 
   const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link)) : filteredJobs;
   const savedCount = [...bookmarks].filter((link) => filteredJobs.some((job) => job.link === link)).length;
@@ -1959,7 +2025,8 @@ export default function Home() {
                   <p className="mfs-h">Bank</p>
                   <div className="mfs-banks">
                     <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All {BANK_COUNT}</button>
-                    {(sheetAllBanks ? Object.keys(BANKS) : Object.keys(BANKS).slice(0, 6)).map((key) => (
+                    {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
+                    {(() => { const ranked = Object.keys(BANKS).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)); return sheetAllBanks ? ranked : ranked.slice(0, 6); })().map((key) => (
                       <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
                         <BankLogo bankKey={key} size={18} />{BANKS[key].shortName}
                       </button>
@@ -1990,7 +2057,7 @@ export default function Home() {
                   <label className="mfs-h" htmlFor="mfs-city">City</label>
                   <select id="mfs-city" className="mfs-select" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
                     <option value="">All cities</option>
-                    {availableLocations.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                    {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}
                   </select>
                 </div>
                 <div className="mfs-foot">
@@ -2374,16 +2441,16 @@ export default function Home() {
                           </button>
                         )}
                       </div>
-                      <select className="filter-dropdown" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                      <select className="filter-dropdown" aria-label="Location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
                         <option value="">All Locations</option>
-                        {availableLocations.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                        {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}
                       </select>
-                      <select className="filter-dropdown" value={jobType} onChange={(e) => setJobType(e.target.value)}>
-                        {Object.entries(JOB_TYPES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                      <select className="filter-dropdown" aria-label="Type" value={jobType} onChange={(e) => setJobType(e.target.value)}>
+                        {Object.entries(JOB_TYPES).map(([key, label]) => <option key={key} value={key}>{key === "all" ? label : `${label} (${typeCounts[key] || 0})`}</option>)}
                       </select>
-                      <select className="filter-dropdown" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                      <select className="filter-dropdown" aria-label="Category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
                         <option value="">All Categories</option>
-                        {availableCategories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                        {withSelected(categoryOptions, categoryFilter).map(([cat, n]) => <option key={cat} value={cat}>{cat} ({n})</option>)}
                       </select>
                     </div>
                   </div>
@@ -2464,7 +2531,7 @@ export default function Home() {
                           </span>
                         </div>
                         {activeBank === "all" && <span className="new-bank-label">{job.bank}</span>}
-                        <button className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}`} onClick={(e) => toggleBookmark(e, job)}>
+                        <button className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}${justSaved === job.link ? " job-bookmark-pop" : ""}`} onClick={(e) => toggleBookmark(e, job)} aria-label={bookmarks.has(job.link) ? "Remove from saved" : "Save job"} aria-pressed={bookmarks.has(job.link)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                           </svg>

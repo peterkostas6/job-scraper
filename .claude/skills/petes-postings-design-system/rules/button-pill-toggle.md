@@ -4,6 +4,8 @@ impact: HIGH
 impactDescription: Filters and multi-select options share one selected-state recipe. Diverging makes filters look like separate widgets.
 tags: chip, pill, toggle, filter, checkbox, radio, selected, segmented
 ---
+> **Nov 2026 theme:** colors in this file predate the navy/cream/coral palette. Keep the structure and sizes here, but take colors from `colors.md`: cream surfaces on a navy page, navy for active states, coral only for the browse-roles and SMS-alerts actions.
+
 
 ## Pill Toggles & Chips
 

@@ -4,6 +4,8 @@ impact: HIGH
 impactDescription: Every field shares one shape and one focus treatment.
 tags: input, select, search, field, form, focus, placeholder, dropdown
 ---
+> **Nov 2026 theme:** colors in this file predate the navy/cream/coral palette. Keep the structure and sizes here, but take colors from `colors.md`: cream surfaces on a navy page, navy for active states, coral only for the browse-roles and SMS-alerts actions.
+
 
 ## Inputs, Selects & Search
 

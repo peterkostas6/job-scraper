@@ -5526,3 +5526,262 @@ input, select { border-radius: 12px; }
   .edge-sub { font-size: 18px; }
   .edge-footer { margin-top: 0; padding-top: 36px; }
 }
+
+/* ==========================================================================
+   MOTION + INTERACTION LAYER
+   Animation principles and UX laws applied site-wide. Durations stay on the
+   design system's 0.15 / 0.2 / 0.3s scale (snappy timing); everything is
+   switched off for prefers-reduced-motion at the end of this block.
+   ========================================================================== */
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);   /* follow through: overshoots, then settles */
+  --ease-windup: cubic-bezier(0.36, 0, 0.66, -0.56);  /* anticipation: pulls back before moving */
+  --t-press: 80ms;                                     /* Doherty: feedback well under 100ms */
+}
+
+/* Squash and stretch + follow through: primary buttons squash on press and spring back on release */
+.nav-cta, .h-cta, .st-cta, .st-next, .modal-cta-primary, .alerts-callout-cta, .lp-cta,
+.recent-teaser-cta, .mfb-bar, .st-option, .mfs-bank, .mfs-more, .mobile-pro-pill, .ss-discover {
+  transition: transform 300ms var(--ease-spring), background 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
+}
+:is(.nav-cta, .h-cta, .st-cta, .st-next, .modal-cta-primary, .alerts-callout-cta, .lp-cta, .recent-teaser-cta):hover {
+  transform: translateY(-1px);
+}
+:is(.nav-cta, .h-cta, .st-cta, .st-next, .modal-cta-primary, .alerts-callout-cta, .lp-cta, .recent-teaser-cta,
+    .mfb-bar, .st-option, .mfs-bank, .mfs-more, .mobile-pro-pill, .ss-discover):active {
+  transform: scale(0.96, 0.93);
+  transition-duration: var(--t-press);
+  transition-timing-function: ease-out;
+}
+
+/* Anticipation: arrows pull back a hair before shooting forward */
+@keyframes pp-windup { 0% { transform: none; } 35% { transform: translateX(-3px); } 100% { transform: translateX(4px); } }
+.ss-discover:hover span, .job-row:hover .job-arrow { animation: pp-windup 300ms var(--ease-out) forwards; }
+
+/* Exaggerated feedback + secondary action: saving a job pops (squash, stretch, settle) and throws a ring */
+.job-bookmark { position: relative; }
+.job-bookmark::before { content: ""; position: absolute; inset: -12px; }       /* Fitts: 14px icon, ~40px target */
+.job-bookmark-pop svg { animation: pp-save-pop 450ms var(--ease-out); }
+.job-bookmark-pop::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border-radius: 50%; border: 2px solid var(--forest-blue); pointer-events: none;
+  animation: pp-save-ring 450ms var(--ease-out) forwards;
+}
+@keyframes pp-save-pop {
+  0%   { transform: scale(1); }
+  20%  { transform: scale(1.35, 0.7); }   /* squash */
+  45%  { transform: scale(0.85, 1.3) translateY(-3px); }  /* stretch, on an arc up */
+  70%  { transform: scale(1.1, 0.95); }
+  100% { transform: scale(1); }
+}
+@keyframes pp-save-ring { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+
+/* Exaggerated feedback: a picked quiz answer gives a small bounce */
+.st-option[aria-pressed="true"] { animation: pp-pick 300ms var(--ease-spring); }
+@keyframes pp-pick { 0% { transform: scale(0.97); } 60% { transform: scale(1.02); } 100% { transform: none; } }
+
+/* Pose to pose + moving in arcs: section reveals travel a curved path between set poses, not a straight line */
+.ss [data-reveal] { transition: none; }
+.ss [data-reveal].is-in { animation: pp-arc-in 600ms var(--ease-out) both; }
+@keyframes pp-arc-in {
+  0%   { opacity: 0; transform: translate(-14px, 22px) rotate(-0.6deg); }
+  50%  { opacity: 1; transform: translate(-3px, 4px) rotate(-0.15deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* Solid drawing (3D) + staging: the Latest roles card tips up into place in perspective */
+.ss-shot { perspective: 1400px; }
+.ss .ss-shot[data-reveal].is-in .lb { animation: pp-tilt-in 700ms var(--ease-out) both; transform-origin: 50% 100%; }
+@keyframes pp-tilt-in { from { transform: rotateX(14deg) translateY(24px); } to { transform: none; } }
+
+/* Staging to focus: with a mouse, the row you point at stays bright and the rest step back */
+@media (hover: hover) and (pointer: fine) {
+  .jobs-list .job-row { transition: opacity 0.15s, transform 0.15s, background 0.15s; }
+  .jobs-list:has(.job-row:hover) .job-row:not(:hover) { opacity: 0.7; }
+  .jobs-list .job-row:hover { transform: translateY(-1px); }
+}
+
+/* Follow through + staging: the phone filter panel overshoots slightly and settles; the page behind dims in */
+@media (max-width: 768px) {
+  .mfs { animation: pp-sheet-up 300ms var(--ease-spring); }
+  .mfs-shade { animation: pp-fade 200ms ease-out; }
+}
+@keyframes pp-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes pp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Fitts's law: on touch screens every chip, pill and icon button is at least 44px tall */
+@media (pointer: coarse) {
+  .mfs-bank, .mfs-more, .mfs-seg button, .mobile-pro-pill, .nav-menu-btn, .st-skip-button { min-height: 44px; }
+  .mfb-bar { min-height: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss [data-reveal].is-in, .ss .ss-shot[data-reveal].is-in .lb, .job-bookmark-pop svg, .job-bookmark-pop::after,
+  .st-option[aria-pressed="true"], .mfs, .mfs-shade, .ss-discover:hover span, .job-row:hover .job-arrow { animation: none; }
+  :is(.nav-cta, .h-cta, .st-cta, .st-next, .modal-cta-primary, .alerts-callout-cta, .lp-cta, .recent-teaser-cta,
+      .mfb-bar, .st-option, .mfs-bank, .mfs-more, .mobile-pro-pill, .ss-discover, .jobs-list .job-row) { transform: none !important; }
+}
+
+/* ==========================================================================
+   NAVY / CREAM / CORAL THEME · 60-30-10
+   60% navy  #14213D  the page, nav, sidebar, footer
+   30% cream #F4EDE0  the cards and tables that hold content
+   10% coral #FF6B5B  ONLY the two actions we want: browse open roles, get SMS alerts
+   Text on coral is navy (5.7:1). Cream on navy is 13.7:1.
+   Page-level text tokens are cream; anything inside a cream surface switches back to navy.
+   ========================================================================== */
+:root {
+  --pp-navy: #14213D;
+  --pp-navy-2: #1C2C4F;          /* raised navy: sidebar, nav on scroll */
+  --pp-cream: #F4EDE0;
+  --pp-coral: #FF6B5B;
+  --pp-coral-hover: #FF8273;
+  --cream: var(--pp-navy);       /* old page-background token */
+  --navy: var(--pp-navy);
+  --navy-hover: #0E1830;
+  --forest-blue: var(--pp-navy);
+  --forest-blue-hover: #0E1830;
+  --blue-10: rgba(20, 33, 61, 0.1);
+  --blue-30: rgba(20, 33, 61, 0.3);
+  --white: var(--pp-cream);
+  --text-primary: var(--pp-cream);
+  --text-secondary: rgba(244, 237, 224, 0.78);
+  --text-muted: rgba(244, 237, 224, 0.6);
+  --border: rgba(244, 237, 224, 0.12);
+  --border-strong: rgba(244, 237, 224, 0.18);
+  --ss-ink: var(--pp-cream);          /* page-level ink; cream surfaces set it back to navy */
+  --ss-glow: rgba(255, 107, 91, 0.10);
+}
+body {
+  --grid-line: rgba(244, 237, 224, 0.045);
+  color: var(--pp-cream);
+  background:
+    radial-gradient(1100px 520px at 50% -160px, var(--ss-glow), transparent 70%) no-repeat,
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px) 0 0 / 28px 28px,
+    var(--pp-navy);
+}
+
+/* ---- Cream surfaces (30%): text inside them flips back to navy ---- */
+.ss-card, .lb, .jobs-list, .welcome-banner, .modal-card, .st-option, .pricing-card, .paywall-plan, .paywall-unlocks,
+.al-card, .al-status, .al-preview, .about-feature, .ss-notif, .ss-applied, .mfs, .mfb-bar, .search-bar, .filter-dropdown,
+.mobile-bank-select, .mfs-select, .st-input, .h-quote, .h-plan, .ss-close, .gate-card, .saved-toggle {
+  --ss-ink: var(--pp-navy);
+  --text-primary: var(--pp-navy);
+  --text-secondary: rgba(20, 33, 61, 0.74);
+  --text-muted: rgba(20, 33, 61, 0.6);
+  --border: rgba(20, 33, 61, 0.1);
+  --border-strong: rgba(20, 33, 61, 0.16);
+  --white: #FBF7EF;
+  color: var(--pp-navy);
+  background: var(--pp-cream);
+  border-color: rgba(20, 33, 61, 0.1);
+}
+.ss-card-tint { background: #EADFCB; }
+.welcome-banner { background: var(--pp-cream); }
+.ss-plan-dark, .pricing-card-popular, .paywall-plan-popular { background: var(--pp-cream); box-shadow: 0 0 0 2px var(--pp-coral), 0 24px 48px -24px rgba(0, 0, 0, 0.5); }
+
+/* ---- Headlines: cream on navy; navy inside cream cards ---- */
+.ss-title, .ss-h2, .st-q, .st-result-title, .al-title, .alerts-intro-title, .about-title, .about-heading,
+.pricing-hero-title, .pricing-faq-title, .paywall-title, .gate-title, .notif-title, .new-postings-page-title {
+  background: linear-gradient(180deg, #F4EDE0 40%, rgba(244, 237, 224, 0.72) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:is(.ss-card, .modal-card, .gate-card, .ss-close, .al-card) :is(.ss-h2, .gate-title, .paywall-title, .al-title) {
+  background: none; color: var(--pp-navy);
+}
+
+/* ---- Nav ---- */
+nav { background: rgba(20, 33, 61, 0.82); border-bottom-color: rgba(244, 237, 224, 0.08); }
+.logo-text, .nav-link, .nav-link-new, .nav-signin { color: var(--pp-cream); }
+.nav-link:hover { background: rgba(244, 237, 224, 0.08); color: var(--pp-cream); }
+.nav-link-active, .nav-link.active { background: rgba(244, 237, 224, 0.12); color: var(--pp-cream); }
+.nav-signin { background: transparent; border-color: rgba(244, 237, 224, 0.25); }
+.nav-menu-btn { color: var(--pp-cream); }
+
+/* ---- Coral (10%): the two actions we point people to ---- */
+.nav-cta, .h-cta, .ss-btn, .ss-btn-blue, .st-next, .st-cta, .alerts-callout-cta, .gate-cta, .modal-cta-primary,
+.pricing-cta-primary, .paywall-plan-cta-primary, .pricing-card-popular .pricing-cta-primary, .paywall-plan-popular .paywall-plan-cta-primary {
+  background: var(--pp-coral);
+  color: var(--pp-navy);
+  box-shadow: 0 8px 20px -8px rgba(255, 107, 91, 0.55);
+}
+:is(.nav-cta, .h-cta, .ss-btn, .ss-btn-blue, .st-next, .st-cta, .alerts-callout-cta, .gate-cta, .modal-cta-primary,
+    .pricing-cta-primary, .paywall-plan-cta-primary):hover {
+  background: var(--pp-coral-hover);
+  box-shadow: 0 12px 26px -8px rgba(255, 107, 91, 0.6);
+}
+.ss-discover, .lb-viewall { color: var(--pp-coral); }
+.ss-discover { font-weight: 700; }
+/* Secondary buttons step back: outline only, no coral */
+.ss-btn-light, .pricing-cta-outline, .about-cta-secondary {
+  background: transparent; color: var(--pp-navy); box-shadow: inset 0 0 0 1.5px rgba(20, 33, 61, 0.35);
+}
+.ss-btn-light:hover { background: rgba(20, 33, 61, 0.06); box-shadow: inset 0 0 0 1.5px var(--pp-navy); }
+
+/* ---- Homepage details ---- */
+.ss-marquee-track span { color: rgba(244, 237, 224, 0.45); }
+.lb-live, .ss-snapshot, .ss-logos-label { color: var(--text-muted); }
+.ss-new { background: rgba(20, 33, 61, 0.08); color: var(--pp-navy); }
+.ss-bars span, .ss-bars i { background: var(--pp-navy); }
+.ss-chips span, .ss-chips .ss-chip { background: var(--pp-cream); color: var(--pp-navy); }
+
+/* ---- App: navy sidebar, cream job table ---- */
+.sidebar { background: var(--pp-navy-2); border-color: rgba(244, 237, 224, 0.08); color: var(--pp-cream); }
+.sidebar-item { color: rgba(244, 237, 224, 0.82); }
+.sidebar-item:hover { background: rgba(244, 237, 224, 0.07); }
+.sidebar-item-active, .sidebar-item.active { background: var(--pp-cream); color: var(--pp-navy); }
+.job-row:hover { background: #EADFCB; }
+.job-badge.badge-analyst { background: rgba(20, 33, 61, 0.08); color: var(--pp-navy); }
+.results-text, .results-bar { color: var(--text-secondary); }
+.mobile-pro-pill { background: var(--pp-navy-2); color: var(--pp-cream); border-color: rgba(244, 237, 224, 0.15); }
+.mobile-pro-pill-active { background: var(--pp-cream); color: var(--pp-navy); }
+
+/* ---- Footer ---- */
+footer, .footer { background: transparent; color: var(--text-muted); border-top-color: rgba(244, 237, 224, 0.08); }
+footer a, .footer a { color: var(--pp-cream); }
+.st-chip[aria-pressed="true"] { background: var(--pp-cream); border-color: var(--pp-cream); color: var(--pp-navy); }
+.saved-toggle-active { background: var(--pp-navy); color: var(--pp-cream); }
+.nav-link-new, .nav-link-new svg { color: var(--pp-cream) !important; }
+.ss-chips span.on { background: var(--pp-navy-2); color: var(--pp-cream); box-shadow: 0 0 0 1.5px var(--pp-cream); }
+
+/* ---- Navy/cream/coral: page-specific fixes (pricing, /alerts, /edge, /about, quiz) ---- */
+/* Links on navy read as cream with an underline; coral stays reserved for the two main actions */
+.text-link, .lp-link, .lp-browse, .paywall-link { color: var(--pp-cream); }
+.lp-browse:hover { color: var(--pp-cream); }
+.lp-kicker { color: var(--pp-cream); }
+.hero-tag { color: var(--pp-cream); background: rgba(244, 237, 224, 0.1); border-color: rgba(244, 237, 224, 0.2); }
+.lp-title, .lp-heading { color: var(--pp-cream); }
+.modal-check { color: var(--pp-cream); }
+:is(.ss-card, .modal-card, .gate-card, .lb, .pp-plan, .pp-club) :is(.text-link, .modal-check, .paywall-link) { color: var(--pp-navy); }
+.lp-cta { background: var(--pp-coral); color: var(--pp-navy); }
+.lp-cta:hover { background: var(--pp-coral-hover); }
+.lp-notif, .hero-notif-body { --text-primary: var(--pp-navy); --text-secondary: rgba(20, 33, 61, 0.74); --text-muted: rgba(20, 33, 61, 0.6); background: var(--pp-cream); color: var(--pp-navy); }
+.about-cta-secondary { background: transparent; color: var(--pp-cream); border-color: rgba(244, 237, 224, 0.35); }
+.about-cta-secondary:hover { background: rgba(244, 237, 224, 0.08); }
+
+/* /pricing */
+.pp-plan, .pp-club {
+  --ss-ink: var(--pp-navy); --text-primary: var(--pp-navy); --text-secondary: rgba(20, 33, 61, 0.74); --text-muted: rgba(20, 33, 61, 0.6);
+  --border: rgba(20, 33, 61, 0.1); --border-strong: rgba(20, 33, 61, 0.16); --white: #FBF7EF;
+  background: var(--pp-cream); color: var(--pp-navy); box-shadow: none;
+}
+.pp-plan:has(.pp-badge) { box-shadow: 0 0 0 2px var(--pp-coral), 0 24px 48px -24px rgba(0, 0, 0, 0.5); }
+.pp-club { background: #EADFCB; }
+.pp-badge { background: var(--pp-navy); color: var(--pp-cream); }
+.pp-toggle { background: var(--pp-navy-2); box-shadow: 0 0 0 1px rgba(244, 237, 224, 0.15); }
+.pp-toggle button { color: var(--pp-cream); }
+.pp-toggle button.on { background: var(--pp-cream); color: var(--pp-navy); }
+
+/* /edge */
+.edge { background: transparent; color: var(--pp-cream); }
+.edge-sub, .edge-banks, .edge-ask, .edge-footer { color: rgba(244, 237, 224, 0.75); }
+.edge-choice { background: var(--pp-cream); border-color: transparent; color: var(--pp-navy); }
+.edge-choice-text span { color: rgba(20, 33, 61, 0.7); }
+.edge-chevron { color: rgba(20, 33, 61, 0.5); }
+.edge-choice-primary { background: var(--pp-coral); border-color: var(--pp-coral); color: var(--pp-navy); box-shadow: 0 14px 30px -12px rgba(255, 107, 91, 0.55); }
+.edge-choice-primary .edge-choice-text span, .edge-choice-primary .edge-chevron { color: rgba(20, 33, 61, 0.8); }
+
+/* Quiz: every answer card is cream, including the full-width one */
+.st-option, .st-option[aria-pressed="true"] { background: var(--pp-cream); }
+.st-option[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--pp-navy), 0 0 0 4px var(--pp-cream); }

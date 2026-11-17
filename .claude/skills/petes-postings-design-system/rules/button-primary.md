@@ -4,6 +4,8 @@ impact: HIGH
 impactDescription: Four tones, one shape family. Every action on the site is one of these.
 tags: button, cta, primary, secondary, outline, ghost, action
 ---
+> **Nov 2026 theme:** colors in this file predate the navy/cream/coral palette. Keep the structure and sizes here, but take colors from `colors.md`: cream surfaces on a navy page, navy for active states, coral only for the browse-roles and SMS-alerts actions.
+
 
 ## Buttons
 

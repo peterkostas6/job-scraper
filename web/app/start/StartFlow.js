@@ -363,7 +363,8 @@ export default function StartFlow() {
         <p className="st-hint">You&rsquo;ll get a text when new {describe(answers)} post.</p>
         <label className="st-field-label" htmlFor="st-phone">Mobile number</label>
         <input id="st-phone" className="st-input" type="tel" autoComplete="tel" placeholder="(555) 000-0000"
-          value={phone} onChange={(e) => { setPhone(e.target.value); setError(""); }} />
+          value={phone} onChange={(e) => { setPhone(e.target.value); setError(""); }}
+          onBlur={() => setPhone(formatPhone(phone))} />
         <label className="st-consent">
           <input type="checkbox" checked={smsConsent} onChange={(e) => { setSmsConsent(e.target.checked); setError(""); }} />
           <span>

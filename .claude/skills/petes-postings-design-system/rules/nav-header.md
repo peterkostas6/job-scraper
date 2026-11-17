@@ -4,6 +4,8 @@ impact: MEDIUM-HIGH
 impactDescription: The nav is on every page. Its height sets the sticky offset for everything else.
 tags: nav, header, logo, sticky, frosted, bell, sign-in
 ---
+> **Nov 2026 theme:** colors in this file predate the navy/cream/coral palette. Keep the structure and sizes here, but take colors from `colors.md`: cream surfaces on a navy page, navy for active states, coral only for the browse-roles and SMS-alerts actions.
+
 
 ## Top Navigation
 

@@ -95,6 +95,18 @@ The site reads as structured because it uses a few container widths, separates s
 | 0.3s | Fade-in on list mount, save-button success |
 | 0.55s cubic-bezier(0.4,0,0.2,1) | Demo cursor travel only |
 
+The `MOTION + INTERACTION LAYER` block in `globals.css` adds:
+
+| Token / pattern | Use |
+|---|---|
+| `--t-press` 80ms | Press feedback (squash to `scale(0.96, 0.93)`); keeps every tap under the 100ms Doherty threshold |
+| `--ease-spring` `cubic-bezier(0.34,1.56,0.64,1)` | Release and sheet entrances: overshoot, then settle (follow through) |
+| `--ease-windup` | Anticipation: arrows pull back before moving forward on hover |
+| `pp-save-pop` + ring | Saving a job: squash, stretch, settle, plus an expanding ring (exaggerated feedback) |
+| `pp-arc-in` | Section reveals travel a curved path (arcs, pose to pose) |
+| Hit areas | Small icon buttons get an invisible `::before` to ~40px; on touch every chip/pill is >= 44px tall (Fitts) |
+| Reduced motion | Every animation above is disabled under `prefers-reduced-motion: reduce`; add new ones to that list |
+
 ### Key rules
 
 - **Sections separate with a hairline top border and padding**, not with a tinted background band. The only tinted full-width blocks are the dark club section and the welcome/teaser banners inside the app.

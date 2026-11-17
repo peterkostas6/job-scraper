@@ -4,6 +4,8 @@ impact: HIGH
 impactDescription: The jobs list is the product. Its anatomy and hover language define how all data lists should look.
 tags: list, row, table, job, hover, header, bookmark, expired, data
 ---
+> **Nov 2026 theme:** colors in this file predate the navy/cream/coral palette. Keep the structure and sizes here, but take colors from `colors.md`: cream surfaces on a navy page, navy for active states, coral only for the browse-roles and SMS-alerts actions.
+
 
 ## Job List & Row
 

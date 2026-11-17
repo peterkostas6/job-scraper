@@ -4,6 +4,8 @@ impact: MEDIUM-HIGH
 impactDescription: The sidebar is the app's primary navigation. Its active state is the only solid navy control.
 tags: sidebar, navigation, app, active, group, count, scroll
 ---
+> **Nov 2026 theme:** colors in this file predate the navy/cream/coral palette. Keep the structure and sizes here, but take colors from `colors.md`: cream surfaces on a navy page, navy for active states, coral only for the browse-roles and SMS-alerts actions.
+
 
 ## App Sidebar
 

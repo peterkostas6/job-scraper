@@ -1,6 +1,6 @@
 ---
 name: petes-postings-design-system
-description: Pete's Postings design system — design tokens, typography, and component specs for the job board UI. Use when building, reviewing, or modifying any client-side UI in web/app — pages, sections, nav, sidebar, job rows, badges, buttons, inputs, search, filters, cards, plan/pricing cards, banners, modals, toggles, chips, empty/loading states, icons, or responsive layouts — or when checking that new UI matches the existing brand (Inter, navy + blue on cream). Triggers on tasks involving globals.css, page.js, pricing/page.js, hero, landing page, dashboard, job list, paywall, notifications panel, or any request to make the site look more consistent, natural, or structured.
+description: Pete's Postings design system — design tokens, typography, and component specs for the job board UI. Use when building, reviewing, or modifying any client-side UI in web/app — pages, sections, nav, sidebar, job rows, badges, buttons, inputs, search, filters, cards, plan/pricing cards, banners, modals, toggles, chips, empty/loading states, icons, or responsive layouts — or when checking that new UI matches the existing brand (navy page, cream surfaces, coral calls to action). Triggers on tasks involving globals.css, page.js, pricing/page.js, hero, landing page, dashboard, job list, paywall, notifications panel, or any request to make the site look more consistent, natural, or structured.
 license: proprietary
 metadata:
   author: petes-postings
@@ -11,7 +11,7 @@ metadata:
 
 Component specifications and design tokens for the Pete's Postings web app (`web/app`). The site is plain CSS: tokens live as custom properties in `web/app/globals.css`, components are class names on JSX in `page.js` and `pricing/page.js`. There is no Tailwind and no component library. Icons are inline SVG in the Lucide style.
 
-The look in one line: **Inter on cream, navy headings, one blue accent, hairline borders, soft radii, quiet shadows.** Structure comes from consistent spacing, a small type scale, and one way to do each thing.
+The look in one line: **Navy page (60%), cream content surfaces (30%), coral only on the two goal actions (10%): browse open roles and get SMS alerts.** Hairline borders, soft radii, quiet shadows. Older rule files still mention blue and white; where they conflict, `colors.md` and the theme block at the end of `globals.css` win. Structure comes from consistent spacing, a small type scale, and one way to do each thing.
 
 ## When to Apply
 
@@ -43,7 +43,7 @@ Reference these rules when:
 ## Quick Reference
 
 ### 1. Tokens & Color (HIGH)
-- `colors` — the palette: cream page, white surfaces, navy `#1e293b` for headings and active states, blue `#2563eb` as the single accent, three text greys, hairline border. Semantic families for success (green), attention (amber), danger (red). Blue opacity ladder for tints.
+- `colors` — the 60-30-10 palette: navy `#14213D` page, cream `#F4EDE0` surfaces and on-navy text, coral `#FF6B5B` only for browse/alerts actions (navy text on coral). How text tokens flip inside cream surfaces. Semantic green/amber/red.
 
 ### 2. Typography (HIGH)
 - `font-headings` — Inter 800 display scale (hero 2.5rem down to 1.15rem section titles), always navy, negative tracking on the large sizes.
@@ -55,7 +55,7 @@ Reference these rules when:
 - `responsive` — one breakpoint at 768px; what collapses (sidebar to top bar, job rows to cards, grids to one column).
 
 ### 4. Buttons (HIGH)
-- `button-primary` — filled blue, outlined blue, neutral outline, ghost text. Sizes by context. Hover is `#1d4ed8` for filled, 4% blue tint for outline/ghost.
+- `button-primary` — coral filled (navy text) for the goal actions only; outline for everything else (navy outline on cream, cream outline on navy). Press squashes to 0.96 and springs back.
 - `button-pill-toggle` — pill filters and chips (`saved-toggle`, `notif-checkbox`, `demo-chip`, `mobile-pro-pill`): 100px radius or 8px, selected = 6-8% blue tint + blue text.
 
 ### 5. Tags & Badges (MEDIUM-HIGH)
@@ -90,7 +90,7 @@ Reference these rules when:
 
 1. Before styling anything, open `rules/colors.md` and `rules/layout-spacing.md`. Every value you need is there.
 2. Search `globals.css` for an existing class that does the job. Reuse it. Add a modifier class before adding a new base class.
-3. If you must add CSS, use the tokens (`var(--navy)`, `var(--forest-blue)`, `var(--border)`, ...) and the scales in these rules. No new hex values without adding them to `colors.md` first.
+3. If you must add CSS, use the tokens (`var(--pp-navy)`, `var(--pp-cream)`, `var(--pp-coral)`, `var(--border)`, ...) and the scales in these rules. No new hex values without adding them to `colors.md` first.
 4. Never use inline `style={{}}` for anything that is not a one-off positional tweak.
 
 Each rule file has: why it matters, an incorrect example, a correct example, a reference table, key rules, and a `Source:` line pointing to the lines in `globals.css` it was drawn from.

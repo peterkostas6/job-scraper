@@ -44,6 +44,8 @@ function matchesQuery(job, query) {
   return tokens.every((t) => has(t) || (SEARCH_ALIASES[t] && SEARCH_ALIASES[t].split(" ").every(has)));
 }
 
+const isLast48h = (job) => (job.detectedAt || 0) > Date.now() - 48 * 3600 * 1000;
+
 function isInternship(title) {
   const t = title.toLowerCase();
   return (
@@ -452,9 +454,9 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
           Apply before everyone else.
         </p>
         <div className="ss-discover-row" ref={heroCtaRef} data-reveal>
-          <button className="ss-discover" onClick={() => { capture("home_cta_clicked", { where: "hero_browse" }); onBrowse(); }}>
-            Browse {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles <span aria-hidden="true">&rarr;</span>
-          </button>
+          <Link href="/start" className="ss-discover" onClick={() => capture("home_cta_clicked", { where: "hero_alerts" })}>
+            Set up my text alerts <span aria-hidden="true">&rarr;</span>
+          </Link>
         </div>
 
       </section>
@@ -464,7 +466,6 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
         <div className="lb">
           <div className="lb-head">
             <h2>Latest roles</h2>
-            <span className="lb-live"><span className="h-live-dot" aria-hidden="true" />Updated every 5 min</span>
           </div>
           <div className="lb-scroll">
             <table className="lb-table">
@@ -798,7 +799,6 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
     <div className="rl">
       <div className="rl-top">
         <h2 className="rl-title">{total > 0 ? `${total} new ${total === 1 ? "role" : "roles"} in the last 48 hours` : "New roles from the last 48 hours"}</h2>
-        <span className="lb-live"><span className="h-live-dot" aria-hidden="true" />Updated every 5 min</span>
       </div>
       <div className="rl-feed">
         <div className="rl-list" aria-hidden="true">
@@ -1453,6 +1453,15 @@ export default function Home() {
       .catch(() => {});
   }, [isLoaded]);
 
+  // Sidebar counts match what Browse shows: without Pro, the last 48 hours aren't counted.
+  useEffect(() => {
+    if (!allJobs.length) return;
+    const isPro = isSignedIn && isSubscribed;
+    const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
+    for (const job of allJobs) if (job.bankKey in counts && (isPro || !isLast48h(job))) counts[job.bankKey]++;
+    setBankCounts(counts);
+  }, [allJobs, isSignedIn, isSubscribed]);
+
   // Load every live job once. The cron refreshes the table every 5 minutes, so the
   // page never has to call a bank's own API.
   useEffect(() => {
@@ -1465,9 +1474,6 @@ export default function Home() {
       .then((data) => {
         const loaded = (data.jobs || []).map((job) => ({ ...job, title: decodeEntities(job.title), location: cleanLocation(job.location), cities: cityKeys(job.location) }));
         setAllJobs(loaded);
-        const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
-        for (const job of loaded) if (job.bankKey in counts) counts[job.bankKey]++;
-        setBankCounts(counts);
         setLoading(false);
       })
       .catch((err) => {
@@ -1502,9 +1508,12 @@ export default function Home() {
     setCategoryFilter("");
     setShowSavedOnly(false);
 
-    const bankJobs = activeBank === "all"
-      ? allJobs.filter((job) => FREE_BANKS.has(job.bankKey) || (isSignedIn && isSubscribed))
-      : allJobs.filter((job) => job.bankKey === activeBank);
+    // Roles from the last 48 hours are what Pro unlocks (Recent Postings), so Browse leaves them out for everyone else.
+    const isPro = isSignedIn && isSubscribed;
+    const bankJobs = (activeBank === "all"
+      ? allJobs.filter((job) => FREE_BANKS.has(job.bankKey) || isPro)
+      : allJobs.filter((job) => job.bankKey === activeBank)
+    ).filter((job) => isPro || !isLast48h(job));
     setJobs(bankJobs);
 
     const cats = [...new Set(bankJobs.map((job) => job.category).filter(Boolean))].sort();

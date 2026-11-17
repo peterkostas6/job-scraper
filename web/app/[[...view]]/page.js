@@ -271,13 +271,16 @@ function areaRank(cat) {
   return i === -1 ? AREA_ORDER.length : i;
 }
 
+// Ages always follow the bank's own posted date. Most banks give only a date (no time), so those
+// read "Today" / "Yesterday" / "3d ago". Our detection time is used only when a bank gives no date.
 function feedAge(job) {
   const posted = Date.parse(job.postedDate) || 0;
-  if (posted >= job.detectedAt && job.postedDate?.endsWith("T00:00:00.000Z")) {
-    const days = Math.floor((Date.now() - posted) / 86400000);
+  if (posted && job.postedDate.endsWith("T00:00:00.000Z")) {
+    const today = new Date(); const d = new Date(posted);
+    const days = Math.round((Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())) / 86400000);
     return days <= 0 ? "Today" : days === 1 ? "Yesterday" : `${days}d ago`;
   }
-  return timeAgo(Math.max(posted, job.detectedAt));
+  return timeAgo(posted || job.detectedAt);
 }
 
 function timeAgo(ms) {
@@ -353,7 +356,7 @@ const ALERT_STEPS = [
   ["Your phone buzzes", "The role, the bank and a link to apply."],
 ];
 function AlertsPhoneDemo({ jobs }) {
-  const feed = [...(jobs || [])].filter((j) => j.title && j.title.length < 70).sort((a, b) => (b.detectedAt || 0) - (a.detectedAt || 0)).slice(0, 10);
+  const feed = [...(jobs || [])].filter((j) => j.title && j.title.length < 70).sort((a, b) => postedAt(b) - postedAt(a)).slice(0, 10);
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
@@ -774,7 +777,7 @@ function SignUpGate({ gate, onClose }) {
 // logo, bank, city and age in plain sight; only the job title is blurred. Pro unlocks the titles.
 function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
   useEffect(() => { capture("paywall_viewed", { new_roles: count ?? null, signed_in: Boolean(isSignedIn), where: "recent_feed" }); }, []);
-  const recent = [...(liveJobs || [])].filter(isLast48h).sort((a, b) => Math.max(postedAt(b), b.detectedAt || 0) - Math.max(postedAt(a), a.detectedAt || 0));
+  const recent = [...(liveJobs || [])].filter(isLast48h).sort((a, b) => postedAt(b) - postedAt(a));
   const total = recent.length || count;
   const [loading, setLoading] = useState(false);
   function checkout() {
@@ -1582,7 +1585,7 @@ export default function Home() {
 
   const notifMatches = allJobs
     .filter((job) => matchesAlertPrefs(job, { ...notifPrefs, location: (notifPrefs.location || "").trim() }))
-    .sort((x, y) => Math.max(Date.parse(y.postedDate) || 0, y.detectedAt) - Math.max(Date.parse(x.postedDate) || 0, x.detectedAt));
+    .sort((x, y) => postedAt(y) - postedAt(x));
   const notifDirty = savedNotifPrefs !== null && alertSettingsKey(notifPrefs) !== alertSettingsKey(savedNotifPrefs);
   const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled));
   const maskedPhone = (num) => { const d = (num || "").replace(/\D/g, "").slice(-4); return d ? `(•••) •••-${d}` : "your phone"; };

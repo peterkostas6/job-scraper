@@ -134,7 +134,9 @@ export default function StartFlow() {
   const prefs = useMemo(() => toPrefs(answers), [answers]);
   const matched = useMemo(() => {
     if (!jobs) return null;
-    return jobs.filter((j) => matchesAlertPrefs(j, prefs)).sort((a, b) => b.detectedAt - a.detectedAt);
+    // Newest by the bank's own posted date; detection time only when a bank gives no date.
+    const at = (j) => Date.parse(j.postedDate) || j.detectedAt || 0;
+    return jobs.filter((j) => matchesAlertPrefs(j, prefs)).sort((a, b) => at(b) - at(a));
   }, [jobs, prefs]);
 
   const go = (next) => setStep(next);

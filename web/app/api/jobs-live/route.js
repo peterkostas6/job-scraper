@@ -17,7 +17,7 @@ export async function GET() {
         EXTRACT(EPOCH FROM last_seen_at)::bigint * 1000 AS last_seen_at_ms
       FROM jobs
       WHERE is_live AND NOT link_dead
-      ORDER BY posted_date DESC NULLS LAST, detected_at DESC
+      ORDER BY COALESCE(posted_date, detected_at) DESC, detected_at DESC
     `;
 
     // Rows saved before the cron dropped Associate/VP roles are closed on its next run;

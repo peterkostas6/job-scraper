@@ -46,9 +46,9 @@ export async function GET() {
         posted_date,
         EXTRACT(EPOCH FROM detected_at)::bigint * 1000 AS detected_at_ms
       FROM jobs
-      WHERE detected_at > NOW() - INTERVAL '7 days'
+      WHERE COALESCE(posted_date, detected_at) > NOW() - INTERVAL '48 hours'
         AND is_live = true AND NOT link_dead
-      ORDER BY detected_at DESC
+      ORDER BY COALESCE(posted_date, detected_at) DESC, detected_at DESC
     `;
 
     if (rows.length === 0) {

@@ -339,6 +339,66 @@ function CountUp({ value, format = (n) => n.toLocaleString() }) {
 const ARROW = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
 const MSG_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="white" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
+// Alerts tab (signed out): real recent roles land on a phone lock screen one by one,
+// while the three steps light up in time. Coral "Set up alerts" is the one action.
+const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
+const ALERT_STEPS = [
+  ["Pick what you want", "Roles, banks and cities. Four quick questions."],
+  ["We watch every bank", "Straight from their own career sites, every 5 minutes."],
+  ["Your phone buzzes", "The role, the bank and a link to apply."],
+];
+function AlertsPhoneDemo({ jobs }) {
+  const feed = [...(jobs || [])].filter((j) => j.title && j.title.length < 70).sort((a, b) => (b.detectedAt || 0) - (a.detectedAt || 0)).slice(0, 10);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => setTick((t) => t + 1), 1400);
+    return () => clearInterval(id);
+  }, []);
+  const step = tick % 3;
+  const landed = Math.floor((tick + 1) / 3) + 1; // a new text every third beat, on "Your phone buzzes"
+  const shown = feed.length ? Array.from({ length: Math.min(3, landed) }, (_, k) => feed[(landed - 1 - k) % feed.length]) : [];
+  const minute = String((41 + landed * 3) % 60).padStart(2, "0");
+  return (
+    <div className="ap">
+      <div className="ap-copy">
+        <h2 className="alerts-intro-title">Get a text the minute a bank posts a role you want</h2>
+        <p className="alerts-intro-desc">We check all {BANK_COUNT} banks every 5 minutes. Free for 7 days, then $4.99 a month.</p>
+        <ol className="ap-steps">
+          {ALERT_STEPS.map(([title, desc], i) => (
+            <li key={title} className={i === step ? "is-on" : ""}>
+              <span className="ap-n">{i + 1}</span>
+              <span><strong>{title}</strong>{desc}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="ap-cta">
+          <Link href="/start" className="h-cta" onClick={() => capture("alerts_tab_cta_clicked")}>
+            Set up alerts
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </Link>
+          <p className="h-fine">Takes about a minute &middot; No credit card</p>
+        </div>
+      </div>
+      <div className="ap-phone" role="img" aria-label="Example text alerts arriving on a phone">
+        <div className="ap-screen">
+          <span className="ap-date">Today</span>
+          <span className="ap-clock">9:{minute}</span>
+          {shown.map((job, k) => (
+            <div key={`${landed - k}`} className={`ap-notif${k === 0 ? " is-new" : ""}`}>
+              <span className="ap-icon">{SMS_ICON}</span>
+              <div>
+                <div className="ap-head"><strong>Pete&rsquo;s Postings</strong><span>{k === 0 ? "now" : `${k * 3}m ago`}</span></div>
+                <p>{job.bank} just posted: {job.title}{job.cities?.[0] ? ` (${job.cities[0]})` : ""}. Apply &rarr;</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
   const liveCount = liveJobs?.length || 0;
   const latest = homeFeed(liveJobs);
@@ -706,6 +766,79 @@ function SignUpGate({ gate, onClose }) {
 }
 
 // ---- PAYWALL ----
+// Recent Postings for non-Pro visitors: the feed is the pitch. The newest roles drop in at the
+// top one by one, the first two stay readable, the rest blur under one centered unlock card.
+const LOCKED_ROWS = 7;
+function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
+  useEffect(() => { capture("paywall_viewed", { new_roles: count ?? null, signed_in: Boolean(isSignedIn), where: "recent_feed" }); }, []);
+  const cutoff = Date.now() - 48 * 3600 * 1000;
+  const recent = [...(liveJobs || [])].filter((j) => (j.detectedAt || 0) > cutoff).sort((a, b) => b.detectedAt - a.detectedAt).slice(0, LOCKED_ROWS);
+  const total = count || recent.length;
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (!recent.length) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { setShown(recent.length); return; }
+    setShown(0);
+    const id = setInterval(() => setShown((n) => { if (n + 1 >= recent.length) clearInterval(id); return Math.min(recent.length, n + 1); }), 380);
+    return () => clearInterval(id);
+  }, [recent.length]);
+  const rows = recent.slice(recent.length - shown); // oldest drops in first, newest lands on top last
+  const [loading, setLoading] = useState(false);
+  function checkout() {
+    track("InitiateCheckout", planPrice("monthly"));
+    setLoading(true);
+    fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: "monthly" }) })
+      .then((res) => res.json())
+      .then((data) => { if (data.url) window.location.href = data.url; else setLoading(false); })
+      .catch(() => setLoading(false));
+  }
+  const plan = PLANS.monthly;
+  const ctaLabel = plan.trialDays ? `Start ${plan.trialDays}-day free trial` : "Get Pro";
+  return (
+    <div className="rl">
+      <div className="rl-top">
+        <h2 className="rl-title">{total > 0 ? `${total} new ${total === 1 ? "role" : "roles"} in the last 48 hours` : "New roles from the last 48 hours"}</h2>
+        <span className="lb-live"><span className="h-live-dot" aria-hidden="true" />Updated every 5 min</span>
+      </div>
+      <div className="rl-feed">
+        <div className="rl-list" aria-hidden="true">
+          {rows.length ? rows.map((job, i) => (
+            <div key={job.link} className={`rl-row${i >= 2 ? " is-locked" : ""}${i === 0 ? " is-enter" : ""}`}>
+              <BankLogo bankKey={job.bankKey} bank={job.bank} size={34} className="rl-logo" />
+              <div className="rl-text">
+                <div className="rl-name"><span className="rl-name-text">{job.title}</span>{(Date.now() - job.detectedAt) < 3 * 3600 * 1000 && <span className="ss-new">New</span>}</div>
+                <div className="rl-meta">{job.bank}{job.cities?.[0] ? ` \u00b7 ${job.cities[0]}` : ""}</div>
+              </div>
+              <span className="rl-age">{feedAge(job)}</span>
+            </div>
+          )) : [0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="rl-row is-locked"><div className="skeleton skeleton-title" /></div>
+          ))}
+        </div>
+        <div className="rl-lock">
+          <h3>{total > 0 ? `See all ${total}, and get a text for the next one` : "See every new role, and get a text for the next one"}</h3>
+          <ul>
+            <li>Every role posted in the last 48 hours</li>
+            <li>Unlimited text and email alerts</li>
+          </ul>
+          {isSignedIn ? (
+            <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Redirecting..." : ctaLabel}</button>
+          ) : (
+            <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
+              <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta">{ctaLabel}</button>
+            </SignUpButton>
+          )}
+          <p className="rl-fine">Then ${plan.price}/{plan.period}. Cancel anytime.</p>
+          {!isSignedIn && (
+            <p className="rl-fine">Already Pro?{" "}<SignInButton mode="modal"><button className="paywall-link">Sign in</button></SignInButton></p>
+          )}
+        </div>
+      </div>
+      <p className="rl-browse">Or <Link href="/jobs?bank=all" className="text-link">browse every open role</Link> for free.</p>
+    </div>
+  );
+}
+
 function PaywallOverlay({ isSignedIn, newCount }) {
   useEffect(() => { capture("paywall_viewed", { new_roles: newCount ?? null, signed_in: Boolean(isSignedIn) }); }, []);
   const [loading, setLoading] = useState(false);
@@ -968,7 +1101,7 @@ function SkeletonRows() {
 }
 
 // ---- RECENT POSTINGS VIEW ----
-function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlerts }) {
+function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlerts, liveJobs }) {
   const [rpSearch, setRpSearch] = useState("");
   const [rpJobType, setRpJobType] = useState("all");
   const [rpBank, setRpBank] = useState("");
@@ -1033,32 +1166,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
     <div className="new-postings-view">
       <div className="new-section">
         {!isSubscribed ? (
-          <>
-          <div className="new-paywall">
-            <div className="new-paywall-blur">
-              {[1,2,3,4].map(i => (
-                <div className="job-row new-paywall-fake" key={i}>
-                  <div className="skeleton skeleton-index" />
-                  <div className="skeleton skeleton-title" />
-                  <div className="skeleton skeleton-location" />
-                  <div className="skeleton skeleton-badge" />
-                </div>
-              ))}
-            </div>
-            <div className="new-paywall-overlay">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <p className="new-paywall-title">Recent postings is a Pro feature</p>
-              <p className="new-paywall-desc">
-                {last48hCount > 0 ? `${last48hCount} ${last48hCount === 1 ? "job was" : "jobs were"} posted in the last 48 hours. ` : ""}
-                Upgrade to Pro to see them here, or <Link href="/jobs?bank=all" className="text-link">browse every open job</Link> for free in the Browse tab.
-              </p>
-            </div>
-          </div>
-          <PaywallOverlay isSignedIn={isSignedIn} newCount={last48hCount} />
-          </>
+          <RecentLockedFeed isSignedIn={isSignedIn} count={last48hCount} liveJobs={liveJobs} />
         ) : (
           <>
             {/* Filters */}
@@ -1890,6 +1998,9 @@ export default function Home() {
           {sidebar}
 
           <main className={`content${!isSubscribed ? " content-recent-locked" : ""}`}>
+            {/* Pro members get the page header and the alerts shortcut; everyone else sees the locked live feed on its own. */}
+            {isSubscribed && (
+              <>
             <div className="new-postings-header">
               <h1 className="new-postings-page-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1933,7 +2044,10 @@ export default function Home() {
                 {!isSubscribed ? "Pro: set up alerts" : isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled) ? "Edit alerts" : "Set up alerts"}
               </button>
             </div>
+              </>
+            )}
             <NewPostingsView
+              liveJobs={allJobs}
               isSubscribed={isSubscribed}
               isSignedIn={isSignedIn}
               data={newPostingsData}
@@ -2077,29 +2191,7 @@ export default function Home() {
           <main className="content">
             {/* Notifications view */}
             {viewNotifications && !isSignedIn && (
-              <div className="notif-panel alerts-intro">
-                <h2 className="alerts-intro-title">Get a text the moment a bank posts a role you want</h2>
-                <p className="alerts-intro-desc">We check all {BANK_COUNT} banks every 5 minutes. Free for 7 days, then $4.99 a month.</p>
-                <div className="alerts-intro-sample" aria-hidden="true">
-                  <span className="h-notif-icon">
-                    <svg width="18" height="18" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
-                  </span>
-                  <div>
-                    <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>now</span></div>
-                    <p>Goldman Sachs just posted: 2027 Investment Banking Summer Analyst. Apply &rarr;</p>
-                  </div>
-                </div>
-                <ol className="alerts-intro-steps">
-                  <li><strong>Answer 4 quick questions</strong> about the roles, banks and cities you want</li>
-                  <li><strong>See the open roles</strong> that already match</li>
-                  <li><strong>Choose text, email or both</strong> and you&rsquo;re set</li>
-                </ol>
-                <Link href="/start" className="h-cta" onClick={() => capture("alerts_tab_cta_clicked")}>
-                  Set up alerts
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                </Link>
-                <p className="h-fine">Takes about a minute &middot; No credit card</p>
-              </div>
+              <AlertsPhoneDemo jobs={allJobs} />
             )}
             {viewNotifications && isSignedIn && (
               <div className="al-page">

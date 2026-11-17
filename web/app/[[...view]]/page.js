@@ -2070,8 +2070,8 @@ export default function Home() {
             </div>
           )}
 
-          {/* SIDEBAR */}
-          {sidebar}
+          {/* SIDEBAR (not on the Alerts tab: bank picking happens inside the alert setup) */}
+          {!viewNotifications && sidebar}
 
           {/* MAIN CONTENT */}
           <main className="content">

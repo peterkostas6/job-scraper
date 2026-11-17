@@ -44,7 +44,10 @@ function matchesQuery(job, query) {
   return tokens.every((t) => has(t) || (SEARCH_ALIASES[t] && SEARCH_ALIASES[t].split(" ").every(has)));
 }
 
-const isLast48h = (job) => (job.detectedAt || 0) > Date.now() - 48 * 3600 * 1000;
+// "New" means posted in the last 48 hours: the bank's own posted date when it gives one (what the
+// Posted column shows), otherwise when we first saw it. Same rule as /api/jobs-new.
+const postedAt = (job) => Date.parse(job.postedDate) || job.detectedAt || 0;
+const isLast48h = (job) => postedAt(job) > Date.now() - 48 * 3600 * 1000;
 
 function isInternship(title) {
   const t = title.toLowerCase();
@@ -771,7 +774,7 @@ function SignUpGate({ gate, onClose }) {
 // logo, bank, city and age in plain sight; only the job title is blurred. Pro unlocks the titles.
 function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
   useEffect(() => { capture("paywall_viewed", { new_roles: count ?? null, signed_in: Boolean(isSignedIn), where: "recent_feed" }); }, []);
-  const recent = [...(liveJobs || [])].filter(isLast48h).sort((a, b) => b.detectedAt - a.detectedAt);
+  const recent = [...(liveJobs || [])].filter(isLast48h).sort((a, b) => Math.max(postedAt(b), b.detectedAt || 0) - Math.max(postedAt(a), a.detectedAt || 0));
   const total = recent.length || count;
   const [loading, setLoading] = useState(false);
   function checkout() {

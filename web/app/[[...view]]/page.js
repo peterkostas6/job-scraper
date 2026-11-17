@@ -1306,6 +1306,12 @@ export default function Home() {
   const [freeAlerts, setFreeAlerts] = useState(null);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
+  const [savedToast, setSavedToast] = useState(false);
+  useEffect(() => {
+    if (!savedToast) return;
+    const id = setTimeout(() => setSavedToast(false), 3200);
+    return () => clearTimeout(id);
+  }, [savedToast]);
   const [pickBanks, setPickBanks] = useState(false);
   // Settings as last saved (null until loaded), and which alert setting row is open.
   const [savedNotifPrefs, setSavedNotifPrefs] = useState(null);
@@ -1648,7 +1654,7 @@ export default function Home() {
       body: JSON.stringify(notifPrefs),
     })
       .then((res) => res.json())
-      .then((data) => { if (data.success) { setNotifSaved(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); } })
+      .then((data) => { if (data.success) { setNotifSaved(true); setSavedToast(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); } })
       .catch(() => {})
       .finally(() => setNotifSaving(false));
   }
@@ -2709,6 +2715,15 @@ export default function Home() {
       )}
 
       {gate && <SignUpGate gate={gate} onClose={() => setGate(null)} />}
+      {savedToast && (
+        <div className="pp-toast" role="status" aria-live="polite">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+          Your alert settings are saved
+          <button className="pp-toast-close" onClick={() => setSavedToast(false)} aria-label="Dismiss">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      )}
 
       {showProWelcome && (
         <ProWelcomeModal

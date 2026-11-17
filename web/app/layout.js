@@ -58,40 +58,46 @@ export const metadata = {
 // Clerk's sign-in / sign-up / account pop-ups, styled to match the site (tokens from
 // globals.css and the design-system modal spec: white card, 16px radius, deep shadow).
 const clerkAppearance = {
+  // Navy / cream / coral theme: cream card, navy text, coral primary button with navy text.
   variables: {
-    colorPrimary: "#2563eb",
-    colorPrimaryForeground: "#ffffff",
-    colorForeground: "#1a1a1a",
-    colorMutedForeground: "#64748b",
-    colorBackground: "#ffffff",
-    colorInput: "#ffffff",
-    colorInputForeground: "#1a1a1a",
-    colorRing: "rgba(37, 99, 235, 0.25)",
+    colorPrimary: "#14213D",
+    colorPrimaryForeground: "#F4EDE0",
+    colorForeground: "#14213D",
+    colorMutedForeground: "rgba(20, 33, 61, 0.7)",
+    colorBackground: "#F4EDE0",
+    colorInput: "#FBF7EF",
+    colorInputForeground: "#14213D",
+    colorRing: "rgba(20, 33, 61, 0.25)",
     colorDanger: "#dc3535",
-    colorModalBackdrop: "rgba(0, 0, 0, 0.45)",
+    colorModalBackdrop: "rgba(10, 18, 38, 0.6)",
     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     borderRadius: "8px",
   },
   elements: {
     cardBox: { borderRadius: "16px", boxShadow: "0 24px 80px rgba(0, 0, 0, 0.18)" },
-    headerTitle: { color: "#1e293b", fontWeight: 700, letterSpacing: "-0.2px" },
-    headerSubtitle: { color: "#64748b" },
+    headerTitle: { color: "#14213D", fontWeight: 700, letterSpacing: "-0.2px" },
+    headerSubtitle: { color: "rgba(20, 33, 61, 0.7)" },
     formButtonPrimary: {
-      backgroundColor: "#2563eb",
+      backgroundColor: "#FF6B5B",
       backgroundImage: "none",
+      color: "#14213D",
+      border: "none",
       boxShadow: "none",
-      fontWeight: 600,
+      borderRadius: "999px",
+      "&::after": { boxShadow: "none" },
+      fontWeight: 700,
       textTransform: "none",
-      "&:hover": { backgroundColor: "#1d4ed8" },
+      "&:hover": { backgroundColor: "#FF8273" },
     },
     // Clerk draws these outlines with box-shadow (border-width is 0), so the hairline and the
     // focus ring are set there.
     formFieldInput: {
-      boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.12)",
-      "&:focus": { boxShadow: "0 0 0 1px #2563eb, 0 0 0 4px rgba(37, 99, 235, 0.1)" },
+      boxShadow: "0 0 0 1px rgba(20, 33, 61, 0.16)",
+      "&:focus": { boxShadow: "0 0 0 1px #14213D, 0 0 0 4px rgba(20, 33, 61, 0.12)" },
     },
-    socialButtonsBlockButton: { boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.12)" },
-    footerActionLink: { color: "#2563eb", fontWeight: 600 },
+    socialButtonsBlockButton: { backgroundColor: "#FBF7EF", boxShadow: "0 0 0 1px rgba(20, 33, 61, 0.16)" },
+    footer: { background: "#EADFCB" },
+    footerActionLink: { color: "#14213D", fontWeight: 700, textDecoration: "underline" },
   },
 };
 

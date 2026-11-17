@@ -666,7 +666,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
       {/* PRICING */}
       <section className="ss-section">
         <p className="ss-eyebrow" data-reveal>Pricing</p>
-        <h2 className="ss-h2" data-reveal>Start free. Upgrade when recruiting heats up.</h2>
+        <h2 className="ss-h2" data-reveal>Browse for free.<br />Go Pro, get notified before others.</h2>
         <div className="ss-plans">
           <div className="ss-card ss-plan" data-reveal>
             <p className="ss-plan-name">Free</p>
@@ -1099,6 +1099,14 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
   const [rpJobType, setRpJobType] = useState("all");
   const [rpBank, setRpBank] = useState("");
   const [rpCategory, setRpCategory] = useState("");
+  const [rpCity, setRpCity] = useState("");
+  const [rpSheetOpen, setRpSheetOpen] = useState(false);
+  useEffect(() => {
+    if (!rpSheetOpen) return;
+    const onKey = (e) => { if (e.key === "Escape") setRpSheetOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [rpSheetOpen]);
 
   if (loading) return <SkeletonRows />;
 
@@ -1113,10 +1121,14 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
     if (rpJobType === "fulltime" && isInternship(job.title)) return false;
     if (rpBank && job.bank !== rpBank) return false;
     if (rpCategory && job.category !== rpCategory) return false;
+    if (rpCity && !cityKeys(job.location).includes(rpCity)) return false;
     return true;
   });
+  // Phones: the same filter bar + bottom panel as Browse (bank, area, type, city).
+  const rpBankKeys = Object.fromEntries(last48h.map((j) => [j.bank, j.bankKey]));
+  const rpCityOptions = rankCounts(last48h.flatMap((j) => cityKeys(j.location)), MULTI_CITY);
 
-  const hasActiveFilter = rpSearch || rpJobType !== "all" || rpBank || rpCategory;
+  const hasActiveFilter = rpSearch || rpJobType !== "all" || rpBank || rpCategory || rpCity;
 
   function JobCard({ job, index }) {
     const effectiveTime = job.effectiveTime || job.detectedAt || 0;
@@ -1162,6 +1174,68 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
           <RecentLockedFeed isSignedIn={isSignedIn} count={last48hCount} liveJobs={liveJobs} />
         ) : (
           <>
+            <div className="mfb">
+              <button className="mfb-bar" onClick={() => setRpSheetOpen(true)} aria-haspopup="dialog">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/>
+                </svg>
+                <span className="mfb-summary">
+                  <b>{rpBank || "All banks"}</b>
+                  {rpCategory && <>{" \u00b7 "}{rpCategory}</>}
+                  {" \u00b7 "}{rpJobType === "all" ? "All types" : JOB_TYPES[rpJobType]}
+                  {" \u00b7 "}{rpCity || "All cities"}
+                </span>
+                <svg className="mfb-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </div>
+            {rpSheetOpen && (
+              <div className="mfs-wrap" role="dialog" aria-modal="true" aria-label="Filter recent roles">
+                <button className="mfs-shade" aria-label="Close filters" onClick={() => setRpSheetOpen(false)} />
+                <div className="mfs">
+                  <div className="mfs-sec">
+                    <p className="mfs-h">Bank</p>
+                    <div className="mfs-banks">
+                      <button className={`mfs-bank mfs-bank-all${rpBank === "" ? " is-on" : ""}`} onClick={() => setRpBank("")}>All</button>
+                      {rankCounts(last48h.map((j) => j.bank)).map(([bank]) => (
+                        <button key={bank} className={`mfs-bank${rpBank === bank ? " is-on" : ""}`} onClick={() => setRpBank(bank)}>
+                          <BankLogo bankKey={rpBankKeys[bank]} bank={bank} size={18} />{BANKS[rpBankKeys[bank]]?.shortName || bank}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {availableCategories.length > 0 && (
+                    <div className="mfs-sec">
+                      <p className="mfs-h">Area</p>
+                      <div className="mfs-banks">
+                        <button className={`mfs-bank mfs-bank-all${rpCategory === "" ? " is-on" : ""}`} onClick={() => setRpCategory("")}>All</button>
+                        {[...availableCategories].sort((x, y) => areaRank(x) - areaRank(y) || x.localeCompare(y)).map((cat) => (
+                          <button key={cat} className={`mfs-bank mfs-bank-all${rpCategory === cat ? " is-on" : ""}`} onClick={() => setRpCategory(cat)}>{cat}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="mfs-sec">
+                    <p className="mfs-h">Type</p>
+                    <div className="mfs-seg">
+                      {[["all", "All"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([key, label]) => (
+                        <button key={key} className={rpJobType === key ? "is-on" : ""} onClick={() => setRpJobType(key)}>{label}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mfs-sec">
+                    <label className="mfs-h" htmlFor="rp-city">City</label>
+                    <select id="rp-city" className="mfs-select" value={rpCity} onChange={(e) => setRpCity(e.target.value)}>
+                      <option value="">All cities</option>
+                      {rpCityOptions.map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}
+                    </select>
+                  </div>
+                  <div className="mfs-foot">
+                    <button className="mfs-clear" onClick={() => { setRpBank(""); setRpJobType("all"); setRpCity(""); setRpCategory(""); setRpSearch(""); }}>Clear</button>
+                    <button className="mfs-go" onClick={() => setRpSheetOpen(false)}>Show {displayJobs.length} {displayJobs.length === 1 ? "role" : "roles"}</button>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Filters */}
             <div className="filters-container">
               <div className="filters">
@@ -1204,7 +1278,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
               </span>
               {hasActiveFilter && (
                 <button className="search-clear" style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.78rem", color: "#64748b", background: "none", border: "none", cursor: "pointer" }}
-                  onClick={() => { setRpSearch(""); setRpJobType("all"); setRpBank(""); setRpCategory(""); }}>
+                  onClick={() => { setRpSearch(""); setRpJobType("all"); setRpBank(""); setRpCategory(""); setRpCity(""); }}>
                   Clear filters
                 </button>
               )}
@@ -1947,8 +2021,8 @@ export default function Home() {
 
       {viewNewPostings && (
         <div className="app-layout">
-          {/* Mobile top bar — replaces sidebar on mobile */}
-          <div className="mobile-top-bar">
+          {/* Mobile top bar — replaces sidebar on mobile (for Pro, the filter bar below replaces it) */}
+          <div className={`mobile-top-bar${isSubscribed ? " mobile-top-bar-replaced" : ""}`}>
             <div className="mobile-top-bar-bank-row">
               <select
                 className="mobile-bank-select"
@@ -2021,37 +2095,39 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Shortcut to alert settings: everyone sees it; without Pro it opens the paywall. */}
-            <div className="welcome-banner alerts-callout">
-              <div className="alerts-callout-body">
-                <span className="alerts-callout-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                  </svg>
-                </span>
-                <div>
-                  <p className="welcome-title">
-                    {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
-                      ? `Your ${notifPrefs.smsEnabled ? "text" : "email"} alerts are on`
-                      : "Get a text the instant a new job posts"}
-                  </p>
-                  <p className="welcome-desc">
-                    {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
-                      ? "Change which banks, roles and cities you hear about."
-                      : "Set up text or email alerts for the banks and roles you want, so you never have to check this page."}
-                  </p>
+            {/* Shortcut to alert settings: only until their alerts are on (then it is just noise). */}
+            {!(notifPrefs.smsEnabled || notifPrefs.enabled) && (
+              <div className="welcome-banner alerts-callout">
+                <div className="alerts-callout-body">
+                  <span className="alerts-callout-icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <p className="welcome-title">
+                      {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
+                        ? `Your ${notifPrefs.smsEnabled ? "text" : "email"} alerts are on`
+                        : "Get a text the instant a new job posts"}
+                    </p>
+                    <p className="welcome-desc">
+                      {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
+                        ? "Change which banks, roles and cities you hear about."
+                        : "Set up text or email alerts for the banks and roles you want, so you never have to check this page."}
+                    </p>
+                  </div>
                 </div>
+                <button
+                  className={`alerts-callout-cta${!isSubscribed ? " alerts-callout-cta-locked" : ""}`}
+                  onClick={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
+                >
+                  {!isSubscribed && (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  )}
+                  {!isSubscribed ? "Pro: set up alerts" : isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled) ? "Edit alerts" : "Set up alerts"}
+                </button>
               </div>
-              <button
-                className={`alerts-callout-cta${!isSubscribed ? " alerts-callout-cta-locked" : ""}`}
-                onClick={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
-              >
-                {!isSubscribed && (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                )}
-                {!isSubscribed ? "Pro: set up alerts" : isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled) ? "Edit alerts" : "Set up alerts"}
-              </button>
-            </div>
+            )}
               </>
             )}
             <NewPostingsView

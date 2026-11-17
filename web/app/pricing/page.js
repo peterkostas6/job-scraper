@@ -160,6 +160,7 @@ function ClubInquiryModal({ onClose }) {
 }
 
 export default function PricingPage() {
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const { isSignedIn, isLoaded, user } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
@@ -196,7 +197,7 @@ export default function PricingPage() {
             <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
-          <div className="nav-center">
+          <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className="nav-link">Browse Jobs</Link>
             <Link href="/recent" className="nav-link">Recent Postings</Link>
             <Link href="/notifications" className="nav-link">Alerts</Link>
@@ -223,13 +224,24 @@ export default function PricingPage() {
               )
             )}
           </div>
+          {/* Phones only: the nav links don't fit in the bar, so they open as a menu (same as the rest of the site). */}
+          <button
+            className="nav-menu-btn"
+            onClick={() => setNavMenuOpen((v) => !v)}
+            aria-label={navMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={navMenuOpen}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {navMenuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M4 7h16M4 12h16M4 17h16"/>}
+            </svg>
+          </button>
         </div>
       </nav>
 
       <div className="pp">
         <section className="pp-head">
           <p className="ss-eyebrow">Pricing</p>
-          <h1 className="ss-h2 pp-title">Start free. Go Pro when recruiting heats up.</h1>
+          <h1 className="ss-h2 pp-title">Browse for free.<br />Go Pro, get notified before others.</h1>
           <p className="ss-lead">Every plan covers all 20 banks. Pro adds unlimited alerts and every role posted in the last 48 hours.</p>
         </section>
 

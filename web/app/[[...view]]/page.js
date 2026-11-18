@@ -2043,8 +2043,8 @@ export default function Home() {
 
       {viewNewPostings && (
         <div className="app-layout">
-          {/* Mobile top bar — replaces sidebar on mobile (for Pro, the filter bar below replaces it) */}
-          <div className={`mobile-top-bar${isSubscribed ? " mobile-top-bar-replaced" : ""}`}>
+          {/* Mobile top bar — not shown on Recent (Pro gets the filter bar below; everyone else just the locked list) */}
+          <div className="mobile-top-bar mobile-top-bar-replaced">
             <div className="mobile-top-bar-bank-row">
               <select
                 className="mobile-bank-select"

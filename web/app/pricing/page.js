@@ -268,7 +268,7 @@ export default function PricingPage() {
           <div className="pp-plan pp-plan-pro">
             <div className="pp-plan-top">
               <p className="pp-plan-name">Pro</p>
-              <span className="pp-badge">Most popular</span>
+              <span className="pp-badge">{PLANS.monthly.trialDays} days free</span>
             </div>
             <p className="pp-price">
               ${PLANS.monthly.price}

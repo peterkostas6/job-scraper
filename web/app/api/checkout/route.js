@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { PLANS } from "@/lib/plans";
 import { guestMetadata } from "@/lib/guest-checkout";
+import { liveSubscriptionsForEmail } from "@/lib/stripe-subs";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -35,7 +36,23 @@ export async function POST(req) {
   const trialDays = Number.isInteger(fromStripe) && fromStripe >= 0 && fromStripe <= 90 ? fromStripe : PLANS.monthly.trialDays;
 
   // Signed in: the account's email. Guest: what they typed on /start, if anything (Stripe asks otherwise).
-  const email = guest ? guestEmail : (await (await clerkClient()).users.getUser(userId)).emailAddresses[0]?.emailAddress;
+  const clerk = await clerkClient();
+  const account = guest ? null : await clerk.users.getUser(userId);
+  const email = guest ? guestEmail : account.emailAddresses[0]?.emailAddress;
+
+  // Already has Pro: don't start a second subscription. A signed-in account whose Stripe
+  // subscription exists but isn't on the account yet gets it attached, so a reload shows Pro.
+  // (A guest who gives no email here is caught after payment, in lib/guest-checkout.js.)
+  if (account?.publicMetadata?.subscribed === true) return Response.json({ alreadyPro: true }, { status: 409 });
+  const existing = await liveSubscriptionsForEmail(stripe, email);
+  if (existing.length > 0) {
+    if (account) {
+      await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: { subscribed: true, stripeCustomerId: existing[0].customer, stripeSubscriptionId: existing[0].id },
+      });
+    }
+    return Response.json({ alreadyPro: true }, { status: 409 });
+  }
 
   // Meta browser identifiers and plan, stored on the session and subscription so the
   // Stripe webhook can report payments to the ad platforms' Conversions APIs.

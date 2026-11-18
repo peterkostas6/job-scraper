@@ -44,7 +44,8 @@ async function fetchJson(url, timeoutMs) {
 // Workday's own frontend calls this "cxs" API to render the job — returns 404 once closed.
 async function isWorkdayJobDead(match, timeoutMs, tenant = match[1].split(".")[0]) {
   const [, host, site, jobPath] = match;
-  const apiUrl = `https://${host}/wday/cxs/${tenant}/${site}/job/${jobPath}`;
+  // Workday 429s Vercel on <tenant>.wdN.myworkdayjobs.com; wdN.myworkdaysite.com serves the same API.
+  const apiUrl = `https://${host.match(/wd\d+/)[0]}.myworkdaysite.com/wday/cxs/${tenant}/${site}/job/${jobPath}`;
   try {
     const { res } = await fetchJson(apiUrl, timeoutMs);
     if (res.status === 404) return true;

@@ -364,7 +364,7 @@ function AlertsPhoneDemo({ jobs }) {
   return (
     <div className="ap">
       <div className="ap-copy">
-        <h2 className="ap-title">Your resume will be first in the pile.</h2>
+        <h2 className="ap-title">Be first to apply. Not last to find out.</h2>
         <div className="ap-cta">
           <svg className="ap-arrow" viewBox="0 0 120 90" aria-hidden="true">
             <path d="M110 6 C 112 46, 78 70, 22 72" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeDasharray="1 9" />
@@ -372,7 +372,7 @@ function AlertsPhoneDemo({ jobs }) {
           </svg>
           {/* Straight to the preferences on /start, not its hero again */}
           <Link href="/start?setup=1" className="h-cta ap-go" onClick={() => capture("alerts_tab_cta_clicked")}>
-            Set up texts so you can apply first
+            Set up text alerts
           </Link>
         </div>
       </div>

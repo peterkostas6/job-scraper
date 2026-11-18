@@ -5768,7 +5768,7 @@ footer a, .footer a { color: var(--pp-cream); }
 }
 .pp-plan:has(.pp-badge) { box-shadow: 0 0 0 2px var(--pp-coral), 0 24px 48px -24px rgba(0, 0, 0, 0.5); }
 .pp-club { background: #EADFCB; }
-.pp-badge { background: var(--pp-navy); color: var(--pp-cream); }
+.pp-badge { background: #dcfce7; color: #15803d; }
 .pp-toggle { background: var(--pp-navy-2); box-shadow: 0 0 0 1px rgba(244, 237, 224, 0.15); }
 .pp-toggle button { color: var(--pp-cream); }
 .pp-toggle button.on { background: var(--pp-cream); color: var(--pp-navy); }

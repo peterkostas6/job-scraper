@@ -249,7 +249,7 @@ export default function StartFlow() {
       <main className="sf-main">
         {/* HERO: the promise, what it looks like, and one button */}
         <section className="sf-hero">
-          <h1 className="st-q sf-title">Your resume will be first in the pile.</h1>
+          <h1 className="st-q sf-title">Be first to apply. Not last to find out.</h1>
           <div className="sf-texts" aria-label="Example text alerts" role="img">
             <span className="sf-texts-label">What lands on your phone</span>
             {(samples.length ? samples : [{ bank: "Goldman Sachs", title: "2027 Investment Banking Summer Analyst" }]).map((job, i) => (
@@ -268,7 +268,7 @@ export default function StartFlow() {
               <path d="M34 60 L 18 72 L 34 84" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <button className="st-cta sf-cta" onClick={() => { capture("start_pitch_continue"); reveal(1); }}>
-              Set up texts so you can apply first
+              Set up text alerts
             </button>
             <Link href="/jobs" className="st-skip" onClick={() => capture("start_browse_clicked")}>Just browse jobs &rarr;</Link>
           </div>

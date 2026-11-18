@@ -35,17 +35,17 @@ export default async function Image() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "72px 80px",
-          background: "#0b1220",
-          color: "#faf8f5",
+          background: "#14213D",
+          color: "#F4EDE0",
           fontFamily: "Inter",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, fontWeight: 800 }}>
-          {/* The logo mark: three rows of postings, the newest in blue. */}
+          {/* The logo mark: three rows of postings, the newest in coral. */}
           <svg width="50" height="50" viewBox="5 5 54 54">
-            <rect x="8" y="12.5" width="48" height="9" rx="3" fill="#60a5fa" />
-            <rect x="8" y="27.5" width="38" height="9" rx="3" fill="#faf8f5" />
-            <rect x="8" y="42.5" width="26" height="9" rx="3" fill="#faf8f5" opacity="0.35" />
+            <rect x="8" y="12.5" width="48" height="9" rx="3" fill="#FF6B5B" />
+            <rect x="8" y="27.5" width="38" height="9" rx="3" fill="#F4EDE0" />
+            <rect x="8" y="42.5" width="26" height="9" rx="3" fill="#F4EDE0" opacity="0.4" />
           </svg>
           Pete&rsquo;s Postings
         </div>
@@ -53,13 +53,13 @@ export default async function Image() {
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", fontSize: 84, fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.03em" }}>
           {/* One span per word so lines break between words, not after a long phrase. */}
           <span style={{ marginRight: 22 }}>Get</span>
-          <span style={{ background: "#2563eb", borderRadius: 14, padding: "0 16px", marginRight: 22 }}>a text</span>
+          <span style={{ background: "#FF6B5B", color: "#14213D", borderRadius: 14, padding: "0 16px", marginRight: 22 }}>a text</span>
           {"the instant a bank posts a job.".split(" ").map((word, i) => (
             <span key={i} style={{ marginRight: 22 }}>{word}</span>
           ))}
         </div>
 
-        <div style={{ display: "flex", fontSize: 28, fontWeight: 500, color: "rgba(250,248,245,0.7)" }}>
+        <div style={{ display: "flex", fontSize: 28, fontWeight: 500, color: "rgba(244,237,224,0.72)" }}>
           Analyst &amp; intern roles from {Object.keys(BANKS).length} banks &middot; petespostings.com
         </div>
       </div>

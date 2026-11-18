@@ -68,6 +68,6 @@ The theme lives in the `NAVY / CREAM / CORAL THEME` block near the end of `web/a
 - **No blue.** `#2563eb` and its tint ladder are retired. Active states, badges and selected chips use navy on cream, or cream on navy.
 - **No pure white surfaces.** Cards are cream; nested inputs inside cards may use `#FBF7EF`.
 - **Tints are opacity of navy or cream**, e.g. `rgba(20,33,61,0.08)` for a badge fill on cream, `rgba(244,237,224,0.08)` for a hover on navy. `#EADFCB` is the one darker cream (row hover, tinted stat cards).
-- **Logo mark** still has its original blue top bar; update it with the brand, not ad hoc.
+- **Logo mark**: three bars, coral top, cream middle, cream at 40% bottom, on navy. Files: `public/logo-mark.svg` (nav), `app/icon1.svg` + `app/icon.png` (tab, navy rounded tile), `app/apple-icon.png` (iPhone, full navy square), `public/logo-square.*` (Google), and inline in `app/opengraph-image.js`. Change them together.
 
 Source: `web/app/globals.css`, block `NAVY / CREAM / CORAL THEME`

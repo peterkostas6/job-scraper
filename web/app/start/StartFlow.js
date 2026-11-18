@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { capture } from "@/lib/analytics";
-import { useUser, SignUpButton, SignInButton } from "@clerk/nextjs";
+import { useUser, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
@@ -62,7 +62,6 @@ export default function StartFlow() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
-  const [pendingCheckout, setPendingCheckout] = useState(false);
   const [restored, setRestored] = useState(false);
   const [jobs, setJobs] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -81,15 +80,14 @@ export default function StartFlow() {
         if (saved.email) setEmail(saved.email);
         if (saved.phone) setPhone(saved.phone);
         if (saved.smsConsent) setSmsConsent(true);
-        setPendingCheckout(Boolean(saved.pendingCheckout));
       }
     } catch {}
     setRestored(true);
   }, []);
   useEffect(() => {
     if (!restored) return;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, reached, email, phone, smsConsent, pendingCheckout })); } catch {}
-  }, [restored, answers, reached, email, phone, smsConsent, pendingCheckout]);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, reached, email, phone, smsConsent })); } catch {}
+  }, [restored, answers, reached, email, phone, smsConsent]);
 
   // Arriving from the Alerts tab (/start?setup=1): skip the hero, open the preferences.
   useEffect(() => {
@@ -103,14 +101,6 @@ export default function StartFlow() {
 
   // Signed in: their account email is the one we use.
   useEffect(() => { if (isSignedIn && user?.primaryEmailAddress?.emailAddress) setEmail(user.primaryEmailAddress.emailAddress); }, [isSignedIn, user]);
-
-  // Back from the sign-up modal at checkout: carry straight on to Stripe.
-  useEffect(() => {
-    if (!restored || !isLoaded || !isSignedIn || !pendingCheckout) return;
-    setPendingCheckout(false);
-    if (isSubscribed) turnOnTexts();
-    else startCheckout();
-  }, [restored, isLoaded, isSignedIn, pendingCheckout]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Back from Stripe (/start?paid=true): count the trial, turn the texts on, go to Alerts.
   useEffect(() => {
@@ -189,7 +179,12 @@ export default function StartFlow() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "monthly", returnTo: "/start" }),
+        // Signed out: straight to Stripe with the picks; the account is made after payment.
+        body: JSON.stringify(isSignedIn ? { plan: "monthly", returnTo: "/start" } : {
+          plan: "monthly", returnTo: "/start", next: "/notifications?welcome=1",
+          prefs: toPrefs(answers), phone: phone.replace(/\D/g, ""), smsConsent: validPhone(phone) && smsConsent,
+          wantsEmail: validEmail(email), email: validEmail(email) ? email.trim() : "",
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!data.url) throw new Error(data.error || "checkout failed");
@@ -232,7 +227,7 @@ export default function StartFlow() {
   ];
 
   const payButton = (
-    <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>
+    <button className="st-cta" disabled={saving || !isLoaded} onClick={isSubscribed ? turnOnTexts : startCheckout}>
       {saving ? "Opening checkout…" : "Start receiving alerts"}
     </button>
   );
@@ -387,9 +382,7 @@ export default function StartFlow() {
             <h2 className="sf-prefs-title">You&rsquo;re one step from first in the pile.</h2>
             <p className="st-hint">We&rsquo;ll {phone.trim() && email.trim() ? `text ${formatPhone(phone)} and email ${email.trim()}` : phone.trim() ? `text ${formatPhone(phone)}` : `email ${email.trim()}`} the moment new {describe(answers)} post.</p>
             {error && <p className="st-error" role="alert">{error}</p>}
-            {isSignedIn ? payButton : (
-              <SignUpButton mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start" initialValues={email.trim() ? { emailAddress: email.trim() } : undefined}>{payButton}</SignUpButton>
-            )}
+            {payButton}
             {!isSubscribed && <p className="st-fine">$0 today, then ${PLANS.monthly.price}/month. Cancel anytime. Secure checkout by Stripe.</p>}
           </section>
         )}

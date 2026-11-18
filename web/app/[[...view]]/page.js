@@ -771,7 +771,8 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
   function checkout() {
     track("InitiateCheckout", planPrice("monthly"));
     setLoading(true);
-    fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: "monthly" }) })
+    // Signed out too: straight to Stripe; the account is made after payment and /welcome signs them in.
+    fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(isSignedIn ? { plan: "monthly" } : { plan: "monthly", next: "/recent" }) })
       .then((res) => res.json())
       .then((data) => { if (data.url) window.location.href = data.url; else setLoading(false); })
       .catch(() => setLoading(false));
@@ -822,13 +823,7 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
             </span>
             <h3>Unlock recent postings</h3>
             <p className="rl-fine">Every role from the last 48 hours, plus a text the moment the next one posts.</p>
-            {isSignedIn ? (
-              <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Redirecting..." : "Unlock"}</button>
-            ) : (
-              <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
-                <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta">Unlock</button>
-              </SignUpButton>
-            )}
+            <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Opening checkout..." : "Unlock"}</button>
             <p className="rl-fine">{plan.trialDays ? `Free for ${plan.trialDays} days, then ` : ""}${plan.price}/{plan.period}. Cancel anytime.</p>
             {!isSignedIn && (
               <p className="rl-fine">Already Pro?{" "}<SignInButton mode="modal"><button className="paywall-link">Sign in</button></SignInButton></p>

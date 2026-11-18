@@ -28,7 +28,8 @@ export const FIRM_SOURCES = {
   ardea: { type: "ashby", slug: "ardea-partners" },
 };
 
-const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+// Same short UA as the older Workday routes; Workday refuses a full Chrome UA from Vercel.
+const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)";
 // Big retail/commercial banks: search these terms instead of paging through 1,000+ jobs.
 const SEARCH_TERMS = ["analyst", "intern", "summer"];
 

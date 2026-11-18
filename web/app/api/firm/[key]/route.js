@@ -13,6 +13,6 @@ export async function GET(_request, { params }) {
     return Response.json({ jobs, count: jobs.length });
   } catch (err) {
     console.error(`Firm ${key} scrape error:`, err);
-    return Response.json({ error: `Failed to fetch ${key} jobs` }, { status: 500 });
+    return Response.json({ error: `Failed to fetch ${key} jobs`, detail: err.message }, { status: 500 });
   }
 }

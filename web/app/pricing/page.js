@@ -248,8 +248,8 @@ export default function PricingPage() {
       <div className="pp">
         <section className="pp-head">
           <p className="ss-eyebrow">Pricing</p>
-          <h1 className="ss-h2 pp-title">Browse for free.<br />Go Pro, get notified before others.</h1>
-          <p className="ss-lead">Every plan covers all 20 banks. Pro adds unlimited alerts and every role posted in the last 48 hours.</p>
+          <h1 className="ss-h2 pp-title">Find jobs for free.<br />Be first to apply with Pro.</h1>
+          <p className="ss-lead">Browse finance jobs at 20 top banks for free. Get text alerts when new roles are posted, so you can apply before the crowd.</p>
         </section>
 
         <section className="pp-plans">

@@ -5884,3 +5884,5 @@ footer a, .footer a { color: var(--pp-cream); }
 .pp-toast-close:hover { background: rgba(20, 33, 61, 0.08); }
 @keyframes pp-toast-in { from { transform: translate(-50%, 24px) scale(0.92); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .pp-toast { animation: none; } }
+/* Alerts on phones: settings only, no preview panel */
+@media (max-width: 768px) { .al-preview { display: none; } }

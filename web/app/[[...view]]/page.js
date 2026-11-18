@@ -2303,7 +2303,7 @@ export default function Home() {
                     </span>
                     <div>
                       <p className="al-welcome-title">You&rsquo;re in. Your texts are on.</p>
-                      <p className="al-welcome-desc">Right now you&rsquo;ll hear about Investment Banking, Sales &amp; Trading, Corporate Banking and Research roles at all {BANK_COUNT} banks. Narrow it down below so you only get what you&rsquo;d apply to.</p>
+                      <p className="al-welcome-desc">We&rsquo;ll text you the moment a role you picked goes live. Change anything below whenever you like.</p>
                     </div>
                     <button className="pp-toast-close" onClick={() => setAlertsWelcome(false)} aria-label="Dismiss">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>

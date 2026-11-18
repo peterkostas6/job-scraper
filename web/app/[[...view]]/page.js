@@ -654,7 +654,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
       {/* PRICING */}
       <section className="ss-section">
         <p className="ss-eyebrow" data-reveal>Pricing</p>
-        <h2 className="ss-h2" data-reveal>Browse for free.<br />Go Pro, get notified before others.</h2>
+        <h2 className="ss-h2" data-reveal>Find jobs for free.<br />Be first to apply with Pro.</h2>
         <div className="ss-plans">
           <div className="ss-card ss-plan" data-reveal>
             <p className="ss-plan-name">Free</p>

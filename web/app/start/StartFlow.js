@@ -19,6 +19,7 @@ const STORAGE_KEY = "pp-start-v3";
 // steps (banks, roles, location, where to reach you) that slide in one after another, then
 // the checkout button. After Stripe, texts turn on with these answers and they land on Alerts.
 const STEP_LABELS = ["What banks?", "What roles?", "What location?", "Where should we alert you?"];
+const STEP_NAMES = ["Banks", "Roles", "Location", "Alerts go to"];
 const EMPTY = { banks: null, areas: null, jobType: "all", city: null };
 
 // "2125550123" -> "(212) 555-0123"; anything else is shown as typed.
@@ -56,7 +57,8 @@ export default function StartFlow() {
   useTrackSignup(user);
 
   const [answers, setAnswers] = useState(EMPTY);
-  const [reached, setReached] = useState(0); // 0 = only the hero; 1..4 = steps shown; 5 = checkout shown
+  const [reached, setReached] = useState(0); // 0 = only the hero; 1..4 = steps unlocked; 5 = checkout shown
+  const [active, setActive] = useState(1); // the step that is open right now
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
@@ -75,7 +77,7 @@ export default function StartFlow() {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (saved) {
         if (saved.answers) setAnswers({ ...EMPTY, ...saved.answers });
-        if (Number.isInteger(saved.reached)) setReached(saved.reached);
+        if (Number.isInteger(saved.reached)) { setReached(saved.reached); setActive(Math.min(Math.max(saved.reached, 1), 4)); }
         if (saved.email) setEmail(saved.email);
         if (saved.phone) setPhone(saved.phone);
         if (saved.smsConsent) setSmsConsent(true);
@@ -127,13 +129,16 @@ export default function StartFlow() {
     if (!el) return;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     requestAnimationFrame(() => el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }));
-  }, [reached]);
+  }, [reached, active]);
 
   function reveal(n) {
     capture("start_step_viewed", { step: n });
-    scrollTarget.current = n;
+    if (n <= 4) setActive(n);
+    else setActive(0);
+    scrollTarget.current = n <= 4 ? Math.max(1, n) : 5;
     setReached((r) => Math.max(r, n));
-    if (n <= reached) { const el = sections.current[n]; el?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    // Already unlocked: no state change to trigger the scroll effect, so scroll now.
+    if (n <= reached) requestAnimationFrame(() => sections.current[scrollTarget.current]?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
   const set = (patch) => setAnswers((a) => ({ ...a, ...patch }));
   const toggle = (field, key) => setAnswers((a) => {
@@ -201,20 +206,13 @@ export default function StartFlow() {
     }
   }
 
-  const stepIndex = Math.min(reached, 4);
-  const progress = reached > 0 && (
-    <div className="sf-progress" aria-label={`Step ${stepIndex} of 4`}>
-      <div className="st-progress-bar"><span style={{ width: `${(Math.min(reached, 5) / 5) * 100}%` }} /></div>
-      {reached < 5 && <span className="st-progress-count">Step {stepIndex} of 4: {STEP_LABELS[stepIndex - 1]}</span>}
-    </div>
-  );
-
-  const stepHead = (n) => (
-    <>
-      <span className="sf-step">Step {n}</span>
-      <h2 className="st-q sf-q">{STEP_LABELS[n - 1]}</h2>
-    </>
-  );
+  // One-line answers for the steps that are done.
+  const summaries = [
+    !answers.banks ? "" : answers.banks.length === 0 ? `All ${BANK_COUNT} banks` : answers.banks.map((k) => BANKS[k]?.shortName).join(", "),
+    !answers.areas ? "" : `${answers.jobType === "internship" ? "Internships" : answers.jobType === "fulltime" ? "Full-time" : "Internships and full-time"} \u00b7 ${answers.areas.length === 0 ? "Open to anything" : answers.areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(", ")}`,
+    answers.city === null ? "" : answers.city || "Anywhere",
+    reached >= 5 ? [formatPhone(phone), email.trim()].filter(Boolean).join(" \u00b7 ") : "",
+  ];
 
   const payButton = (
     <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>
@@ -235,7 +233,6 @@ export default function StartFlow() {
           </SignInButton>
         )}
       </header>
-      {progress}
 
       <main className="sf-main">
         {/* HERO: the promise, what it looks like, and one button */}
@@ -266,91 +263,106 @@ export default function StartFlow() {
         </section>
 
         {restored && reached >= 1 && (
-          <section className="sf-sec" ref={(el) => (sections.current[1] = el)}>
-            {stepHead(1)}
-            <div className="st-options">
-              <button className="st-option" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => { set({ banks: [] }); reveal(2); }}>
-                <span className="st-option-label">All {BANK_COUNT} banks</span>
-                <span className="st-option-sub">Recommended. Postings go fast.</span>
-              </button>
-            </div>
-            <p className="st-or">or pick specific banks</p>
-            <div className="st-chips">
-              {Object.entries(BANKS).map(([key, b]) => (
-                <button key={key} className="st-chip" aria-pressed={(answers.banks || []).includes(key)} onClick={() => toggle("banks", key)}>
-                  <BankLogo bankKey={key} size={16} />{b.shortName}
-                </button>
-              ))}
-            </div>
-            {answers.banks?.length > 0 && <button className="st-next" onClick={() => reveal(2)}>Continue</button>}
-          </section>
-        )}
-
-        {restored && reached >= 2 && (
-          <section className="sf-sec" ref={(el) => (sections.current[2] = el)}>
-            {stepHead(2)}
-            <div className="sf-seg" role="group" aria-label="Internship or full-time">
-              {JOB_TYPES.map((t) => (
-                <button key={t.key} aria-pressed={answers.jobType === t.key} onClick={() => set({ jobType: t.key })}>{t.key === "all" ? "Both" : t.label}</button>
-              ))}
-            </div>
-            <div className="st-options st-options-grid">
-              {AREAS.map((a) => (
-                <button key={a.key} className="st-option st-option-compact" aria-pressed={(answers.areas || []).includes(a.key)} onClick={() => toggle("areas", a.key)}>
-                  <span className="st-option-label">{a.label}</span>
-                </button>
-              ))}
-              <button className="st-option st-option-compact st-option-wide" aria-pressed={answers.areas !== null && answers.areas.length === 0} onClick={() => { set({ areas: [] }); reveal(3); }}>
-                <span className="st-option-label">Open to anything</span>
-              </button>
-            </div>
-            {answers.areas?.length > 0 && <button className="st-next" onClick={() => reveal(3)}>Continue</button>}
-          </section>
-        )}
-
-        {restored && reached >= 3 && (
-          <section className="sf-sec" ref={(el) => (sections.current[3] = el)}>
-            {stepHead(3)}
-            <div className="st-options st-options-grid">
-              {CITIES.map((c) => (
-                <button key={c} className="st-option st-option-compact" aria-pressed={answers.city === c} onClick={() => { set({ city: c }); reveal(4); }}>
-                  <span className="st-option-label">{c}</span>
-                </button>
-              ))}
-              <button className="st-option st-option-compact" aria-pressed={answers.city === ""} onClick={() => { set({ city: "" }); reveal(4); }}>
-                <span className="st-option-label">Anywhere</span>
-              </button>
-            </div>
-          </section>
-        )}
-
-        {restored && reached >= 4 && (
-          <section className="sf-sec" ref={(el) => (sections.current[4] = el)}>
-            {stepHead(4)}
-            <form className="sf-form" onSubmit={(e) => { e.preventDefault(); confirmContact(); }} noValidate>
-              <label className="st-field-label" htmlFor="sf-email">Email</label>
-              <input id="sf-email" className="st-input" type="email" autoComplete="email" placeholder="you@school.edu"
-                value={email} readOnly={Boolean(isSignedIn)} onChange={(e) => { setEmail(e.target.value); setContactError(""); }} />
-              <label className="st-field-label" htmlFor="sf-phone">Mobile number</label>
-              <input id="sf-phone" className="st-input" type="tel" inputMode="tel" autoComplete="tel" placeholder="(555) 000-0000"
-                value={phone} onChange={(e) => { setPhone(e.target.value); setContactError(""); }} onBlur={() => setPhone(formatPhone(phone))} />
-              <label className="st-consent">
-                <input type="checkbox" checked={smsConsent} onChange={(e) => { setSmsConsent(e.target.checked); setContactError(""); }} />
-                <span>
-                  I agree to receive recurring automated text messages from Pete&rsquo;s Postings about new job postings matching my preferences. Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete&rsquo;s Postings. See our{" "}
-                  <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
-                  <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
-                </span>
-              </label>
-              {contactError && <p className="st-error" role="alert">{contactError}</p>}
-              <button className="st-next" type="submit">Continue</button>
-            </form>
+          <section className="sf-prefs" ref={(el) => (sections.current[1] = el)}>
+            <h2 className="sf-prefs-title">Let&rsquo;s set up your preferences</h2>
+            <ol className="sf-track">
+              {[1, 2, 3, 4].map((n) => {
+                const open = active === n;
+                const done = summaries[n - 1] && !open;
+                const locked = n > reached;
+                return (
+                  <li key={n} ref={(el) => { if (n > 1) sections.current[n] = el; }} className={`sf-row${open ? " is-open" : ""}${done ? " is-done" : ""}${locked ? " is-locked" : ""}`}>
+                    <span className="sf-dot" aria-hidden="true">
+                      {done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg> : n}
+                    </span>
+                    <div className="sf-row-body">
+                      <div className="sf-row-head">
+                        <h3 className="sf-row-title">{open ? STEP_LABELS[n - 1] : STEP_NAMES[n - 1]}</h3>
+                        {done && <span className="sf-row-answer">{summaries[n - 1]}</span>}
+                        {done && <button className="sf-change" onClick={() => reveal(n)}>Change</button>}
+                      </div>
+                      {open && (
+                        <div className="sf-row-content">
+                          {n === 1 && (
+                            <>
+                <div className="sf-pills">
+                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => { set({ banks: [] }); reveal(2); }}>All {BANK_COUNT} banks</button>
+                  {Object.entries(BANKS).map(([key, b]) => (
+                    <button key={key} className="sf-pill" aria-pressed={(answers.banks || []).includes(key)} onClick={() => toggle("banks", key)}>
+                      <BankLogo bankKey={key} size={16} />{b.shortName}
+                    </button>
+                  ))}
+                </div>
+                {answers.banks?.length > 0 && <button className="sf-next" onClick={() => reveal(2)}>Next</button>}
+                            </>
+                          )}
+                          {n === 2 && (
+                            <>
+                <div className="sf-seg" role="group" aria-label="Internship or full-time">
+                  {JOB_TYPES.map((t) => (
+                    <button key={t.key} aria-pressed={answers.jobType === t.key} onClick={() => set({ jobType: t.key })}>{t.key === "all" ? "Both" : t.label}</button>
+                  ))}
+                </div>
+                <div className="sf-pills">
+                  {AREAS.map((a) => (
+                    <button key={a.key} className="sf-pill" aria-pressed={(answers.areas || []).includes(a.key)} onClick={() => toggle("areas", a.key)}>{a.label}</button>
+                  ))}
+                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.areas !== null && answers.areas.length === 0} onClick={() => { set({ areas: [] }); reveal(3); }}>Open to anything</button>
+                </div>
+                {answers.areas?.length > 0 && <button className="sf-next" onClick={() => reveal(3)}>Next</button>}
+                            </>
+                          )}
+                          {n === 3 && (
+                            <>
+                <div className="sf-pills">
+                  {CITIES.map((c) => (
+                    <button key={c} className="sf-pill" aria-pressed={answers.city === c} onClick={() => { set({ city: c }); reveal(4); }}>{c}</button>
+                  ))}
+                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.city === ""} onClick={() => { set({ city: "" }); reveal(4); }}>Anywhere</button>
+                </div>
+                            </>
+                          )}
+                          {n === 4 && (
+                            <>
+                <form className="sf-form" onSubmit={(e) => { e.preventDefault(); confirmContact(); }} noValidate>
+                  <div className="sf-fields">
+                    <div className="sf-field">
+                      <label className="st-field-label" htmlFor="sf-email">Email</label>
+                      <input id="sf-email" className="st-input" type="email" autoComplete="email" placeholder="you@school.edu"
+                        value={email} readOnly={Boolean(isSignedIn)} onChange={(e) => { setEmail(e.target.value); setContactError(""); }} />
+                    </div>
+                    <div className="sf-field">
+                      <label className="st-field-label" htmlFor="sf-phone">Mobile number</label>
+                      <input id="sf-phone" className="st-input" type="tel" inputMode="tel" autoComplete="tel" placeholder="(555) 000-0000"
+                        value={phone} onChange={(e) => { setPhone(e.target.value); setContactError(""); }} onBlur={() => setPhone(formatPhone(phone))} />
+                    </div>
+                  </div>
+                  <label className="st-consent">
+                    <input type="checkbox" checked={smsConsent} onChange={(e) => { setSmsConsent(e.target.checked); setContactError(""); }} />
+                    <span>
+                      I agree to receive recurring automated text messages from Pete&rsquo;s Postings about new job postings matching my preferences. Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete&rsquo;s Postings. See our{" "}
+                      <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
+                      <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
+                    </span>
+                  </label>
+                  {contactError && <p className="st-error" role="alert">{contactError}</p>}
+                  <button className="sf-next" type="submit">Next</button>
+                </form>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
           </section>
         )}
 
         {restored && reached >= 5 && (
-          <section className="sf-sec sf-checkout" ref={(el) => (sections.current[5] = el)}>
-            <h2 className="st-q sf-q">You&rsquo;re one step from first in the pile.</h2>
+          <section className="sf-checkout" ref={(el) => (sections.current[5] = el)}>
+            <h2 className="sf-prefs-title">You&rsquo;re one step from first in the pile.</h2>
             <p className="st-hint">We&rsquo;ll text {formatPhone(phone)} the moment new {describe(answers)} post.</p>
             {error && <p className="st-error" role="alert">{error}</p>}
             {isSignedIn ? payButton : (

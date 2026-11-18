@@ -205,7 +205,7 @@ export default function StartFlow() {
   const progress = reached > 0 && (
     <div className="sf-progress" aria-label={`Step ${stepIndex} of 4`}>
       <div className="st-progress-bar"><span style={{ width: `${(Math.min(reached, 5) / 5) * 100}%` }} /></div>
-      <span className="st-progress-count">{reached >= 5 ? "Last step: start your trial" : `Step ${stepIndex} of 4: ${STEP_LABELS[stepIndex - 1]}`}</span>
+      {reached < 5 && <span className="st-progress-count">Step {stepIndex} of 4: {STEP_LABELS[stepIndex - 1]}</span>}
     </div>
   );
 

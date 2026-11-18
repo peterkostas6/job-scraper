@@ -5883,3 +5883,33 @@ footer a, .footer a { color: var(--pp-cream); }
 @media (prefers-reduced-motion: reduce) { .pp-toast { animation: none; } }
 /* Alerts on phones: settings only, no preview panel */
 @media (max-width: 768px) { .al-preview { display: none; } }
+
+/* ---- /start: sell first, then phone, then trial ---- */
+.st-main-wide { max-width: 1040px; }
+.st-pitch { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; padding-block: 2rem; }
+.st-pitch-copy { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; }
+.st-pitch-title { font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.04; letter-spacing: -0.04em; margin: 0; }
+.st-pitch .st-hint { margin: 0; font-size: 1.05rem; line-height: 1.6; max-width: 52ch; }
+.st-proof { list-style: none; margin: 0.25rem 0 0.5rem; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; color: rgba(244, 237, 224, 0.8); font-size: 0.95rem; }
+.st-proof strong { color: var(--pp-cream); }
+.st-pitch .st-cta { width: auto; padding-inline: 1.6rem; }
+.st-texts { display: flex; flex-direction: column; gap: 0.6rem; padding: 1.25rem; border-radius: 28px; background: linear-gradient(160deg, #2a3f6e, var(--pp-navy) 70%); box-shadow: 0 0 0 1px rgba(244, 237, 224, 0.1), 0 30px 60px -30px rgba(0, 0, 0, 0.7); }
+.st-texts-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(244, 237, 224, 0.6); margin-bottom: 0.2rem; }
+.st-text { display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.7rem 0.8rem; border-radius: 18px; background: rgba(244, 237, 224, 0.94); color: var(--pp-navy); animation: ap-drop 700ms var(--ease-spring) both; }
+.st-text p { margin: 0.1rem 0 0; font-size: 0.82rem; line-height: 1.38; }
+.st-text p img, .st-text p span { vertical-align: -2px; }
+.st-text-head { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.74rem; }
+.st-text-head span { color: rgba(20, 33, 61, 0.55); }
+.st-text-icon { width: 30px; height: 30px; flex: none; border-radius: 8px; background: #34c759; display: grid; place-items: center; }
+@media (max-width: 760px) {
+  .st-pitch { grid-template-columns: 1fr; gap: 1.75rem; padding-block: 0.5rem 1.5rem; }
+  .st-pitch .st-cta { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .st-text { animation: none; } }
+
+/* ---- Alerts: welcome after sign-up ---- */
+.al-welcome { display: flex; gap: 0.85rem; align-items: flex-start; padding: 1rem 1.1rem; margin-bottom: 1rem; border-radius: 16px; background: var(--pp-cream); color: var(--pp-navy); }
+.al-welcome-mark { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #dcfce7; color: #15803d; }
+.al-welcome > div { flex: 1; min-width: 0; }
+.al-welcome-title { margin: 0; font-weight: 700; }
+.al-welcome-desc { margin: 0.2rem 0 0; font-size: 0.88rem; line-height: 1.5; color: rgba(20, 33, 61, 0.75); }

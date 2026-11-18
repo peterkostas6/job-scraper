@@ -1,12 +1,13 @@
-// /start — guided sign-up for ad traffic. Four quick questions, then the live jobs that
-// match the answers, then a free account with alerts already set to those answers.
+// /start — sign-up for text alerts (every "Set up alerts" / "Get SMS alerts" button lands here).
+// One screen that sells being first in the pile, then phone number, then the free trial;
+// after checkout, texts are on and they land on Alerts to fine-tune.
 // Kept out of search results; the homepage and /alerts stay as they are.
 import StartFlow from "./StartFlow";
 
 export const metadata = {
-  title: "Find Your Bank Jobs in 30 Seconds | Pete’s Postings",
+  title: "Be First in the Pile | Pete’s Postings",
   description:
-    "Answer four questions and see every open analyst and internship role at 20 banks that fits you, then get a text when the next one posts.",
+    "Get a text the moment a bank posts an analyst or internship role, so your resume is one of the first they read. 20 banks, checked every 5 minutes.",
   alternates: { canonical: "https://petespostings.com/start" },
   robots: { index: false, follow: true },
 };

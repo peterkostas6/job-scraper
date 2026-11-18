@@ -1384,6 +1384,15 @@ export default function Home() {
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
+  // Fresh from the /start sign-up: say what's on and invite them to fine-tune.
+  const [alertsWelcome, setAlertsWelcome] = useState(false);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("welcome") !== "1") return;
+    setAlertsWelcome(true);
+    url.searchParams.delete("welcome");
+    window.history.replaceState(null, "", url.pathname + url.search);
+  }, []);
   useEffect(() => {
     if (!savedToast) return;
     const id = setTimeout(() => setSavedToast(false), 3200);
@@ -2286,6 +2295,21 @@ export default function Home() {
                   <h2 className="al-title">Job alerts</h2>
                   <p className="al-sub">We check every bank every 5 minutes and tell you when a match goes live.</p>
                 </div>
+
+                {alertsWelcome && (
+                  <div className="al-welcome" role="status">
+                    <span className="al-welcome-mark" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                    </span>
+                    <div>
+                      <p className="al-welcome-title">You&rsquo;re in. Your texts are on.</p>
+                      <p className="al-welcome-desc">Right now you&rsquo;ll hear about Investment Banking, Sales &amp; Trading, Corporate Banking and Research roles at all {BANK_COUNT} banks. Narrow it down below so you only get what you&rsquo;d apply to.</p>
+                    </div>
+                    <button className="pp-toast-close" onClick={() => setAlertsWelcome(false)} aria-label="Dismiss">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                )}
 
                 {notifLoading || savedNotifPrefs === null ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>

@@ -218,7 +218,7 @@ export default function StartFlow() {
 
   const payButton = (
     <button className="st-cta" disabled={saving || !isLoaded} onClick={isSignedIn ? startCheckout : () => setPendingCheckout(true)}>
-      {saving ? "Opening checkout…" : isSubscribed ? "Turn on my texts" : `Start my ${PLANS.monthly.trialDays}-day free trial`}
+      {saving ? "Opening checkout…" : "Start receiving alerts"}
     </button>
   );
 

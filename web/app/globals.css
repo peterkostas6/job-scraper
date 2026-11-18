@@ -5478,7 +5478,8 @@ input, select { border-radius: 12px; }
   .jobs-list-browse .job-location, .jobs-list-browse .new-bank-label { display: none; }
   .jobs-list-browse .job-posted { grid-column: 2; grid-row: 1; justify-self: end; font-size: 0.72rem; color: var(--text-secondary); }
   .jobs-list-browse .job-badges { grid-column: 2; grid-row: 2; justify-self: end; }
-  .jobs-list-browse .job-bookmark { position: static; transform: none; grid-column: 3; grid-row: 1 / span 2; padding: 0.5rem; }
+  /* relative, not static: the button's ::before tap-area extender must anchor to the button, or it covers the whole row and every tap saves the job. */
+  .jobs-list-browse .job-bookmark { position: relative; transform: none; grid-column: 3; grid-row: 1 / span 2; padding: 0.5rem; }
   .jobs-list-browse .job-logo { top: 50%; transform: translateY(-50%); }
 }
 

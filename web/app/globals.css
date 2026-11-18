@@ -6031,3 +6031,14 @@ footer a, .footer a { color: var(--pp-cream); }
 /* Pro Recent: centered heading like the locked page; filter bar lines up with the list */
 .rl-title-pro { margin: 0.75rem 0 1.5rem; }
 .new-postings-view .mfb { padding: 0 0 0.9rem; }
+
+/* ---- Browse (no Pro): locked newest rows + unlock bar at the top of the list ---- */
+.job-row-locked { background: #EFE5D3; }
+.job-row-locked:hover { background: #EADFCB; }
+.job-row-locked .job-index { color: rgba(20, 33, 61, 0.55); display: flex; align-items: center; }
+.job-locked-title { filter: blur(5px); user-select: none; }
+.job-row-locked .job-title { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.job-row-locked .job-title .ss-new { flex: none; }
+.job-locked-bar { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem 1rem; flex-wrap: wrap; padding: 0.85rem 1.25rem; background: var(--pp-navy-2); color: var(--pp-cream); text-decoration: none; font-size: 0.9rem; border-bottom: 1px solid rgba(20, 33, 61, 0.15); }
+.job-locked-bar:hover { background: #22345c; }
+.job-locked-cta { flex: none; padding: 0.45rem 0.95rem; border-radius: 999px; background: var(--pp-coral); color: var(--pp-navy); font-weight: 700; font-size: 0.85rem; }

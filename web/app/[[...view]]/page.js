@@ -400,6 +400,8 @@ function AlertsPhoneDemo({ jobs }) {
 
 function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
   const liveCount = liveJobs?.length || 0;
+  // What Browse Jobs shows without Pro (the last 48 hours live in Recent Postings).
+  const browseCount = (liveJobs || []).filter((j) => !isLast48h(j)).length;
   const latest = homeFeed(liveJobs);
   const bankNames = Object.values(BANKS).map((b) => b.name);
 
@@ -451,8 +453,8 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
           Apply before everyone else.
         </p>
         <div className="ss-discover-row" ref={heroCtaRef} data-reveal>
-          <Link href="/start" className="ss-discover" onClick={() => capture("home_cta_clicked", { where: "hero_alerts" })}>
-            Set up my text alerts <span aria-hidden="true">&rarr;</span>
+          <Link href="/jobs?bank=all" className="ss-discover" onClick={() => capture("home_cta_clicked", { where: "hero_browse" })}>
+            Browse {browseCount > 0 ? `${browseCount.toLocaleString()} ` : ""}open roles <span aria-hidden="true">&rarr;</span>
           </Link>
         </div>
 
@@ -476,19 +478,14 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
                 {(latest.length ? latest : HERO_NOTIFS.map((n, i) => ({ link: i, title: n.title, bank: n.bank, location: "New York, NY", detectedAt: Date.now() - (i + 1) * 3600000 }))).slice(0, 6).map((job, i) => (
                   <tr key={job.link}>
                     <td>
-                      <a
-                        className="lb-startup"
-                        href={latest.length ? trackedLink(job.link) : "/jobs"}
-                        target={latest.length ? "_blank" : undefined}
-                        rel="noopener noreferrer"
-                        onClick={() => capture("home_job_clicked", { where: "shot" })}
-                      >
+                      {/* A preview only: rows aren't links. */}
+                      <div className="lb-startup">
                         <BankLogo bankKey={job.bankKey} bank={job.bank} size={40} className="lb-logo" />
                         <span className="lb-startup-text">
                           <span className="lb-name"><span className="lb-name-text">{job.title}</span>{i < 2 && <span className="ss-new">New</span>}</span>
                           <span className="lb-desc">{job.bank} &middot; {job.location}</span>
                         </span>
-                      </a>
+                      </div>
                     </td>
                     <td className="lb-num lb-time">{latest.length ? feedAge(job) : `${i + 1}h ago`}</td>
                   </tr>
@@ -497,7 +494,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
             </table>
           </div>
           <button className="lb-viewall" onClick={() => { capture("home_cta_clicked", { where: "shot_all" }); onBrowse(); }}>
-            See all {liveCount > 0 ? `${liveCount.toLocaleString()} ` : ""}open roles &rarr;
+            See all {browseCount > 0 ? `${browseCount.toLocaleString()} ` : ""}open roles &rarr;
           </button>
         </div>
         <div className="ss-logos" data-reveal>
@@ -1749,6 +1746,10 @@ export default function Home() {
   const withSelected = (opts, sel) => (sel && !opts.some(([v]) => v === sel) ? [[sel, 0], ...opts] : opts);
 
   const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link)) : filteredJobs;
+  // The roles Browse leaves out without Pro, for the locked rows at the top of the list.
+  const lockedRecent = (isSignedIn && isSubscribed) || showSavedOnly ? [] : allJobs
+    .filter((j) => isLast48h(j) && (activeBank === "all" || j.bankKey === activeBank))
+    .sort((a, b) => postedAt(b) - postedAt(a));
   const savedCount = [...bookmarks].filter((link) => filteredJobs.some((job) => job.link === link)).length;
   const isGatedBank = activeBank !== "all" && !FREE_BANKS.has(activeBank) && (!isSignedIn || !isSubscribed);
 
@@ -2572,19 +2573,6 @@ export default function Home() {
             {/* Bank jobs view */}
             {!viewingSaved && !viewNotifications && (
               <>
-                {isSignedIn && !isSubscribed && last48hCount > 0 && (
-                  <div className="recent-teaser-strip">
-                    <span className="recent-teaser-content">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                      </svg>
-                      <strong>{last48hCount}</strong> {last48hCount === 1 ? "job" : "jobs"} posted in the last 48 hours
-                    </span>
-                    <button className="recent-teaser-cta" onClick={() => router.push("/recent")}>
-                      See them →
-                    </button>
-                  </div>
-                )}
                 {showWelcome && !isGatedBank && !isSignedIn && (
                   <div className="welcome-banner alerts-callout">
                     <div>
@@ -2677,6 +2665,33 @@ export default function Home() {
                       <span style={{ width: 14 }} />
                       <span style={{ width: 14 }} />
                     </div>
+                    {/* Without Pro: the newest roles (last 48 hours) sit at the top, locked, and lead to Recent Postings. */}
+                    {lockedRecent.length > 0 && (
+                      <>
+                        {lockedRecent.slice(0, 3).map((job) => (
+                          <Link href="/recent" className="job-row job-row-locked" key={`locked-${job.link}`} onClick={() => capture("browse_locked_row_clicked", { bank: job.bank })}>
+                            <span className="job-index" aria-hidden="true">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                            </span>
+                            <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
+                            <span className="job-title"><span className="job-locked-title" aria-hidden="true">{job.title}</span><span className="sr-only">New {job.bank} role, unlocks with Pro</span><span className="ss-new">New</span></span>
+                            <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
+                            <span className="job-location">{job.location || "\u2014"}</span>
+                            <span className="job-posted tnum">{feedAge(job)}</span>
+                            <div className="job-badges">
+                              <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>{isInternship(job.title) ? "Internship" : "Analyst"}</span>
+                            </div>
+                            {activeBank === "all" && <span className="new-bank-label">{job.bank}</span>}
+                            <span style={{ width: 14 }} />
+                            <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                          </Link>
+                        ))}
+                        <Link href="/recent" className="job-locked-bar" onClick={() => capture("browse_locked_bar_clicked", { hidden: lockedRecent.length })}>
+                          <span><strong>+{lockedRecent.length} new {lockedRecent.length === 1 ? "role" : "roles"}</strong> from the last 48 hours{activeBank !== "all" && BANKS[activeBank] ? ` at ${BANKS[activeBank].name}` : ""}</span>
+                          <span className="job-locked-cta">Unlock recent postings &rarr;</span>
+                        </Link>
+                      </>
+                    )}
                     {displayJobs.map((job, index) => (
                       <a
                         href={trackedLink(job.link)}

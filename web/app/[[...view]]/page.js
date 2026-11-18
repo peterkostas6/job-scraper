@@ -2598,9 +2598,8 @@ export default function Home() {
                 {!isGatedBank && !loading && !error && (
                   <div className="results-bar">
                     <span className="results-text">
-                      {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} {activeBank === "all" ? "across all banks" : `at ${BANKS[activeBank].name}`}
                       {lockedRecent.length > 0 && (
-                        <>{" \u00b7 "}<Link href="/recent" className="results-new" onClick={() => capture("browse_new_count_clicked", { hidden: lockedRecent.length })}>+{lockedRecent.length} new in the last 48 hours &rarr;</Link></>
+                        <Link href="/recent" className="results-new" onClick={() => capture("browse_new_count_clicked", { hidden: lockedRecent.length })}>+{lockedRecent.length} new in the last 48 hours &rarr;</Link>
                       )}
                     </span>
                     <button className={`saved-toggle ${viewingSaved ? "saved-toggle-active" : ""}`} onClick={() => {

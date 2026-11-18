@@ -7,7 +7,7 @@ import { useUser, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
-import { JOB_TYPES, AREAS, CITIES } from "@/lib/alert-options";
+import { JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { track } from "@/lib/track";
 import { PLANS } from "@/lib/plans";
@@ -163,6 +163,14 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
       .sort((a, b) => postedAt(b) - postedAt(a))
       .slice(0, 3);
   }, [jobs]);
+
+  // Step 5: how many roles matching their picks were posted in the last 48 hours.
+  const recentMatches = useMemo(() => {
+    if (!jobs) return null;
+    const prefs = toPrefs(answers);
+    const since = Date.now() - 48 * 60 * 60 * 1000;
+    return jobs.filter((j) => postedAt(j) >= since && matchesAlertPrefs(j, prefs)).length;
+  }, [jobs, answers]);
 
   function confirmContact() {
     setContactError("");
@@ -385,12 +393,28 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
                   </li>
                 );
               })}
+              {reached >= 5 && (
+                <li ref={(el) => (sections.current[5] = el)} className="sf-row is-open sf-row-stat">
+                  <span className="sf-dot" aria-hidden="true">5</span>
+                  <div className="sf-row-body">
+                    <div className="sf-row-head">
+                      <h3 className="sf-row-title">
+                        {recentMatches == null ? "Checking the last 48 hours\u2026"
+                          : `There ${recentMatches === 1 ? "has" : "have"} been ${recentMatches.toLocaleString()} ${recentMatches === 1 ? "role" : "roles"} posted in the past 48 hours based on your preferences.`}
+                      </h3>
+                    </div>
+                    <div className="sf-row-content">
+                      <p className="sf-stat-note">Applicants who apply within the first 48 hours see a <strong>32% increase</strong> in interviews landed.</p>
+                    </div>
+                  </div>
+                </li>
+              )}
             </ol>
           </section>
         )}
 
         {restored && reached >= 5 && (
-          <section className="sf-checkout" ref={(el) => (sections.current[5] = el)}>
+          <section className="sf-checkout">
             <h2 className="sf-prefs-title">You&rsquo;re one step from first in the pile.</h2>
             <p className="st-hint">We&rsquo;ll {phone.trim() && email.trim() ? `text ${formatPhone(phone)} and email ${email.trim()}` : phone.trim() ? `text ${formatPhone(phone)}` : `email ${email.trim()}`} the moment new {describe(answers)} post.</p>
             {error && <p className="st-error" role="alert">{error}</p>}

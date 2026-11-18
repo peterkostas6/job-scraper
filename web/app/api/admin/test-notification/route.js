@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { sql } from "@vercel/postgres";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { alertEmail, welcomeEmail, prefsEmail, clubConfirmationEmail } from "@/lib/email-templates";
+import { BANK_COUNT } from "@/lib/banks";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function GET(request) {
   if (preview) {
     const built = {
       alert: () => alertEmail({ jobs: SAMPLE_JOBS, firstName: "Alex", userId: "preview-user" }),
-      welcome: () => welcomeEmail({ firstName: "Alex", bankCount: 20 }),
+      welcome: () => welcomeEmail({ firstName: "Alex", bankCount: BANK_COUNT }),
       prefs: () => prefsEmail({ firstName: "Alex", isFirstSetup: true, enabled: true, smsEnabled: true, phoneNumber: "+12125550147", bankNames: ["Goldman Sachs", "JPMorgan Chase"], categories: [], jobTypeLabel: "Internships only", userId: "preview-user" }),
       club: () => clubConfirmationEmail({ contactName: "Alex", clubName: "Finance Society", schoolName: "NYU Stern" }),
     }[preview];

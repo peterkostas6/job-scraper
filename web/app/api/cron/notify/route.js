@@ -196,14 +196,24 @@ export async function GET(request) {
 
     // 2. Find new jobs by checking Postgres — any link not in the jobs table is new
     const newJobs = [];
+    const firstRunBanks = new Set();
     if (allJobs.length > 0) {
       const currentLinks = allJobs.map((j) => j.link);
       const { rows: existingRows } = await sql`
         SELECT link FROM jobs WHERE link = ANY(${currentLinks})
       `;
       const existingLinks = new Set(existingRows.map((r) => r.link));
+      // A bank with no job seen in the last 3 days is new (or back after a long outage, like
+      // UBS): its whole current list would look "new". Store those jobs quietly instead of
+      // alerting on them; alerts start from the next run.
+      const { rows: knownBankRows } = await sql`
+        SELECT DISTINCT bank_key FROM jobs
+        WHERE bank_key = ANY(${succeededBankKeys}) AND last_seen_at > NOW() - INTERVAL '3 days'
+      `;
+      const knownBanks = new Set(knownBankRows.map((r) => r.bank_key));
+      for (const key of succeededBankKeys) if (!knownBanks.has(key) && bankStats[key].kept > 0) firstRunBanks.add(key);
       for (const job of allJobs) {
-        if (!existingLinks.has(job.link)) newJobs.push(job);
+        if (!existingLinks.has(job.link) && !firstRunBanks.has(job.bankKey)) newJobs.push(job);
       }
       if (simulateNew > 0 && newJobs.length === 0) {
         const { rows: recent } = await sql`SELECT link FROM jobs WHERE is_live = true ORDER BY detected_at DESC LIMIT ${simulateNew}`;
@@ -249,11 +259,14 @@ export async function GET(request) {
     //    failed the check above is stored with link_dead = true so it is never shown and
     //    never re-checked on every run. The site reads this table, so it must stay current.
     const detectedAt = new Date();
+    // First-run jobs with no posted date were listed before we started watching the bank, so
+    // date them a month back; otherwise they would all fill the Recent tab as "posted today".
+    const seedDetectedAt = new Date(detectedAt.getTime() - 30 * 24 * 60 * 60 * 1000);
     const uniqueJobs = [...new Map(allJobs.map((j) => [j.link, j])).values()];
     if (!dryRun && uniqueJobs.length > 0) {
       await sql`
         INSERT INTO jobs (link, title, bank, bank_key, location, category, posted_date, detected_at, is_live, link_dead, last_seen_at)
-        SELECT u.link, u.title, u.bank, u.bank_key, u.location, u.category, u.posted_date, ${detectedAt}, true, u.link_dead, ${detectedAt}
+        SELECT u.link, u.title, u.bank, u.bank_key, u.location, u.category, u.posted_date, u.detected_at, true, u.link_dead, ${detectedAt}
         FROM unnest(
           ${uniqueJobs.map((j) => j.link)}::text[],
           ${uniqueJobs.map((j) => j.title)}::text[],
@@ -262,8 +275,9 @@ export async function GET(request) {
           ${uniqueJobs.map((j) => j.location || "")}::text[],
           ${uniqueJobs.map((j) => j.category || "")}::text[],
           ${uniqueJobs.map((j) => { const d = j.postedDate || recoveredDates.get(j.link); return d ? new Date(d).toISOString() : null; })}::timestamptz[],
-          ${uniqueJobs.map((j) => deadNewLinks.has(j.link))}::boolean[]
-        ) AS u(link, title, bank, bank_key, location, category, posted_date, link_dead)
+          ${uniqueJobs.map((j) => deadNewLinks.has(j.link))}::boolean[],
+          ${uniqueJobs.map((j) => (firstRunBanks.has(j.bankKey) && !j.postedDate ? seedDetectedAt : detectedAt).toISOString())}::timestamptz[]
+        ) AS u(link, title, bank, bank_key, location, category, posted_date, link_dead, detected_at)
         ON CONFLICT (link) DO UPDATE SET
           title = EXCLUDED.title,
           location = EXCLUDED.location,
@@ -430,6 +444,7 @@ export async function GET(request) {
       db: dryRun ? await dbIdentity() : undefined,
       totalJobs: allJobs.length,
       newJobs: verifiedNewJobs.length,
+      firstRunBanks: [...firstRunBanks],
       skippedBrokenLinks,
       recheckedLinks,
       recheckedDead,

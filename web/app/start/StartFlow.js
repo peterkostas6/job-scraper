@@ -20,7 +20,7 @@ const STORAGE_KEY = "pp-start-v3";
 // the checkout button. After Stripe, texts turn on with these answers and they land on Alerts.
 const STEP_LABELS = ["What banks?", "What roles?", "What location?", "Where should we alert you?"];
 const STEP_NAMES = ["Banks", "Roles", "Location", "Alerts go to"];
-const EMPTY = { banks: null, areas: null, jobType: "all", city: null };
+const EMPTY = { banks: null, areas: null, jobType: null, city: null };
 
 // "2125550123" -> "(212) 555-0123"; anything else is shown as typed.
 const formatPhone = (raw) => {
@@ -143,7 +143,9 @@ export default function StartFlow() {
   const set = (patch) => setAnswers((a) => ({ ...a, ...patch }));
   const toggle = (field, key) => setAnswers((a) => {
     const cur = a[field] || [];
-    return { ...a, [field]: cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key] };
+    const next = cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key];
+    // Unpicking the last one goes back to "nothing chosen", not to "all".
+    return { ...a, [field]: next.length ? next : null };
   });
 
   // Three real, recent roles for the sample texts.
@@ -286,14 +288,14 @@ export default function StartFlow() {
                           {n === 1 && (
                             <>
                 <div className="sf-pills">
-                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => { set({ banks: [] }); reveal(2); }}>All {BANK_COUNT} banks</button>
+                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => set({ banks: [] })}>All {BANK_COUNT} banks</button>
                   {Object.entries(BANKS).map(([key, b]) => (
                     <button key={key} className="sf-pill" aria-pressed={(answers.banks || []).includes(key)} onClick={() => toggle("banks", key)}>
                       <BankLogo bankKey={key} size={16} />{b.shortName}
                     </button>
                   ))}
                 </div>
-                {answers.banks?.length > 0 && <button className="sf-next" onClick={() => reveal(2)}>Next</button>}
+                <button className="sf-next" disabled={answers.banks === null} onClick={() => reveal(2)}>Next</button>
                             </>
                           )}
                           {n === 2 && (
@@ -307,19 +309,21 @@ export default function StartFlow() {
                   {AREAS.map((a) => (
                     <button key={a.key} className="sf-pill" aria-pressed={(answers.areas || []).includes(a.key)} onClick={() => toggle("areas", a.key)}>{a.label}</button>
                   ))}
-                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.areas !== null && answers.areas.length === 0} onClick={() => { set({ areas: [] }); reveal(3); }}>Open to anything</button>
+                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.areas !== null && answers.areas.length === 0} onClick={() => set({ areas: [] })}>Open to anything</button>
                 </div>
-                {answers.areas?.length > 0 && <button className="sf-next" onClick={() => reveal(3)}>Next</button>}
+                <button className="sf-next" disabled={!answers.jobType || answers.areas === null} onClick={() => reveal(3)}>Next</button>
+                {(!answers.jobType || answers.areas === null) && <p className="sf-need">{!answers.jobType && answers.areas === null ? "Pick internship or full-time, and an area." : !answers.jobType ? "Pick internship, full-time or both." : "Pick an area, or Open to anything."}</p>}
                             </>
                           )}
                           {n === 3 && (
                             <>
                 <div className="sf-pills">
                   {CITIES.map((c) => (
-                    <button key={c} className="sf-pill" aria-pressed={answers.city === c} onClick={() => { set({ city: c }); reveal(4); }}>{c}</button>
+                    <button key={c} className="sf-pill" aria-pressed={answers.city === c} onClick={() => set({ city: c })}>{c}</button>
                   ))}
-                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.city === ""} onClick={() => { set({ city: "" }); reveal(4); }}>Anywhere</button>
+                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.city === ""} onClick={() => set({ city: "" })}>Anywhere</button>
                 </div>
+                <button className="sf-next" disabled={answers.city === null} onClick={() => reveal(4)}>Next</button>
                             </>
                           )}
                           {n === 4 && (

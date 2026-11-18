@@ -6045,8 +6045,7 @@ footer a, .footer a { color: var(--pp-cream); }
 /* Locked rows: an Unlock pill where the bank name goes; "+N new" link in the results line */
 .job-unlock { display: inline-flex; align-items: center; padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--pp-coral); color: var(--pp-navy); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.01em; }
 .job-row-locked:hover .job-unlock { background: var(--pp-coral-hover); }
-.results-new { color: var(--pp-coral); font-weight: 700; text-decoration: none; }
-.results-new:hover { text-decoration: underline; text-underline-offset: 3px; }
+.job-row-locked .job-posted { color: var(--pp-coral); font-weight: 700; }
 .job-unlock-phone { display: none; }
 @media (max-width: 768px) { .job-unlock-phone { display: inline-flex; flex: none; } }
 @media (max-width: 768px) {

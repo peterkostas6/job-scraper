@@ -6016,3 +6016,15 @@ footer a, .footer a { color: var(--pp-cream); }
   .ap-go { width: 100%; }
   .ap-copy { gap: 0.5rem; }
 }
+/* Alerts tab hero uses the same spacing as the /start hero */
+.app-layout > .content:has(> .ap) { display: flex; align-items: center; }
+.ap { width: 100%; max-width: 1040px; margin: 0 auto; grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr); column-gap: 3rem; min-height: calc(100vh - 140px); padding: 2rem 1.25rem; }
+.ap-copy { max-width: none; justify-self: stretch; gap: 1.75rem; }
+.ap-title { font-size: clamp(2.3rem, 5.4vw, 3.8rem); }
+.ap-go { font-size: 1.05rem; padding: 0.95rem 1.7rem; }
+@media (max-width: 860px) {
+  .ap { grid-template-columns: 1fr; min-height: 0; row-gap: 1.25rem; padding: 1rem 0 2rem; }
+  .ap-copy { gap: 0; }
+  .ap-cta { padding-top: 3.2rem; }
+}
+.ap-copy { gap: 3.5rem; } @media (max-width: 860px) { .ap-copy { gap: 0; } }

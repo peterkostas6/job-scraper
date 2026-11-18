@@ -238,7 +238,7 @@ export default function StartFlow() {
   );
 
   return (
-    <div className="st sf">
+    <div className={`st sf${reached >= 1 ? " sf-started" : ""}`}>
       <header className="st-header">
         <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
           <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />

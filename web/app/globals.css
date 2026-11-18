@@ -6053,3 +6053,14 @@ footer a, .footer a { color: var(--pp-cream); }
   .job-row-locked .job-lock-icon, .job-row-locked .job-title .ss-new { display: none; }
   .job-row-locked .job-index { color: inherit; }
 }
+/* Phones: once the preferences open, show only them (no hero above) */
+@media (max-width: 760px) {
+  .sf-started .sf-hero { display: none; }
+  .sf-started .sf-prefs { padding-top: 1.5rem; }
+}
+/* Phones, Alerts tab: room for the arrow between the headline and the button */
+@media (max-width: 860px) {
+  .ap-copy { gap: 0; }
+  .ap-cta { padding-top: 4.25rem; }
+  .ap-arrow { top: 0.5rem; }
+}

@@ -6064,3 +6064,8 @@ footer a, .footer a { color: var(--pp-cream); }
   .ap-cta { padding-top: 4.25rem; }
   .ap-arrow { top: 0.5rem; }
 }
+/* Locked titles: blur the letters themselves so it still reads as a line of words */
+.job-locked-title, .rl-table .rl-blur {
+  filter: none; color: transparent; user-select: none;
+  text-shadow: 0 0 10px rgba(20, 33, 61, 0.85);
+}

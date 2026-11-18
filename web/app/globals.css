@@ -5913,3 +5913,37 @@ footer a, .footer a { color: var(--pp-cream); }
 .al-welcome > div { flex: 1; min-width: 0; }
 .al-welcome-title { margin: 0; font-weight: 700; }
 .al-welcome-desc { margin: 0.2rem 0 0; font-size: 0.88rem; line-height: 1.5; color: rgba(20, 33, 61, 0.75); }
+
+/* ---- /start as one scrolling page (sf-*) ---- */
+.sf .st-header { max-width: 1040px; margin: 0 auto; }
+.sf-progress { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; align-items: center; gap: 1rem; max-width: 640px; margin: 0 auto; padding: 0.7rem 1.25rem; background: rgba(20, 33, 61, 0.92); backdrop-filter: blur(8px); border-radius: 0 0 14px 14px; }
+.sf-progress .st-progress-bar { flex: 1; }
+.sf-progress .st-progress-count { white-space: nowrap; }
+.sf-main { max-width: 1040px; margin: 0 auto; padding: 0 1.25rem 30vh; }
+.sf-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr); grid-template-areas: "title texts" "go texts"; column-gap: 3rem; row-gap: 1.75rem; align-items: center; min-height: calc(100vh - 140px); padding-block: 2rem; }
+.sf-title { grid-area: title; align-self: end; margin: 0; font-size: clamp(2.3rem, 5.4vw, 3.8rem); line-height: 1.03; letter-spacing: -0.045em; text-wrap: balance; }
+.sf-texts { grid-area: texts; display: flex; flex-direction: column; gap: 0.6rem; padding: 1.25rem; border-radius: 28px; background: linear-gradient(160deg, #2a3f6e, var(--pp-navy) 70%); box-shadow: 0 0 0 1px rgba(244, 237, 224, 0.1), 0 30px 60px -30px rgba(0, 0, 0, 0.7); }
+.sf-texts-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(244, 237, 224, 0.6); margin-bottom: 0.2rem; }
+.sf-go { grid-area: go; align-self: start; position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.9rem; }
+.sf-cta { width: auto; padding-inline: 1.7rem; font-size: 1.05rem; }
+/* Curved, hand-drawn arrow from the texts down into the button */
+.sf-arrow { position: absolute; width: 120px; height: 90px; left: 21rem; top: -46px; color: var(--pp-coral); }
+.sf-sec { display: flex; flex-direction: column; gap: 0.9rem; max-width: 640px; margin: 0 auto; padding: 4.5rem 0 2rem; scroll-margin-top: 3.5rem; animation: sf-in 520ms var(--ease-out) both; }
+.sf-step { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pp-coral); }
+.sf-q { margin: 0; }
+.sf-seg { display: inline-flex; gap: 0.3rem; padding: 0.3rem; border-radius: 999px; background: rgba(244, 237, 224, 0.08); align-self: flex-start; }
+.sf-seg button { border: 0; border-radius: 999px; padding: 0.55rem 1rem; min-height: 40px; background: transparent; color: rgba(244, 237, 224, 0.75); font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+.sf-seg button[aria-pressed="true"] { background: var(--pp-cream); color: var(--pp-navy); }
+.sf-form { display: flex; flex-direction: column; gap: 0.6rem; }
+.sf-form .st-next { margin-top: 0.4rem; }
+.sf-checkout { padding-top: 3.5rem; }
+@keyframes sf-in { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) {
+  .sf-hero { grid-template-columns: 1fr; grid-template-areas: "title" "texts" "go"; min-height: 0; row-gap: 1.25rem; padding-block: 1rem 2rem; }
+  .sf-title { align-self: auto; }
+  .sf-go { align-items: stretch; padding-top: 3.2rem; }
+  .sf-cta { width: 100%; }
+  .sf-arrow { left: 50%; top: -6px; width: 62px; height: 52px; transform: translateX(-30%) rotate(-90deg); }
+  .sf-progress { border-radius: 0; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .sf-sec { animation: none; } }

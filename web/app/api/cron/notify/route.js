@@ -284,6 +284,8 @@ export async function GET(request) {
           category = EXCLUDED.category,
           posted_date = COALESCE(EXCLUDED.posted_date, jobs.posted_date),
           is_live = true,
+          -- UBS jobs were wrongly marked dead by the phrase check (see UBS_HOST_RE); un-hide them.
+          link_dead = CASE WHEN jobs.link LIKE 'https://jobs.ubs.com/%' THEN false ELSE jobs.link_dead END,
           last_seen_at = EXCLUDED.last_seen_at
       `;
     }

@@ -25,6 +25,7 @@ const WORKDAY_RE = /^https:\/\/([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com)\/[^/]+\/(
 // name, so the site name has to map to it by hand.
 const WORKDAYSITE_RE = /^https:\/\/(wd\d+\.myworkdaysite\.com)\/[^/]+\/([^/]+)\/job\/(.+)$/i;
 const WORKDAYSITE_TENANTS = { WellsFargoJobs: "wf" };
+export const UBS_HOST_RE = /^https:\/\/jobs\.ubs\.com\//i;
 const ORACLE_FUSION_RE = /^https:\/\/([a-z0-9.-]+\.oraclecloud\.com)\/hcmUI\/CandidateExperience\/[^/]+\/sites\/([^/]+)\/job\/(\d+)\/?$/i;
 
 async function fetchJson(url, timeoutMs) {
@@ -84,6 +85,10 @@ export async function isJobLinkDead(link, timeoutMs = 8000) {
 
   const oracleMatch = link.match(ORACLE_FUSION_RE);
   if (oracleMatch) return isOracleFusionJobDead(oracleMatch, timeoutMs);
+  // UBS (BrassRing) job pages are one Angular template that always carries the "no longer
+  // accepting applications" / "no longer available" messages in hidden blocks, so the
+  // phrase check calls every UBS job closed. Closed UBS jobs drop off the listing instead.
+  if (UBS_HOST_RE.test(link)) return false;
 
   try {
     const controller = new AbortController();
@@ -126,6 +131,7 @@ export async function checkJobLinkAndDate(link, timeoutMs = 8000) {
 
   const oracleMatch = link.match(ORACLE_FUSION_RE);
   if (oracleMatch) return { dead: await isOracleFusionJobDead(oracleMatch, timeoutMs), postedDate: null };
+  if (UBS_HOST_RE.test(link)) return { dead: false, postedDate: null };
 
   try {
     const controller = new AbortController();

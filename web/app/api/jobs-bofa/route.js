@@ -10,7 +10,7 @@ const CAMPUS_URL =
   "https://bankcampuscareers.tal.net/vx/lang-en-GB/mobile-0/brand-4/xf-3d2c04c04723/candidate/jobboard/vacancy/1/adv/?ftq=analyst&fc=2&fl=6&offset=0&num_items=100&f_Item_Coverage=2";
 
 const WORKDAY_URL =
-  "https://ghr.wd1.myworkdayjobs.com/wday/cxs/ghr/lateral-us/jobs";
+  "https://wd1.myworkdaysite.com/wday/cxs/ghr/lateral-us/jobs";
 
 const WORKDAY_SITE =
   "https://ghr.wd1.myworkdayjobs.com/en-US/lateral-us";

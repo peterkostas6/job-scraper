@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const WORKDAY_URL = "https://mizuho.wd1.myworkdayjobs.com/wday/cxs/mizuho/mizuhoamericas/jobs";
+const WORKDAY_URL = "https://wd1.myworkdaysite.com/wday/cxs/mizuho/mizuhoamericas/jobs";
 const WORKDAY_SITE = "https://mizuho.wd1.myworkdayjobs.com/en-US/mizuhoamericas";
 
 function isUSLocation(loc) {

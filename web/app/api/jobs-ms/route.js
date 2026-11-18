@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 const MS_API_URL =
-  "https://ms.wd5.myworkdayjobs.com/wday/cxs/ms/External/jobs";
+  "https://wd5.myworkdaysite.com/wday/cxs/ms/External/jobs";
 
 const MS_SITE_URL =
   "https://ms.wd5.myworkdayjobs.com/en-US/External";

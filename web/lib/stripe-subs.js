@@ -12,5 +12,6 @@ export async function liveSubscriptionsForEmail(stripe, email, { exclude } = {})
     const { data } = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 20 });
     subs.push(...data.filter((s) => LIVE.has(s.status) && s.id !== exclude));
   }
+  console.log("TEMP liveSubscriptionsForEmail", JSON.stringify({ variants, customers: customers.map((c) => c.id), subs: subs.map((x) => [x.id, x.status]) }));
   return subs;
 }

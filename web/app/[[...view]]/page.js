@@ -789,48 +789,70 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
       .catch(() => setLoading(false));
   }
   const plan = PLANS.monthly;
-  const ctaLabel = plan.trialDays ? `Start ${plan.trialDays}-day free trial` : "Get Pro";
   return (
     <div className="rl">
-      <h2 className="rl-title">{total > 0 ? `${total} new ${total === 1 ? "role" : "roles"} in the last 48 hours` : "New roles from the last 48 hours"}</h2>
-      <div className="rl-feed">
-        <div className="rl-lock">
-          <div className="rl-lock-copy">
-            <h3>See every title, and get a text for the next one</h3>
-            <p className="rl-fine">Every role from the last 48 hours plus unlimited text and email alerts. Then ${plan.price}/{plan.period}, cancel anytime.</p>
+      <h2 className="rl-title">
+        {total > 0
+          ? <><span className="rl-mark">{total} {total === 1 ? "role" : "roles"}</span> posted in the last <span className="rl-mark">48 hours</span></>
+          : <>Roles posted in the last <span className="rl-mark">48 hours</span></>}
+      </h2>
+      <div className="rl-wall">
+        {/* Same table as Browse Jobs, but not clickable, titles blurred, and the whole list sits behind the lock. */}
+        <div className="jobs-list jobs-list-browse  rl-table" aria-hidden="true">
+          <div className="job-row-header">
+            <span className="job-index">#</span>
+            <span className="job-logo-spacer" aria-hidden="true" />
+            <span className="job-title">Title</span>
+            <span className="job-location">Location</span>
+            <span className="job-posted">Posted</span>
+            <span className="job-badges">Type</span>
+            <span className="new-bank-label">Bank</span>
+            <span style={{ width: 14 }} />
+            <span style={{ width: 14 }} />
           </div>
-          <div className="rl-lock-actions">
+          {(recent.length ? recent : Array.from({ length: 8 }, (_, i) => ({ link: i, title: "Investment Banking Analyst", bank: "", location: "" }))).map((job, index) => (
+            <div className="job-row" key={job.link}>
+              <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+              <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
+              <span className="job-title rl-blur">{job.title}</span>
+              <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
+              <span className="job-location">{job.location || "\u2014"}</span>
+              <span className="job-posted tnum">{formatPostedAt(job)}</span>
+              <div className="job-badges">
+                <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>{isInternship(job.title) ? "Internship" : "Analyst"}</span>
+              </div>
+              <span className="new-bank-label">{job.bank}</span>
+              <span style={{ width: 14 }} />
+              <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          ))}
+        </div>
+        <div className="rl-lock-layer">
+          <div className="rl-lock">
+            <span className="rl-lock-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            </span>
+            <h3>Unlock every new role</h3>
+            <p className="rl-fine">Every role from the last 48 hours, plus a text the moment the next one posts.</p>
             {isSignedIn ? (
-              <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Redirecting..." : ctaLabel}</button>
+              <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Redirecting..." : "Unlock"}</button>
             ) : (
               <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
-                <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta">{ctaLabel}</button>
+                <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta">Unlock</button>
               </SignUpButton>
             )}
+            <p className="rl-fine">{plan.trialDays ? `Free for ${plan.trialDays} days, then ` : ""}${plan.price}/{plan.period}. Cancel anytime.</p>
             {!isSignedIn && (
               <p className="rl-fine">Already Pro?{" "}<SignInButton mode="modal"><button className="paywall-link">Sign in</button></SignInButton></p>
             )}
           </div>
-        </div>
-        <div className="rl-list">
-          {recent.length ? recent.map((job) => (
-            <div key={job.link} className="rl-row">
-              <BankLogo bankKey={job.bankKey} bank={job.bank} size={34} className="rl-logo" />
-              <div className="rl-text">
-                <div className="rl-name"><span className="rl-name-text" aria-hidden="true">{job.title}</span><span className="sr-only">Title unlocks with Pro</span><span className="ss-new">New</span></div>
-                <div className="rl-meta">{job.bank}{job.cities?.[0] ? ` \u00b7 ${job.cities[0]}` : ""}</div>
-              </div>
-              <span className="rl-age">{feedAge(job)}</span>
-            </div>
-          )) : [0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="rl-row"><div className="skeleton skeleton-title" /></div>
-          ))}
         </div>
       </div>
       <p className="rl-browse">Or <Link href="/jobs?bank=all" className="text-link">browse every open role</Link> for free.</p>
     </div>
   );
 }
+
 
 function PaywallOverlay({ isSignedIn, newCount }) {
   useEffect(() => { capture("paywall_viewed", { new_roles: newCount ?? null, signed_in: Boolean(isSignedIn) }); }, []);

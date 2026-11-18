@@ -41,6 +41,9 @@ export const BANKS = {
   pnc: { name: "PNC", shortName: "PNC", endpoint: "/api/firm/pnc" },
   santander: { name: "Santander", shortName: "Santander", endpoint: "/api/firm/santander" },
   cibc: { name: "CIBC", shortName: "CIBC", endpoint: "/api/firm/cibc" },
+  rbc: { name: "RBC Capital Markets", shortName: "RBC", endpoint: "/api/firm/rbc" },
+  scotiabank: { name: "Scotiabank", shortName: "Scotiabank", endpoint: "/api/firm/scotiabank" },
+  rothschild: { name: "Rothschild & Co", shortName: "Rothschild", endpoint: "/api/firm/rothschild" },
 };
 
 export const BANK_COUNT = Object.keys(BANKS).length;

@@ -5840,9 +5840,9 @@ footer a, .footer a { color: var(--pp-cream); }
 .rl-wall { position: relative; }
 .rl-table { filter: blur(1.5px); pointer-events: none; user-select: none; }
 .rl-table .rl-blur { filter: blur(5px); }
-.rl-lock-layer { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 7rem; background: linear-gradient(180deg, rgba(20, 33, 61, 0) 0%, rgba(20, 33, 61, 0.35) 100%); border-radius: var(--ss-radius); }
+.rl-lock-layer { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; padding: 1rem; background: linear-gradient(180deg, rgba(20, 33, 61, 0) 0%, rgba(20, 33, 61, 0.35) 100%); border-radius: var(--ss-radius); }
 .rl-lock {
-  position: sticky; top: 30vh; width: min(400px, calc(100% - 2rem));
+  width: min(400px, 100%);
   display: flex; flex-direction: column; align-items: center; gap: 0.65rem; padding: 1.6rem 1.5rem; text-align: center;
   border-radius: 20px; background: var(--pp-navy); color: var(--pp-cream); box-shadow: 0 0 0 1px rgba(244, 237, 224, 0.12), 0 30px 60px -20px rgba(0, 0, 0, 0.7);
 }
@@ -5853,7 +5853,7 @@ footer a, .footer a { color: var(--pp-cream); }
 .rl-fine .paywall-link { color: var(--pp-cream); text-decoration: underline; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
 .rl-browse { margin: 0; text-align: center; font-size: 0.88rem; color: rgba(244, 237, 224, 0.7); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@media (max-width: 768px) { .rl-lock-layer { padding-top: 4rem; } .rl-mark { text-decoration-thickness: 3px; text-underline-offset: 5px; } }
+@media (max-width: 768px) { .rl-mark { text-decoration-thickness: 3px; text-underline-offset: 5px; } }
 
 /* App pages fill the screen: nav, sidebar and content run edge to edge */
 .nav-inner { max-width: none; }

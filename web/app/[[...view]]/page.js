@@ -832,7 +832,7 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
             <span className="rl-lock-icon" aria-hidden="true">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
             </span>
-            <h3>Unlock every new role</h3>
+            <h3>Unlock recent postings</h3>
             <p className="rl-fine">Every role from the last 48 hours, plus a text the moment the next one posts.</p>
             {isSignedIn ? (
               <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Redirecting..." : "Unlock"}</button>

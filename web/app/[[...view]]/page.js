@@ -2276,13 +2276,13 @@ export default function Home() {
           {/* MAIN CONTENT */}
           <main className="content">
             {/* Notifications view */}
-            {viewNotifications && !isSignedIn && (
+            {viewNotifications && !(isSignedIn && isSubscribed) && (
               <>
                 <AlertsPhoneDemo jobs={allJobs} onStart={() => setAlertsSetupSignal((n) => n + 1)} />
                 <StartFlow embedded openSignal={alertsSetupSignal} />
               </>
             )}
-            {viewNotifications && isSignedIn && (
+            {viewNotifications && isSignedIn && isSubscribed && (
               <div className="al-page">
                 <div className="al-head">
                   <h2 className="al-title">Job alerts</h2>

@@ -1,6 +1,6 @@
 // Scrapers for the firms added in Nov 2026. Each firm is one config line in FIRM_SOURCES;
 // the adapters below speak the job-board APIs those firms use (Workday, Greenhouse, Lever,
-// Ashby, Oracle Recruiting Cloud, Oleeo/tal.net). /api/firm/[key] runs them.
+// Ashby, Oracle Recruiting Cloud, Oleeo/tal.net, SAP SuccessFactors). /api/firm/[key] runs them.
 // Every adapter returns [{ title, link, location, category, postedDate }] like the older
 // per-bank routes, filtered to analyst/intern-type titles in the US.
 
@@ -26,6 +26,9 @@ export const FIRM_SOURCES = {
   ],
   dadavidson: { type: "lever", slug: "dadavidson" },
   ardea: { type: "ashby", slug: "ardea-partners" },
+  rbc: { type: "workday", host: "rbc.wd3.myworkdayjobs.com", tenant: "rbc", site: "RBCGLOBAL1", search: true },
+  rothschild: { type: "workday", host: "rothschildandco.wd3.myworkdayjobs.com", tenant: "rothschildandco", site: "Rothschildandco_Lateral" },
+  scotiabank: { type: "rmk", base: "https://jobs.scotiabank.com" },
 };
 
 // Same short UA as the older Workday routes; Workday refuses a full Chrome UA from Vercel.
@@ -199,9 +202,31 @@ async function talnet(src) {
   return out;
 }
 
+// SAP SuccessFactors career sites (jobs.<bank>.com/search/) render results as plain HTML,
+// 25 rows a page. Locations end in a country code ("Dallas, TX, US, 75219"); keep US only.
+async function rmk(src) {
+  const out = [];
+  for (const q of SEARCH_TERMS) {
+    for (let startrow = 0; startrow < 500; startrow += 25) {
+      const res = await fetch(`${src.base}/search/?q=${q}&startrow=${startrow}`, { cache: "no-store", headers: { "User-Agent": UA, "Accept-Language": "en-US" } });
+      if (!res.ok) throw new Error(`${new URL(src.base).host} returned ${res.status}`);
+      const rows = [...(await res.text()).matchAll(/<tr class="data-row">([\s\S]*?)<\/tr>/g)].map((m) => m[1]);
+      for (const row of rows) {
+        const t = row.match(/class="jobTitle-link"[^>]*href="([^"]+)"[^>]*>([^<]+)/);
+        const location = row.match(/class="jobLocation"[^>]*>\s*([^<]+)/)?.[1].trim() || "";
+        if (!t || !/,\s*US\b/.test(location)) continue;
+        out.push({ title: decode(t[2]), link: `${src.base}${t[1]}`, location: location.replace(/,\s*US\b.*$/, ""), postedDate: isoDay(row.match(/class="jobDate"[^>]*>\s*([^<]+)/)?.[1].trim()) });
+      }
+      if (rows.length < 25) break;
+      await sleep(300);
+    }
+  }
+  return out;
+}
+
 const decode = (s) => s.replace(/&amp;/g, "&").replace(/&#039;|&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 
-const ADAPTERS = { workday, greenhouse, lever, ashby, oracle, talnet };
+const ADAPTERS = { workday, greenhouse, lever, ashby, oracle, talnet, rmk };
 
 export async function fetchFirmJobs(key) {
   const cfg = FIRM_SOURCES[key];

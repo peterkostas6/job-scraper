@@ -5665,7 +5665,7 @@ body {
 
 /* ---- Cream surfaces (30%): text inside them flips back to navy ---- */
 .ss-card, .lb, .jobs-list, .welcome-banner, .modal-card, .st-option, .pricing-card, .paywall-plan, .paywall-unlocks,
-.al-card, .al-status, .al-preview, .about-feature, .ss-notif, .ss-applied, .mfs, .mfb-bar, .search-bar, .filter-dropdown,
+.al-card, .al-status, .al-preview, .about-feature, .about-bank-card, .ss-notif, .ss-applied, .mfs, .mfb-bar, .search-bar, .filter-dropdown,
 .mobile-bank-select, .mfs-select, .st-input, .h-quote, .h-plan, .ss-close, .gate-card, .saved-toggle {
   --ss-ink: var(--pp-navy);
   --text-primary: var(--pp-navy);

@@ -8,6 +8,7 @@ import { createHmac } from "crypto";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sendMetaServerEvent } from "@/lib/meta-capi";
 import { sendRedditServerEvent } from "@/lib/reddit-capi";
+import { BANK_COUNT } from "@/lib/banks";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export async function POST(req) {
     // Send welcome email
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const { subject, html, text } = welcomeEmail({ firstName, bankCount: 20 });
+      const { subject, html, text } = welcomeEmail({ firstName, bankCount: BANK_COUNT });
       await sendEmail(resend, { to: email, subject, html, text, idempotencyKey: `welcome-${userData.id}`, tags: [{ name: "type", value: "welcome" }] });
     } catch (err) {
       console.error("Failed to send welcome email:", err);

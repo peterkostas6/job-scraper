@@ -14,7 +14,7 @@ import { useTrackSignup } from "@/lib/use-track-signup";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 
-const FREE_BANKS = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "blackrock", "jefferies"]);
+const FREE_BANKS = new Set(Object.keys(BANKS));
 
 const JOB_TYPES = {
   all: "All Types",
@@ -205,7 +205,7 @@ function rankCounts(values, last) {
 
 // Homepage comparison chart: [row label, on your own, Pete's Postings]
 const COMPARE_ROWS = [
-  ["Coverage", "20 career sites, checked one by one", "All 20 banks in one feed"],
+  ["Coverage", `${BANK_COUNT} career sites, checked one by one`, `All ${BANK_COUNT} banks in one feed`],
   ["Speed", "You find out whenever you happen to check", "A text or email within 5 minutes of posting"],
   ["Your applications", "Scattered across tabs and spreadsheets", "Saved jobs, all in one place"],
 ];
@@ -1005,7 +1005,7 @@ function AboutPage({ onBrowse }) {
           </div>
           <div className="about-feature">
             <strong>Every bank in one place</strong>
-            <span>All open analyst and internship roles across {BANK_COUNT} banks in one searchable list, instead of checking 20 different career sites every day.</span>
+            <span>All open analyst and internship roles across {BANK_COUNT} banks in one searchable list, instead of checking {BANK_COUNT} different career sites every day.</span>
           </div>
           <div className="about-feature">
             <strong>Straight from the source</strong>

@@ -21,6 +21,28 @@ export const BANKS = {
   blackstone: { name: "Blackstone", shortName: "Blackstone", endpoint: "/api/jobs-blackstone" },
   blackrock: { name: "BlackRock", shortName: "BlackRock", endpoint: "/api/jobs-blackrock" },
   jefferies: { name: "Jefferies", shortName: "Jefferies", endpoint: "/api/jobs-jefferies" },
+  ubs: { name: "UBS", shortName: "UBS", endpoint: "/api/jobs-ubs" },
+  // Added Nov 2026; one shared route, scrapers configured in lib/firm-sources.js.
+  evercore: { name: "Evercore", shortName: "Evercore", endpoint: "/api/firm/evercore" },
+  lazard: { name: "Lazard", shortName: "Lazard", endpoint: "/api/firm/lazard" },
+  moelis: { name: "Moelis & Company", shortName: "Moelis", endpoint: "/api/firm/moelis" },
+  pjt: { name: "PJT Partners", shortName: "PJT", endpoint: "/api/firm/pjt" },
+  pwp: { name: "Perella Weinberg", shortName: "Perella", endpoint: "/api/firm/pwp" },
+  williamblair: { name: "William Blair", shortName: "William Blair", endpoint: "/api/firm/williamblair" },
+  harriswilliams: { name: "Harris Williams", shortName: "Harris Williams", endpoint: "/api/firm/harriswilliams" },
+  lincoln: { name: "Lincoln International", shortName: "Lincoln", endpoint: "/api/firm/lincoln" },
+  leerink: { name: "Leerink Partners", shortName: "Leerink", endpoint: "/api/firm/leerink" },
+  raine: { name: "The Raine Group", shortName: "Raine", endpoint: "/api/firm/raine" },
+  ardea: { name: "Ardea Partners", shortName: "Ardea", endpoint: "/api/firm/ardea" },
+  dadavidson: { name: "D.A. Davidson", shortName: "Davidson", endpoint: "/api/firm/dadavidson" },
+  raymondjames: { name: "Raymond James", shortName: "Raymond James", endpoint: "/api/firm/raymondjames" },
+  truist: { name: "Truist Securities", shortName: "Truist", endpoint: "/api/firm/truist" },
+  citizens: { name: "Citizens", shortName: "Citizens", endpoint: "/api/firm/citizens" },
+  pnc: { name: "PNC", shortName: "PNC", endpoint: "/api/firm/pnc" },
+  santander: { name: "Santander", shortName: "Santander", endpoint: "/api/firm/santander" },
+  cibc: { name: "CIBC", shortName: "CIBC", endpoint: "/api/firm/cibc" },
 };
+
+export const BANK_COUNT = Object.keys(BANKS).length;
 
 export const BANK_NAMES = Object.fromEntries(Object.entries(BANKS).map(([k, b]) => [k, b.name]));

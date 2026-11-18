@@ -40,7 +40,7 @@ function toPrefs(a) {
     location: a.city || "",
   };
 }
-// "Investment Banking internships at all 20 banks in New York"
+// "Investment Banking internships at all banks in New York"
 function describe(a) {
   const areas = a.areas || [];
   const area = areas.length === 0 ? "" : areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(" or ") + " ";

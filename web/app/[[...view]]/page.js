@@ -1261,25 +1261,6 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
             {/* Filters */}
             <div className="filters-container">
               <div className="filters">
-                <div className="search-wrapper">
-                  <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                  </svg>
-                  <input
-                    className="search-bar"
-                    type="text"
-                    placeholder="Search job titles..."
-                    value={rpSearch}
-                    onChange={(e) => setRpSearch(e.target.value)}
-                  />
-                  {rpSearch && (
-                    <button className="search-clear" onClick={() => setRpSearch("")}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 6 6 18M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  )}
-                </div>
                 <select className="filter-dropdown" value={rpBank} onChange={(e) => setRpBank(e.target.value)}>
                   <option value="">All Banks</option>
                   {availableBanks.map((b) => <option key={b} value={b}>{b}</option>)}
@@ -2620,25 +2601,6 @@ export default function Home() {
                       )}
                     </button>
                     <div className={`filters${mobileFiltersOpen ? " filters-mobile-open" : ""}`}>
-                      <div className="search-wrapper">
-                        <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                        </svg>
-                        <input
-                          className="search-bar"
-                          type="text"
-                          placeholder="Search job titles..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        {searchQuery && (
-                          <button className="search-clear" onClick={() => setSearchQuery("")}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M18 6 6 18M6 6l12 12"/>
-                            </svg>
-                          </button>
-                        )}
-                      </div>
                       <select className="filter-dropdown" aria-label="Location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
                         <option value="">All Locations</option>
                         {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}

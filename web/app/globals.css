@@ -6028,3 +6028,6 @@ footer a, .footer a { color: var(--pp-cream); }
   .ap-cta { padding-top: 3.2rem; }
 }
 .ap-copy { gap: 3.5rem; } @media (max-width: 860px) { .ap-copy { gap: 0; } }
+/* Pro Recent: centered heading like the locked page; filter bar lines up with the list */
+.rl-title-pro { margin: 0.75rem 0 1.5rem; }
+.new-postings-view .mfb { padding: 0 0 0.9rem; }

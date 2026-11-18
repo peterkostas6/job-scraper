@@ -2086,17 +2086,12 @@ export default function Home() {
             {/* Pro members get the page header and the alerts shortcut; everyone else sees the locked live feed on its own. */}
             {isSubscribed && (
               <>
-            <div className="new-postings-header">
-              <h1 className="new-postings-page-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                </svg>
-                Recent Postings
-              </h1>
-              <p className="new-postings-page-desc">
-                Jobs posted in the last 48 hours across all banks. Apply early — roles fill fast.
-              </p>
-            </div>
+            {/* Same centered heading as the locked page, so the tab reads the same for everyone. */}
+            <h1 className="rl-title rl-title-pro">
+              {last48hCount > 0
+                ? <><span className="rl-mark">{last48hCount} {last48hCount === 1 ? "role" : "roles"}</span> posted in the last <span className="rl-mark">48 hours</span></>
+                : <>Roles posted in the last <span className="rl-mark">48 hours</span></>}
+            </h1>
 
             {/* Shortcut to alert settings: only until their alerts are on (then it is just noise). */}
             {!(notifPrefs.smsEnabled || notifPrefs.enabled) && (

@@ -6002,3 +6002,17 @@ footer a, .footer a { color: var(--pp-cream); }
 .sf-next:disabled { background: rgba(244, 237, 224, 0.14); color: rgba(244, 237, 224, 0.5); cursor: not-allowed; transform: none; }
 .sf-need { margin: -0.4rem 0 0; font-size: 0.82rem; color: rgba(244, 237, 224, 0.6); }
 .sf-need-top { margin: 0; }
+/* ---- Alerts tab (signed out): same promise as /start ---- */
+.ap-title { margin: 0; font-size: clamp(2.2rem, 4.6vw, 3.6rem); font-weight: 700; line-height: 1.03; letter-spacing: -0.045em; color: var(--pp-cream); text-wrap: balance; }
+.ap-copy { gap: 2.2rem; }
+.ap-cta { position: relative; }
+.ap-go { font-size: 1.05rem; padding: 0.95rem 1.7rem; }
+.ap-arrow { position: absolute; width: 120px; height: 90px; left: 21rem; top: -46px; color: var(--pp-coral); }
+.ap-side { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; justify-self: center; }
+.ap-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(244, 237, 224, 0.6); }
+@media (max-width: 860px) {
+  .ap-cta { padding-top: 3rem; }
+  .ap-arrow { left: 50%; top: -4px; width: 62px; height: 52px; transform: translateX(-30%) rotate(-90deg); }
+  .ap-go { width: 100%; }
+  .ap-copy { gap: 0.5rem; }
+}

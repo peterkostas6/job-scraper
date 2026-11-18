@@ -91,6 +91,16 @@ export default function StartFlow() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, reached, email, phone, smsConsent, pendingCheckout })); } catch {}
   }, [restored, answers, reached, email, phone, smsConsent, pendingCheckout]);
 
+  // Arriving from the Alerts tab (/start?setup=1): skip the hero, open the preferences.
+  useEffect(() => {
+    if (!restored) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("setup") !== "1") return;
+    url.searchParams.delete("setup");
+    window.history.replaceState(null, "", url.pathname + url.search);
+    reveal(1);
+  }, [restored]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Signed in: their account email is the one we use.
   useEffect(() => { if (isSignedIn && user?.primaryEmailAddress?.emailAddress) setEmail(user.primaryEmailAddress.emailAddress); }, [isSignedIn, user]);
 

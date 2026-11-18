@@ -347,14 +347,9 @@ function CountUp({ value, format = (n) => n.toLocaleString() }) {
 const ARROW = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
 const MSG_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="white" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
-// Alerts tab (signed out): real recent roles land on a phone lock screen one by one,
-// while the three steps light up in time. Coral "Set up alerts" is the one action.
+// Alerts tab (signed out): same promise as /start. Real recent roles land on a phone lock
+// screen one by one; the one action goes straight to the preferences on /start.
 const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
-const ALERT_STEPS = [
-  ["Pick what you want", "Roles, banks and cities. Four quick questions."],
-  ["We watch every bank", "Straight from their own career sites, every 5 minutes."],
-  ["Your phone buzzes", "The role, the bank and a link to apply."],
-];
 function AlertsPhoneDemo({ jobs }) {
   const feed = [...(jobs || [])].filter((j) => j.title && j.title.length < 70).sort((a, b) => postedAt(b) - postedAt(a)).slice(0, 10);
   const [tick, setTick] = useState(0);
@@ -363,31 +358,26 @@ function AlertsPhoneDemo({ jobs }) {
     const id = setInterval(() => setTick((t) => t + 1), 1400);
     return () => clearInterval(id);
   }, []);
-  const step = tick % 3;
   const landed = Math.floor((tick + 1) / 3) + 1; // a new text every third beat, on "Your phone buzzes"
   const shown = feed.length ? Array.from({ length: Math.min(3, landed) }, (_, k) => feed[(landed - 1 - k) % feed.length]) : [];
   const minute = String((41 + landed * 3) % 60).padStart(2, "0");
   return (
     <div className="ap">
       <div className="ap-copy">
-        <h2 className="alerts-intro-title">Get a text the minute a bank posts a role you want</h2>
-        <p className="alerts-intro-desc">We check all {BANK_COUNT} banks every 5 minutes. Free for 7 days, then $4.99 a month.</p>
-        <ol className="ap-steps">
-          {ALERT_STEPS.map(([title, desc], i) => (
-            <li key={title} className={i === step ? "is-on" : ""}>
-              <span className="ap-n">{i + 1}</span>
-              <span><strong>{title}</strong>{desc}</span>
-            </li>
-          ))}
-        </ol>
+        <h2 className="ap-title">Your resume will be first in the pile.</h2>
         <div className="ap-cta">
-          <Link href="/start" className="h-cta" onClick={() => capture("alerts_tab_cta_clicked")}>
-            Set up alerts
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <svg className="ap-arrow" viewBox="0 0 120 90" aria-hidden="true">
+            <path d="M110 6 C 112 46, 78 70, 22 72" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeDasharray="1 9" />
+            <path d="M34 60 L 18 72 L 34 84" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {/* Straight to the preferences on /start, not its hero again */}
+          <Link href="/start?setup=1" className="h-cta ap-go" onClick={() => capture("alerts_tab_cta_clicked")}>
+            Set up texts so you can apply first
           </Link>
-          <p className="h-fine">Takes about a minute &middot; No credit card</p>
         </div>
       </div>
+      <div className="ap-side">
+      <span className="ap-label">What lands on your phone</span>
       <div className="ap-phone" role="img" aria-label="Example text alerts arriving on a phone">
         <div className="ap-screen">
           <span className="ap-date">Today</span>
@@ -402,6 +392,7 @@ function AlertsPhoneDemo({ jobs }) {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

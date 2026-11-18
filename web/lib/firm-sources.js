@@ -105,7 +105,9 @@ async function getJSON(url, init = {}, tries = 3) {
 // ---- Adapters ----
 
 async function workday(src) {
-  const api = `https://${src.host}/wday/cxs/${src.tenant}/${src.site}/jobs`;
+  // Workday answers Vercel with 429 on <tenant>.wdN.myworkdayjobs.com (since Nov 15 2026) but
+  // serves the same API on wdN.myworkdaysite.com. Job links keep the normal host.
+  const api = `https://${src.host.match(/wd\d+/)[0]}.myworkdaysite.com/wday/cxs/${src.tenant}/${src.site}/jobs`;
   const linkBase = src.linkBase || `https://${src.host}/en-US/${src.site}`;
   const out = [];
   for (const searchText of src.search ? SEARCH_TERMS : [""]) {

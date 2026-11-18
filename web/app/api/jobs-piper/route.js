@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const WORKDAY_URL = "https://pipersandler.wd501.myworkdayjobs.com/wday/cxs/pipersandler/Piper_Sandler_Careers/jobs";
+const WORKDAY_URL = "https://wd501.myworkdaysite.com/wday/cxs/pipersandler/Piper_Sandler_Careers/jobs";
 const WORKDAY_SITE = "https://pipersandler.wd501.myworkdayjobs.com/en-US/Piper_Sandler_Careers";
 
 function isUSLocation(loc) {

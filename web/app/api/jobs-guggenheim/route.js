@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const WORKDAY_URL = "https://guggenheim.wd1.myworkdayjobs.com/wday/cxs/guggenheim/Guggenheim_Careers/jobs";
+const WORKDAY_URL = "https://wd1.myworkdaysite.com/wday/cxs/guggenheim/Guggenheim_Careers/jobs";
 const WORKDAY_SITE = "https://guggenheim.wd1.myworkdayjobs.com/en-US/Guggenheim_Careers";
 
 function isUSLocation(loc) {

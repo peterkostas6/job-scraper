@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const WORKDAY_URL = "https://hl.wd1.myworkdayjobs.com/wday/cxs/hl/External/jobs";
+const WORKDAY_URL = "https://wd1.myworkdaysite.com/wday/cxs/hl/External/jobs";
 const WORKDAY_SITE = "https://hl.wd1.myworkdayjobs.com/en-US/External";
 
 function sleep(ms) {

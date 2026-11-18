@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const WORKDAY_URL = "https://td.wd3.myworkdayjobs.com/wday/cxs/td/TD_Bank_Careers/jobs";
+const WORKDAY_URL = "https://wd3.myworkdaysite.com/wday/cxs/td/TD_Bank_Careers/jobs";
 const WORKDAY_SITE = "https://td.wd3.myworkdayjobs.com/en-US/TD_Bank_Careers";
 
 function isUSLocation(loc) {

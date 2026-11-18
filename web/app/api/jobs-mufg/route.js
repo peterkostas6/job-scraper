@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const WORKDAY_URL = "https://mufgub.wd3.myworkdayjobs.com/wday/cxs/mufgub/MUFG-Careers/jobs";
+const WORKDAY_URL = "https://wd3.myworkdaysite.com/wday/cxs/mufgub/MUFG-Careers/jobs";
 const WORKDAY_SITE = "https://mufgub.wd3.myworkdayjobs.com/en-US/MUFG-Careers";
 
 function isUSLocation(loc) {

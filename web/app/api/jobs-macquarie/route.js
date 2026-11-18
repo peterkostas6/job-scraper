@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const WORKDAY_URL = "https://mq.wd3.myworkdayjobs.com/wday/cxs/mq/CareersatMQ/jobs";
+const WORKDAY_URL = "https://wd3.myworkdaysite.com/wday/cxs/mq/CareersatMQ/jobs";
 const WORKDAY_SITE = "https://mq.wd3.myworkdayjobs.com/en-US/CareersatMQ";
 
 function isUSLocation(loc) {

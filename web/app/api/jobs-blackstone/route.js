@@ -4,8 +4,8 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const API_URL = "https://blackstone.wd1.myworkdayjobs.com/wday/cxs/blackstone/Blackstone_Careers/jobs";
-const DETAIL_BASE = "https://blackstone.wd1.myworkdayjobs.com/wday/cxs/blackstone/Blackstone_Careers";
+const API_URL = "https://wd1.myworkdaysite.com/wday/cxs/blackstone/Blackstone_Careers/jobs";
+const DETAIL_BASE = "https://wd1.myworkdaysite.com/wday/cxs/blackstone/Blackstone_Careers";
 const SITE_URL = "https://blackstone.wd1.myworkdayjobs.com/en-US/Blackstone_Careers";
 
 function categorizeJob(title) {

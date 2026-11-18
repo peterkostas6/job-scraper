@@ -176,6 +176,8 @@ export default function PricingPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.url) window.location.href = data.url;
+        else if (data.alreadyPro) window.location.reload(); // already Pro: reload shows it
+        else setCheckoutLoading(null);
       })
       .catch(() => setCheckoutLoading(null));
   }

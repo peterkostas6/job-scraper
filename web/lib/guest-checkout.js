@@ -3,6 +3,7 @@
 // back to (/welcome) call provisionGuestCheckout; a row in checkout_claims makes sure only
 // one of them does the work, so nobody gets two accounts or two welcome texts.
 import Stripe from "stripe";
+import { liveSubscriptionsForEmail } from "@/lib/stripe-subs";
 import { sql } from "@vercel/postgres";
 import { clerkClient } from "@clerk/nextjs/server";
 import { saveAlertPrefs } from "@/lib/alert-prefs";
@@ -99,11 +100,21 @@ export async function provisionGuestCheckout(sessionOrId, { origin } = {}) {
       }
     }
 
+    // This email already had Pro (signed-out checkouts can't be checked before Stripe when no
+    // email is known): cancel the subscription just made, while it's still in its free trial,
+    // and keep the one they had. They are told to sign in, like any existing account.
+    const earlier = await liveSubscriptionsForEmail(stripe, email, { exclude: session.subscription });
+    const keep = earlier[0];
+    if (keep && session.subscription) await stripe.subscriptions.cancel(session.subscription);
+
     await clerk.users.updateUserMetadata(user.id, {
-      publicMetadata: { subscribed: true, stripeCustomerId: session.customer, stripeSubscriptionId: session.subscription },
+      publicMetadata: keep
+        ? { subscribed: true, stripeCustomerId: keep.customer, stripeSubscriptionId: keep.id }
+        : { subscribed: true, stripeCustomerId: session.customer, stripeSubscriptionId: session.subscription },
     });
     // Renewals and cancellations find the account through this.
-    if (session.subscription) await stripe.subscriptions.update(session.subscription, { metadata: { clerkUserId: user.id } });
+    const subId = keep ? keep.id : session.subscription;
+    if (subId) await stripe.subscriptions.update(subId, { metadata: { clerkUserId: user.id } });
 
     // Only for an account made just now: anyone can type any email into Stripe, so an existing
     // account's alert settings are never changed from here (that person signs in first).

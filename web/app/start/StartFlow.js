@@ -193,6 +193,12 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
         }),
       });
       const data = await res.json().catch(() => ({}));
+      if (data.alreadyPro) {
+        if (isSignedIn) { await turnOnTexts(); return; } // their account is Pro: just save the alerts
+        setError("That email already has Pro. Sign in to finish setting up your alerts.");
+        setSaving(false);
+        return;
+      }
       if (!data.url) throw new Error(data.error || "checkout failed");
       window.location.href = data.url;
     } catch {

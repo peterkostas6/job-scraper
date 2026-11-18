@@ -774,7 +774,11 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
     // Signed out too: straight to Stripe; the account is made after payment and /welcome signs them in.
     fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(isSignedIn ? { plan: "monthly" } : { plan: "monthly", next: "/recent" }) })
       .then((res) => res.json())
-      .then((data) => { if (data.url) window.location.href = data.url; else setLoading(false); })
+      .then((data) => {
+        if (data.url) window.location.href = data.url;
+        else if (data.alreadyPro) window.location.reload(); // already Pro: reload shows the feed
+        else setLoading(false);
+      })
       .catch(() => setLoading(false));
   }
   const plan = PLANS.monthly;
@@ -854,6 +858,8 @@ function PaywallOverlay({ isSignedIn, newCount }) {
       .then((res) => res.json())
       .then((data) => {
         if (data.url) window.location.href = data.url;
+        else if (data.alreadyPro) window.location.reload(); // already Pro: reload shows it
+        else { setLoading(false); setSelectedPlan(null); }
       })
       .catch(() => { setLoading(false); setSelectedPlan(null); });
   }

@@ -307,11 +307,10 @@ function homeFeed(jobs) {
   return picked;
 }
 
-// Every sign-up button on the homepage goes to the /start quiz: a few taps of
-// commitment and a list of real matches before we ask for an account.
+// Every "Set up alerts" button on the homepage goes to the Alerts tab.
 function StartCta({ where, className = "h-cta" }) {
   return (
-    <Link href="/start" className={className} onClick={() => capture("home_cta_clicked", { where })}>
+    <Link href="/notifications" className={className} onClick={() => capture("home_cta_clicked", { where })}>
       Set up alerts
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </Link>

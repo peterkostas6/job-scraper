@@ -160,9 +160,12 @@ export default function StartFlow() {
 
   function confirmContact() {
     setContactError("");
-    if (!isSignedIn && !validEmail(email)) { setContactError("Enter your email address."); return; }
-    if (!validPhone(phone)) { setContactError("Enter a 10-digit US mobile number."); return; }
-    if (!smsConsent) { setContactError("Check the box to agree to texts."); return; }
+    // Either one is enough: a phone number means texts, an email means emails, both means both.
+    const hasPhone = phone.trim() !== "", hasEmail = email.trim() !== "";
+    if (!hasPhone && !hasEmail) { setContactError("Enter a phone number or an email."); return; }
+    if (hasEmail && !validEmail(email)) { setContactError("That email doesn\u2019t look right."); return; }
+    if (hasPhone && !validPhone(phone)) { setContactError("Enter a 10-digit US mobile number."); return; }
+    if (hasPhone && !smsConsent) { setContactError("Check the box to agree to texts."); return; }
     capture("start_contact_entered", { signedIn: Boolean(isSignedIn) });
     reveal(5);
   }
@@ -189,17 +192,19 @@ export default function StartFlow() {
 
   async function turnOnTexts() {
     setError("");
-    if (!validPhone(phone) || !smsConsent) { setReached((r) => Math.max(r, 4)); scrollTarget.current = 4; return; }
+    const wantsSms = validPhone(phone) && smsConsent;
+    const wantsEmail = validEmail(email);
+    if (!wantsSms && !wantsEmail) { setReached((r) => Math.max(r, 4)); setActive(4); scrollTarget.current = 4; return; }
     setSaving(true);
     try {
       const res = await fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: true, ...toPrefs(answers), smsEnabled: true, smsConsent: true, phoneNumber: phone.replace(/\D/g, "") }),
+        body: JSON.stringify({ enabled: wantsEmail, ...toPrefs(answers), smsEnabled: wantsSms, smsConsent: wantsSms, phoneNumber: wantsSms ? phone.replace(/\D/g, "") : "" }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.error || "save failed");
-      capture("start_alerts_saved", { sms: true, email: true });
+      capture("start_alerts_saved", { sms: wantsSms, email: wantsEmail });
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
       window.location.href = "/notifications?welcome=1";
     } catch {
@@ -329,11 +334,12 @@ export default function StartFlow() {
                           {n === 4 && (
                             <>
                 <form className="sf-form" onSubmit={(e) => { e.preventDefault(); confirmContact(); }} noValidate>
+                  <p className="sf-need sf-need-top">Texts, email, or both. Fill in either one.</p>
                   <div className="sf-fields">
                     <div className="sf-field">
                       <label className="st-field-label" htmlFor="sf-email">Email</label>
                       <input id="sf-email" className="st-input" type="email" autoComplete="email" placeholder="you@school.edu"
-                        value={email} readOnly={Boolean(isSignedIn)} onChange={(e) => { setEmail(e.target.value); setContactError(""); }} />
+                        value={email} onChange={(e) => { setEmail(e.target.value); setContactError(""); }} />
                     </div>
                     <div className="sf-field">
                       <label className="st-field-label" htmlFor="sf-phone">Mobile number</label>
@@ -341,14 +347,16 @@ export default function StartFlow() {
                         value={phone} onChange={(e) => { setPhone(e.target.value); setContactError(""); }} onBlur={() => setPhone(formatPhone(phone))} />
                     </div>
                   </div>
-                  <label className="st-consent">
-                    <input type="checkbox" checked={smsConsent} onChange={(e) => { setSmsConsent(e.target.checked); setContactError(""); }} />
-                    <span>
-                      I agree to receive recurring automated text messages from Pete&rsquo;s Postings about new job postings matching my preferences. Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete&rsquo;s Postings. See our{" "}
-                      <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
-                      <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
-                    </span>
-                  </label>
+                  {phone.trim() !== "" && (
+                    <label className="st-consent">
+                      <input type="checkbox" checked={smsConsent} onChange={(e) => { setSmsConsent(e.target.checked); setContactError(""); }} />
+                      <span>
+                        I agree to receive recurring automated text messages from Pete&rsquo;s Postings about new job postings matching my preferences. Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete&rsquo;s Postings. See our{" "}
+                        <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
+                        <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
+                      </span>
+                    </label>
+                  )}
                   {contactError && <p className="st-error" role="alert">{contactError}</p>}
                   <button className="sf-next" type="submit">Next</button>
                 </form>
@@ -367,10 +375,10 @@ export default function StartFlow() {
         {restored && reached >= 5 && (
           <section className="sf-checkout" ref={(el) => (sections.current[5] = el)}>
             <h2 className="sf-prefs-title">You&rsquo;re one step from first in the pile.</h2>
-            <p className="st-hint">We&rsquo;ll text {formatPhone(phone)} the moment new {describe(answers)} post.</p>
+            <p className="st-hint">We&rsquo;ll {phone.trim() && email.trim() ? `text ${formatPhone(phone)} and email ${email.trim()}` : phone.trim() ? `text ${formatPhone(phone)}` : `email ${email.trim()}`} the moment new {describe(answers)} post.</p>
             {error && <p className="st-error" role="alert">{error}</p>}
             {isSignedIn ? payButton : (
-              <SignUpButton mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start" initialValues={{ emailAddress: email.trim() }}>{payButton}</SignUpButton>
+              <SignUpButton mode="modal" forceRedirectUrl="/start" signInForceRedirectUrl="/start" initialValues={email.trim() ? { emailAddress: email.trim() } : undefined}>{payButton}</SignUpButton>
             )}
             {!isSubscribed && <p className="st-fine">$0 today, then ${PLANS.monthly.price}/month. Cancel anytime. Secure checkout by Stripe.</p>}
           </section>

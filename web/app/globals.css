@@ -6001,3 +6001,4 @@ footer a, .footer a { color: var(--pp-cream); }
 /* /start: Next stays dimmed until the step has an answer */
 .sf-next:disabled { background: rgba(244, 237, 224, 0.14); color: rgba(244, 237, 224, 0.5); cursor: not-allowed; transform: none; }
 .sf-need { margin: -0.4rem 0 0; font-size: 0.82rem; color: rgba(244, 237, 224, 0.6); }
+.sf-need-top { margin: 0; }

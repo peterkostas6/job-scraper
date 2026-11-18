@@ -13,6 +13,7 @@ import { capture } from "@/lib/analytics";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
+import StartFlow from "@/app/start/StartFlow";
 
 const FREE_BANKS = new Set(Object.keys(BANKS));
 
@@ -349,7 +350,7 @@ const MSG_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="white" ar
 // Alerts tab (signed out): same promise as /start. Real recent roles land on a phone lock
 // screen one by one; the one action goes straight to the preferences on /start.
 const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
-function AlertsPhoneDemo({ jobs }) {
+function AlertsPhoneDemo({ jobs, onStart }) {
   const feed = [...(jobs || [])].filter((j) => j.title && j.title.length < 70).sort((a, b) => postedAt(b) - postedAt(a)).slice(0, 10);
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -369,10 +370,10 @@ function AlertsPhoneDemo({ jobs }) {
             <path d="M110 6 C 112 46, 78 70, 22 72" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeDasharray="1 9" />
             <path d="M34 60 L 18 72 L 34 84" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {/* Straight to the preferences on /start, not its hero again */}
-          <Link href="/start?setup=1" className="h-cta ap-go" onClick={() => capture("alerts_tab_cta_clicked")}>
+          {/* Opens the preferences right below, on this page */}
+          <button className="h-cta ap-go" onClick={() => { capture("alerts_tab_cta_clicked"); onStart(); }}>
             Set up text alerts
-          </Link>
+          </button>
         </div>
       </div>
       <div className="ap-side">
@@ -1367,6 +1368,7 @@ export default function Home() {
   const [savedToast, setSavedToast] = useState(false);
   // Fresh from the /start sign-up: say what's on and invite them to fine-tune.
   const [alertsWelcome, setAlertsWelcome] = useState(false);
+  const [alertsSetupSignal, setAlertsSetupSignal] = useState(0); // bumps to open the setup steps on the Alerts tab
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get("welcome") !== "1") return;
@@ -2261,7 +2263,10 @@ export default function Home() {
           <main className="content">
             {/* Notifications view */}
             {viewNotifications && !isSignedIn && (
-              <AlertsPhoneDemo jobs={allJobs} />
+              <>
+                <AlertsPhoneDemo jobs={allJobs} onStart={() => setAlertsSetupSignal((n) => n + 1)} />
+                <StartFlow embedded openSignal={alertsSetupSignal} />
+              </>
             )}
             {viewNotifications && isSignedIn && (
               <div className="al-page">

@@ -51,7 +51,9 @@ function describe(a) {
 
 const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
-export default function StartFlow() {
+// embedded: rendered inside the Alerts tab under its own hero, so no header or hero here;
+// the Alerts tab's button bumps openSignal and the preferences slide open on the same page.
+export default function StartFlow({ embedded = false, openSignal = 0 }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const isSubscribed = user?.publicMetadata?.subscribed === true;
   useTrackSignup(user);
@@ -89,7 +91,7 @@ export default function StartFlow() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, reached, email, phone, smsConsent })); } catch {}
   }, [restored, answers, reached, email, phone, smsConsent]);
 
-  // Arriving from the Alerts tab (/start?setup=1): skip the hero, open the preferences.
+  // /start?setup=1 skips the hero and opens the preferences (the Alerts tab now embeds them instead).
   useEffect(() => {
     if (!restored) return;
     const url = new URL(window.location.href);
@@ -98,6 +100,10 @@ export default function StartFlow() {
     window.history.replaceState(null, "", url.pathname + url.search);
     reveal(1);
   }, [restored]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (embedded && restored && openSignal > 0) reveal(1);
+  }, [openSignal, restored]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Signed in: their account email is the one we use.
   useEffect(() => { if (isSignedIn && user?.primaryEmailAddress?.emailAddress) setEmail(user.primaryEmailAddress.emailAddress); }, [isSignedIn, user]);
@@ -233,8 +239,8 @@ export default function StartFlow() {
   );
 
   return (
-    <div className={`st sf${reached >= 1 ? " sf-started" : ""}`}>
-      <header className="st-header">
+    <div className={`st sf${reached >= 1 ? " sf-started" : ""}${embedded ? " sf-embed" : ""}`}>
+      {!embedded && <header className="st-header">
         <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
           <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
           <span className="logo-text">Pete&rsquo;s Postings</span>
@@ -244,11 +250,11 @@ export default function StartFlow() {
             <button className="st-signin">Sign in</button>
           </SignInButton>
         )}
-      </header>
+      </header>}
 
       <main className="sf-main">
         {/* HERO: the promise, what it looks like, and one button */}
-        <section className="sf-hero">
+        {!embedded && <section className="sf-hero">
           <h1 className="st-q sf-title">Be first to apply. Not last to find out.</h1>
           <div className="sf-texts" aria-label="Example text alerts" role="img">
             <span className="sf-texts-label">What lands on your phone</span>
@@ -272,7 +278,7 @@ export default function StartFlow() {
             </button>
             <Link href="/jobs" className="st-skip" onClick={() => capture("start_browse_clicked")}>Just browse jobs &rarr;</Link>
           </div>
-        </section>
+        </section>}
 
         {restored && reached >= 1 && (
           <section className="sf-prefs" ref={(el) => (sections.current[1] = el)}>

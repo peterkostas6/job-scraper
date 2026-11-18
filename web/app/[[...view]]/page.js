@@ -735,6 +735,12 @@ function SignUpGate({ gate, onClose }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   const redirect = gate.redirect ? { forceRedirectUrl: gate.redirect, signInForceRedirectUrl: gate.redirect } : {};
+  // Job links always open in a new tab, so after signing up we come back here and offer the job
+  // as a link instead of sending this tab to the bank's site.
+  const rememberJob = () => {
+    if (!gate.job) return;
+    try { sessionStorage.setItem("pp_open_job", JSON.stringify(gate.job)); } catch {}
+  };
 
   return (
     <div className="modal-overlay" data-state="open" onClick={onClose}>
@@ -750,10 +756,10 @@ function SignUpGate({ gate, onClose }) {
           </p>
         )}
         <p className="gate-desc">{gate.desc}</p>
-        <button className="h-cta gate-cta" onClick={() => { capture("signup_gate_continued", { kind: gate.kind }); onClose(); clerk.openSignUp(redirect); }}>{gate.cta}</button>
+        <button className="h-cta gate-cta" onClick={() => { capture("signup_gate_continued", { kind: gate.kind }); rememberJob(); onClose(); clerk.openSignUp(redirect); }}>{gate.cta}</button>
         <p className="gate-fine">
           Free &middot; No credit card &middot; Have an account?{" "}
-          <button className="gate-link" onClick={() => { onClose(); clerk.openSignIn(redirect); }}>Sign in</button>
+          <button className="gate-link" onClick={() => { rememberJob(); onClose(); clerk.openSignIn(redirect); }}>Sign in</button>
         </p>
       </div>
     </div>
@@ -1367,8 +1373,28 @@ export default function Home() {
   const [gate, setGate] = useState(null);
   function askToSignUp(kind, job) {
     capture("signup_gate_shown", { kind });
-    setGate({ ...SIGNUP_GATES[kind], kind, job, redirect: job ? trackedLink(job.link) : undefined });
+    let redirect;
+    if (job) {
+      const back = new URL(window.location.href);
+      back.searchParams.set("openjob", "1");
+      redirect = back.pathname + back.search;
+    }
+    setGate({ ...SIGNUP_GATES[kind], kind, job, redirect });
   }
+  // Back from the sign-up a job click asked for: show that job with a new-tab link.
+  const [readyJob, setReadyJob] = useState(null);
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("openjob") !== "1") return;
+    url.searchParams.delete("openjob");
+    window.history.replaceState(null, "", url.pathname + url.search);
+    try {
+      const job = JSON.parse(sessionStorage.getItem("pp_open_job") || "null");
+      sessionStorage.removeItem("pp_open_job");
+      if (job?.link) setReadyJob(job);
+    } catch {}
+  }, [isSignedIn]);
   const [notifPrefs, setNotifPrefs] = useState(NOTIF_DEFAULTS);
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
@@ -2789,6 +2815,25 @@ export default function Home() {
       )}
 
       {gate && <SignUpGate gate={gate} onClose={() => setGate(null)} />}
+      {readyJob && (
+        <div className="modal-overlay" data-state="open" onClick={() => setReadyJob(null)}>
+          <div className="modal-card gate-card" role="dialog" aria-modal="true" aria-labelledby="ready-title" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setReadyJob(null)} aria-label="Close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <h2 className="gate-title" id="ready-title">You&rsquo;re in.</h2>
+            <p className="gate-job">
+              <strong>{readyJob.title}</strong>
+              <span><BankLogo bankKey={readyJob.bankKey} bank={readyJob.bank} size={16} />{readyJob.bank || BANKS[readyJob.bankKey]?.name}{readyJob.location ? ` \u00b7 ${readyJob.location}` : ""}</span>
+            </p>
+            <p className="gate-desc">The role opens on the bank&rsquo;s site in a new tab.</p>
+            <a className="h-cta gate-cta" href={trackedLink(readyJob.link)} target="_blank" rel="noopener noreferrer"
+              onClick={() => { capture("job_opened", { view: "after_signup", bank: readyJob.bank, title: readyJob.title, signed_in: true }); setReadyJob(null); }}>
+              Open role &#8599;
+            </a>
+          </div>
+        </div>
+      )}
       {savedToast && (
         <div className="pp-toast" role="status" aria-live="polite">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>

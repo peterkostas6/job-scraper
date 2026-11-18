@@ -449,7 +449,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
       <section className="ss-hero">
         <h1 className="ss-title" data-reveal>The database of live banking roles</h1>
         <p className="ss-sub" data-reveal>
-          Analyst and internship roles at {BANK_COUNT} banks, texted to you minutes after they go live.
+          See roles before other applicants with text notifications.
           Apply before everyone else.
         </p>
         <div className="ss-discover-row" ref={heroCtaRef} data-reveal>

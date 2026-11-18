@@ -1985,7 +1985,7 @@ export default function Home() {
                 <SignInButton mode="modal">
                   <button className="nav-signin">Sign in</button>
                 </SignInButton>
-                <Link href="/start" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav" })}>Get SMS alerts</Link>
+                <Link href="/notifications" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav" })}>Get SMS alerts</Link>
               </>
             )}
           </div>

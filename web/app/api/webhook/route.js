@@ -9,6 +9,7 @@ import { Resend } from "resend";
 import { sendEmail } from "@/lib/email";
 import { newMemberEmail, NEW_MEMBER_NOTICE_TO } from "@/lib/email-templates";
 import { captureServer } from "@/lib/posthog-server";
+import { provisionGuestCheckout } from "@/lib/guest-checkout";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -32,9 +33,20 @@ export async function POST(req) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const clerkUserId = session.metadata?.clerkUserId;
+    let clerkUserId = session.metadata?.clerkUserId;
 
-    if (clerkUserId) {
+    // Paid before having an account: make the account now (or wait for /welcome doing it).
+    if (!clerkUserId && session.metadata?.guest === "1") {
+      try {
+        const done = await provisionGuestCheckout(session, { origin: new URL(req.url).origin });
+        clerkUserId = done?.userId;
+      } catch (err) {
+        console.error("Guest checkout provisioning failed:", err);
+        return Response.json({ error: "provisioning failed" }, { status: 500 }); // Stripe retries
+      }
+    }
+
+    if (session.metadata?.clerkUserId) {
       await clerk.users.updateUserMetadata(clerkUserId, {
         publicMetadata: {
           subscribed: true,

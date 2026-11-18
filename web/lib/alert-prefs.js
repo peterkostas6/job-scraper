@@ -1,0 +1,112 @@
+// Saving alert settings for one account: the Alerts page (POST /api/notifications) and the
+// after-checkout step for people who paid before having an account both go through here,
+// so consent rules, the confirmation email and the welcome text behave the same everywhere.
+import { prefsEmail } from "@/lib/email-templates";
+import { sendEmail } from "@/lib/email";
+import { smsConfig, sendSms, logNotification } from "@/lib/notif-send";
+import { BANK_NAMES } from "@/lib/banks";
+import { clerkClient } from "@clerk/nextjs/server";
+import { Resend } from "resend";
+import { captureServer } from "@/lib/posthog-server";
+
+const JOB_TYPE_LABELS = {
+  all: "All types (analyst + internship)",
+  internship: "Internship only",
+  fulltime: "Analyst only",
+};
+
+export async function saveAlertPrefs({ userId, body, origin }) {
+  const { enabled, banks, categories, jobType } = body;
+
+  // Normalize phone number to E.164 format (+1XXXXXXXXXX)
+  let phoneNumber = (body.phoneNumber || "").replace(/\D/g, "");
+  if (phoneNumber.length === 10) phoneNumber = "1" + phoneNumber;
+  if (phoneNumber.length === 11 && phoneNumber.startsWith("1")) phoneNumber = "+" + phoneNumber;
+  else if (phoneNumber.length > 0 && !phoneNumber.startsWith("+")) phoneNumber = "+" + phoneNumber;
+
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  const oldPrefs = user.unsafeMetadata?.notifications;
+  const oldPhone = oldPrefs?.phoneNumber || "";
+  const oldSmsEnabled = oldPrefs?.smsEnabled || false;
+  const isFirstSetup = !oldPrefs;
+
+  // SMS can only be enabled with explicit, unchecked-by-default opt-in consent and a phone number
+  const smsConsent = Boolean(body.smsConsent);
+  const smsEnabled = Boolean(body.smsEnabled) && smsConsent && phoneNumber.length > 0;
+  const smsConsentAt = smsConsent ? (oldPrefs?.smsConsentAt || new Date().toISOString()) : null;
+
+  await client.users.updateUser(userId, {
+    unsafeMetadata: {
+      ...user.unsafeMetadata,
+      notifications: {
+        enabled: Boolean(enabled),
+        banks: Array.isArray(banks) ? banks : [],
+        categories: Array.isArray(categories) ? categories : [],
+        jobType: jobType || "all",
+        location: typeof body.location === "string" ? body.location.trim().slice(0, 60) : "",
+        smsEnabled,
+        phoneNumber: phoneNumber || "",
+        smsConsent,
+        smsConsentAt,
+        smsOptOutAt: smsEnabled ? null : oldPrefs?.smsOptOutAt || null,
+      },
+    },
+  });
+
+  const email = user.emailAddresses?.[0]?.emailAddress;
+  const firstName = user.firstName || "";
+
+  // Settings as properties on the person too, so you can filter users by what they track.
+  // The phone number is never sent.
+  const alertProps = {
+    email_alerts: Boolean(enabled),
+    sms_alerts: smsEnabled,
+    job_type: jobType || "all",
+    banks: Array.isArray(banks) && banks.length ? banks : ["all"],
+    categories: Array.isArray(categories) && categories.length ? categories : ["all"],
+    city: typeof body.location === "string" && body.location.trim() ? body.location.trim().slice(0, 60) : "anywhere",
+  };
+  await captureServer(userId, isFirstSetup ? "alerts_set_up" : "alert_settings_changed", {
+    ...alertProps,
+    sms_turned_on: smsEnabled && !oldSmsEnabled,
+    sms_turned_off: !smsEnabled && oldSmsEnabled,
+    $set: { alert_email: alertProps.email_alerts, alert_sms: alertProps.sms_alerts, alert_job_type: alertProps.job_type, alert_bank_count: Array.isArray(banks) && banks.length ? banks.length : 20 },
+  });
+
+  // Send preferences confirmation email
+  if (email) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const { subject, html, text } = prefsEmail({
+        firstName,
+        isFirstSetup,
+        enabled: Boolean(enabled),
+        smsEnabled: Boolean(smsEnabled),
+        phoneNumber: phoneNumber || "",
+        bankNames: (Array.isArray(banks) ? banks : []).map((k) => BANK_NAMES[k] || k),
+        categories: Array.isArray(categories) ? categories : [],
+        jobTypeLabel: JOB_TYPE_LABELS[jobType] || "All types",
+        userId,
+      });
+      await sendEmail(resend, { to: email, subject, html, text, tags: [{ name: "type", value: "prefs" }] });
+    } catch (emailErr) {
+      console.error("Prefs confirmation email failed:", emailErr);
+    }
+  }
+
+  // Send a welcome text when SMS is enabled for the first time, re-enabled, or the number changes
+  const newPhone = phoneNumber?.trim();
+  if (smsEnabled && newPhone && (newPhone !== oldPhone || !oldSmsEnabled)) {
+    const sms = smsConfig();
+    if (sms) {
+      const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
+      // Awaited: Vercel freezes the function once the response is sent, which would drop an in-flight send.
+      // Attach the contact card so the number saves as "Pete's Postings" in one tap.
+      const contactCard = `${origin}/petes-postings.vcf`;
+      const welcomeSid = await sendSms(sms, newPhone, welcomeMsg, contactCard).catch((e) => console.error("Welcome SMS failed:", e.message));
+      // The welcome text carries the STOP wording, so alerts can skip it for the next 30 days.
+      if (welcomeSid) await logNotification({ userId, channel: "sms-optout-notice", status: "sent", recipient: newPhone, providerId: welcomeSid });
+    }
+  }
+}

@@ -3,23 +3,25 @@ import Stripe from "stripe";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { PLANS } from "@/lib/plans";
+import { guestMetadata } from "@/lib/guest-checkout";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
   const { userId } = await auth();
 
-  if (!userId) {
-    return Response.json({ error: "Not signed in" }, { status: 401 });
-  }
-
-  // One plan. The /start quiz asks to come back to itself so it can finish turning on texts.
+  // One plan. The /start page asks to come back to itself so it can finish turning on texts.
+  // Without an account, checkout still opens: Stripe collects the email and the account is
+  // made right after payment (lib/guest-checkout.js), then /welcome signs them in.
   const plan = "monthly";
   let returnTo = "";
+  let body = {};
   try {
-    const body = await req.json();
+    body = await req.json();
     if (body.returnTo === "/start") returnTo = body.returnTo;
   } catch {}
+  const guest = !userId;
+  const guestEmail = guest && typeof body.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim() : "";
 
   const priceId = process.env.STRIPE_PRICE_ID;
   if (!priceId) {
@@ -32,9 +34,8 @@ export async function POST(req) {
   const fromStripe = parseInt(price.metadata?.trial_days ?? price.product?.metadata?.trial_days, 10);
   const trialDays = Number.isInteger(fromStripe) && fromStripe >= 0 && fromStripe <= 90 ? fromStripe : PLANS.monthly.trialDays;
 
-  // Get the user's email from Clerk
-  const user = await (await clerkClient()).users.getUser(userId);
-  const email = user.emailAddresses[0]?.emailAddress;
+  // Signed in: the account's email. Guest: what they typed on /start, if anything (Stripe asks otherwise).
+  const email = guest ? guestEmail : (await (await clerkClient()).users.getUser(userId)).emailAddresses[0]?.emailAddress;
 
   // Meta browser identifiers and plan, stored on the session and subscription so the
   // Stripe webhook can report payments to the ad platforms' Conversions APIs.
@@ -52,7 +53,7 @@ export async function POST(req) {
     mode: "subscription",
     // Apple Pay and Google Pay appear here as card wallets when they are on in the Stripe dashboard.
     payment_method_types: ["card"],
-    customer_email: email,
+    ...(email && { customer_email: email }),
     line_items: [
       {
         price: priceId,
@@ -63,13 +64,12 @@ export async function POST(req) {
     subscription_data: {
       ...(trialDays > 0 && { trial_period_days: trialDays }),
       // clerkUserId lets renewals and cancellations be tied back to the account.
-      metadata: { ...meta, clerkUserId: userId },
+      metadata: { ...meta, ...(userId && { clerkUserId: userId }) },
     },
-    metadata: {
-      clerkUserId: userId,
-      ...meta,
-    },
-    success_url: returnTo
+    metadata: guest ? { ...meta, ...guestMetadata(body) } : { clerkUserId: userId, ...meta },
+    success_url: guest
+      ? `${siteUrl}/welcome?session_id={CHECKOUT_SESSION_ID}`
+      : returnTo
       ? `${siteUrl}${returnTo}?paid=true&session_id={CHECKOUT_SESSION_ID}`
       : `${siteUrl}?subscribed=true&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}${returnTo}`,

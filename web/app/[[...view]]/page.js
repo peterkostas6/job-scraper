@@ -1358,7 +1358,6 @@ export default function Home() {
     capture("bank_selected", { bank: activeBank, bank_name: BANKS[activeBank]?.name || "All banks" });
   }, [activeBank]);
   const [availableCategories, setAvailableCategories] = useState([]);
-  const [showWelcome, setShowWelcome] = useState(false);
   // Signed-out visitors who try something that needs an account see why first (see SignUpGate).
   const [gate, setGate] = useState(null);
   function askToSignUp(kind, job) {
@@ -1475,12 +1474,6 @@ export default function Home() {
   const [sheetAllBanks, setSheetAllBanks] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
-
-  // Load welcome state from localStorage
-  useEffect(() => {
-    const welcomed = localStorage.getItem("pp-welcomed");
-    if (!welcomed) setShowWelcome(true);
-  }, []);
 
   // Load saved jobs from Clerk unsafeMetadata
   useEffect(() => {
@@ -1620,12 +1613,6 @@ export default function Home() {
       user.update({ unsafeMetadata: { ...user.unsafeMetadata, savedJobs: next } });
       return next;
     });
-  }
-
-  function dismissWelcome() {
-    capture("browse_alerts_banner_dismissed");
-    setShowWelcome(false);
-    localStorage.setItem("pp-welcomed", "true");
   }
 
   function toggleNotifBank(bankKey) {
@@ -1968,9 +1955,15 @@ export default function Home() {
               href="/recent"
               className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
+              {isSignedIn && isSubscribed ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Pro">
+                  <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                </svg>
+              )}
               Recent Postings
             </Link>
             <Link href="/notifications" className={`nav-link nav-link-alerts${viewNotifications ? " nav-link-active" : ""}`}>Alerts</Link>
@@ -2573,18 +2566,6 @@ export default function Home() {
             {/* Bank jobs view */}
             {!viewingSaved && !viewNotifications && (
               <>
-                {showWelcome && !isGatedBank && !isSignedIn && (
-                  <div className="welcome-banner alerts-callout">
-                    <div>
-                      <p className="welcome-title">Get a text when the next one posts</p>
-                      <p className="welcome-desc">Pick your banks and roles. Free for 7 days.</p>
-                    </div>
-                    <div className="welcome-actions">
-                      <Link href="/start" className="alerts-callout-cta" onClick={() => capture("browse_alerts_cta_clicked")}>Get SMS alerts &rarr;</Link>
-                      <button className="welcome-dismiss" onClick={dismissWelcome} aria-label="Dismiss">&times;</button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Filters */}
                 {!isGatedBank && (
@@ -2618,6 +2599,9 @@ export default function Home() {
                   <div className="results-bar">
                     <span className="results-text">
                       {displayJobs.length} {displayJobs.length === 1 ? "position" : "positions"} {activeBank === "all" ? "across all banks" : `at ${BANKS[activeBank].name}`}
+                      {lockedRecent.length > 0 && (
+                        <>{" \u00b7 "}<Link href="/recent" className="results-new" onClick={() => capture("browse_new_count_clicked", { hidden: lockedRecent.length })}>+{lockedRecent.length} new in the last 48 hours &rarr;</Link></>
+                      )}
                     </span>
                     <button className={`saved-toggle ${viewingSaved ? "saved-toggle-active" : ""}`} onClick={() => {
                       if (!isSignedIn) { askToSignUp("save"); return; }
@@ -2671,7 +2655,8 @@ export default function Home() {
                         {lockedRecent.slice(0, 3).map((job) => (
                           <Link href="/recent" className="job-row job-row-locked" key={`locked-${job.link}`} onClick={() => capture("browse_locked_row_clicked", { bank: job.bank })}>
                             <span className="job-index" aria-hidden="true">
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                              <svg className="job-lock-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                              <span className="job-unlock job-unlock-phone">Unlock</span>
                             </span>
                             <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
                             <span className="job-title"><span className="job-locked-title" aria-hidden="true">{job.title}</span><span className="sr-only">New {job.bank} role, unlocks with Pro</span><span className="ss-new">New</span></span>
@@ -2681,15 +2666,11 @@ export default function Home() {
                             <div className="job-badges">
                               <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>{isInternship(job.title) ? "Internship" : "Analyst"}</span>
                             </div>
-                            {activeBank === "all" && <span className="new-bank-label">{job.bank}</span>}
+                            {activeBank === "all" && <span className="new-bank-label"><span className="job-unlock">Unlock</span></span>}
                             <span style={{ width: 14 }} />
                             <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                           </Link>
                         ))}
-                        <Link href="/recent" className="job-locked-bar" onClick={() => capture("browse_locked_bar_clicked", { hidden: lockedRecent.length })}>
-                          <span><strong>+{lockedRecent.length} new {lockedRecent.length === 1 ? "role" : "roles"}</strong> from the last 48 hours{activeBank !== "all" && BANKS[activeBank] ? ` at ${BANKS[activeBank].name}` : ""}</span>
-                          <span className="job-locked-cta">Unlock recent postings &rarr;</span>
-                        </Link>
                       </>
                     )}
                     {displayJobs.map((job, index) => (

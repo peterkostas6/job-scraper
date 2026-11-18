@@ -6042,3 +6042,14 @@ footer a, .footer a { color: var(--pp-cream); }
 .job-locked-bar { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem 1rem; flex-wrap: wrap; padding: 0.85rem 1.25rem; background: var(--pp-navy-2); color: var(--pp-cream); text-decoration: none; font-size: 0.9rem; border-bottom: 1px solid rgba(20, 33, 61, 0.15); }
 .job-locked-bar:hover { background: #22345c; }
 .job-locked-cta { flex: none; padding: 0.45rem 0.95rem; border-radius: 999px; background: var(--pp-coral); color: var(--pp-navy); font-weight: 700; font-size: 0.85rem; }
+/* Locked rows: an Unlock pill where the bank name goes; "+N new" link in the results line */
+.job-unlock { display: inline-flex; align-items: center; padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--pp-coral); color: var(--pp-navy); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.01em; }
+.job-row-locked:hover .job-unlock { background: var(--pp-coral-hover); }
+.results-new { color: var(--pp-coral); font-weight: 700; text-decoration: none; }
+.results-new:hover { text-decoration: underline; text-underline-offset: 3px; }
+.job-unlock-phone { display: none; }
+@media (max-width: 768px) { .job-unlock-phone { display: inline-flex; flex: none; } }
+@media (max-width: 768px) {
+  .job-row-locked .job-lock-icon, .job-row-locked .job-title .ss-new { display: none; }
+  .job-row-locked .job-index { color: inherit; }
+}

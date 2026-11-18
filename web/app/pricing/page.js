@@ -199,7 +199,14 @@ export default function PricingPage() {
           </Link>
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className="nav-link">Browse Jobs</Link>
-            <Link href="/recent" className="nav-link">Recent Postings</Link>
+            <Link href="/recent" className="nav-link nav-link-new">
+              {user?.publicMetadata?.subscribed === true ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Pro"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              )}
+              Recent Postings
+            </Link>
             <Link href="/notifications" className="nav-link">Alerts</Link>
             <Link href="/pricing" className="nav-link nav-link-active">Pricing</Link>
             <Link href="/about" className="nav-link">About</Link>

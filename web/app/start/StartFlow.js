@@ -416,7 +416,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
                 {!isSubscribed && <span className="pp-badge">{PLANS.monthly.trialDays} days free</span>}
               </div>
               <p className="pp-price">${PLANS.monthly.price}<span>/month</span></p>
-              <p className="pp-billed">{isSubscribed ? "You already have Pro." : `$0 today, then $${PLANS.monthly.price}/mo after ${PLANS.monthly.trialDays} days. Cancel anytime.`}</p>
+              <p className="pp-billed">{isSubscribed ? "You already have Pro." : "$0 today. Cancel anytime."}</p>
               <p className="sf-plan-label">What you get</p>
               <ul className="pp-list">
                 <li><strong>Unlimited</strong> text and email alerts</li>

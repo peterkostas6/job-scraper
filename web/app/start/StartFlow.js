@@ -397,7 +397,13 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
             <p className="st-hint">We&rsquo;ll {phone.trim() && email.trim() ? `text ${formatPhone(phone)} and email ${email.trim()}` : phone.trim() ? `text ${formatPhone(phone)}` : `email ${email.trim()}`} the moment new {describe(answers)} post.</p>
 
             {/* A stack of resumes; theirs drops in and lands on top. */}
-            <div className="sf-pile" aria-hidden="true">
+            <div className="sf-pile" aria-hidden="true" ref={(el) => {
+              // Drop the resume only once the pile is on screen, so they see it land.
+              if (!el || el.dataset.watch) return;
+              el.dataset.watch = "1";
+              const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { el.classList.add("is-in"); io.disconnect(); } }, { threshold: 0.6 });
+              io.observe(el);
+            }}>
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="sf-sheet" style={{ "--i": i }}><i /><i /><i /><i /></div>
               ))}

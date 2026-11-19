@@ -476,9 +476,11 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
               </thead>
               <tbody>
                 {(latest.length ? latest : HERO_NOTIFS.map((n, i) => ({ link: i, title: n.title, bank: n.bank, location: "New York, NY", detectedAt: Date.now() - (i + 1) * 3600000 }))).slice(0, 6).map((job, i) => (
-                  <tr key={job.link}>
+                  <tr key={job.link} className="lb-row-link" role="link" tabIndex={0}
+                    onClick={() => { capture("home_cta_clicked", { where: "latest_row" }); onBrowse(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { capture("home_cta_clicked", { where: "latest_row" }); onBrowse(); } }}>
                     <td>
-                      {/* A preview only: rows aren't links. */}
+                      {/* Each row goes to Browse Jobs. */}
                       <div className="lb-startup">
                         <BankLogo bankKey={job.bankKey} bank={job.bank} size={40} className="lb-logo" />
                         <span className="lb-startup-text">
@@ -2718,7 +2720,6 @@ export default function Home() {
                         key={index}
                         onClick={(e) => {
                           capture("job_opened", { view: viewingSaved ? "saved" : "browse", bank: job.bank || BANKS[job.bankKey]?.name, category: job.category, title: job.title, position: index + 1, signed_in: Boolean(isSignedIn) });
-                          if (!isSignedIn) { e.preventDefault(); askToSignUp("job", job); }
                         }}
                       >
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>

@@ -20,7 +20,9 @@ const STORAGE_KEY = "pp-start-v3";
 // the checkout button. After Stripe, texts turn on with these answers and they land on Alerts.
 const STEP_LABELS = ["What banks?", "What roles?", "What location?", "Where should we alert you?"];
 const STEP_NAMES = ["Banks", "Roles", "Location", "Alerts go to"];
-const EMPTY = { banks: null, areas: null, jobType: null, city: null };
+// Every step starts on its broadest answer, so Next works right away: all banks, internships
+// and full-time, any area, anywhere. Picking something narrows it.
+const EMPTY = { banks: [], areas: [], jobType: "all", city: "" };
 
 // "2125550123" -> "(212) 555-0123"; anything else is shown as typed.
 const formatPhone = (raw) => {
@@ -77,7 +79,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (saved) {
-        if (saved.answers) setAnswers({ ...EMPTY, ...saved.answers });
+        if (saved.answers) setAnswers(Object.fromEntries(Object.entries(EMPTY).map(([k, v]) => [k, saved.answers[k] ?? v])));
         if (Number.isInteger(saved.reached)) { setReached(saved.reached); setActive(Math.min(Math.max(saved.reached, 1), 4)); }
         if (saved.email) setEmail(saved.email);
         if (saved.phone) setPhone(saved.phone);
@@ -150,8 +152,8 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
   const toggle = (field, key) => setAnswers((a) => {
     const cur = a[field] || [];
     const next = cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key];
-    // Unpicking the last one goes back to "nothing chosen", not to "all".
-    return { ...a, [field]: next.length ? next : null };
+    // Unpicking the last one goes back to "all".
+    return { ...a, [field]: next };
   });
 
   // Three real, recent roles for the sample texts.
@@ -300,8 +302,8 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
             <ol className="sf-track">
               {[1, 2, 3, 4].map((n) => {
                 const open = active === n;
-                const done = summaries[n - 1] && !open;
                 const locked = n > reached;
+                const done = summaries[n - 1] && !open && !locked;
                 return (
                   <li key={n} ref={(el) => { if (n > 1) sections.current[n] = el; }} className={`sf-row${open ? " is-open" : ""}${done ? " is-done" : ""}${locked ? " is-locked" : ""}`}>
                     <span className="sf-dot" aria-hidden="true">

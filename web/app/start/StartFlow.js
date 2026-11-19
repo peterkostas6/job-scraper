@@ -416,14 +416,14 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
                 {!isSubscribed && <span className="pp-badge">{PLANS.monthly.trialDays} days free</span>}
               </div>
               <p className="pp-price">${PLANS.monthly.price}<span>/month</span></p>
-              <p className="pp-billed">{isSubscribed ? "You already have Pro." : `$0 today. ${PLANS.monthly.trialDays}-day free trial, then billed monthly. Cancel anytime.`}</p>
+              <p className="pp-billed">{isSubscribed ? "You already have Pro." : `$0 today, then $${PLANS.monthly.price}/mo after ${PLANS.monthly.trialDays} days. Cancel anytime.`}</p>
               <p className="sf-plan-label">What you get</p>
               <ul className="pp-list">
-                <li><strong>Unlimited</strong> text and email alerts for the roles you picked</li>
-                <li><strong>Recent postings:</strong> every role from the last 48 hours</li>
-                <li>Every open role at all {BANK_COUNT} banks</li>
+                <li><strong>Unlimited</strong> text and email alerts</li>
+                <li><strong>Every role</strong> from the last 48 hours</li>
+                <li>All open roles at {BANK_COUNT} banks</li>
                 <li>Save jobs and track applications</li>
-                <li>Request a bank you want us to add</li>
+                <li>Request banks for us to add</li>
               </ul>
               {error && <p className="st-error" role="alert">{error}</p>}
               {payButton}

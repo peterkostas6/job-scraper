@@ -6121,3 +6121,21 @@ footer a, .footer a { color: var(--pp-cream); }
 .sf-plan .st-fine { text-align: center; color: var(--text-secondary); }
 .sf-plan .st-error { margin-top: 1rem; }
 .sf-checkout > .sf-prefs-title, .sf-checkout > .st-hint { text-align: center; margin-left: auto; margin-right: auto; }
+
+/* Checkout fits one screen on phones and laptops: heading, pile, Pro box and button together. */
+.sf-checkout { padding-top: 1.25rem; scroll-margin-top: 4.5rem; }
+.sf-checkout > .sf-prefs-title { margin-bottom: 0.4rem; font-size: clamp(1.45rem, 3vw, 2rem); }
+.sf-checkout > .st-hint { margin-bottom: 0; max-width: 46ch; font-size: 0.9rem; line-height: 1.45; }
+.sf-checkout .sf-pile { width: 92px; height: 84px; margin: 0.9rem auto 0.2rem; }
+.sf-checkout .sf-sheet { height: 72px; padding: 9px 9px; gap: 5px; border-radius: 6px; bottom: calc(var(--i, 0) * 3px); }
+.sf-checkout .sf-sheet i { height: 3px; }
+.sf-checkout .sf-sheet-you { bottom: 12px; }
+.sf-checkout .sf-sheet-you b { padding: 1px 6px; font-size: 0.55rem; }
+.sf-checkout .sf-plan { margin-top: 0.75rem; padding: 1.15rem 1.3rem 1rem; border-radius: 20px; }
+.sf-checkout .sf-plan .pp-price { margin-top: 0.35rem; font-size: 2.25rem; }
+.sf-checkout .sf-plan .pp-billed { margin-top: 0.35rem; font-size: 0.82rem; }
+.sf-checkout .sf-plan-label { margin-top: 0.85rem; font-size: 0.68rem; }
+.sf-checkout .sf-plan .pp-list { margin-top: 0.4rem; padding-top: 0.6rem; gap: 0.4rem; }
+.sf-checkout .sf-plan .pp-list li { font-size: 0.88rem; line-height: 1.35; }
+.sf-checkout .sf-plan .st-cta { margin-top: 1rem; }
+.sf-checkout .sf-plan .st-fine { margin: 0.45rem 0 0; font-size: 0.75rem; }

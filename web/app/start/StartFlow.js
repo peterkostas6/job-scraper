@@ -136,6 +136,20 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
     scrollTarget.current = null;
     if (!el) return;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (el.classList.contains("sf-checkout")) {
+      // The checkout is the last stop: wait for the steps above to fold, scroll it to the top,
+      // then nudge once more in case anything above moved while scrolling.
+      const go = (behavior) => {
+        const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+        window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - margin, behavior });
+      };
+      const t1 = setTimeout(() => go(reduce ? "auto" : "smooth"), 120);
+      const t2 = setTimeout(() => {
+        const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+        if (Math.abs(el.getBoundingClientRect().top - margin) > 12) go("smooth");
+      }, 1100);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
     requestAnimationFrame(() => el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }));
   }, [reached, active]);
 

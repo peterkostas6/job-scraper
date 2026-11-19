@@ -196,7 +196,14 @@ export function isGraduateProgram(title) {
 // "summer" or "analyst" (Summer Associate programs, "Analyst/Associate", "Quant Analyst, VP").
 // The site is for undergrads and recent grads, so any of these words drops the role.
 export function isMbaOrSenior(title) {
-  return /\bassociates?\b|\bmba\b|\bvice president\b|\bvp\b|\b(managing )?director\b/i.test(title);
+  return /\bassociates?\b|\bmba\b|\bvice president\b|\b[aes]?vp\b|\b(managing )?director\b/i.test(title);
+}
+
+// The site lists analyst and internship roles only: the title says "analyst" or reads as an
+// internship, and it isn't an Associate/MBA/VP/Director role. Every list and count uses this.
+export function isAnalystOrIntern(title) {
+  if (!title || isMbaOrSenior(title)) return false;
+  return /analyst/i.test(title) || isInternship(title);
 }
 
 // Returns true for entry-level banking roles worth showing.

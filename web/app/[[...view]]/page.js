@@ -400,8 +400,8 @@ function AlertsPhoneDemo({ jobs, onStart }) {
 
 function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
   const liveCount = liveJobs?.length || 0;
-  // What Browse Jobs shows without Pro (the last 48 hours live in Recent Postings).
-  const browseCount = (liveJobs || []).filter((j) => !isLast48h(j)).length;
+  // Every count on the site is all live roles, the last 48 hours included.
+  const browseCount = liveCount;
   const latest = homeFeed(liveJobs);
   const bankNames = Object.values(BANKS).map((b) => b.name);
 
@@ -1547,18 +1547,21 @@ export default function Home() {
     if (!isLoaded) return;
     fetch("/api/jobs-new")
       .then((res) => res.json())
-      .then((data) => setLast48hCount(data.last48hCount || 0))
+      .then((data) => setLast48hCount((c) => c ?? (data.last48hCount || 0))) // the job list's own count wins
       .catch(() => {});
   }, [isLoaded]);
 
-  // Sidebar counts match what Browse shows: without Pro, the last 48 hours aren't counted.
+  // Sidebar counts are every live role at each bank, the last 48 hours included.
   useEffect(() => {
     if (!allJobs.length) return;
-    const isPro = isSignedIn && isSubscribed;
     const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
-    for (const job of allJobs) if (job.bankKey in counts && (isPro || !isLast48h(job))) counts[job.bankKey]++;
+    for (const job of allJobs) if (job.bankKey in counts) counts[job.bankKey]++;
     setBankCounts(counts);
-  }, [allJobs, isSignedIn, isSubscribed]);
+  }, [allJobs]);
+  // The 48-hour count comes from the same list as every other number, once it has loaded.
+  useEffect(() => {
+    if (allJobs.length) setLast48hCount(allJobs.filter(isLast48h).length);
+  }, [allJobs]);
 
   // Load every live job once. The cron refreshes the table every 5 minutes, so the
   // page never has to call a bank's own API.
@@ -1588,7 +1591,6 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         setNewPostingsData(data);
-        setLast48hCount(data.last48hCount || 0);
       })
       .catch(() => {})
       .finally(() => setNewPostingsLoading(false));

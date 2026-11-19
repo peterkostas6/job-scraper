@@ -407,6 +407,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
 
         {restored && reached >= 5 && (
           <section className="sf-checkout" ref={(el) => (sections.current[5] = el)}>
+            <div className="sf-co-intro">
             <h2 className="sf-prefs-title">You&rsquo;re one step from first in the pile.</h2>
             <p className="st-hint">We&rsquo;ll {phone.trim() && email.trim() ? `text ${formatPhone(phone)} and email ${email.trim()}` : phone.trim() ? `text ${formatPhone(phone)}` : `email ${email.trim()}`} the moment new {describe(answers)} post.</p>
 
@@ -422,6 +423,8 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
                 <div key={i} className="sf-sheet" style={{ "--i": i }}><i /><i /><i /><i /></div>
               ))}
               <div className="sf-sheet sf-sheet-you"><b>You</b><i /><i /><i /><i /></div>
+            </div>
+
             </div>
 
             <div className="pp-plan pp-plan-pro sf-plan">

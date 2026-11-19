@@ -6139,3 +6139,16 @@ footer a, .footer a { color: var(--pp-cream); }
 .sf-checkout .sf-plan .pp-list li { font-size: 0.88rem; line-height: 1.35; }
 .sf-checkout .sf-plan .st-cta { margin-top: 1rem; }
 .sf-checkout .sf-plan .st-fine { margin: 0.45rem 0 0; font-size: 0.75rem; }
+/* Room below so the section can scroll to the top of the screen; sits under the sticky site nav when embedded. */
+.sf-checkout { min-height: calc(100svh - 1rem); padding-top: 0.5rem; scroll-margin-top: 0.75rem; }
+.sf-embed .sf-checkout { min-height: calc(100svh - 4.5rem); scroll-margin-top: 4.25rem; }
+.sf-checkout > .sf-prefs-title { font-size: clamp(1.35rem, 2.8vw, 1.9rem); }
+.sf-checkout > .st-hint { font-size: 0.86rem; }
+.sf-checkout .sf-pile { height: 72px; width: 84px; margin: 0.6rem auto 0; }
+.sf-checkout .sf-sheet { height: 62px; padding: 8px; gap: 4px; }
+.sf-checkout .sf-sheet-you { bottom: 9px; }
+.sf-checkout .sf-plan { margin-top: 0.6rem; padding: 1rem 1.25rem 0.9rem; }
+.sf-checkout .sf-plan .pp-price { margin-top: 0.2rem; font-size: 2.1rem; }
+.sf-checkout .sf-plan-label { margin-top: 0.7rem; }
+.sf-checkout .sf-plan .pp-list { gap: 0.3rem; padding-top: 0.5rem; }
+.sf-checkout .sf-plan .st-cta { margin-top: 0.85rem; }

@@ -325,7 +325,8 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
                         <div className="sf-row-content">
                           {n === 1 && (
                             <>
-                <div className="sf-pills">
+                {/* Scrolls inside its own box so the Next button below is always on screen. */}
+                <div className="sf-pills sf-pills-scroll">
                   <button className="sf-pill sf-pill-strong" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => set({ banks: [] })}>All {BANK_COUNT} banks</button>
                   {Object.entries(BANKS).map(([key, b]) => (
                     <button key={key} className="sf-pill" aria-pressed={(answers.banks || []).includes(key)} onClick={() => toggle("banks", key)}>

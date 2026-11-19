@@ -3,7 +3,7 @@
 // The cron refreshes the table every 5 minutes; the CDN may serve this for up to a minute.
 import { sql } from "@vercel/postgres";
 import { decodeEntities } from "@/lib/text";
-import { isGraduateProgram, isMbaOrSenior, isBankingEntryLevel, isFinanceRole } from "@/lib/notif-helpers";
+import { isGraduateProgram, isAnalystOrIntern, isFinanceRole } from "@/lib/notif-helpers";
 import { BANKS, BANK_NAMES } from "@/lib/banks";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export async function GET() {
     // Rows saved before the cron dropped Associate/VP roles are closed on its next run;
     // filtering here too keeps them off the site in the meantime (and on preview builds,
     // where the cron never runs).
-    const jobs = rows.filter((row) => !isMbaOrSenior(row.title)).map((row) => ({
+    const jobs = rows.filter((row) => isAnalystOrIntern(row.title)).map((row) => ({
       link: row.link,
       title: decodeEntities(row.title),
       location: row.location,
@@ -72,8 +72,8 @@ async function scrapeFallback() {
     const { bankKey, jobs: bankJobs } = result.value;
     for (const job of bankJobs) {
       if (!job.link || seen.has(job.link)) continue;
-      if (isGraduateProgram(job.title) || isMbaOrSenior(job.title)) continue;
-      if (!isBankingEntryLevel(job.title) || !isFinanceRole(job.title)) continue;
+      if (isGraduateProgram(job.title)) continue;
+      if (!isAnalystOrIntern(job.title) || !isFinanceRole(job.title)) continue;
       seen.add(job.link);
       jobs.push({
         link: job.link,

@@ -6155,3 +6155,22 @@ footer a, .footer a { color: var(--pp-cream); }
   .sf-plan .st-cta { margin-top: clamp(1rem, 2.6vh, 1.6rem); }
   .sf-plan .st-fine { font-size: 0.8rem; margin-top: 0.6rem; }
 }
+
+/* Laptops: scale the checkout with the screen height so it fills a big screen too. */
+@media (min-width: 900px) {
+  .sf-checkout { max-width: 1120px; grid-template-columns: minmax(0, 1fr) minmax(0, clamp(420px, 52vh, 540px)); }
+  .sf-co-intro .sf-prefs-title { font-size: clamp(2.1rem, 6.4vh, 3.8rem); }
+  .sf-co-intro .st-hint { font-size: clamp(0.95rem, 2.3vh, 1.25rem); }
+  .sf-pile { width: clamp(110px, 17vh, 190px); height: clamp(150px, 23vh, 250px); }
+  .sf-plan { max-width: none; padding: clamp(1.25rem, 4vh, 2.6rem) clamp(1.5rem, 4vh, 2.6rem); border-radius: clamp(20px, 3vh, 30px); }
+  .sf-plan .pp-plan-name { font-size: clamp(0.95rem, 2.1vh, 1.2rem); }
+  .sf-plan .pp-badge { font-size: clamp(0.72rem, 1.6vh, 0.9rem); }
+  .sf-plan .pp-price { font-size: clamp(2.4rem, 7vh, 4rem); }
+  .sf-plan .pp-price span { font-size: clamp(1rem, 2.2vh, 1.25rem); }
+  .sf-plan .pp-billed { font-size: clamp(0.9rem, 2vh, 1.1rem); }
+  .sf-plan-label { font-size: clamp(0.72rem, 1.6vh, 0.85rem); }
+  .sf-plan .pp-list { gap: clamp(0.45rem, 1.7vh, 1rem); }
+  .sf-plan .pp-list li { font-size: clamp(0.9rem, 2.2vh, 1.2rem); padding-left: 2em; }
+  .sf-plan .st-cta { min-height: clamp(48px, 6.6vh, 64px); font-size: clamp(1rem, 2.2vh, 1.2rem); }
+  .sf-plan .st-fine { font-size: clamp(0.8rem, 1.7vh, 0.95rem); }
+}

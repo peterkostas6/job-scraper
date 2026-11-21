@@ -1368,14 +1368,16 @@ export default function Home() {
   const [gate, setGate] = useState(null);
   function askToSignUp(kind, job) {
     capture("signup_gate_shown", { kind });
-    let redirect, signInRedirect;
     if (job) {
+      // A job click goes straight to the sign-up form, then into the SMS setup steps; the job
+      // is offered once they finish (openjob). Signing in instead goes back to the job.
+      try { sessionStorage.setItem("pp_open_job", JSON.stringify(job)); } catch {}
       const back = new URL(window.location.href);
       back.searchParams.set("openjob", "1");
-      signInRedirect = back.pathname + back.search;
-      redirect = "/start?setup=1";
+      clerk.openSignUp({ forceRedirectUrl: "/start?setup=1", signInForceRedirectUrl: back.pathname + back.search });
+      return;
     }
-    setGate({ ...SIGNUP_GATES[kind], kind, job, redirect, signInRedirect });
+    setGate({ ...SIGNUP_GATES[kind], kind });
   }
   // Back from the sign-up a job click asked for: show that job with a new-tab link.
   const [readyJob, setReadyJob] = useState(null);

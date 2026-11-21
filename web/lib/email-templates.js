@@ -133,10 +133,10 @@ export function prefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phone
     heading: subject,
     intro: `${firstName ? `Hi ${escapeHtml(firstName)}, ` : ""}${isFirstSetup ? "here is what you will be alerted about." : "here is what is active now."}`,
     body: settingsHtml(rows) + `<p style="margin:0 0 4px;font-size:16px;line-height:24px;color:${C.text};">Alerts go out within minutes of a matching posting, any time of day. Change these settings whenever you like.</p>`,
-    cta: { label: "See your matching roles", url: preferencesUrl },
+    cta: { label: "Browse open roles", url: `${BRAND.site}/jobs` },
     footer,
   });
-  const text = textVersion([subject, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Alerts go out within minutes of a matching posting.", `See your matching roles: ${preferencesUrl}`], footer);
+  const text = textVersion([subject, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Alerts go out within minutes of a matching posting.", `Browse open roles: ${BRAND.site}/jobs`], footer);
   return { subject, html, text };
 }
 
@@ -154,8 +154,8 @@ export function welcomeAlertsEmail({ firstName, bankCount, userId, ...prefs }) {
     heading: `Welcome${firstName ? `, ${escapeHtml(firstName)}` : ""}. You're set.`,
     intro: `We check ${bankCount} bank career sites every 5 minutes. The moment a role matching your alerts goes up, we&rsquo;ll ${how}, so you can apply before it hits the job boards.`,
     body: `<p style="margin:0 0 4px;font-size:14px;line-height:20px;font-weight:700;color:${C.muted};">Your alerts</p>` + settingsHtml(rows)
-      + `<p style="margin:0 0 4px;font-size:16px;line-height:24px;color:${C.text};">Every open role that already matches is waiting on your Alerts page. Change your alerts there anytime.</p>`,
-    cta: { label: "See your matching roles", url: preferencesUrl },
+      + `<p style="margin:0 0 4px;font-size:16px;line-height:24px;color:${C.text};">Every open role is on Browse. Change your alerts anytime from the Alerts button next to the filters.</p>`,
+    cta: { label: "Browse open roles", url: `${BRAND.site}/jobs` },
     outro: "Questions? Reply to this email and it reaches Pete directly.",
     footer,
   });
@@ -167,7 +167,7 @@ export function welcomeAlertsEmail({ firstName, bankCount, userId, ...prefs }) {
     "Your alerts:",
     ...rows.map(([k, v]) => `${k}: ${v}`),
     "",
-    `See your matching roles: ${preferencesUrl}`,
+    `Browse open roles: ${BRAND.site}/jobs`,
     "",
     "Questions? Reply to this email and it reaches Pete directly.",
   ], footer);

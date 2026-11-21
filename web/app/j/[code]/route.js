@@ -1,6 +1,6 @@
 // GET /j/<code> — short link from an alert text or email. Counts the click, then sends the
 // visitor on to the job posting on the bank's site. Alerts are free, but once an account's
-// 3 free days are up (lib/alert-trial.js) its alert links open the Premium page instead,
+// 3 free days from sign-up are up (lib/alert-trial-days.js) its alert links open the Premium page instead,
 // until it pays.
 import { sql } from "@vercel/postgres";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -19,11 +19,10 @@ async function alertLinkLocked(userId) {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     if (user.publicMetadata?.subscribed === true) return false;
+    return alertTrial(user.createdAt).over;
   } catch {
     return false;
   }
-  const trial = await alertTrial(userId);
-  return Boolean(trial?.over);
 }
 
 export async function GET(request, { params }) {

@@ -22,7 +22,7 @@ export async function GET() {
     };
 
     // Free accounts: where their 3 free days of alert links stand (Premium: null).
-    const trial = user.publicMetadata?.subscribed === true ? null : await alertTrial(userId);
+    const trial = user.publicMetadata?.subscribed === true ? null : alertTrial(user.createdAt);
 
     return Response.json({ notifications, trial });
   } catch (err) {

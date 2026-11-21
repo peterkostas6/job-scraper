@@ -92,7 +92,7 @@ export async function GET(request) {
 
         if (dryRun) { emailsSent += email ? 1 : 0; continue; }
         const isFree = clerkUser.publicMetadata?.subscribed !== true;
-        const sent = await sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree });
+        const sent = await sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree, createdAt: clerkUser.createdAt });
         if (sent.emailSent) emailsSent++;
         if (sent.smsSent) smsSent++;
       }

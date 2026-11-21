@@ -219,7 +219,6 @@ export default function PricingPage() {
               )}
               Recent Postings
             </Link>
-            <Link href="/notifications" className="nav-link">Alerts</Link>
             <Link href="/pricing" className="nav-link nav-link-active">Pricing</Link>
             <Link href="/about" className="nav-link">About</Link>
           </div>
@@ -238,7 +237,7 @@ export default function PricingPage() {
                   <SignInButton mode="modal">
                     <button className="nav-signin">Sign in</button>
                   </SignInButton>
-                  <Link href="/notifications" className="nav-cta">Get SMS alerts</Link>
+                  <Link href="/start" className="nav-cta">Get SMS alerts</Link>
                 </>
               )
             )}

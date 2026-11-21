@@ -267,7 +267,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
       if (!res.ok || !data.success) throw new Error(data.error || "save failed");
       capture("start_alerts_saved", { sms: wantsSms, email: wantsEmail });
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
-      window.location.href = pendingJob() ? "/notifications?welcome=1&openjob=1" : "/notifications?welcome=1";
+      window.location.href = pendingJob() ? "/jobs?welcome=1&openjob=1" : "/jobs?welcome=1";
     } catch {
       setError("Couldn’t turn on your texts. Try again.");
       setSaving(false);
@@ -291,7 +291,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
           <span className="logo-text">Pete&rsquo;s Postings</span>
         </Link>
         {isLoaded && !isSignedIn && (
-          <SignInButton mode="modal" forceRedirectUrl="/notifications">
+          <SignInButton mode="modal" forceRedirectUrl="/jobs?alerts=1">
             <button className="st-signin">Sign in</button>
           </SignInButton>
         )}

@@ -23,7 +23,7 @@ export default function AlertsLanding() {
   const { isLoaded, isSignedIn } = useUser();
 
   // One action: the /start quiz, which sets up alerts and starts the free trial.
-  const button = <Link href="/start" className="lp-cta">Start your 7-day free trial</Link>;
+  const button = <Link href="/start" className="lp-cta">Start free alerts</Link>;
 
   return (
     <div className="lp">
@@ -63,7 +63,7 @@ export default function AlertsLanding() {
 
         {button}
         <p className="lp-fine">
-          Free for 7 days, then $4.99/month. Cancel anytime.
+          Free account, no credit card. Alerts are free for 3 days, then $4.99/month to keep opening them.
           {isLoaded && !isSignedIn && (
             <>
               {" "}Have an account?{" "}

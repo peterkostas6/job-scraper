@@ -18,21 +18,21 @@ export default function TermsPage() {
 
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>2. Description of Service</h2>
-        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>Pete's Postings aggregates publicly available job listings from financial institutions and displays them in a single interface. Browsing current listings is free. A paid Pro subscription adds text and email job alerts, the recent postings feed, saved jobs, and company requests. Links to job postings pass through petespostings.com before sending you to the employer's site.</p>
+        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>Pete's Postings aggregates publicly available job listings from financial institutions and displays them in a single interface. Browsing current listings is free. A free account adds text and email job alerts; links in those alerts open for free for 3 days after your first alert. A paid Premium subscription keeps alert links opening and adds the recent postings feed and company requests. Links to job postings pass through petespostings.com before sending you to the employer's site.</p>
       </section>
 
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>3. Subscriptions & Billing</h2>
-        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>Pro is available weekly, monthly or yearly at the prices shown on our <a href="/pricing" style={{ color: "#2563eb" }}>pricing page</a> when you subscribe. Payments are processed by Stripe.</p>
+        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>Premium is available at the price shown on our <a href="/pricing" style={{ color: "#2563eb" }}>pricing page</a> when you subscribe. Payments are processed by Stripe.</p>
         <ul style={{ fontSize: 15, color: "#334155", lineHeight: 2, paddingLeft: 20, marginBottom: 12 }}>
           <li><strong>Billing:</strong> your card is charged the plan&rsquo;s price when you subscribe, then again at the start of each billing period (every week, month or year, depending on your plan).</li>
-          <li><strong>Free trials:</strong> Pro starts with a 7-day free trial. You add a payment method when you start it, and it is charged $4.99 when the trial ends unless you cancel before then. After that, Pro renews every month until you cancel.</li>
+          <li><strong>Free alert period:</strong> alerts are free. For 3 days after your first alert, their links open without a subscription; after that, opening them requires Premium. No payment method is needed for the free period, and Premium is charged when you subscribe, then every month until you cancel.</li>
           <li><strong>Automatic renewal:</strong> subscriptions renew automatically at the end of each billing period until you cancel.</li>
-          <li><strong>How to cancel:</strong> open the menu under your profile picture and choose <strong>Manage subscription</strong>, or use <strong>Manage subscription</strong> in the Pro section of the sidebar. You can also email <a href="mailto:pete@petespostings.com" style={{ color: "#2563eb" }}>pete@petespostings.com</a>. Cancelling stops future charges; you keep Pro until the end of the period you already paid for.</li>
+          <li><strong>How to cancel:</strong> open the menu under your profile picture and choose <strong>Manage subscription</strong>, or use <strong>Manage subscription</strong> in the Premium section of the sidebar. You can also email <a href="mailto:pete@petespostings.com" style={{ color: "#2563eb" }}>pete@petespostings.com</a>. Cancelling stops future charges; you keep Premium until the end of the period you already paid for.</li>
           <li><strong>Refunds:</strong> handled case by case. Contact <a href="mailto:pete@petespostings.com" style={{ color: "#2563eb" }}>pete@petespostings.com</a>.</li>
           <li><strong>Price changes:</strong> we will tell you before a price change affects your subscription, and you can cancel before it takes effect.</li>
         </ul>
-        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>Students at partner schools may receive Pro access at no charge; that access can end if the partnership ends.</p>
+        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>Students at partner schools may receive Premium access at no charge; that access can end if the partnership ends.</p>
       </section>
 
       <section style={{ marginBottom: 36 }}>

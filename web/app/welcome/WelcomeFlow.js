@@ -66,8 +66,8 @@ export default function WelcomeFlow() {
   } else if (state.status === "existing") {
     body = (
       <>
-        <h1 className="wl-title">You&rsquo;re Pro. Sign in to finish.</h1>
-        <p className="wl-sub">{state.email ? <>There&rsquo;s already an account for <strong>{state.email}</strong>.</> : "There's already an account for that email."} Sign in and your Pro access is waiting.</p>
+        <h1 className="wl-title">You have Premium. Sign in to finish.</h1>
+        <p className="wl-sub">{state.email ? <>There&rsquo;s already an account for <strong>{state.email}</strong>.</> : "There's already an account for that email."} Sign in and your Premium access is waiting.</p>
         <SignInButton mode="modal" forceRedirectUrl={state.next === "/notifications?welcome=1" ? "/start?paid=true" : state.next || "/recent"} initialValues={state.email ? { emailAddress: state.email } : undefined}>
           <button className="st-cta wl-cta">Sign in</button>
         </SignInButton>

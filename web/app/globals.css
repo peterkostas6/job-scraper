@@ -6174,3 +6174,31 @@ footer a, .footer a { color: var(--pp-cream); }
 .sf-pills-scroll { max-height: min(34vh, 300px); overflow-y: auto; overscroll-behavior: contain; padding: 2px 6px 18px 2px;
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
   scrollbar-width: thin; scrollbar-color: rgba(244, 237, 224, 0.3) transparent; }
+
+/* ---- Option chips on cream cards (Alerts > What you'll hear about) ----
+   The /start chip rule above makes chips cream-on-transparent for the navy setup page,
+   which turned them invisible on the cream Alerts card. Navy outline, navy fill when picked. */
+.al-card .st-chip { background: transparent; color: var(--pp-navy); border: 1px solid rgba(20, 33, 61, 0.24); }
+.al-card .st-chip:hover { border-color: rgba(20, 33, 61, 0.5); background: rgba(20, 33, 61, 0.04); }
+.al-card .st-chip[aria-pressed="true"] { background: var(--pp-navy); border-color: var(--pp-navy); color: var(--pp-cream); }
+.al-card .st-chip img, .al-card .st-chip svg { flex-shrink: 0; }
+
+/* ---- Setup step 4: Next plus "Don't alert me" ---- */
+.sf-form-actions { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; }
+.sf-skip { min-height: 44px; padding: 0 0.6rem; border: 0; background: none; color: rgba(244, 237, 224, 0.75); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.sf-skip:hover { color: var(--pp-cream); }
+
+/* ---- One plan: "Get first in the stack" with a Premium banner ---- */
+.pp-plans.pp-plans-one, .ss-plans.ss-plans-one { grid-template-columns: minmax(0, 420px); justify-content: center; }
+.pp-plan:has(.pp-banner), .ss-plan:has(.ss-plan-banner) { position: relative; padding-top: 2.6rem; }
+.pp-banner, .ss-plan-banner {
+  position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%);
+  padding: 0.35rem 1.1rem; border-radius: 999px;
+  background: var(--pp-coral); color: #fff;
+  font-size: 0.74rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap;
+  box-shadow: 0 6px 16px -6px rgba(255, 107, 91, 0.6);
+}
+.pp-plan:has(.pp-banner) { box-shadow: 0 0 0 2px var(--pp-coral), 0 24px 48px -24px rgba(0, 0, 0, 0.5); }
+.pp-plan:has(.pp-banner) .pp-plan-name, .ss-plan:has(.ss-plan-banner) .ss-plan-name { font-size: 1.15rem; font-weight: 800; color: var(--ss-ink, inherit); }
+.pp-have { margin: 0.5rem 0; font-weight: 700; }
+.pp-alert-locked { max-width: 640px; margin: 1.5rem auto 0; padding: 0.9rem 1.1rem; border-radius: 14px; background: var(--pp-cream); color: var(--pp-navy); line-height: 1.5; text-align: center; }

@@ -1,4 +1,4 @@
-import { freeAlertsUsed, FREE_ALERT_LIMIT } from "@/lib/notif-send";
+import { alertTrial } from "@/lib/alert-trial";
 import { saveAlertPrefs } from "@/lib/alert-prefs";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
@@ -21,12 +21,10 @@ export async function GET() {
       jobType: "all",
     };
 
-    // Free accounts: how much of the alert allowance is used (Pro has no limit).
-    const freeAlerts = user.publicMetadata?.subscribed === true
-      ? null
-      : { used: await freeAlertsUsed(userId, notifications.smsEnabled ? notifications.phoneNumber : ""), limit: FREE_ALERT_LIMIT };
+    // Free accounts: where their 3 free days of alert links stand (Premium: null).
+    const trial = user.publicMetadata?.subscribed === true ? null : await alertTrial(userId);
 
-    return Response.json({ notifications, freeAlerts });
+    return Response.json({ notifications, trial });
   } catch (err) {
     console.error("Notifications GET error:", err);
     return Response.json({ error: "Failed to fetch preferences" }, { status: 500 });

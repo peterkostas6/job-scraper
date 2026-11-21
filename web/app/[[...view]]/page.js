@@ -134,7 +134,7 @@ function ProWelcomeModal({ onClose, onSetupAlerts, activated, timedOut }) {
         <div className="modal-success-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <h2 id="pro-welcome-title" className="modal-title">Welcome to Pro</h2>
+        <h2 id="pro-welcome-title" className="modal-title">Welcome to Premium</h2>
         <p className="modal-subtitle">Thanks for subscribing. Here&rsquo;s everything you just unlocked:</p>
 
         <ul className="modal-benefits modal-benefits-detailed">
@@ -150,11 +150,11 @@ function ProWelcomeModal({ onClose, onSetupAlerts, activated, timedOut }) {
 
         <div className="modal-actions">
           <button className="modal-cta-primary" ref={primaryRef} onClick={onSetupAlerts} disabled={!activated}>
-            {activated ? "Set up your text alerts" : "Activating Pro\u2026"}
+            {activated ? "Set up your text alerts" : "Activating Premium\u2026"}
           </button>
         </div>
         {!activated && timedOut && (
-          <p className="modal-pending-note">This is taking longer than usual. Refresh the page in a minute, or email pete@petespostings.com if Pro still isn&rsquo;t on.</p>
+          <p className="modal-pending-note">This is taking longer than usual. Refresh the page in a minute, or email pete@petespostings.com if Premium still isn&rsquo;t on.</p>
         )}
         <button className="modal-dismiss-link" onClick={onClose}>I&rsquo;ll do it later</button>
       </div>
@@ -256,7 +256,7 @@ const HERO_NOTIFS = [
 const HOME_QUOTES = [TESTIMONIALS[5], TESTIMONIALS[3], TESTIMONIALS[1]];
 
 const HOME_FAQ = [
-  ["Is it really free?", `Browsing is. A free account gets you every open role at all ${BANK_COUNT} banks and saved jobs, with no credit card. Text and email alerts and the feed of everything posted in the last 48 hours are part of Pro: free for 7 days, then $4.99 a month.`],
+  ["Is it really free?", `Browsing is. A free account gets you every open role at all ${BANK_COUNT} banks and saved jobs, with no credit card. Text and email alerts are free too. After your first 3 days, opening roles from your alerts and the feed of everything posted in the last 48 hours take Premium, $4.99 a month.`],
   ["How fast are the alerts?", "We check every bank's career site every 5 minutes, around the clock. When a new role matches what you picked, your text or email goes out right away."],
   ["Will I get spammed?", "No. You only hear about roles at the banks, job types and cities you choose. Change them or turn alerts off whenever you like."],
   ["Where do the jobs come from?", "Straight from each bank's own careers site, not LinkedIn or Indeed, with a direct link to apply."],
@@ -656,26 +656,18 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
       {/* PRICING */}
       <section className="ss-section">
         <p className="ss-eyebrow" data-reveal>Pricing</p>
-        <h2 className="ss-h2" data-reveal>Find jobs for free.<br />Be first to apply with Pro.</h2>
-        <div className="ss-plans">
-          <div className="ss-card ss-plan" data-reveal>
-            <p className="ss-plan-name">Free</p>
-            <p className="ss-plan-price">$0</p>
-            <ul>
-              <li>Every open role at all {BANK_COUNT} banks</li>
-              <li>Save jobs and track applications</li>
-            </ul>
-            <Link href="/jobs" className="ss-btn ss-btn-light ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_free" })}>Browse jobs {ARROW}</Link>
-          </div>
+        <h2 className="ss-h2" data-reveal>Browse free.<br />Get first in the stack.</h2>
+        <div className="ss-plans ss-plans-one">
           <div className="ss-card ss-plan ss-plan-dark" data-reveal>
-            <p className="ss-plan-name">Pro</p>
+            <span className="ss-plan-banner">Premium</span>
+            <p className="ss-plan-name">Get first in the stack</p>
             <p className="ss-plan-price">${PLANS.monthly.price}<span>/mo</span></p>
             <ul>
-              <li>Unlimited text and email alerts</li>
+              <li>Open every text and email alert, the second a role posts</li>
               <li>Everything posted in the last 48 hours</li>
-              <li>{PLANS.monthly.trialDays}-day free trial, cancel anytime</li>
+              <li>Alerts free for your first 3 days, cancel anytime</li>
             </ul>
-            <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>Get Pro {ARROW}</Link>
+            <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>Get first in the stack {ARROW}</Link>
           </div>
         </div>
       </section>
@@ -714,8 +706,8 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
 const SIGNUP_GATES = {
   job: {
     title: "Create a free account to open this job",
-    desc: "It takes 30 seconds.",
-    cta: "Continue to the job",
+    desc: "Free, no credit card. Then pick the roles you want texts about, or skip it.",
+    cta: "Continue",
   },
   save: {
     title: "Save jobs with a free account",
@@ -736,7 +728,8 @@ function SignUpGate({ gate, onClose }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
-  const redirect = gate.redirect ? { forceRedirectUrl: gate.redirect, signInForceRedirectUrl: gate.redirect } : {};
+  // A job click signs up into the preferences funnel; signing in goes back to the job.
+  const redirect = gate.redirect ? { forceRedirectUrl: gate.redirect, signInForceRedirectUrl: gate.signInRedirect || gate.redirect } : {};
   // Job links always open in a new tab, so after signing up we come back here and offer the job
   // as a link instead of sending this tab to the bank's site.
   const rememberJob = () => {
@@ -838,7 +831,7 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
             <button className="paywall-plan-cta paywall-plan-cta-primary rl-cta" onClick={checkout} disabled={loading}>{loading ? "Opening checkout..." : "Unlock"}</button>
             <p className="rl-fine">{plan.trialDays ? `Free for ${plan.trialDays} days, then ` : ""}${plan.price}/{plan.period}. Cancel anytime.</p>
             {!isSignedIn && (
-              <p className="rl-fine">Already Pro?{" "}<SignInButton mode="modal"><button className="paywall-link">Sign in</button></SignInButton></p>
+              <p className="rl-fine">Already Premium?{" "}<SignInButton mode="modal"><button className="paywall-link">Sign in</button></SignInButton></p>
             )}
           </div>
         </div>
@@ -893,12 +886,12 @@ function PaywallOverlay({ isSignedIn, newCount }) {
   return (
     <div className="paywall">
       <div className="paywall-header">
-        <div className="paywall-badge">Pro</div>
+        <div className="paywall-badge">Premium</div>
         <h2 className="paywall-title">
-          {newCount > 0 ? `${newCount} new ${newCount === 1 ? "role" : "roles"} in the last 48 hours` : "Unlock Pro Features"}
+          {newCount > 0 ? `${newCount} new ${newCount === 1 ? "role" : "roles"} in the last 48 hours` : "Get first in the stack"}
         </h2>
         <p className="paywall-desc">
-          Pro shows you every role posted in the last 48 hours and texts you the moment new ones go live.
+          Premium shows you every role posted in the last 48 hours and texts you the moment new ones go live.
         </p>
       </div>
 
@@ -931,7 +924,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
                 <span className="paywall-plan-period">/{plan.period}</span>
               </div>
               <p className="paywall-plan-billing">{plan.perMonth ? `$${plan.perMonth.toFixed(2)}/mo, billed yearly` : plan.billed}</p>
-              {ctaBtn(key, plan.trialDays ? `Start ${plan.trialDays}-day free trial` : `Get ${plan.name}`, featured)}
+              {ctaBtn(key, plan.trialDays ? `Start ${plan.trialDays}-day free trial` : "Get first in the stack", featured)}
             </div>
           );
         })}
@@ -956,7 +949,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
 // every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
 const ABOUT_FAQ = [
   ["Is Pete's Postings free?",
-    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs, with no credit card. Pro adds text and email alerts and the 48-hour recent postings feed for $4.99 a month after a 7-day free trial.`],
+    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs, with no credit card. Text and email alerts are free for your first 3 days. Premium keeps them opening and adds the 48-hour recent postings feed for $4.99 a month.`],
   ["How fast will I hear about a new posting?",
     "Within minutes. We check every bank every 5 minutes, and as soon as a role that matches your alert settings goes live, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
   ["Which banks do you track?",
@@ -967,8 +960,8 @@ const ABOUT_FAQ = [
     "Analyst and internship roles: summer analyst and summer internship programs, off-cycle internships, and full-time analyst positions across investment banking, sales and trading, research, wealth management, risk, technology, and more."],
   ["Can I choose which jobs I get texts about?",
     "Yes. Pick the banks, job type (analyst or internship), categories, and city you care about, and you only hear about matching roles. Reply STOP to any text to turn texts off."],
-  ["Can I cancel Pro any time?",
-    "Yes. Choose Manage subscription from your account menu to cancel online in a few clicks. You keep Pro until the end of the period you paid for."],
+  ["Can I cancel Premium any time?",
+    "Yes. Choose Manage subscription from your account menu to cancel online in a few clicks. You keep Premium until the end of the period you paid for."],
 ];
 
 function AboutPage({ onBrowse }) {
@@ -1043,7 +1036,7 @@ function AboutPage({ onBrowse }) {
           </div>
         </div>
         <p className="about-text" style={{ marginTop: "1rem" }}>
-          Browsing is free. A free account adds saved jobs. Text and email alerts and recent postings are part of <Link href="/pricing" className="text-link">Pro</Link>.
+          Browsing is free. A free account adds saved jobs. Alerts are free for 3 days; after that, opening them and recent postings are part of <Link href="/pricing" className="text-link">Premium</Link>.
         </p>
       </section>
 
@@ -1375,13 +1368,14 @@ export default function Home() {
   const [gate, setGate] = useState(null);
   function askToSignUp(kind, job) {
     capture("signup_gate_shown", { kind });
-    let redirect;
+    let redirect, signInRedirect;
     if (job) {
       const back = new URL(window.location.href);
       back.searchParams.set("openjob", "1");
-      redirect = back.pathname + back.search;
+      signInRedirect = back.pathname + back.search;
+      redirect = "/start?setup=1";
     }
-    setGate({ ...SIGNUP_GATES[kind], kind, job, redirect });
+    setGate({ ...SIGNUP_GATES[kind], kind, job, redirect, signInRedirect });
   }
   // Back from the sign-up a job click asked for: show that job with a new-tab link.
   const [readyJob, setReadyJob] = useState(null);
@@ -1400,7 +1394,7 @@ export default function Home() {
   const [notifPrefs, setNotifPrefs] = useState(NOTIF_DEFAULTS);
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
-  const [freeAlerts, setFreeAlerts] = useState(null);
+  const [alertTrial, setAlertTrial] = useState(null); // free accounts: { startedAt, endsAt, over }; null for Premium
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
@@ -1538,7 +1532,7 @@ export default function Home() {
         const loaded = { ...NOTIF_DEFAULTS, ...(data.notifications || {}) };
         setNotifPrefs(loaded);
         setSavedNotifPrefs(loaded);
-        setFreeAlerts(data.freeAlerts || null);
+        setAlertTrial(data.trial || null);
       })
       .catch(() => setSavedNotifPrefs((prev) => prev ?? NOTIF_DEFAULTS))
       .finally(() => setNotifLoading(false));
@@ -1691,6 +1685,8 @@ export default function Home() {
     .sort((x, y) => postedAt(y) - postedAt(x));
   const notifDirty = savedNotifPrefs !== null && alertSettingsKey(notifPrefs) !== alertSettingsKey(savedNotifPrefs);
   const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled));
+  // Alerts are free, so anyone signed in with alerts on (or on Premium) gets the settings page.
+  const showAlertSettings = Boolean(isSignedIn && (isSubscribed || alertsOn));
   const maskedPhone = (num) => { const d = (num || "").replace(/\D/g, "").slice(-4); return d ? `(•••) •••-${d}` : "your phone"; };
   const alertAreasLabel = notifPrefs.categories.length === 0
     ? "Open to anything"
@@ -1839,7 +1835,7 @@ export default function Home() {
   };
 
   const sidebar = (
-    <aside className="sidebar" aria-label="Banks and Pro features">
+    <aside className="sidebar" aria-label="Banks and Premium features">
       <div className="sidebar-header">
         <span>Banks</span>
         {countsLoaded > 0 && <span className="sidebar-total tnum">{totalOpen} open</span>}
@@ -1934,7 +1930,7 @@ export default function Home() {
           </svg>
           Notifications
         </span>
-        {!freeAlerts && notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
+        {notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
       </button>
       <button
         className="sidebar-item"
@@ -1996,7 +1992,7 @@ export default function Home() {
                   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                 </svg>
               ) : (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Pro">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Premium">
                   <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
                 </svg>
               )}
@@ -2151,13 +2147,10 @@ export default function Home() {
                   </div>
                 </div>
                 <button
-                  className={`alerts-callout-cta${!isSubscribed ? " alerts-callout-cta-locked" : ""}`}
+                  className="alerts-callout-cta"
                   onClick={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
                 >
-                  {!isSubscribed && (
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  )}
-                  {!isSubscribed ? "Pro: set up alerts" : isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled) ? "Edit alerts" : "Set up alerts"}
+                  {notifPrefs.smsEnabled || notifPrefs.enabled ? "Edit alerts" : "Set up free alerts"}
                 </button>
               </div>
             )}
@@ -2311,13 +2304,16 @@ export default function Home() {
           {/* MAIN CONTENT */}
           <main className="content">
             {/* Notifications view */}
-            {viewNotifications && !(isSignedIn && isSubscribed) && (
+            {viewNotifications && isSignedIn && savedNotifPrefs === null && !isSubscribed && (
+              <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
+            )}
+            {viewNotifications && !showAlertSettings && !(isSignedIn && savedNotifPrefs === null && !isSubscribed) && (
               <>
                 <AlertsPhoneDemo jobs={allJobs} onStart={() => setAlertsSetupSignal((n) => n + 1)} />
                 <StartFlow embedded openSignal={alertsSetupSignal} />
               </>
             )}
-            {viewNotifications && isSignedIn && isSubscribed && (
+            {viewNotifications && showAlertSettings && (
               <div className="al-page">
                 <div className="al-head">
                   <h2 className="al-title">Job alerts</h2>
@@ -2354,11 +2350,15 @@ export default function Home() {
                             : "Choose what you want, turn on texts or email, then save."}
                         </p>
                       </div>
-                      {freeAlerts && (
+                      {alertTrial && (
                         <div className="al-quota">
                           <p>
-                            Alerts are sent on Pro.{" "}
-                            <Link href="/pricing" className="al-link">Start your 7-day free trial</Link>
+                            {alertTrial.over
+                              ? "Your 3 free days are up. Alerts still arrive, and opening them takes Premium. "
+                              : alertTrial.endsAt
+                                ? `Free until ${new Date(alertTrial.endsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}. After that, opening roles from alerts takes Premium. `
+                                : "Your first 3 days of alerts are free, starting with your first alert. "}
+                            <Link href="/pricing" className="al-link">{alertTrial.over ? "Get first in the stack" : "See Premium"}</Link>
                           </p>
                         </div>
                       )}
@@ -2702,7 +2702,7 @@ export default function Home() {
                               <span className="job-unlock job-unlock-phone">Unlock</span>
                             </span>
                             <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
-                            <span className="job-title"><span className="job-locked-title" aria-hidden="true">{job.title}</span><span className="sr-only">New {job.bank} role, unlocks with Pro</span><span className="ss-new">New</span></span>
+                            <span className="job-title"><span className="job-locked-title" aria-hidden="true">{job.title}</span><span className="sr-only">New {job.bank} role, unlocks with Premium</span><span className="ss-new">New</span></span>
                             <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
                             <span className="job-location">{job.location || "\u2014"}</span>
                             <span className="job-posted tnum">{feedAge(job)}</span>
@@ -2725,6 +2725,8 @@ export default function Home() {
                         key={index}
                         onClick={(e) => {
                           capture("job_opened", { view: viewingSaved ? "saved" : "browse", bank: job.bank || BANKS[job.bankKey]?.name, category: job.category, title: job.title, position: index + 1, signed_in: Boolean(isSignedIn) });
+                          // Signed out: a free account first (see SignUpGate).
+                          if (isLoaded && !isSignedIn) { e.preventDefault(); askToSignUp("job", { title: job.title, link: job.link, bank: job.bank, bankKey: job.bankKey, location: job.location }); }
                         }}
                       >
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
@@ -2812,9 +2814,9 @@ export default function Home() {
               </>
             ) : (
               <>
-                <p className="modal-subtitle">Requesting companies is a Pro feature. Upgrade to tell us which company to track next.</p>
+                <p className="modal-subtitle">Requesting companies is a Premium feature. Upgrade to tell us which company to track next.</p>
                 <div className="modal-actions">
-                  <button className="modal-cta-primary" onClick={() => { setShowCompanyRequest(false); router.push("/pricing"); }}>See Pro plans</button>
+                  <button className="modal-cta-primary" onClick={() => { setShowCompanyRequest(false); router.push("/pricing"); }}>See Premium</button>
                 </div>
               </>
             )}

@@ -2,7 +2,7 @@
 import WelcomeFlow from "./WelcomeFlow";
 
 export const metadata = {
-  title: "Welcome to Pro | Pete’s Postings",
+  title: "Welcome to Premium | Pete’s Postings",
   robots: { index: false, follow: false },
 };
 

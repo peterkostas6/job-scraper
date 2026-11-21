@@ -144,7 +144,7 @@ export default function AlertsPanel({
 
             <footer className="alx-foot">
               <p className={`alx-foot-note${blocker ? " is-blocked" : ""}`}>{blocker || (dirty ? "You have unsaved changes." : "All changes saved.")}</p>
-              <button className="alx-save" onClick={onSave} disabled={saving || Boolean(blocker) || !dirty}>{saving ? "Saving…" : "Save alerts"}</button>
+              <button className="alx-save" onClick={onSave} disabled={saving || Boolean(blocker) || !dirty}>{saving ? "Saving…" : "Save preferences"}</button>
             </footer>
           </>
         )}

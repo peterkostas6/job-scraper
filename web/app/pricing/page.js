@@ -9,6 +9,7 @@ import { PLANS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 import { BANK_COUNT } from "@/lib/banks";
 import { trialFor } from "@/lib/alert-trial-days";
+import PremiumTimer from "@/lib/premium-timer";
 
 function ClubInquiryModal({ onClose }) {
   const [form, setForm] = useState({
@@ -229,6 +230,8 @@ export default function PricingPage() {
           <div className="nav-right">
             {isLoaded && (
               isSignedIn ? (
+                <>
+                {inTrial && <PremiumTimer endsAt={trial.endsAt} />}
                 <UserButton>
                   {user?.publicMetadata?.stripeCustomerId && (
                     <UserButton.MenuItems>
@@ -236,6 +239,7 @@ export default function PricingPage() {
                     </UserButton.MenuItems>
                   )}
                 </UserButton>
+                </>
               ) : (
                 <>
                   <SignInButton mode="modal">

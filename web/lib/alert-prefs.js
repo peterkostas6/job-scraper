@@ -75,8 +75,9 @@ export async function saveAlertPrefs({ userId, body, origin }) {
     $set: { alert_email: alertProps.email_alerts, alert_sms: alertProps.sms_alerts, alert_job_type: alertProps.job_type, alert_bank_count: Array.isArray(banks) && banks.length ? banks.length : 20 },
   });
 
-  // Send preferences confirmation email
-  if (email) {
+  // Send preferences confirmation email. Preferences saved with every alert off (the setup's
+  // "Don't alert me") send nothing the first time; the held welcome email still goes out.
+  if (email && !(isFirstSetup && !enabled && !smsEnabled)) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const prefs = {

@@ -238,8 +238,17 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
   const pendingJob = () => { try { return Boolean(sessionStorage.getItem("pp_open_job")); } catch { return false; } };
 
   // "Don't alert me": no alerts, straight on to the jobs (and the one they clicked, if any).
-  function skipAlerts() {
+  // Preferences are still saved (alerts off), so Browse can filter to "My preferences".
+  async function skipAlerts() {
     capture("start_alerts_skipped", { signedIn: Boolean(isSignedIn) });
+    if (isSignedIn) {
+      setSaving(true);
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: false, ...toPrefs(answers), smsEnabled: false, smsConsent: false, phoneNumber: "" }),
+      }).catch(() => {});
+    }
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
     window.location.href = pendingJob() ? "/jobs?openjob=1" : "/jobs";
   }

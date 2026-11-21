@@ -24,7 +24,8 @@ export async function GET() {
     // Free accounts: where their 3 free days of alert links stand (Premium: null).
     const trial = user.publicMetadata?.subscribed === true ? null : alertTrial(user.createdAt);
 
-    return Response.json({ notifications, trial });
+    // hasPrefs: they have saved preferences at least once (alerts on or off).
+    return Response.json({ notifications, trial, hasPrefs: Boolean(user.unsafeMetadata?.notifications) });
   } catch (err) {
     console.error("Notifications GET error:", err);
     return Response.json({ error: "Failed to fetch preferences" }, { status: 500 });

@@ -275,7 +275,7 @@ export default function PricingPage() {
         <section className="pp-plans pp-plans-one">
           <div className="pp-plan pp-plan-pro">
             <span className="pp-banner">Premium</span>
-            <p className="pp-plan-name">First.</p>
+            <p className="pp-plan-name">Apply first.</p>
             <p className="pp-price">
               ${PLANS.monthly.price}
               <span>/month</span>
@@ -297,7 +297,7 @@ export default function PricingPage() {
             <p className="pp-includes">Premium includes</p>
             <ul className="pp-list">
               <li><strong>Unlimited</strong> text messages</li>
-              <li><strong>Unlimited</strong> access to Recent postings: every role from the last 48 hours</li>
+              <li><strong>Unlimited</strong> access to Recent postings</li>
               <li>Save jobs</li>
               <li>Track applications</li>
               <li>Request banks for us to add</li>

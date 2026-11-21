@@ -662,12 +662,12 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
         <div className="ss-plans ss-plans-one">
           <div className="ss-card ss-plan ss-plan-dark" data-reveal>
             <span className="ss-plan-banner">Premium</span>
-            <p className="ss-plan-name">First.</p>
+            <p className="ss-plan-name">Apply first.</p>
             <p className="ss-plan-price">${PLANS.monthly.price}<span>/mo</span></p>
             <p className="ss-plan-free">Every new account gets Premium free for 3 days.</p>
             <ul>
               <li>Unlimited text messages</li>
-              <li>Unlimited access to Recent postings: every role from the last 48 hours</li>
+              <li>Unlimited access to Recent postings</li>
               <li>Save jobs</li>
               <li>Track applications</li>
               <li>Request banks for us to add</li>

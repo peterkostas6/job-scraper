@@ -8,6 +8,7 @@ import { capture } from "@/lib/analytics";
 import { PLANS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 import { BANK_COUNT } from "@/lib/banks";
+import { trialFor } from "@/lib/alert-trial-days";
 
 function ClubInquiryModal({ onClose }) {
   const [form, setForm] = useState({
@@ -212,7 +213,7 @@ export default function PricingPage() {
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className="nav-link">Browse Jobs</Link>
             <Link href="/recent" className="nav-link nav-link-new">
-              {user?.publicMetadata?.subscribed === true ? (
+              {user?.publicMetadata?.subscribed === true || (user && !trialFor(user.createdAt).over) ? (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               ) : (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Premium"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>

@@ -63,7 +63,7 @@ export default function AlertsLanding() {
 
         {button}
         <p className="lp-fine">
-          Free account, no credit card. Alerts are free for 3 days, then $4.99/month to keep opening them.
+          Takes a minute. Change or stop your alerts anytime.
           {isLoaded && !isSignedIn && (
             <>
               {" "}Have an account?{" "}

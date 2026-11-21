@@ -11,7 +11,6 @@ import { JOB_TYPES, AREAS, CITIES } from "@/lib/alert-options";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { track } from "@/lib/track";
 import { PLANS } from "@/lib/plans";
-import { ALERT_TRIAL_DAYS } from "@/lib/alert-trial-days";
 
 const BANK_COUNT = Object.keys(BANKS).length;
 const STORAGE_KEY = "pp-start-v3";
@@ -461,12 +460,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
             </div>
 
             <div className="pp-plan pp-plan-pro sf-plan">
-              <div className="pp-plan-top">
-                <p className="pp-plan-name">{isSubscribed ? "Premium" : "Free alerts"}</p>
-                {!isSubscribed && <span className="pp-badge">No card needed</span>}
-              </div>
-              <p className="pp-price">$0<span>{isSubscribed ? "" : ` for ${ALERT_TRIAL_DAYS} days`}</span></p>
-              <p className="pp-billed">{isSubscribed ? "You have Premium, so your alerts never lock." : `Then $${PLANS.monthly.price}/month to keep opening roles from your alerts.`}</p>
+              <p className="pp-plan-name">Your alerts</p>
               <p className="sf-plan-label">What you get</p>
               <ul className="pp-list">
                 <li><strong>Instant</strong> texts and emails when a match posts</li>
@@ -476,7 +470,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
               </ul>
               {error && <p className="st-error" role="alert">{error}</p>}
               {payButton}
-              {!isSubscribed && <p className="st-fine">{isSignedIn ? "Free. No credit card." : "Free account. No credit card."}</p>}
+
             </div>
           </section>
         )}

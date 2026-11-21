@@ -1714,8 +1714,11 @@ export default function Home() {
   // There is no Alerts page any more: alerts are a panel on Browse. Signed out, alerts start at /start.
   function openAlerts() {
     if (!isSignedIn) { router.push("/start"); return; }
-    setViewNotifications(false); setViewingSaved(false); setViewNewPostings(false); setViewHome(false);
+    // Recent postings opens the panel in place; anywhere else goes to Browse, where it lives.
+    if (!viewNewPostings) { setViewNotifications(false); setViewingSaved(false); setViewHome(false); }
     setAlertsPanelOpen(true);
+    // The panel sits at the top of the content; bring it into view.
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
     capture("alerts_panel_opened");
   }
   // Old /notifications links (emails, bookmarks) land on Browse with the panel open.
@@ -2214,6 +2217,7 @@ export default function Home() {
           {sidebar}
 
           <main className={`content${!isSubscribed ? " content-recent-locked" : ""}`}>
+            {alertsPanel}
             {/* Pro members get the page header and the alerts shortcut; everyone else sees the locked live feed on its own. */}
             {isSubscribed && (
               <>

@@ -89,11 +89,20 @@ export async function POST(req) {
       }
     }
 
-    // Send welcome email
+    // Welcome email, held for 30 minutes: if they set up alerts in that time (most do, right
+    // after signing up), lib/alert-prefs.js cancels it and sends one welcome + alerts email.
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const { subject, html, text } = welcomeEmail({ firstName, bankCount: BANK_COUNT });
-      await sendEmail(resend, { to: email, subject, html, text, idempotencyKey: `welcome-${userData.id}`, tags: [{ name: "type", value: "welcome" }] });
+      const sent = await sendEmail(resend, {
+        to: email, subject, html, text,
+        scheduledAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        idempotencyKey: `welcome-${userData.id}`, tags: [{ name: "type", value: "welcome" }],
+      });
+      if (sent?.id) {
+        const client = await clerkClient();
+        await client.users.updateUserMetadata(userData.id, { privateMetadata: { welcomeEmailId: sent.id } });
+      }
     } catch (err) {
       console.error("Failed to send welcome email:", err);
     }

@@ -70,13 +70,20 @@ export function layout({ title, preheader = "", heading, intro = "", body = "", 
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
   <title>${escapeHtml(title)}</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .pp-outer { padding: 16px 10px !important; }
+      .pp-card { padding: 22px 18px !important; border-radius: 10px !important; }
+      .pp-h1 { font-size: 22px !important; line-height: 28px !important; }
+    }
+  </style>
 </head>
 <body style="margin:0;padding:0;background:${C.cream};">
   <div lang="${lang}" dir="ltr" style="background:${C.cream};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${C.text};">
     ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(preheader)}${"&#8203;&nbsp;".repeat(40)}</div>` : ""}
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${C.cream};">
       <tr>
-        <td align="center" style="padding:32px 16px;">
+        <td align="center" class="pp-outer" style="padding:32px 16px;">
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;">
             <tr>
               <td style="padding:0 8px 20px;">
@@ -84,8 +91,8 @@ export function layout({ title, preheader = "", heading, intro = "", body = "", 
               </td>
             </tr>
             <tr>
-              <td style="background:${C.white};border:1px solid ${C.hairline};border-radius:12px;padding:32px 28px;">
-                <h1 style="margin:0 0 12px;font-size:24px;line-height:30px;font-weight:800;letter-spacing:-0.01em;color:${C.navy};">${escapeHtml(heading)}</h1>
+              <td class="pp-card" style="background:${C.white};border:1px solid ${C.hairline};border-radius:12px;padding:32px 28px;">
+                <h1 class="pp-h1" style="margin:0 0 12px;font-size:24px;line-height:30px;font-weight:800;letter-spacing:-0.01em;color:${C.navy};">${escapeHtml(heading)}</h1>
                 ${intro ? `<p style="margin:0 0 20px;font-size:16px;line-height:24px;color:${C.text};">${intro}</p>` : ""}
                 ${body}
                 ${cta ? `<div style="padding:8px 0 4px;">${button(cta.label, cta.url)}</div>` : ""}
@@ -148,8 +155,10 @@ function isRetryable(err) {
   return code === 429 || (code >= 500 && code < 600) || err?.name === "AbortError" || err?.code === "ETIMEDOUT";
 }
 
-export async function sendEmail(resend, { to, subject, html, text, from = BRAND.fromHello, replyTo = BRAND.replyTo, headers = {}, idempotencyKey, tags }, { maxRetries = 3 } = {}) {
-  const payload = { from, to, subject, html, text, reply_to: replyTo, headers, tags };
+// scheduledAt (ISO date) holds the email in Resend until then; it can be cancelled before it goes.
+// The SDK reads replyTo (camelCase); it silently drops reply_to.
+export async function sendEmail(resend, { to, subject, html, text, from = BRAND.fromHello, replyTo = BRAND.replyTo, headers = {}, idempotencyKey, tags, scheduledAt }, { maxRetries = 3 } = {}) {
+  const payload = { from, to, subject, html, text, replyTo, headers, tags, ...(scheduledAt && { scheduledAt }) };
   const options = idempotencyKey ? { idempotencyKey } : {};
   let lastErr;
   for (let attempt = 0; attempt < maxRetries; attempt++) {

@@ -6332,3 +6332,5 @@ footer a, .footer a { color: var(--pp-cream); }
 /* Browse rows: texted / viewed / applied */
 .row-tags { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-left: 0.5rem; vertical-align: 2px; }
 .row-tags .al-tag { font-size: 0.66rem; padding: 0.08rem 0.45rem; }
+/* Upgrade pill beside "Your tools": readable on the navy sidebar */
+.sidebar-pro-pill { background: var(--pp-coral) !important; color: #fff !important; border-color: transparent !important; }

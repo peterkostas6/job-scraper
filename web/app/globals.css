@@ -6257,3 +6257,34 @@ footer a, .footer a { color: var(--pp-cream); }
   .al-job-logo { margin-top: 2px; }
   .al-apply { min-height: 34px; padding: 0 0.8rem; }
 }
+
+/* ---- Alerts page on desktop: use the width like Browse does ----
+   One-line preferences bar, and table-style rows: title + meta on the left, status tags,
+   then Mark applied and Apply side by side. */
+@media (min-width: 900px) {
+  .app-layout > .content:has(> .al-page .al-top) { max-width: 1080px; }
+  .al-page:has(.al-top) { max-width: none; }
+  .al-top { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.85rem 0.75rem 1.1rem; }
+  .al-top-row { display: contents; }
+  .al-top-title { flex: 0 1 auto; }
+  .al-top-prefs { order: 2; flex: 1 1 auto; min-width: 0; margin: 0; padding-left: 0.75rem; border-left: 1px solid rgba(20, 33, 61, 0.15); font-size: 0.88rem; }
+  .al-top-edit { order: 3; }
+  .al-top-note { order: 4; flex-basis: 100%; margin: 0 0 0 1.35rem; }
+
+  .al-feed { margin-top: 1.75rem; }
+  .al-feed-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; }
+  .al-feed-title { font-size: 1.3rem; }
+  .al-feed-sub { margin: 0; }
+
+  .al-job { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; column-gap: 1rem; padding: 0.85rem 1.25rem; transition: background 0.15s ease; }
+  .al-job:hover { background: rgba(20, 33, 61, 0.035); }
+  .al-job-applied:hover { background: rgba(22, 163, 74, 0.08); }
+  .al-job-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title tags" "meta tags"; column-gap: 1.25rem; align-items: center; }
+  .al-job-title { grid-area: title; font-size: 0.98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .al-job-meta { grid-area: meta; }
+  .al-job-tags { grid-area: tags; margin: 0; justify-content: flex-end; flex-wrap: nowrap; }
+  .al-job-actions { flex-direction: row; align-items: center; gap: 0.5rem; }
+  .al-job-actions .al-mark { order: -1; min-height: 36px; padding: 0 0.85rem; font-size: 0.8rem; }
+  .al-apply { min-width: 92px; }
+  .al-more { max-width: 320px; margin-inline: auto; }
+}

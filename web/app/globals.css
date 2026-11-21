@@ -6377,3 +6377,9 @@ footer a, .footer a { color: var(--pp-cream); }
 .row-tags .al-tag { font-size: 0.66rem; padding: 0.08rem 0.45rem; }
 /* Upgrade pill beside "Your tools": readable on the navy sidebar */
 .sidebar-pro-pill { background: var(--pp-coral) !important; color: #fff !important; border-color: transparent !important; }
+
+/* Browse: My preferences | All roles */
+.browse-mode { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(244, 237, 224, 0.1); border: 1px solid rgba(244, 237, 224, 0.18); }
+.browse-mode button { min-height: 34px; padding: 0 0.95rem; border: none; border-radius: 999px; background: transparent; color: rgba(244, 237, 224, 0.75); font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.browse-mode button:hover { color: var(--pp-cream); }
+.browse-mode button[aria-pressed="true"] { background: var(--pp-cream); color: var(--pp-navy); }

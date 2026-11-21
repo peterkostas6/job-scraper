@@ -1396,7 +1396,10 @@ export default function Home() {
   const [notifPrefs, setNotifPrefs] = useState(NOTIF_DEFAULTS);
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
-  const [alertTrial, setAlertTrial] = useState(null); // free accounts: { startedAt, endsAt, over }; null for Premium
+  const [alertTrial, setAlertTrial] = useState(null);
+  const [alertsEditOpen, setAlertsEditOpen] = useState(false); // Alerts page: preferences fold into a bar until Edit
+  const [jobStatus, setJobStatus] = useState({}); // { [link]: { alertedAt, alertedVia, viewedAt, appliedAt } } from Postgres
+  const [feedLimit, setFeedLimit] = useState(30); // free accounts: { startedAt, endsAt, over }; null for Premium
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
@@ -1689,6 +1692,21 @@ export default function Home() {
   const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled));
   // Alerts are free, so anyone signed in with alerts on (or on Premium) gets the settings page.
   const showAlertSettings = Boolean(isSignedIn && (isSubscribed || alertsOn));
+  useEffect(() => {
+    if (!viewNotifications || !showAlertSettings) return;
+    fetch("/api/job-status").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.statuses) setJobStatus(d.statuses); }).catch(() => {});
+  }, [viewNotifications, showAlertSettings]);
+  const patchJobStatus = (link, patch) => setJobStatus((m) => ({ ...m, [link]: { ...(m[link] || {}), ...patch } }));
+  function toggleApplied(job) {
+    const applied = !jobStatus[job.link]?.appliedAt;
+    patchJobStatus(job.link, { appliedAt: applied ? new Date().toISOString() : null });
+    capture("job_marked_applied", { applied, bank: job.bank, where: "alerts" });
+    fetch("/api/job-status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ link: job.link, applied }) })
+      .then((r) => { if (!r.ok) throw new Error(); })
+      .catch(() => patchJobStatus(job.link, { appliedAt: applied ? null : jobStatus[job.link]?.appliedAt || null }));
+  }
+  // New roles stay locked for free accounts once their free alert days are over (same rule as Browse).
+  const feedLocked = (job) => !isSubscribed && Boolean(alertTrial?.over) && isLast48h(job);
   const maskedPhone = (num) => { const d = (num || "").replace(/\D/g, "").slice(-4); return d ? `(•••) •••-${d}` : "your phone"; };
   const alertAreasLabel = notifPrefs.categories.length === 0
     ? "Open to anything"
@@ -1749,7 +1767,7 @@ export default function Home() {
       body: JSON.stringify(notifPrefs),
     })
       .then((res) => res.json())
-      .then((data) => { if (data.success) { setNotifSaved(true); setSavedToast(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); } })
+      .then((data) => { if (data.success) { setNotifSaved(true); setSavedToast(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); setAlertsEditOpen(false); } })
       .catch(() => {})
       .finally(() => setNotifSaving(false));
   }
@@ -2317,53 +2335,38 @@ export default function Home() {
             )}
             {viewNotifications && showAlertSettings && (
               <div className="al-page">
-                <div className="al-head">
-                  <h2 className="al-title">Job alerts</h2>
-                  <p className="al-sub">We check every bank every 5 minutes and tell you when a match goes live.</p>
-                </div>
-
-                {alertsWelcome && (
-                  <div className="al-welcome" role="status">
-                    <span className="al-welcome-mark" aria-hidden="true">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
-                    </span>
-                    <div>
-                      <p className="al-welcome-title">You&rsquo;re in. Your texts are on.</p>
-                      <p className="al-welcome-desc">We&rsquo;ll text you the moment a role you picked goes live. Change anything below whenever you like.</p>
-                    </div>
-                    <button className="pp-toast-close" onClick={() => setAlertsWelcome(false)} aria-label="Dismiss">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                    </button>
-                  </div>
-                )}
-
                 {notifLoading || savedNotifPrefs === null ? (
                   <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
                 ) : (
                   <>
-                    {/* STATUS · what is on right now, as saved */}
-                    <section className={`al-status${alertsOn ? " al-status-on" : ""}`}>
-                      <span className="al-status-dot" aria-hidden="true" />
-                      <div className="al-status-main">
-                        <p className="al-status-title">{alertsOn ? "Your alerts are on" : "Your alerts are off"}</p>
-                        <p className="al-status-sub">
+                    {/* TOP · preferences folded into one compact bar (a fifth of a phone screen at most) */}
+                    <section className={`al-top${alertsOn ? " al-top-on" : ""}`}>
+                      <div className="al-top-row">
+                        <span className="al-status-dot" aria-hidden="true" />
+                        <p className="al-top-title">
+                          {alertsWelcome ? "You\u2019re in. " : ""}
                           {alertsOn
-                            ? [savedNotifPrefs.smsEnabled && `Texting ${maskedPhone(savedNotifPrefs.phoneNumber)}`, savedNotifPrefs.enabled && `emailing ${user?.primaryEmailAddress?.emailAddress || "you"}`].filter(Boolean).join(" and ")
-                            : "Choose what you want, turn on texts or email, then save."}
+                            ? [savedNotifPrefs.smsEnabled && `Texting ${maskedPhone(savedNotifPrefs.phoneNumber)}`, savedNotifPrefs.enabled && "emailing you"].filter(Boolean).join(" and ")
+                            : "Your alerts are off"}
                         </p>
+                        <button className="al-top-edit" aria-expanded={alertsEditOpen} onClick={() => { setAlertsEditOpen((v) => !v); setAlertsWelcome(false); capture("alerts_edit_toggled", { open: !alertsEditOpen }); }}>
+                          {alertsEditOpen ? "Done" : "Edit"}
+                        </button>
                       </div>
+                      <p className="al-top-prefs">
+                        {[ALERT_JOB_TYPES.find((t) => t.key === savedNotifPrefs.jobType)?.label || "Both", alertAreasLabel, alertBanksLabel, (savedNotifPrefs.location || "").trim() || "Anywhere"].join(" \u00b7 ")}
+                      </p>
                       {/* Nothing about cost until their free days are over: the texts sell it first. */}
                       {alertTrial?.over && (
-                        <div className="al-quota">
-                          <p>
-                            Alerts still arrive, and opening them takes Premium.{" "}
-                            <Link href="/pricing" className="al-link">Get first in the stack</Link>
-                          </p>
-                        </div>
+                        <p className="al-top-note">
+                          Alerts still arrive, and opening new ones takes Premium.{" "}
+                          <Link href="/pricing" className="al-link">Get first in the stack</Link>
+                        </p>
                       )}
                     </section>
 
-                    <div className="al-grid">
+                    {alertsEditOpen && (
+                    <div className="al-edit">
                       <div className="al-settings">
                         {/* WHAT · one row per question; tap to change */}
                         <div className="al-card">
@@ -2514,37 +2517,58 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* PREVIEW · what these settings would send, from real postings */}
-                      <aside className="al-preview" aria-label="Preview">
-                        <p className="al-card-label">Preview</p>
-                        <div className="al-preview-msg">
-                          <span className={`al-channel-icon ${notifPrefs.smsEnabled || !notifPrefs.enabled ? "al-channel-icon-sms" : "al-channel-icon-email"}`} aria-hidden="true">
-                            {notifPrefs.smsEnabled || !notifPrefs.enabled
-                              ? <svg width="16" height="16" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
-                              : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>}
-                          </span>
-                          <div>
-                            <div className="h-notif-head"><strong>Pete&rsquo;s Postings</strong><span>now</span></div>
-                            <p>
-                              {notifMatches[0]
-                                ? <>{notifMatches[0].bank} just posted: {notifMatches[0].title}. Apply &rarr;</>
-                                : "No open roles match right now. You'll hear the moment one posts."}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="al-preview-count"><strong className="tnum">{notifMatches.length}</strong> open {notifMatches.length === 1 ? "role matches" : "roles match"} right now</p>
-                        {notifMatches.length > 0 && (
-                          <ol className="al-preview-list">
-                            {notifMatches.slice(0, 4).map((job) => (
-                              <li key={job.link}>
-                                <span className="al-preview-title">{job.title}</span>
-                                <span className="al-preview-meta">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
-                              </li>
-                            ))}
-                          </ol>
-                        )}
-                      </aside>
                     </div>
+                    )}
+
+                    {/* FEED · every open role these preferences match, with what we've done about each */}
+                    <section className="al-feed" aria-label="Roles that match your alerts">
+                      <div className="al-feed-head">
+                        <h2 className="al-feed-title"><span className="tnum">{notifMatches.length}</span> {notifMatches.length === 1 ? "role matches" : "roles match"} right now</h2>
+                        <p className="al-feed-sub">New ones get texted to you the moment they post.</p>
+                      </div>
+                      {notifMatches.length === 0 ? (
+                        <p className="al-feed-empty">Nothing open matches yet. You&rsquo;ll hear the moment something does, or <button className="gate-link" onClick={() => setAlertsEditOpen(true)}>widen your preferences</button>.</p>
+                      ) : (
+                        <ul className="al-feed-list">
+                          {notifMatches.slice(0, feedLimit).map((job) => {
+                            const st = jobStatus[job.link] || {};
+                            const locked = feedLocked(job);
+                            return (
+                              <li key={job.link} className={`al-job${st.appliedAt ? " al-job-applied" : ""}${locked ? " al-job-locked" : ""}`}>
+                                <BankLogo bankKey={job.bankKey} bank={job.bank} size={30} className="al-job-logo" />
+                                <div className="al-job-main">
+                                  <p className="al-job-title">{locked ? <span className="job-locked-title" aria-hidden="true">{job.title}</span> : job.title}</p>
+                                  <p className="al-job-meta">{job.bank}{job.location ? ` \u00b7 ${cleanLocation(job.location)}` : ""} &middot; {formatPostedAt(job)}</p>
+                                  <div className="al-job-tags">
+                                    {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : "Texted you"}</span>}
+                                    {st.viewedAt && <span className="al-tag al-tag-viewed">Viewed</span>}
+                                    {st.appliedAt && <span className="al-tag al-tag-applied">Applied</span>}
+                                  </div>
+                                </div>
+                                <div className="al-job-actions">
+                                  {locked ? (
+                                    <Link href="/pricing" className="al-apply al-apply-locked" onClick={() => capture("paywall_clicked", { where: "alerts_feed" })}>Unlock</Link>
+                                  ) : (
+                                    <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="al-apply"
+                                      onClick={() => { patchJobStatus(job.link, { viewedAt: st.viewedAt || new Date().toISOString() }); capture("job_opened", { view: "alerts", bank: job.bank, category: job.category, title: job.title, texted: Boolean(st.alertedAt) }); }}>
+                                      Apply &#8599;
+                                    </a>
+                                  )}
+                                  {!locked && (
+                                    <button className="al-mark" aria-pressed={Boolean(st.appliedAt)} onClick={() => toggleApplied(job)}>
+                                      {st.appliedAt ? "\u2713 Applied" : "Mark applied"}
+                                    </button>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                      {notifMatches.length > feedLimit && (
+                        <button className="al-more" onClick={() => setFeedLimit((n) => n + 30)}>Show more ({notifMatches.length - feedLimit} left)</button>
+                      )}
+                    </section>
                   </>
                 )}
               </div>

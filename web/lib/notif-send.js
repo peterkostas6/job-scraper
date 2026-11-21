@@ -6,6 +6,7 @@ import { alertEmail } from "@/lib/email-templates";
 import { sendEmail, unsubscribeUrl, BRAND } from "@/lib/email";
 import { captureServer } from "@/lib/posthog-server";
 import { alertTrial } from "@/lib/alert-trial";
+import { markAlerted } from "@/lib/job-status";
 
 // Sends go through the Twilio Messaging Service that the approved A2P campaign is attached to.
 export function smsConfig() {
@@ -151,6 +152,7 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
       });
       result.emailSent = true;
       await logNotification({ userId, channel: "email", status: "sent", recipient: email, jobLinks, providerId: sent?.id || null });
+      await markAlerted(userId, jobLinks, "email");
     } catch (err) {
       console.error(`Failed to email ${email}:`, err?.message || err);
       result.failed = true;
@@ -166,6 +168,7 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
       const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs, withOptOut, shortUrls, trialOver));
       result.smsSent = true;
       await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
+      await markAlerted(userId, jobLinks, "sms");
       if (withOptOut) await logNotification({ userId, channel: "sms-optout-notice", status: "sent", recipient: prefs.phoneNumber, providerId: messageId });
     } catch (err) {
       // SMS failures are logged but never queued: a retry would hit the same carrier or

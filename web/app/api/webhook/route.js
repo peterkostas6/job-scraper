@@ -69,7 +69,7 @@ export async function POST(req) {
     // Tell the owners about every new subscription. A failed notice only goes to the logs.
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const plan = `${PLANS[m.plan]?.name || "Monthly"} (${PLANS.monthly.trialDays}-day free trial)`;
+      const plan = `Premium, ${PLANS[m.plan]?.name || "monthly"}${PLANS.monthly.trialDays ? ` (${PLANS.monthly.trialDays}-day free trial)` : ""}`;
       const notice = newMemberEmail({
         subject: `New Pro subscriber: ${who.email || "no email"}`,
         heading: "Someone subscribed to Pro",

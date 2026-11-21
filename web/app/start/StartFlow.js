@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { capture } from "@/lib/analytics";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
@@ -11,13 +11,15 @@ import { JOB_TYPES, AREAS, CITIES } from "@/lib/alert-options";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { track } from "@/lib/track";
 import { PLANS } from "@/lib/plans";
+import { ALERT_TRIAL_DAYS } from "@/lib/alert-trial-days";
 
 const BANK_COUNT = Object.keys(BANKS).length;
 const STORAGE_KEY = "pp-start-v3";
 
 // One scrolling page: the promise and sample texts, then the button scrolls into four short
 // steps (banks, roles, location, where to reach you) that slide in one after another, then
-// the checkout button. After Stripe, texts turn on with these answers and they land on Alerts.
+// the free start. Alerts are free (no card); signed-out visitors make an account at the end,
+// then the alerts turn on with these answers and they land on Alerts.
 const STEP_LABELS = ["What banks?", "What roles?", "What location?", "Where should we alert you?"];
 const STEP_NAMES = ["Banks", "Roles", "Location", "Alerts go to"];
 // Every step starts on its broadest answer, so Next works right away: all banks, internships
@@ -57,6 +59,7 @@ const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" ari
 // the Alerts tab's button bumps openSignal and the preferences slide open on the same page.
 export default function StartFlow({ embedded = false, openSignal = 0 }) {
   const { isLoaded, isSignedIn, user } = useUser();
+  const clerk = useClerk();
   const isSubscribed = user?.publicMetadata?.subscribed === true;
   useTrackSignup(user);
 
@@ -109,6 +112,15 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
 
   // Signed in: their account email is the one we use.
   useEffect(() => { if (isSignedIn && user?.primaryEmailAddress?.emailAddress) setEmail(user.primaryEmailAddress.emailAddress); }, [isSignedIn, user]);
+
+  // Back from the sign-up the last step asked for (/start?finish=1): turn the alerts on.
+  useEffect(() => {
+    if (!restored || !isLoaded || !isSignedIn) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("finish") !== "1") return;
+    window.history.replaceState(null, "", "/start");
+    turnOnTexts();
+  }, [restored, isLoaded, isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Back from Stripe (/start?paid=true): count the trial, turn the texts on, go to Alerts.
   useEffect(() => {
@@ -223,6 +235,23 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
     }
   }
 
+  // A visitor who clicked a job to get here gets it offered when they land (see openjob in the main page).
+  const pendingJob = () => { try { return Boolean(sessionStorage.getItem("pp_open_job")); } catch { return false; } };
+
+  // "Don't alert me": no alerts, straight on to the jobs (and the one they clicked, if any).
+  function skipAlerts() {
+    capture("start_alerts_skipped", { signedIn: Boolean(isSignedIn) });
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    window.location.href = pendingJob() ? "/jobs?openjob=1" : "/jobs";
+  }
+
+  // Last step: signed in turns the alerts on now; signed out makes a free account first.
+  function startFree() {
+    if (isSignedIn) { turnOnTexts(); return; }
+    capture("start_signup_opened");
+    clerk.openSignUp({ forceRedirectUrl: "/start?finish=1", signInForceRedirectUrl: "/start?finish=1" });
+  }
+
   async function turnOnTexts() {
     setError("");
     const wantsSms = validPhone(phone) && smsConsent;
@@ -239,7 +268,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
       if (!res.ok || !data.success) throw new Error(data.error || "save failed");
       capture("start_alerts_saved", { sms: wantsSms, email: wantsEmail });
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
-      window.location.href = "/notifications?welcome=1";
+      window.location.href = pendingJob() ? "/notifications?welcome=1&openjob=1" : "/notifications?welcome=1";
     } catch {
       setError("Couldn’t turn on your texts. Try again.");
       setSaving(false);
@@ -255,8 +284,8 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
   ];
 
   const payButton = (
-    <button className="st-cta" disabled={saving || !isLoaded} onClick={isSubscribed ? turnOnTexts : startCheckout}>
-      {saving ? "Opening checkout…" : "Start receiving alerts"}
+    <button className="st-cta" disabled={saving || !isLoaded} onClick={startFree}>
+      {saving ? "Turning on your alerts…" : "Start my free alerts"}
     </button>
   );
 
@@ -392,7 +421,10 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
                     </label>
                   )}
                   {contactError && <p className="st-error" role="alert">{contactError}</p>}
-                  <button className="sf-next" type="submit">Next</button>
+                  <div className="sf-form-actions">
+                    <button className="sf-next" type="submit">Next</button>
+                    <button className="sf-skip" type="button" onClick={skipAlerts}>Don&rsquo;t alert me</button>
+                  </div>
                 </form>
                             </>
                           )}
@@ -430,22 +462,21 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
 
             <div className="pp-plan pp-plan-pro sf-plan">
               <div className="pp-plan-top">
-                <p className="pp-plan-name">Pro</p>
-                {!isSubscribed && <span className="pp-badge">{PLANS.monthly.trialDays} days free</span>}
+                <p className="pp-plan-name">{isSubscribed ? "Premium" : "Free alerts"}</p>
+                {!isSubscribed && <span className="pp-badge">No card needed</span>}
               </div>
-              <p className="pp-price">${PLANS.monthly.price}<span>/month</span></p>
-              <p className="pp-billed">{isSubscribed ? "You already have Pro." : "$0 today. Cancel anytime."}</p>
+              <p className="pp-price">$0<span>{isSubscribed ? "" : ` for ${ALERT_TRIAL_DAYS} days`}</span></p>
+              <p className="pp-billed">{isSubscribed ? "You have Premium, so your alerts never lock." : `Then $${PLANS.monthly.price}/month to keep opening roles from your alerts.`}</p>
               <p className="sf-plan-label">What you get</p>
               <ul className="pp-list">
-                <li><strong>Unlimited</strong> text and email alerts</li>
-                <li><strong>Every role</strong> from the last 48 hours</li>
-                <li>All open roles at {BANK_COUNT} banks</li>
-                <li>Save jobs and track applications</li>
-                <li>Request banks for us to add</li>
+                <li><strong>Instant</strong> texts and emails when a match posts</li>
+                <li>All {BANK_COUNT} banks checked every 5 minutes</li>
+                <li>Every open role, free to browse</li>
+                <li>Change or stop alerts anytime</li>
               </ul>
               {error && <p className="st-error" role="alert">{error}</p>}
               {payButton}
-              {!isSubscribed && <p className="st-fine">Secure checkout by Stripe.</p>}
+              {!isSubscribed && <p className="st-fine">{isSignedIn ? "Free. No credit card." : "Free account. No credit card."}</p>}
             </div>
           </section>
         )}

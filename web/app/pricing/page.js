@@ -165,6 +165,15 @@ export default function PricingPage() {
   const { isSignedIn, isLoaded, user } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
+  const isSubscribed = user?.publicMetadata?.subscribed === true;
+  // /pricing?alert=<code>: they tapped an alert after their 3 free days.
+  const [alertLocked, setAlertLocked] = useState(false);
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("alert");
+    if (!code) return;
+    setAlertLocked(true);
+    capture("paywall_viewed", { where: "alert_link", signed_in: Boolean(isSignedIn) });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   function handleSubscribe(plan = "monthly") {
     track("InitiateCheckout", planPrice(plan));
     setCheckoutLoading(plan);
@@ -206,7 +215,7 @@ export default function PricingPage() {
               {user?.publicMetadata?.subscribed === true ? (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               ) : (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Pro"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Premium"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
               )}
               Recent Postings
             </Link>
@@ -249,50 +258,43 @@ export default function PricingPage() {
       </nav>
 
       <div className="pp">
+        {alertLocked && (
+          <div className="pp-alert-locked" role="status">
+            <strong>Your 3 free days of alerts are up.</strong> Get first in the stack to open the roles we text you. Your alerts keep coming either way.
+          </div>
+        )}
         <section className="pp-head">
           <p className="ss-eyebrow">Pricing</p>
-          <h1 className="ss-h2 pp-title">Find jobs for free.<br />Be first to apply with Pro.</h1>
-          <p className="ss-lead">Browse finance jobs at {BANK_COUNT} top banks for free. Get text alerts when new roles are posted, so you can apply before the crowd.</p>
+          <h1 className="ss-h2 pp-title">Browse free.<br />Get first in the stack.</h1>
+          <p className="ss-lead">Every job at {BANK_COUNT} top banks is free to browse, and alerts are free for your first 3 days. Premium keeps every alert opening the second a role posts, so you apply before the crowd.</p>
         </section>
 
-        <section className="pp-plans">
-          <div className="pp-plan">
-            <p className="pp-plan-name">Free</p>
-            <p className="pp-price">$0</p>
-            <p className="pp-billed">Free forever. No credit card.</p>
-            <Link href="/jobs" className="ss-btn ss-btn-light ss-btn-block">Browse jobs</Link>
-            <ul className="pp-list">
-              <li>Every open role at all {BANK_COUNT} banks</li>
-              <li>Save jobs and track applications</li>
-              <li>Search and filter by city and type</li>
-            </ul>
-          </div>
-
+        <section className="pp-plans pp-plans-one">
           <div className="pp-plan pp-plan-pro">
-            <div className="pp-plan-top">
-              <p className="pp-plan-name">Pro</p>
-              <span className="pp-badge">{PLANS.monthly.trialDays} days free</span>
-            </div>
+            <span className="pp-banner">Premium</span>
+            <p className="pp-plan-name">Get first in the stack</p>
             <p className="pp-price">
               ${PLANS.monthly.price}
               <span>/month</span>
             </p>
-            <p className="pp-billed">
-              {PLANS.monthly.trialDays}-day free trial, then billed monthly. Cancel anytime.
-            </p>
-            {isSignedIn ? (
+            <p className="pp-billed">Billed monthly. Cancel anytime.</p>
+            {isSubscribed ? (
+              <p className="pp-have">You have Premium.</p>
+            ) : isSignedIn ? (
               <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
-                {checkoutLoading ? "Redirecting…" : "Start free trial"}
+                {checkoutLoading ? "Redirecting…" : "Get first in the stack"}
               </button>
             ) : (
               <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
-                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free trial</button>
+                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Get first in the stack</button>
               </SignUpButton>
             )}
             <ul className="pp-list">
-              <li><strong>Unlimited</strong> text and email alerts</li>
-              <li><strong>Recent postings:</strong> every role from the last 48 hours</li>
-              <li>Everything in Free</li>
+              <li><strong>Open every alert</strong>: texts and emails the second a role posts</li>
+              <li><strong>Every role</strong> from the last 48 hours</li>
+              <li>All open roles at {BANK_COUNT} banks</li>
+              <li>Save jobs and track applications</li>
+              <li>Request banks for us to add</li>
             </ul>
           </div>
         </section>
@@ -306,8 +308,8 @@ export default function PricingPage() {
         <section className="pp-club">
           <div className="pp-club-copy">
             <p className="pp-plan-name">For finance clubs</p>
-            <h2 className="pp-club-title">Pro for your whole club.</h2>
-            <p className="pp-club-desc">Every member gets full Pro access and verifies with their school email. One invoice for the club.</p>
+            <h2 className="pp-club-title">Premium for your whole club.</h2>
+            <p className="pp-club-desc">Every member gets full Premium access and verifies with their school email. One invoice for the club.</p>
           </div>
           <div className="pp-club-side">
             <p className="pp-club-label">Club plan</p>
@@ -319,11 +321,11 @@ export default function PricingPage() {
         <section className="ss-faq pp-faq">
           <h2 className="ss-h2">Questions</h2>
           {[
-            ["How much is Pro?", "$4.99 a month for unlimited text and email alerts and the 48-hour recent postings feed, after a 7-day free trial. Your card is charged when the trial ends unless you cancel before then, and it renews monthly until you cancel."],
+            ["How much is Premium?", "$4.99 a month. Alerts are free for your first 3 days; after that, Premium lets you open every alert and see the 48-hour recent postings feed. It renews monthly until you cancel."],
             ["Can I cancel anytime?", "Yes. Cancel from your account settings at any time. You keep access until the end of your billing period."],
-            ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Alerts are part of Pro, which is free for the first 7 days."],
+            ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Alerts are free for everyone with an account. For your first 3 days you can open every one; after that, opening them takes Premium."],
             ["What does the recent postings feed include?", `Every role posted in the last 48 hours across all ${BANK_COUNT} banks, updated every 5 minutes.`],
-            ["How do club memberships work?", "The club pays $50 a month. Members verify with their school email and get Pro automatically, so nobody manages individual subscriptions."],
+            ["How do club memberships work?", "The club pays $50 a month. Members verify with their school email and get Premium automatically, so nobody manages individual subscriptions."],
           ].map(([q, a]) => (
             <details key={q} onToggle={(e) => { if (e.currentTarget.open) capture("faq_opened", { question: q, page: "pricing" }); }}>
               <summary>{q}</summary>

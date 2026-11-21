@@ -5,6 +5,7 @@ import { sql } from "@vercel/postgres";
 import { alertEmail } from "@/lib/email-templates";
 import { sendEmail, unsubscribeUrl, BRAND } from "@/lib/email";
 import { captureServer } from "@/lib/posthog-server";
+import { alertTrial } from "@/lib/alert-trial";
 
 // Sends go through the Twilio Messaging Service that the approved A2P campaign is attached to.
 export function smsConfig() {
@@ -18,9 +19,9 @@ export function smsConfig() {
 // message to UCS-2 and halves the characters per billable segment.
 // shortUrls (optional) holds one short link per job; when every job has one, each job
 // gets its own link instead of the Recent page link.
-// Free accounts get this many alerts (a text and/or an email for one batch counts once).
-// Alerts are Pro-only (with a 7-day free trial), so free accounts get none.
-export const FREE_ALERT_LIMIT = 0;
+// Alerts are free for every account (see lib/alert-trial.js for when their links lock).
+// Kept for the free-alert log count below.
+export const FREE_ALERT_LIMIT = Infinity;
 
 // Free alerts already sent to this account, or to this phone number from any account, so a
 // second sign-up with the same number doesn't reset the allowance. Counted from the log, not
@@ -39,13 +40,13 @@ export async function freeAlertsUsed(userId, phone) {
   }
 }
 
-export function buildSmsText(jobs, withOptOut, shortUrls, lastFree) {
+export function buildSmsText(jobs, withOptOut, shortUrls, trialOver) {
   const clean = (s) => String(s).replace(/[\u2013\u2014]/g, "-").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[^\x20-\x7E\n]/g, "");
   const perJob = jobs.length <= 3 && shortUrls?.length === jobs.length && shortUrls.every(Boolean);
   const jobLines = jobs.slice(0, 3).map((j, i) => `- ${clean(j.title).slice(0, 48)} @ ${clean(j.bank)}${perJob ? `\n${shortUrls[i]}` : ""}`).join("\n");
   const more = jobs.length > 3 ? `\n+ ${jobs.length - 3} more` : "";
   const footer = perJob ? "" : "\n\npetespostings.com/recent";
-  const upgrade = lastFree ? "\n\nThat was your last free alert. Keep them coming: petespostings.com/pricing" : "";
+  const upgrade = trialOver ? "\n\nYour 3 free days are up. Get Premium to open these: petespostings.com/pricing" : "";
   return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}${footer}${upgrade}${withOptOut ? "\n\nReply STOP to unsubscribe" : ""}`;
 }
 
@@ -109,8 +110,7 @@ export async function logNotification({ userId = null, channel, status, recipien
 
 /**
  * Send one email and (if enabled) one SMS to a user for a batch of jobs.
- * isFree: the account isn't Pro, so the send only happens while it has free alerts left
- * (result.limitReached is set when it doesn't), and each free send is logged as one alert.
+ * isFree: the account isn't Premium; the alert still goes out and is logged as a free alert.
  * Returns { emailSent, smsSent, failed } — failed is true only when the email could not
  * be delivered, so the caller queues the jobs for the retry sweep.
  */
@@ -118,12 +118,10 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
   const result = { emailSent: false, smsSent: false, failed: false };
   if (!jobs || jobs.length === 0) return result;
   const smsTo = sms && prefs?.smsEnabled && prefs?.phoneNumber ? prefs.phoneNumber : "";
-  let lastFree = false;
-  if (isFree) {
-    const used = await freeAlertsUsed(userId, smsTo);
-    if (used >= FREE_ALERT_LIMIT) { result.limitReached = true; return result; }
-    lastFree = used === FREE_ALERT_LIMIT - 1;
-  }
+  // Free accounts always get the alert; once their 3 free days are up the text says the
+  // links need Premium (the /j/ links themselves enforce it).
+  const trial = isFree && userId ? await alertTrial(userId) : null;
+  const trialOver = Boolean(trial?.over);
   const uid = userId || email || "anon";
   const jobLinks = jobs.map((j) => j.link);
 
@@ -165,7 +163,7 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
     try {
       const withOptOut = await needsOptOutReminder(prefs.phoneNumber);
       const shortUrls = jobs.length <= 3 ? await Promise.all(jobs.map((j) => shortLink(uid, j.link))) : null;
-      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs, withOptOut, shortUrls, lastFree));
+      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs, withOptOut, shortUrls, trialOver));
       result.smsSent = true;
       await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
       if (withOptOut) await logNotification({ userId, channel: "sms-optout-notice", status: "sent", recipient: prefs.phoneNumber, providerId: messageId });
@@ -192,7 +190,7 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
       jobs: jobs.length,
       banks: [...new Set(jobs.map((j) => j.bank).filter(Boolean))],
       free_alert: isFree,
-      last_free_alert: lastFree,
+      trial_over: trialOver,
     });
   }
 

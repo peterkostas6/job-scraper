@@ -337,8 +337,8 @@ export async function GET(request) {
       }
     }
 
-    // 4. Notify users right away (one email + one SMS per user per run). Pro accounts are
-    //    unlimited; free accounts get FREE_ALERT_LIMIT alerts, enforced in sendUserNotification.
+    // 4. Notify users right away (one email + one SMS per user per run). Alerts are free for
+    //    every account; alert links lock after the 3-day trial (lib/alert-trial.js).
     //    Anything that fails to send is queued for the retry sweep.
     let queued = 0;
     let notifiedUsers = 0;

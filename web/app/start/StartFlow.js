@@ -16,9 +16,9 @@ const BANK_COUNT = Object.keys(BANKS).length;
 const STORAGE_KEY = "pp-start-v3";
 
 // One scrolling page: the promise and sample texts, then the button scrolls into four short
-// steps (banks, roles, location, where to reach you) that slide in one after another, then
-// the free start. Alerts are free (no card); signed-out visitors make an account at the end,
-// then the alerts turn on with these answers and they land on Alerts.
+// steps (banks, roles, location, where to reach you). Step 4's Save preferences turns the
+// alerts on (signed-out visitors make a free account first) and they land on Alerts; saving
+// with a phone number sends the welcome text.
 const STEP_LABELS = ["What banks?", "What roles?", "What location?", "Where should we alert you?"];
 const STEP_NAMES = ["Banks", "Roles", "Location", "Alerts go to"];
 // Every step starts on its broadest answer, so Next works right away: all banks, internships
@@ -82,7 +82,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (saved) {
         if (saved.answers) setAnswers(Object.fromEntries(Object.entries(EMPTY).map(([k, v]) => [k, saved.answers[k] ?? v])));
-        if (Number.isInteger(saved.reached)) { setReached(saved.reached); setActive(Math.min(Math.max(saved.reached, 1), 4)); }
+        if (Number.isInteger(saved.reached)) { setReached(Math.min(saved.reached, 4)); setActive(Math.min(Math.max(saved.reached, 1), 4)); }
         if (saved.email) setEmail(saved.email);
         if (saved.phone) setPhone(saved.phone);
         if (saved.smsConsent) setSmsConsent(true);
@@ -200,7 +200,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
     if (hasPhone && !validPhone(phone)) { setContactError("Enter a 10-digit US mobile number."); return; }
     if (hasPhone && !smsConsent) { setContactError("Check the box to agree to texts."); return; }
     capture("start_contact_entered", { signedIn: Boolean(isSignedIn) });
-    reveal(5);
+    startFree();
   }
 
   async function startCheckout() {
@@ -282,11 +282,6 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
     reached >= 5 ? [formatPhone(phone), email.trim()].filter(Boolean).join(" \u00b7 ") : "",
   ];
 
-  const payButton = (
-    <button className="st-cta" disabled={saving || !isLoaded} onClick={startFree}>
-      {saving ? "Turning on your alerts…" : "Start my free alerts"}
-    </button>
-  );
 
   return (
     <div className={`st sf${reached >= 1 ? " sf-started" : ""}${embedded ? " sf-embed" : ""}`}>
@@ -419,9 +414,9 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
                       </span>
                     </label>
                   )}
-                  {contactError && <p className="st-error" role="alert">{contactError}</p>}
+                  {(contactError || error) && <p className="st-error" role="alert">{contactError || error}</p>}
                   <div className="sf-form-actions">
-                    <button className="sf-next" type="submit">Next</button>
+                    <button className="sf-next" type="submit" disabled={saving || !isLoaded}>{saving ? "Saving\u2026" : "Save preferences"}</button>
                     <button className="sf-skip" type="button" onClick={skipAlerts}>Don&rsquo;t alert me</button>
                   </div>
                 </form>
@@ -437,43 +432,6 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
           </section>
         )}
 
-        {restored && reached >= 5 && (
-          <section className="sf-checkout" ref={(el) => (sections.current[5] = el)}>
-            <div className="sf-co-intro">
-            <h2 className="sf-prefs-title">You&rsquo;re one step from first in the pile.</h2>
-            <p className="st-hint">We&rsquo;ll {phone.trim() && email.trim() ? `text ${formatPhone(phone)} and email ${email.trim()}` : phone.trim() ? `text ${formatPhone(phone)}` : `email ${email.trim()}`} the moment new {describe(answers)} post.</p>
-
-            {/* A stack of resumes; theirs drops in and lands on top. */}
-            <div className="sf-pile" aria-hidden="true" ref={(el) => {
-              // Drop the resume only once the pile is on screen, so they see it land.
-              if (!el || el.dataset.watch) return;
-              el.dataset.watch = "1";
-              const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { el.classList.add("is-in"); io.disconnect(); } }, { threshold: 0.6 });
-              io.observe(el);
-            }}>
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="sf-sheet" style={{ "--i": i }}><i /><i /><i /><i /></div>
-              ))}
-              <div className="sf-sheet sf-sheet-you"><b>You</b><i /><i /><i /><i /></div>
-            </div>
-
-            </div>
-
-            <div className="pp-plan pp-plan-pro sf-plan">
-              <p className="pp-plan-name">Your alerts</p>
-              <p className="sf-plan-label">What you get</p>
-              <ul className="pp-list">
-                <li><strong>Instant</strong> texts and emails when a match posts</li>
-                <li>All {BANK_COUNT} banks checked every 5 minutes</li>
-                <li>Every open role, free to browse</li>
-                <li>Change or stop alerts anytime</li>
-              </ul>
-              {error && <p className="st-error" role="alert">{error}</p>}
-              {payButton}
-
-            </div>
-          </section>
-        )}
       </main>
     </div>
   );

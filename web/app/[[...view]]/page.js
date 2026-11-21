@@ -1403,7 +1403,11 @@ export default function Home() {
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
   const [alertTrial, setAlertTrial] = useState(null);
-  const [alertsPanelOpen, setAlertsPanelOpen] = useState(false); // alert preferences, opened from the Browse filters
+  const [alertsPanelOpen, setAlertsPanelOpen] = useState(false);
+  // Browse: "mine" = only roles matching their alert preferences, "all" = everything. Remembered per browser.
+  const [browseMode, setBrowseModeState] = useState("mine");
+  useEffect(() => { try { const v = localStorage.getItem("pp-browse-mode"); if (v === "all" || v === "mine") setBrowseModeState(v); } catch {} }, []);
+  const setBrowseMode = (v) => { setBrowseModeState(v); capture("browse_mode_changed", { mode: v }); try { localStorage.setItem("pp-browse-mode", v); } catch {} }; // alert preferences, opened from the Browse filters
   const [jobStatus, setJobStatus] = useState({}); // { [link]: { alertedAt, alertedVia, viewedAt, appliedAt } } from Postgres
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
@@ -1801,7 +1805,12 @@ export default function Home() {
   const okType = (job) => jobType === "all" || typeOf(job) === jobType;
   const okLocation = (job) => locationFilter === "" || (job.cities || []).includes(locationFilter);
   const okCategory = (job) => categoryFilter === "" || (job.category || "") === categoryFilter;
-  const searched = jobs.filter((job) => searchQuery === "" || matchesQuery(job, searchQuery));
+  // Browse shows the roles that match their alert preferences ("My preferences") until they
+  // switch to "All roles". Only for signed-in people with alerts on.
+  const hasAlertPrefs = Boolean(isSignedIn && alertsOn && savedNotifPrefs);
+  const usePrefs = hasAlertPrefs && browseMode === "mine";
+  const okPrefs = (job) => !usePrefs || matchesAlertPrefs(job, { ...savedNotifPrefs, location: (savedNotifPrefs.location || "").trim() });
+  const searched = jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okPrefs(job));
   const filteredJobs = searched.filter((job) => okType(job) && okLocation(job) && okCategory(job));
   // Each dropdown counts the jobs left after the OTHER filters, so its numbers always add up to what you'd see.
   const locationOptions = rankCounts(searched.filter((j) => okType(j) && okCategory(j)).flatMap((j) => j.cities || []), MULTI_CITY);
@@ -2479,7 +2488,12 @@ export default function Home() {
 
                 {!isGatedBank && !loading && !error && (
                   <div className="results-bar">
-                    <span className="results-text" />
+                    {hasAlertPrefs ? (
+                      <div className="browse-mode" role="group" aria-label="Which roles to show">
+                        <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My preferences</button>
+                        <button aria-pressed={browseMode === "all"} onClick={() => setBrowseMode("all")}>All roles</button>
+                      </div>
+                    ) : <span className="results-text" />}
                     <button className={`saved-toggle ${viewingSaved ? "saved-toggle-active" : ""}`} onClick={() => {
                       if (!isSignedIn) { askToSignUp("save"); return; }
                       setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");

@@ -4,6 +4,7 @@ import { sql } from "@vercel/postgres";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { isAnalystOrIntern } from "@/lib/notif-helpers";
+import { trialFor } from "@/lib/alert-trial-days";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -16,7 +17,8 @@ export async function GET() {
     if (userId) {
       const client = await clerkClient();
       const user = await client.users.getUser(userId);
-      isSubscribed = user.publicMetadata?.subscribed === true;
+      // Premium, or inside the 3 free days after sign-up (lib/alert-trial-days.js).
+      isSubscribed = user.publicMetadata?.subscribed === true || !trialFor(user.createdAt).over;
     }
 
     // Only fetch jobs that are currently live on the bank's website (is_live = true)

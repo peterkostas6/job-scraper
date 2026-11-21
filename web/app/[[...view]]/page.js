@@ -15,6 +15,7 @@ import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { trialFor } from "@/lib/alert-trial-days";
 import { openBillingPortal } from "@/lib/billing";
 import StartFlow from "@/app/start/StartFlow";
+import AlertsPanel from "./AlertsPanel";
 
 const FREE_BANKS = new Set(Object.keys(BANKS));
 
@@ -1880,181 +1881,25 @@ export default function Home() {
 
   // ALERTS PANEL · alert preferences live next to the Browse filters (inline on desktop, a sheet on phones).
   const alertsPanel = alertsPanelOpen && isSignedIn && (
-    <div className="ap-wrap" role="dialog" aria-modal="false" aria-label="Alert preferences">
-      <button className="ap-shade" aria-label="Close alerts" onClick={() => setAlertsPanelOpen(false)} />
-      <div className="ap">
-        <div className="ap-top">
-          <div className="ap-top-text">
-            <p className="ap-title">
-              <span className={`ap-dot${alertsOn ? " ap-dot-on" : ""}`} aria-hidden="true" />
-              {alertsOn ? "Your alerts are on" : "Your alerts are off"}
-            </p>
-            <p className="ap-sub">
-              {alertsOn && savedNotifPrefs
-                ? [savedNotifPrefs.smsEnabled && `Texting ${maskedPhone(savedNotifPrefs.phoneNumber)}`, savedNotifPrefs.enabled && `emailing ${user?.primaryEmailAddress?.emailAddress || "you"}`].filter(Boolean).join(" and ")
-                : "Pick what you want, turn on texts or email, then save."}
-            </p>
-            {!isPaid && alertTrial?.over && (
-              <p className="ap-sub">Alerts still arrive, and opening them takes Premium. <Link href="/pricing" className="al-link">Get first in the stack</Link></p>
-            )}
-          </div>
-          <button className="mfs-x" aria-label="Close alerts" onClick={() => setAlertsPanelOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-        </div>
-        {notifLoading || savedNotifPrefs === null ? (
-          <div className="loading-state" style={{ padding: "2rem" }}><div className="spinner" /></div>
-        ) : (
-                      <div className="al-settings">
-                        {/* WHAT · one row per question; tap to change */}
-                        <div className="al-card">
-                          <p className="al-card-label">What you&rsquo;ll hear about</p>
-                          {alertRow("type", "Recruiting for", ALERT_JOB_TYPES.find((t) => t.key === notifPrefs.jobType)?.label || "Both", (
-                            <div className="st-chips">
-                              {ALERT_JOB_TYPES.map((t) => (
-                                <button key={t.key} className="st-chip" aria-pressed={notifPrefs.jobType === t.key} onClick={() => updateNotif({ jobType: t.key })}>{t.label}</button>
-                              ))}
-                            </div>
-                          ))}
-                          {alertRow("areas", "Areas", alertAreasLabel, (
-                            <div className="st-chips">
-                              <button className="st-chip" aria-pressed={notifPrefs.categories.length === 0} onClick={() => updateNotif({ categories: [] })}>Open to anything</button>
-                              {AREAS.map((a) => (
-                                <button key={a.key} className="st-chip" aria-pressed={a.categories.every((c) => notifPrefs.categories.includes(c))} onClick={() => toggleNotifArea(a)}>{a.label}</button>
-                              ))}
-                              {/* Older settings can hold categories no area covers; show them so nothing is hidden. */}
-                              {notifPrefs.categories.filter((c) => !AREAS.some((a) => a.categories.includes(c))).map((c) => (
-                                <button key={c} className="st-chip" aria-pressed onClick={() => toggleNotifCategory(c)}>{c}</button>
-                              ))}
-                            </div>
-                          ))}
-                          {alertRow("banks", "Banks", alertBanksLabel, (
-                            <>
-                              <div className="st-chips">
-                                <button className="st-chip" aria-pressed={!showBankPicker} onClick={() => { setPickBanks(false); updateNotif({ banks: [] }); }}>All {BANK_COUNT} banks</button>
-                                <button className="st-chip" aria-pressed={showBankPicker} onClick={() => setPickBanks(true)}>Choose banks</button>
-                              </div>
-                              {showBankPicker && (
-                                <div className="st-chips al-bank-chips">
-                                  {Object.entries(BANKS).map(([key, bank]) => (
-                                    <button key={key} className="st-chip" aria-pressed={notifPrefs.banks.includes(key)} onClick={() => toggleNotifBank(key)}><BankLogo bankKey={key} size={16} />{bank.shortName}</button>
-                                  ))}
-                                </div>
-                              )}
-                            </>
-                          ))}
-                          {alertRow("city", "City", notifCity || "Anywhere", (
-                            <>
-                              <div className="st-chips">
-                                <button className="st-chip" aria-pressed={!notifCity} onClick={() => updateNotif({ location: "" })}>Anywhere</button>
-                                {CITIES.map((c) => (
-                                  <button key={c} className="st-chip" aria-pressed={notifCity.toLowerCase() === c.toLowerCase()} onClick={() => updateNotif({ location: c })}>{c}</button>
-                                ))}
-                              </div>
-                              <input
-                                className="notif-phone-input al-city-input"
-                                type="text"
-                                aria-label="Another city"
-                                placeholder="Or type another city"
-                                value={CITIES.some((c) => c.toLowerCase() === notifCity.toLowerCase()) ? "" : notifCity}
-                                onChange={(e) => updateNotif({ location: e.target.value })}
-                              />
-                            </>
-                          ))}
-                        </div>
-
-                        {/* HOW · channels with their switches right on the row */}
-                        <div className="al-card">
-                          <p className="al-card-label">How we reach you</p>
-                          <div className="al-channel">
-                            <div className="al-channel-head">
-                              <span className="al-channel-icon al-channel-icon-sms" aria-hidden="true">
-                                <svg width="16" height="16" viewBox="0 0 64 64" fill="white"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>
-                              </span>
-                              <div className="al-channel-text">
-                                <span className="al-row-label">Text message</span>
-                                <span className="al-channel-sub">
-                                  {notifPrefs.smsEnabled && notifPrefs.phoneNumber ? maskedPhone(notifPrefs.phoneNumber) : "Fastest. Most people use this."}
-                                  {notifPrefs.smsEnabled && savedNotifPrefs.smsEnabled && savedNotifPrefs.phoneNumber && !editingPhone && (
-                                    <> &middot; <button className="gate-link" onClick={() => setEditingPhone(true)}>Change</button></>
-                                  )}
-                                </span>
-                              </div>
-                              <button
-                                className={`notif-toggle ${notifPrefs.smsEnabled ? "notif-toggle-on" : ""}`}
-                                role="switch"
-                                aria-checked={notifPrefs.smsEnabled}
-                                aria-label="Text message alerts"
-                                onClick={() => updateNotif({ smsEnabled: !notifPrefs.smsEnabled })}
-                              >
-                                <span className="notif-toggle-knob" />
-                              </button>
-                            </div>
-                            {savedNotifPrefs.smsEnabled && savedNotifPrefs.phoneNumber && notifPrefs.smsEnabled && !editingPhone && (
-                              <div className="al-contact">
-                                <span>Save our number so alerts show up as Pete&rsquo;s Postings.</span>
-                                <a href="/petes-postings.vcf" className="al-link" onClick={() => capture("contact_card_saved", { where: "alerts_tab" })}>Save contact</a>
-                              </div>
-                            )}
-                            {notifPrefs.smsEnabled && (editingPhone || !(savedNotifPrefs.smsEnabled && savedNotifPrefs.phoneNumber)) && (
-                              <div className="al-channel-body">
-                                <label className="notif-field-label" htmlFor="notif-phone">Mobile number</label>
-                                <input
-                                  id="notif-phone"
-                                  className="notif-phone-input"
-                                  type="tel"
-                                  autoComplete="tel"
-                                  placeholder="(555) 000-0000"
-                                  value={notifPrefs.phoneNumber || ""}
-                                  onChange={(e) => updateNotif({ phoneNumber: e.target.value })}
-                                />
-                                <label className="notif-consent al-consent">
-                                  <input
-                                    type="checkbox"
-                                    checked={notifPrefs.smsConsent}
-                                    onChange={(e) => updateNotif({ smsConsent: e.target.checked })}
-                                  />
-                                  <span>
-                                I agree to receive recurring automated text messages from Pete's Postings about new job postings matching my preferences. Message frequency varies based on new job postings matching your preferences, up to a few times per day. Message and data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. Consent is not required to use Pete's Postings. See our{" "}
-                                <Link href="/privacy" className="text-link" target="_blank">Privacy Policy</Link> and{" "}
-                                <Link href="/terms" className="text-link" target="_blank">Terms of Service</Link>.
-                              </span>
-                                </label>
-                              </div>
-                            )}
-                          </div>
-                          <div className="al-channel">
-                            <div className="al-channel-head">
-                              <span className="al-channel-icon al-channel-icon-email" aria-hidden="true">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                              </span>
-                              <div className="al-channel-text">
-                                <span className="al-row-label">Email</span>
-                                <span className="al-channel-sub">{user?.primaryEmailAddress?.emailAddress || "Your account email"}</span>
-                              </div>
-                              <button
-                                className={`notif-toggle ${notifPrefs.enabled ? "notif-toggle-on" : ""}`}
-                                role="switch"
-                                aria-checked={notifPrefs.enabled}
-                                aria-label="Email alerts"
-                                onClick={() => updateNotif({ enabled: !notifPrefs.enabled })}
-                              >
-                                <span className="notif-toggle-knob" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="al-save">
-                          <p className={`al-save-note${notifBlocker ? " notif-summary-blocked" : ""}`}>
-                            {notifBlocker || (notifDirty ? "You have unsaved changes." : notifSaved ? "Saved." : "All changes saved.")}
-                          </p>
-                          <button className="h-cta al-save-btn" onClick={saveNotifPrefs} disabled={notifSaving || !!notifBlocker || !notifDirty}>
-                            {notifSaving ? "Saving\u2026" : "Save changes"}
-                          </button>
-                        </div>
-                      </div>
-        )}
-      </div>
-    </div>
+    <AlertsPanel
+      prefs={savedNotifPrefs ? notifPrefs : null}
+      saved={savedNotifPrefs}
+      loading={notifLoading}
+      email={user?.primaryEmailAddress?.emailAddress}
+      trialOver={!isPaid && Boolean(alertTrial?.over)}
+      pickBanks={pickBanks}
+      onPickBanks={setPickBanks}
+      onChange={updateNotif}
+      onToggleArea={toggleNotifArea}
+      onToggleBank={toggleNotifBank}
+      editingPhone={editingPhone}
+      onEditPhone={setEditingPhone}
+      onSave={saveNotifPrefs}
+      saving={notifSaving}
+      dirty={notifDirty}
+      blocker={notifBlocker}
+      onClose={() => setAlertsPanelOpen(false)}
+    />
   );
   // What we've done about a job for this person (Postgres: user_job_status).
   const rowTags = (job) => {
@@ -2072,8 +1917,7 @@ export default function Home() {
   const alertsButton = (cls) => (
     <button className={`${cls}${alertsPanelOpen ? " is-open" : ""}`} aria-expanded={alertsPanelOpen} onClick={() => (alertsPanelOpen ? setAlertsPanelOpen(false) : openAlerts())}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      Alerts
-      {isSignedIn && savedNotifPrefs && <span className={`ap-dot${alertsOn ? " ap-dot-on" : ""}`} aria-label={alertsOn ? "on" : "off"} />}
+      {isSignedIn && savedNotifPrefs ? (alertsOn ? "Alerts on" : "Alerts off") : "Alerts"}
     </button>
   );
 
@@ -2125,7 +1969,6 @@ export default function Home() {
           </svg>
           Alerts
         </span>
-        {alertsOn ? <span className="sidebar-notif-dot" /> : null}
       </button>
       <button
         className="sidebar-item"

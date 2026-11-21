@@ -67,7 +67,7 @@ export default function AlertsLanding() {
           {isLoaded && !isSignedIn && (
             <>
               {" "}Have an account?{" "}
-              <SignInButton mode="modal" forceRedirectUrl="/notifications">
+              <SignInButton mode="modal" forceRedirectUrl="/jobs?alerts=1">
                 <button className="lp-link">Sign in</button>
               </SignInButton>
             </>

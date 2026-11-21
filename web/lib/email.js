@@ -146,7 +146,7 @@ export function verifyUnsubscribeToken(userId, token) {
 export function unsubscribeUrl(userId) {
   return `${BRAND.site}/api/unsubscribe?u=${encodeURIComponent(userId)}&t=${unsubscribeToken(userId)}`;
 }
-export const preferencesUrl = `${BRAND.site}/notifications`;
+export const preferencesUrl = `${BRAND.site}/jobs?alerts=1`;
 
 // ---- Send wrapper: idempotency key, retry with backoff on 5xx/429/timeouts, 15s timeout ----
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }

@@ -12,6 +12,7 @@ import { track } from "@/lib/track";
 import { capture } from "@/lib/analytics";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
+import { trialFor } from "@/lib/alert-trial-days";
 import { openBillingPortal } from "@/lib/billing";
 import StartFlow from "@/app/start/StartFlow";
 
@@ -311,7 +312,7 @@ function homeFeed(jobs) {
 // Every "Set up alerts" button on the homepage goes to the Alerts tab.
 function StartCta({ where, className = "h-cta" }) {
   return (
-    <Link href="/notifications" className={className} onClick={() => capture("home_cta_clicked", { where })}>
+    <Link href="/start" className={className} onClick={() => capture("home_cta_clicked", { where })}>
       Set up alerts
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </Link>
@@ -1315,7 +1316,11 @@ export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
   const clerk = useClerk();
   const router = useRouter();
-  const isSubscribed = user?.publicMetadata?.subscribed === true;
+  // isPaid: on Premium. isSubscribed: can see everything right now, which is Premium or the
+  // first 3 days after sign-up (lib/alert-trial-days.js). Content gates use isSubscribed.
+  const isPaid = user?.publicMetadata?.subscribed === true;
+  const trialActive = Boolean(isSignedIn && user && !isPaid && !trialFor(user.createdAt).over);
+  const isSubscribed = isPaid || trialActive;
 
   const [activeBank, setActiveBank] = useState("all");
   // Keep ?bank= in sync on /jobs so a bank view can be linked to.
@@ -1397,9 +1402,8 @@ export default function Home() {
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
   const [alertTrial, setAlertTrial] = useState(null);
-  const [alertsEditOpen, setAlertsEditOpen] = useState(false); // Alerts page: preferences fold into a bar until Edit
+  const [alertsPanelOpen, setAlertsPanelOpen] = useState(false); // alert preferences, opened from the Browse filters
   const [jobStatus, setJobStatus] = useState({}); // { [link]: { alertedAt, alertedVia, viewedAt, appliedAt } } from Postgres
-  const [feedLimit, setFeedLimit] = useState(30); // free accounts: { startedAt, endsAt, over }; null for Premium
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
@@ -1448,7 +1452,7 @@ export default function Home() {
 
   useTrackSignup(user);
   useEffect(() => {
-    if (!showProWelcome || !user || isSubscribed) return;
+    if (!showProWelcome || !user || isPaid) return;
     let tries = 0;
     const id = setInterval(() => {
       tries++;
@@ -1456,7 +1460,7 @@ export default function Home() {
       if (tries >= 15) { clearInterval(id); setProWelcomeTimedOut(true); }
     }, 2000);
     return () => clearInterval(id);
-  }, [showProWelcome, user, isSubscribed]);
+  }, [showProWelcome, user, isPaid]);
 
   // ---- URL-driven views ----
   // Each view has its own route. The flags below are derived from the pathname; the
@@ -1688,32 +1692,36 @@ export default function Home() {
   const notifMatches = allJobs
     .filter((job) => matchesAlertPrefs(job, { ...notifPrefs, location: (notifPrefs.location || "").trim() }))
     .sort((x, y) => postedAt(y) - postedAt(x));
-  // Too few matches to fill the page: add similar roles, loosening the picks one at a time
-  // (city, then banks, then areas, then internship/full-time) until the feed has FEED_MIN rows.
-  const FEED_MIN = 15;
-  const similarJobs = [];
-  if (notifMatches.length < FEED_MIN) {
-    const seen = new Set(notifMatches.map((j) => j.link));
-    const base = { ...notifPrefs, location: (notifPrefs.location || "").trim() };
-    const steps = [{ location: "" }, { location: "", banks: [] }, { location: "", banks: [], categories: [] }, { location: "", banks: [], categories: [], jobType: "all" }];
-    for (const step of steps) {
-      if (notifMatches.length + similarJobs.length >= FEED_MIN) break;
-      const loose = allJobs.filter((j) => !seen.has(j.link) && matchesAlertPrefs(j, { ...base, ...step })).sort((x, y) => postedAt(y) - postedAt(x));
-      for (const j of loose) {
-        if (notifMatches.length + similarJobs.length >= FEED_MIN) break;
-        seen.add(j.link);
-        similarJobs.push(j);
-      }
-    }
-  }
   const notifDirty = savedNotifPrefs !== null && alertSettingsKey(notifPrefs) !== alertSettingsKey(savedNotifPrefs);
   const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled));
   // Alerts are free, so anyone signed in with alerts on (or on Premium) gets the settings page.
-  const showAlertSettings = Boolean(isSignedIn && (isSubscribed || alertsOn));
+  // Texted / viewed / applied per job, from Postgres, shown on the Browse rows.
   useEffect(() => {
-    if (!viewNotifications || !showAlertSettings) return;
+    if (!isSignedIn) return;
     fetch("/api/job-status").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.statuses) setJobStatus(d.statuses); }).catch(() => {});
-  }, [viewNotifications, showAlertSettings]);
+  }, [isSignedIn]);
+  // There is no Alerts page any more: alerts are a panel on Browse. Signed out, alerts start at /start.
+  function openAlerts() {
+    if (!isSignedIn) { router.push("/start"); return; }
+    setViewNotifications(false); setViewingSaved(false); setViewNewPostings(false); setViewHome(false);
+    setAlertsPanelOpen(true);
+    capture("alerts_panel_opened");
+  }
+  // Old /notifications links (emails, bookmarks) land on Browse with the panel open.
+  useEffect(() => {
+    if (!viewNotifications || !isLoaded) return;
+    if (!isSignedIn) { router.replace("/start"); return; }
+    openAlerts();
+  }, [viewNotifications, isLoaded, isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ?alerts=1 opens the panel (links from emails and the nav).
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("alerts") !== "1") return;
+    url.searchParams.delete("alerts");
+    window.history.replaceState(null, "", url.pathname + url.search);
+    setAlertsPanelOpen(true);
+  }, [isLoaded, isSignedIn]);
   const patchJobStatus = (link, patch) => setJobStatus((m) => ({ ...m, [link]: { ...(m[link] || {}), ...patch } }));
   function toggleApplied(job) {
     const applied = !jobStatus[job.link]?.appliedAt;
@@ -1723,42 +1731,6 @@ export default function Home() {
       .then((r) => { if (!r.ok) throw new Error(); })
       .catch(() => patchJobStatus(job.link, { appliedAt: applied ? null : jobStatus[job.link]?.appliedAt || null }));
   }
-  // New roles stay locked for free accounts once their free alert days are over (same rule as Browse).
-  const feedLocked = (job) => !isSubscribed && Boolean(alertTrial?.over) && isLast48h(job);
-  // One row of the Alerts feed: the job, what we've done about it, and Apply / Mark applied.
-  const renderFeedJob = (job) => {
-                            const st = jobStatus[job.link] || {};
-                            const locked = feedLocked(job);
-                            return (
-                              <li key={job.link} className={`al-job${st.appliedAt ? " al-job-applied" : ""}${locked ? " al-job-locked" : ""}`}>
-                                <BankLogo bankKey={job.bankKey} bank={job.bank} size={30} className="al-job-logo" />
-                                <div className="al-job-main">
-                                  <p className="al-job-title">{locked ? <span className="job-locked-title" aria-hidden="true">{job.title}</span> : job.title}</p>
-                                  <p className="al-job-meta">{job.bank}{job.location ? ` \u00b7 ${cleanLocation(job.location)}` : ""} &middot; {formatPostedAt(job)}</p>
-                                  <div className="al-job-tags">
-                                    {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : "Texted you"}</span>}
-                                    {st.viewedAt && <span className="al-tag al-tag-viewed">Viewed</span>}
-                                    {st.appliedAt && <span className="al-tag al-tag-applied">Applied</span>}
-                                  </div>
-                                </div>
-                                <div className="al-job-actions">
-                                  {locked ? (
-                                    <Link href="/pricing" className="al-apply al-apply-locked" onClick={() => capture("paywall_clicked", { where: "alerts_feed" })}>Unlock</Link>
-                                  ) : (
-                                    <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="al-apply"
-                                      onClick={() => { patchJobStatus(job.link, { viewedAt: st.viewedAt || new Date().toISOString() }); capture("job_opened", { view: "alerts", bank: job.bank, category: job.category, title: job.title, texted: Boolean(st.alertedAt) }); }}>
-                                      Apply &#8599;
-                                    </a>
-                                  )}
-                                  {!locked && (
-                                    <button className="al-mark" aria-pressed={Boolean(st.appliedAt)} onClick={() => toggleApplied(job)}>
-                                      {st.appliedAt ? "\u2713 Applied" : "Mark applied"}
-                                    </button>
-                                  )}
-                                </div>
-                              </li>
-                            );
-  };
   const maskedPhone = (num) => { const d = (num || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : num || "your phone"; };
   const alertAreasLabel = notifPrefs.categories.length === 0
     ? "Open to anything"
@@ -1819,7 +1791,7 @@ export default function Home() {
       body: JSON.stringify(notifPrefs),
     })
       .then((res) => res.json())
-      .then((data) => { if (data.success) { setNotifSaved(true); setSavedToast(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); setAlertsEditOpen(false); } })
+      .then((data) => { if (data.success) { setNotifSaved(true); setSavedToast(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); setAlertsPanelOpen(false); } })
       .catch(() => {})
       .finally(() => setNotifSaving(false));
   }
@@ -1906,519 +1878,31 @@ export default function Home() {
     );
   };
 
-  const sidebar = (
-    <aside className="sidebar" aria-label="Banks and Premium features">
-      <div className="sidebar-header">
-        <span>Banks</span>
-        {countsLoaded > 0 && <span className="sidebar-total tnum">{totalOpen} open</span>}
-      </div>
-      <div className="bank-search-wrap">
-        <svg className="bank-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input
-          className="bank-search-input"
-          type="text"
-          placeholder="Find a bank"
-          aria-label="Find a bank"
-          value={bankSearch}
-          onChange={(e) => setBankSearch(e.target.value)}
-        />
-        {bankSearch && (
-          <button className="bank-search-clear" onClick={() => setBankSearch("")} aria-label="Clear">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        )}
-      </div>
-
-      <div className="sidebar-banks">
-        {!bankQuery && (
-          <button
-            className={`sidebar-item sidebar-item-all${activeBank === "all" && !viewingSaved && !viewNewPostings ? " sidebar-item-active" : ""}`}
-            onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank("all"); }}
-            aria-current={activeBank === "all" && !viewingSaved && !viewNewPostings ? "page" : undefined}
-          >
-            <span>All banks</span>
-            {countsLoaded > 0 && <span className="sidebar-count tnum">{totalOpen}</span>}
-          </button>
-        )}
-        {bankGroups.map((group) => (
-          <div key={group.label || "results"} className="sidebar-group">
-            {group.label && <div className="sidebar-group-label">{group.label}</div>}
-            {group.keys.length === 0 ? (
-              <p className="sidebar-empty">No bank matches &ldquo;{bankSearch.trim()}&rdquo;</p>
-            ) : group.keys.map(renderBankRow)}
-          </div>
-        ))}
-      </div>
-
-      <div className="sidebar-divider" />
-      <div className="sidebar-header">
-        <span>Your tools</span>
-        {!isSubscribed && <Link href="/pricing" className="sidebar-pro-pill">Upgrade</Link>}
-      </div>
-      <button
-        className={`sidebar-item${viewNewPostings ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
-        onClick={() => {
-          setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
-        }}
-      >
-        <span className="sidebar-saved-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          Recent postings
-        </span>
-        {!isSubscribed ? (
-          last48hCount > 0 ? <span className="sidebar-count sidebar-count-teaser tnum">{last48hCount} new</span> : <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        ) : last48hCount > 0 ? <span className="sidebar-count tnum">{last48hCount}</span> : null}
-      </button>
-      <button
-        className={`sidebar-item${viewingSaved && !viewNotifications ? " sidebar-item-active" : ""}`}
-        onClick={() => {
-          if (!isSignedIn) { askToSignUp("save"); return; }
-          setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
-        }}
-      >
-        <span className="sidebar-saved-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved && !viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-          </svg>
-          Saved jobs
-        </span>
-        {savedJobs.length > 0 && <span className="sidebar-count tnum">{savedJobs.length}</span>}
-      </button>
-      <button
-        className={`sidebar-item${viewNotifications ? " sidebar-item-active" : ""}`}
-        onClick={() => {
-          if (!isSignedIn) { router.push("/start"); return; }
-          setViewNotifications(true); setViewingSaved(true);
-        }}
-      >
-        <span className="sidebar-saved-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          Notifications
-        </span>
-        {notifPrefs.enabled ? <span className="sidebar-notif-dot" /> : null}
-      </button>
-      <button
-        className="sidebar-item"
-        onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
-      >
-        <span className="sidebar-saved-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
-          Request a company
-        </span>
-      </button>
-      {user?.publicMetadata?.stripeCustomerId && (
-        <button className="sidebar-item" onClick={openBillingPortal}>
-          <span className="sidebar-saved-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
-            </svg>
-            Manage subscription
-          </span>
-        </button>
-      )}
-      <span className="sidebar-scroll-arrow" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </span>
-    </aside>
-  );
-
-  if (!routeView) notFound();
-
-  // App views wait for Clerk so Pro members never see a paywall flash. Home and About don't
-  // depend on the account, so they render immediately and their text is in the server HTML.
-  if (!isLoaded && !viewHome && !viewAbout) {
-    return (
-      <div className="loading-state">
-        <div className="spinner" />
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <nav>
-        <div className="nav-inner">
-          <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
-            <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
-            <span className="logo-text">Pete&rsquo;s Postings</span>
-          </Link>
-          <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
-            <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
-            <Link
-              href="/recent"
-              className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
-            >
-              {isSignedIn && isSubscribed ? (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                </svg>
-              ) : (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Premium">
-                  <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-                </svg>
-              )}
-              Recent Postings
-            </Link>
-            <Link href="/notifications" className={`nav-link nav-link-alerts${viewNotifications ? " nav-link-active" : ""}`}>Alerts</Link>
-            <Link href="/pricing" className="nav-link">Pricing</Link>
-            <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
-            <button className="nav-link nav-link-mobile-only" onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
-          </div>
-          <div className="nav-right">
-            {!isLoaded ? null : isSignedIn ? (
-              <>
-              {savedNotifPrefs !== null && !alertsOn && !viewNotifications && (
-                <Link href="/notifications" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav_signed_in" })}>Get SMS alerts</Link>
-              )}
-              <UserButton>
-                {user?.publicMetadata?.stripeCustomerId && (
-                  <UserButton.MenuItems>
-                    <UserButton.Action label="Manage subscription" labelIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>} onClick={openBillingPortal} />
-                  </UserButton.MenuItems>
-                )}
-              </UserButton>
-              </>
-            ) : (
-              <>
-                <SignInButton mode="modal">
-                  <button className="nav-signin">Sign in</button>
-                </SignInButton>
-                <Link href="/notifications" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav" })}>Get SMS alerts</Link>
-              </>
+  // ALERTS PANEL · alert preferences live next to the Browse filters (inline on desktop, a sheet on phones).
+  const alertsPanel = alertsPanelOpen && isSignedIn && (
+    <div className="ap-wrap" role="dialog" aria-modal="false" aria-label="Alert preferences">
+      <button className="ap-shade" aria-label="Close alerts" onClick={() => setAlertsPanelOpen(false)} />
+      <div className="ap">
+        <div className="ap-top">
+          <div className="ap-top-text">
+            <p className="ap-title">
+              <span className={`ap-dot${alertsOn ? " ap-dot-on" : ""}`} aria-hidden="true" />
+              {alertsOn ? "Your alerts are on" : "Your alerts are off"}
+            </p>
+            <p className="ap-sub">
+              {alertsOn && savedNotifPrefs
+                ? [savedNotifPrefs.smsEnabled && `Texting ${maskedPhone(savedNotifPrefs.phoneNumber)}`, savedNotifPrefs.enabled && `emailing ${user?.primaryEmailAddress?.emailAddress || "you"}`].filter(Boolean).join(" and ")
+                : "Pick what you want, turn on texts or email, then save."}
+            </p>
+            {!isPaid && alertTrial?.over && (
+              <p className="ap-sub">Alerts still arrive, and opening them takes Premium. <Link href="/pricing" className="al-link">Get first in the stack</Link></p>
             )}
           </div>
-          {/* Phones only: the nav links don't fit in the bar, so they open as a menu. */}
-          <button
-            className="nav-menu-btn"
-            onClick={() => setNavMenuOpen((v) => !v)}
-            aria-label={navMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={navMenuOpen}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {navMenuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M4 7h16M4 12h16M4 17h16"/>}
-            </svg>
-          </button>
+          <button className="mfs-x" aria-label="Close alerts" onClick={() => setAlertsPanelOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
-      </nav>
-
-      {viewHome && !viewAbout && !viewNewPostings && (
-        <HomePage
-          onBrowse={() => router.push("/jobs")}
-          isSignedIn={isSignedIn}
-          last48hCount={last48hCount}
-          liveJobs={allJobs}
-        />
-      )}
-
-      {viewAbout && !viewNewPostings && (
-        <AboutPage onBrowse={() => router.push("/jobs")} />
-      )}
-
-      {viewNewPostings && (
-        <div className="app-layout">
-          {/* Mobile top bar — not shown on Recent (Pro gets the filter bar below; everyone else just the locked list) */}
-          <div className="mobile-top-bar mobile-top-bar-replaced">
-            <div className="mobile-top-bar-bank-row">
-              <select
-                className="mobile-bank-select"
-                value={activeBank}
-                onChange={(e) => {
-                  setViewNewPostings(false);
-                  setViewingSaved(false);
-                  setViewNotifications(false);
-                  setViewHome(false);
-                  setActiveBank(e.target.value);
-                }}
-              >
-                <option value="all">All banks</option>
-                {Object.entries(BANKS).map(([key, bank]) => (
-                  <option key={key} value={key}>{bank.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="mobile-top-bar-pro-row">
-              <button
-                className="mobile-pro-pill mobile-pro-pill-active"
-                onClick={() => {
-                  setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
-                }}
-              >
-                Last 48h
-              </button>
-              <button
-                className="mobile-pro-pill"
-                onClick={() => {
-                  if (!isSignedIn) { askToSignUp("save"); return; }
-                  setViewNewPostings(false); setViewingSaved(true); setViewNotifications(false); setViewHome(false);
-                }}
-              >
-                Saved
-              </button>
-              <button
-                className="mobile-pro-pill"
-                onClick={() => {
-                  if (!isSignedIn) { router.push("/start"); return; }
-                  setViewNewPostings(false); setViewingSaved(true); setViewNotifications(true); setViewHome(false);
-                }}
-              >
-                Alerts
-              </button>
-              <button
-                className="mobile-pro-pill"
-                onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
-              >
-                Request
-              </button>
-            </div>
-          </div>
-          {/* Sidebar — same as normal view */}
-          {sidebar}
-
-          <main className={`content${!isSubscribed ? " content-recent-locked" : ""}`}>
-            {/* Pro members get the page header and the alerts shortcut; everyone else sees the locked live feed on its own. */}
-            {isSubscribed && (
-              <>
-            {/* Same centered heading as the locked page, so the tab reads the same for everyone. */}
-            <h1 className="rl-title rl-title-pro">
-              {last48hCount > 0
-                ? <><span className="rl-mark">{last48hCount} {last48hCount === 1 ? "role" : "roles"}</span> posted in the last <span className="rl-mark">48 hours</span></>
-                : <>Roles posted in the last <span className="rl-mark">48 hours</span></>}
-            </h1>
-
-            {/* Shortcut to alert settings: only until their alerts are on (then it is just noise). */}
-            {!(notifPrefs.smsEnabled || notifPrefs.enabled) && (
-              <div className="welcome-banner alerts-callout">
-                <div className="alerts-callout-body">
-                  <span className="alerts-callout-icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                    </svg>
-                  </span>
-                  <div>
-                    <p className="welcome-title">
-                      {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
-                        ? `Your ${notifPrefs.smsEnabled ? "text" : "email"} alerts are on`
-                        : "Get a text the instant a new job posts"}
-                    </p>
-                    <p className="welcome-desc">
-                      {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
-                        ? "Change which banks, roles and cities you hear about."
-                        : "Set up text or email alerts for the banks and roles you want, so you never have to check this page."}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  className="alerts-callout-cta"
-                  onClick={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
-                >
-                  {notifPrefs.smsEnabled || notifPrefs.enabled ? "Edit alerts" : "Set up free alerts"}
-                </button>
-              </div>
-            )}
-              </>
-            )}
-            <NewPostingsView
-              liveJobs={allJobs}
-              isSubscribed={isSubscribed}
-              isSignedIn={isSignedIn}
-              data={newPostingsData}
-              loading={newPostingsLoading}
-              onSetupAlerts={() => { setViewingSaved(true); setViewNotifications(true); setViewNewPostings(false); }}
-            />
-          </main>
-        </div>
-      )}
-
-      {!viewHome && !viewAbout && !viewNewPostings && (
-        <div className="app-layout">
-          {/* Mobile top bar — replaces sidebar on mobile (on /jobs the filter bar replaces it; on Alerts it isn't shown) */}
-          <div className={`mobile-top-bar${!viewingSaved || viewNotifications ? " mobile-top-bar-replaced" : ""}`}>
-            <div className="mobile-top-bar-bank-row">
-              <select
-                className="mobile-bank-select"
-                value={activeBank}
-                onChange={(e) => {
-                  setViewingSaved(false);
-                  setViewNotifications(false);
-                  setViewNewPostings(false);
-                  setActiveBank(e.target.value);
-                }}
-              >
-                <option value="all">All banks</option>
-                {Object.entries(BANKS).map(([key, bank]) => (
-                  <option key={key} value={key}>{bank.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="mobile-top-bar-pro-row">
-              <button
-                className={`mobile-pro-pill${viewNewPostings ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
-                onClick={() => {
-                  setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
-                }}
-              >
-                Last 48h
-              </button>
-              <button
-                className={`mobile-pro-pill${viewingSaved && !viewNotifications ? " mobile-pro-pill-active" : ""}`}
-                onClick={() => {
-                  if (!isSignedIn) { askToSignUp("save"); return; }
-                  setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
-                }}
-              >
-                Saved
-              </button>
-              <button
-                className={`mobile-pro-pill${viewNotifications ? " mobile-pro-pill-active" : ""}`}
-                onClick={() => {
-                  if (!isSignedIn) { router.push("/start"); return; }
-                  setViewingSaved(true); setViewNotifications(true);
-                }}
-              >
-                Alerts
-              </button>
-              <button
-                className="mobile-pro-pill"
-                onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
-              >
-                Request
-              </button>
-            </div>
-          </div>
-          {/* Phones, /jobs: one filter bar that sums up bank · type · city and opens the filter panel */}
-          {!viewingSaved && (
-            <div className="mfb">
-              <button className="mfb-bar" onClick={() => setFilterSheetOpen(true)} aria-haspopup="dialog">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/>
-                </svg>
-                <span className="mfb-summary">
-                  <b>{activeBank === "all" ? "All banks" : BANKS[activeBank]?.name}</b>
-                  {categoryFilter && <>{" \u00b7 "}{categoryFilter}</>}
-                  {" \u00b7 "}{jobType === "all" ? "All types" : JOB_TYPES[jobType]}
-                  {" \u00b7 "}{locationFilter || "All cities"}
-                </span>
-                <svg className="mfb-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-              </button>
-            </div>
-          )}
-          {filterSheetOpen && !viewingSaved && (
-            <div className="mfs-wrap" role="dialog" aria-modal="true" aria-label="Filter roles">
-              <button className="mfs-shade" aria-label="Close filters" onClick={() => setFilterSheetOpen(false)} />
-              <div className="mfs">
-                <div className="mfs-top">
-                  <p className="mfs-title">Filters</p>
-                  <button className="mfs-x" aria-label="Close filters" onClick={() => setFilterSheetOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-                </div>
-                <div className="mfs-sec">
-                  <p className="mfs-h">Bank</p>
-                  <div className="mfs-banks">
-                    <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All {BANK_COUNT}</button>
-                    {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
-                    {(() => { const ranked = Object.keys(BANKS).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)); return sheetAllBanks ? ranked : ranked.slice(0, 6); })().map((key) => (
-                      <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
-                        <BankLogo bankKey={key} size={18} />{BANKS[key].shortName}
-                      </button>
-                    ))}
-                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>+{Object.keys(BANKS).length - 6} more</button>}
-                  </div>
-                </div>
-                {availableCategories.length > 0 && (
-                  <div className="mfs-sec">
-                    <p className="mfs-h">Area</p>
-                    <div className="mfs-banks">
-                      <button className={`mfs-bank mfs-bank-all${categoryFilter === "" ? " is-on" : ""}`} onClick={() => setCategoryFilter("")}>All</button>
-                      {[...availableCategories].sort((x, y) => areaRank(x) - areaRank(y) || x.localeCompare(y)).map((cat) => (
-                        <button key={cat} className={`mfs-bank mfs-bank-all${categoryFilter === cat ? " is-on" : ""}`} onClick={() => setCategoryFilter(cat)}>{cat}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="mfs-sec">
-                  <p className="mfs-h">Type</p>
-                  <div className="mfs-seg">
-                    {[["all", "All"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([key, label]) => (
-                      <button key={key} className={jobType === key ? "is-on" : ""} onClick={() => setJobType(key)}>{label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mfs-sec">
-                  <label className="mfs-h" htmlFor="mfs-city">City</label>
-                  <select id="mfs-city" className="mfs-select" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-                    <option value="">All cities</option>
-                    {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}
-                  </select>
-                </div>
-                <div className="mfs-foot">
-                  <button className="mfs-clear" onClick={() => { setActiveBank("all"); setJobType("all"); setLocationFilter(""); setCategoryFilter(""); setSearchQuery(""); }}>Clear</button>
-                  <button className="mfs-go" onClick={() => setFilterSheetOpen(false)}>
-                    {isGatedBank ? "Show roles" : `Show ${displayJobs.length} ${displayJobs.length === 1 ? "role" : "roles"}`}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SIDEBAR (not on the Alerts tab: bank picking happens inside the alert setup) */}
-          {!viewNotifications && sidebar}
-
-          {/* MAIN CONTENT */}
-          <main className="content">
-            {/* Notifications view */}
-            {viewNotifications && isSignedIn && savedNotifPrefs === null && !isSubscribed && (
-              <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
-            )}
-            {viewNotifications && !showAlertSettings && !(isSignedIn && savedNotifPrefs === null && !isSubscribed) && (
-              <>
-                <AlertsPhoneDemo jobs={allJobs} onStart={() => setAlertsSetupSignal((n) => n + 1)} />
-                <StartFlow embedded openSignal={alertsSetupSignal} />
-              </>
-            )}
-            {viewNotifications && showAlertSettings && (
-              <div className="al-page">
-                {notifLoading || savedNotifPrefs === null ? (
-                  <div className="loading-state" style={{ padding: "3rem" }}><div className="spinner" /></div>
-                ) : (
-                  <>
-                    {/* TOP · preferences folded into one compact bar (a fifth of a phone screen at most) */}
-                    <section className={`al-top${alertsOn ? " al-top-on" : ""}`}>
-                      <div className="al-top-row">
-                        <span className="al-status-dot" aria-hidden="true" />
-                        <p className="al-top-title">
-                          {alertsWelcome ? "You\u2019re in. " : ""}
-                          {alertsOn
-                            ? [savedNotifPrefs.smsEnabled && `Texting ${maskedPhone(savedNotifPrefs.phoneNumber)}`, savedNotifPrefs.enabled && "emailing you"].filter(Boolean).join(" and ")
-                            : "Your alerts are off"}
-                        </p>
-                        <button className="al-top-edit" aria-expanded={alertsEditOpen} onClick={() => { setAlertsEditOpen((v) => !v); setAlertsWelcome(false); capture("alerts_edit_toggled", { open: !alertsEditOpen }); }}>
-                          {alertsEditOpen ? "Done" : "Edit"}
-                        </button>
-                      </div>
-                      <p className="al-top-prefs">
-                        {[ALERT_JOB_TYPES.find((t) => t.key === savedNotifPrefs.jobType)?.label || "Both", alertAreasLabel, alertBanksLabel, (savedNotifPrefs.location || "").trim() || "Anywhere"].join(" \u00b7 ")}
-                      </p>
-                      {/* Nothing about cost until their free days are over: the texts sell it first. */}
-                      {alertTrial?.over && (
-                        <p className="al-top-note">
-                          Alerts still arrive, and opening new ones takes Premium.{" "}
-                          <Link href="/pricing" className="al-link">Get first in the stack</Link>
-                        </p>
-                      )}
-                    </section>
-
-                    {alertsEditOpen && (
-                    <div className="al-edit">
+        {notifLoading || savedNotifPrefs === null ? (
+          <div className="loading-state" style={{ padding: "2rem" }}><div className="spinner" /></div>
+        ) : (
                       <div className="al-settings">
                         {/* WHAT · one row per question; tap to change */}
                         <div className="al-card">
@@ -2568,41 +2052,494 @@ export default function Home() {
                           </button>
                         </div>
                       </div>
+        )}
+      </div>
+    </div>
+  );
+  // What we've done about a job for this person (Postgres: user_job_status).
+  const rowTags = (job) => {
+    const st = jobStatus[job.link];
+    if (!st || !(st.alertedAt || st.viewedAt || st.appliedAt)) return null;
+    return (
+      <span className="row-tags">
+        {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : "Texted you"}</span>}
+        {st.viewedAt && <span className="al-tag al-tag-viewed">Viewed</span>}
+        {st.appliedAt && <span className="al-tag al-tag-applied">Applied</span>}
+      </span>
+    );
+  };
+  // The Alerts button that sits with the filters.
+  const alertsButton = (cls) => (
+    <button className={`${cls}${alertsPanelOpen ? " is-open" : ""}`} aria-expanded={alertsPanelOpen} onClick={() => (alertsPanelOpen ? setAlertsPanelOpen(false) : openAlerts())}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Alerts
+      {isSignedIn && savedNotifPrefs && <span className={`ap-dot${alertsOn ? " ap-dot-on" : ""}`} aria-label={alertsOn ? "on" : "off"} />}
+    </button>
+  );
 
-                    </div>
-                    )}
+  const sidebar = (
+    <aside className="sidebar" aria-label="Your tools and banks">
+      <div className="sidebar-header">
+        <span>Your tools</span>
+        {!isPaid && <Link href="/pricing" className="sidebar-pro-pill">Upgrade</Link>}
+      </div>
+      <button
+        className={`sidebar-item${viewNewPostings ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
+        onClick={() => {
+          setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
+        }}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          Recent postings
+        </span>
+        {!isSubscribed ? (
+          last48hCount > 0 ? <span className="sidebar-count sidebar-count-teaser tnum">{last48hCount} new</span> : <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        ) : last48hCount > 0 ? <span className="sidebar-count tnum">{last48hCount}</span> : null}
+      </button>
+      <button
+        className={`sidebar-item${viewingSaved && !viewNotifications ? " sidebar-item-active" : ""}`}
+        onClick={() => {
+          if (!isSignedIn) { askToSignUp("save"); return; }
+          setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+        }}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={viewingSaved && !viewNotifications ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Saved jobs
+        </span>
+        {savedJobs.length > 0 && <span className="sidebar-count tnum">{savedJobs.length}</span>}
+      </button>
+      <button
+        className={`sidebar-item${alertsPanelOpen ? " sidebar-item-active" : ""}`}
+        onClick={openAlerts}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={alertsPanelOpen ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Alerts
+        </span>
+        {alertsOn ? <span className="sidebar-notif-dot" /> : null}
+      </button>
+      <button
+        className="sidebar-item"
+        onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+      >
+        <span className="sidebar-saved-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Request a company
+        </span>
+      </button>
+      {user?.publicMetadata?.stripeCustomerId && (
+        <button className="sidebar-item" onClick={openBillingPortal}>
+          <span className="sidebar-saved-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+            </svg>
+            Manage subscription
+          </span>
+        </button>
+      )}
+      <div className="sidebar-divider" />
+      <div className="sidebar-header">
+        <span>Banks</span>
+        {countsLoaded > 0 && <span className="sidebar-total tnum">{totalOpen} open</span>}
+      </div>
+      <div className="bank-search-wrap">
+        <svg className="bank-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          className="bank-search-input"
+          type="text"
+          placeholder="Find a bank"
+          aria-label="Find a bank"
+          value={bankSearch}
+          onChange={(e) => setBankSearch(e.target.value)}
+        />
+        {bankSearch && (
+          <button className="bank-search-clear" onClick={() => setBankSearch("")} aria-label="Clear">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        )}
+      </div>
 
-                    {/* FEED · every open role these preferences match, with what we've done about each */}
-                    <section className="al-feed" aria-label="Roles that match your alerts">
-                      <div className="al-feed-head">
-                        <h2 className="al-feed-title"><span className="tnum">{notifMatches.length}</span> {notifMatches.length === 1 ? "role matches" : "roles match"} right now</h2>
-                        <p className="al-feed-sub">New ones get texted to you the moment they post.</p>
-                      </div>
-                      {notifMatches.length === 0 ? (
-                        <p className="al-feed-empty">Nothing open matches yet. You&rsquo;ll hear the moment something does, or <button className="gate-link" onClick={() => setAlertsEditOpen(true)}>widen your preferences</button>.</p>
-                      ) : (
-                        <ul className="al-feed-list">
-                          {notifMatches.slice(0, feedLimit).map((job) => renderFeedJob(job))}
-                        </ul>
-                      )}
-                      {notifMatches.length > feedLimit && (
-                        <button className="al-more" onClick={() => setFeedLimit((n) => n + 30)}>Show more ({notifMatches.length - feedLimit} left)</button>
-                      )}
-                      {similarJobs.length > 0 && (
-                        <>
-                          <div className="al-feed-head al-similar-head">
-                            <h3 className="al-feed-title">Similar roles</h3>
-                            <p className="al-feed-sub">Close to what you picked. We won&rsquo;t text you about these unless you <button className="gate-link al-similar-edit" onClick={() => setAlertsEditOpen(true)}>widen your alerts</button>.</p>
-                          </div>
-                          <ul className="al-feed-list">{similarJobs.map((job) => renderFeedJob(job))}</ul>
-                        </>
-                      )}
-                    </section>
-                  </>
+      <div className="sidebar-banks">
+        {!bankQuery && (
+          <button
+            className={`sidebar-item sidebar-item-all${activeBank === "all" && !viewingSaved && !viewNewPostings ? " sidebar-item-active" : ""}`}
+            onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank("all"); }}
+            aria-current={activeBank === "all" && !viewingSaved && !viewNewPostings ? "page" : undefined}
+          >
+            <span>All banks</span>
+            {countsLoaded > 0 && <span className="sidebar-count tnum">{totalOpen}</span>}
+          </button>
+        )}
+        {bankGroups.map((group) => (
+          <div key={group.label || "results"} className="sidebar-group">
+            {group.label && <div className="sidebar-group-label">{group.label}</div>}
+            {group.keys.length === 0 ? (
+              <p className="sidebar-empty">No bank matches &ldquo;{bankSearch.trim()}&rdquo;</p>
+            ) : group.keys.map(renderBankRow)}
+          </div>
+        ))}
+      </div>
+
+      <span className="sidebar-scroll-arrow" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </span>
+    </aside>
+  );
+
+  if (!routeView) notFound();
+
+  // App views wait for Clerk so Pro members never see a paywall flash. Home and About don't
+  // depend on the account, so they render immediately and their text is in the server HTML.
+  if (!isLoaded && !viewHome && !viewAbout) {
+    return (
+      <div className="loading-state">
+        <div className="spinner" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <nav>
+        <div className="nav-inner">
+          <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
+            <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
+            <span className="logo-text">Pete&rsquo;s Postings</span>
+          </Link>
+          <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
+            <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
+            <Link
+              href="/recent"
+              className={`nav-link nav-link-new${viewNewPostings ? " nav-link-active" : ""}`}
+            >
+              {isSignedIn && isSubscribed ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Premium">
+                  <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                </svg>
+              )}
+              Recent Postings
+            </Link>
+            <Link href="/pricing" className="nav-link">Pricing</Link>
+            <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
+            <button className="nav-link nav-link-mobile-only" onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
+          </div>
+          <div className="nav-right">
+            {!isLoaded ? null : isSignedIn ? (
+              <>
+              {savedNotifPrefs !== null && !alertsOn && !alertsPanelOpen && (
+                <button className="nav-cta" onClick={() => { capture("home_cta_clicked", { where: "nav_signed_in" }); openAlerts(); }}>Get SMS alerts</button>
+              )}
+              <UserButton>
+                {user?.publicMetadata?.stripeCustomerId && (
+                  <UserButton.MenuItems>
+                    <UserButton.Action label="Manage subscription" labelIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>} onClick={openBillingPortal} />
+                  </UserButton.MenuItems>
                 )}
+              </UserButton>
+              </>
+            ) : (
+              <>
+                <SignInButton mode="modal">
+                  <button className="nav-signin">Sign in</button>
+                </SignInButton>
+                <Link href="/start" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav" })}>Get SMS alerts</Link>
+              </>
+            )}
+          </div>
+          {/* Phones only: the nav links don't fit in the bar, so they open as a menu. */}
+          <button
+            className="nav-menu-btn"
+            onClick={() => setNavMenuOpen((v) => !v)}
+            aria-label={navMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={navMenuOpen}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {navMenuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M4 7h16M4 12h16M4 17h16"/>}
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      {viewHome && !viewAbout && !viewNewPostings && (
+        <HomePage
+          onBrowse={() => router.push("/jobs")}
+          isSignedIn={isSignedIn}
+          last48hCount={last48hCount}
+          liveJobs={allJobs}
+        />
+      )}
+
+      {viewAbout && !viewNewPostings && (
+        <AboutPage onBrowse={() => router.push("/jobs")} />
+      )}
+
+      {viewNewPostings && (
+        <div className="app-layout">
+          {/* Mobile top bar — not shown on Recent (Pro gets the filter bar below; everyone else just the locked list) */}
+          <div className="mobile-top-bar mobile-top-bar-replaced">
+            <div className="mobile-top-bar-bank-row">
+              <select
+                className="mobile-bank-select"
+                value={activeBank}
+                onChange={(e) => {
+                  setViewNewPostings(false);
+                  setViewingSaved(false);
+                  setViewNotifications(false);
+                  setViewHome(false);
+                  setActiveBank(e.target.value);
+                }}
+              >
+                <option value="all">All banks</option>
+                {Object.entries(BANKS).map(([key, bank]) => (
+                  <option key={key} value={key}>{bank.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mobile-top-bar-pro-row">
+              <button
+                className="mobile-pro-pill mobile-pro-pill-active"
+                onClick={() => {
+                  setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
+                }}
+              >
+                Last 48h
+              </button>
+              <button
+                className="mobile-pro-pill"
+                onClick={() => {
+                  if (!isSignedIn) { askToSignUp("save"); return; }
+                  setViewNewPostings(false); setViewingSaved(true); setViewNotifications(false); setViewHome(false);
+                }}
+              >
+                Saved
+              </button>
+              <button
+                className="mobile-pro-pill"
+                onClick={() => {
+                  openAlerts();
+                }}
+              >
+                Alerts
+              </button>
+              <button
+                className="mobile-pro-pill"
+                onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+              >
+                Request
+              </button>
+            </div>
+          </div>
+          {/* Sidebar — same as normal view */}
+          {sidebar}
+
+          <main className={`content${!isSubscribed ? " content-recent-locked" : ""}`}>
+            {/* Pro members get the page header and the alerts shortcut; everyone else sees the locked live feed on its own. */}
+            {isSubscribed && (
+              <>
+            {/* Same centered heading as the locked page, so the tab reads the same for everyone. */}
+            <h1 className="rl-title rl-title-pro">
+              {last48hCount > 0
+                ? <><span className="rl-mark">{last48hCount} {last48hCount === 1 ? "role" : "roles"}</span> posted in the last <span className="rl-mark">48 hours</span></>
+                : <>Roles posted in the last <span className="rl-mark">48 hours</span></>}
+            </h1>
+
+            {/* Shortcut to alert settings: only until their alerts are on (then it is just noise). */}
+            {!(notifPrefs.smsEnabled || notifPrefs.enabled) && (
+              <div className="welcome-banner alerts-callout">
+                <div className="alerts-callout-body">
+                  <span className="alerts-callout-icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <p className="welcome-title">
+                      {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
+                        ? `Your ${notifPrefs.smsEnabled ? "text" : "email"} alerts are on`
+                        : "Get a text the instant a new job posts"}
+                    </p>
+                    <p className="welcome-desc">
+                      {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
+                        ? "Change which banks, roles and cities you hear about."
+                        : "Set up text or email alerts for the banks and roles you want, so you never have to check this page."}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  className="alerts-callout-cta"
+                  onClick={openAlerts}
+                >
+                  {notifPrefs.smsEnabled || notifPrefs.enabled ? "Edit alerts" : "Set up free alerts"}
+                </button>
               </div>
             )}
+              </>
+            )}
+            <NewPostingsView
+              liveJobs={allJobs}
+              isSubscribed={isSubscribed}
+              isSignedIn={isSignedIn}
+              data={newPostingsData}
+              loading={newPostingsLoading}
+              onSetupAlerts={openAlerts}
+            />
+          </main>
+        </div>
+      )}
 
+      {!viewHome && !viewAbout && !viewNewPostings && (
+        <div className="app-layout">
+          {/* Mobile top bar — replaces sidebar on mobile (on /jobs the filter bar replaces it; on Alerts it isn't shown) */}
+          <div className={`mobile-top-bar${!viewingSaved || viewNotifications ? " mobile-top-bar-replaced" : ""}`}>
+            <div className="mobile-top-bar-bank-row">
+              <select
+                className="mobile-bank-select"
+                value={activeBank}
+                onChange={(e) => {
+                  setViewingSaved(false);
+                  setViewNotifications(false);
+                  setViewNewPostings(false);
+                  setActiveBank(e.target.value);
+                }}
+              >
+                <option value="all">All banks</option>
+                {Object.entries(BANKS).map(([key, bank]) => (
+                  <option key={key} value={key}>{bank.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mobile-top-bar-pro-row">
+              <button
+                className={`mobile-pro-pill${viewNewPostings ? " mobile-pro-pill-active" : ""}${!isSubscribed ? " mobile-pro-pill-locked" : ""}`}
+                onClick={() => {
+                  setViewNewPostings(true); setViewingSaved(false); setViewNotifications(false); setViewHome(false);
+                }}
+              >
+                Last 48h
+              </button>
+              <button
+                className={`mobile-pro-pill${viewingSaved && !viewNotifications ? " mobile-pro-pill-active" : ""}`}
+                onClick={() => {
+                  if (!isSignedIn) { askToSignUp("save"); return; }
+                  setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+                }}
+              >
+                Saved
+              </button>
+              <button
+                className={`mobile-pro-pill${alertsPanelOpen ? " mobile-pro-pill-active" : ""}`}
+                onClick={openAlerts}
+              >
+                Alerts
+              </button>
+              <button
+                className="mobile-pro-pill"
+                onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+              >
+                Request
+              </button>
+            </div>
+          </div>
+          {/* Phones, /jobs: one filter bar that sums up bank · type · city and opens the filter panel */}
+          {!viewingSaved && (
+            <div className="mfb">
+              <button className="mfb-bar" onClick={() => setFilterSheetOpen(true)} aria-haspopup="dialog">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/>
+                </svg>
+                <span className="mfb-summary">
+                  <b>{activeBank === "all" ? "All banks" : BANKS[activeBank]?.name}</b>
+                  {categoryFilter && <>{" \u00b7 "}{categoryFilter}</>}
+                  {" \u00b7 "}{jobType === "all" ? "All types" : JOB_TYPES[jobType]}
+                  {" \u00b7 "}{locationFilter || "All cities"}
+                </span>
+                <svg className="mfb-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              {alertsButton("mfb-alerts")}
+            </div>
+          )}
+          {filterSheetOpen && !viewingSaved && (
+            <div className="mfs-wrap" role="dialog" aria-modal="true" aria-label="Filter roles">
+              <button className="mfs-shade" aria-label="Close filters" onClick={() => setFilterSheetOpen(false)} />
+              <div className="mfs">
+                <div className="mfs-top">
+                  <p className="mfs-title">Filters</p>
+                  <button className="mfs-x" aria-label="Close filters" onClick={() => setFilterSheetOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+                </div>
+                <div className="mfs-sec">
+                  <p className="mfs-h">Bank</p>
+                  <div className="mfs-banks">
+                    <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All {BANK_COUNT}</button>
+                    {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
+                    {(() => { const ranked = Object.keys(BANKS).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)); return sheetAllBanks ? ranked : ranked.slice(0, 6); })().map((key) => (
+                      <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
+                        <BankLogo bankKey={key} size={18} />{BANKS[key].shortName}
+                      </button>
+                    ))}
+                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>+{Object.keys(BANKS).length - 6} more</button>}
+                  </div>
+                </div>
+                {availableCategories.length > 0 && (
+                  <div className="mfs-sec">
+                    <p className="mfs-h">Area</p>
+                    <div className="mfs-banks">
+                      <button className={`mfs-bank mfs-bank-all${categoryFilter === "" ? " is-on" : ""}`} onClick={() => setCategoryFilter("")}>All</button>
+                      {[...availableCategories].sort((x, y) => areaRank(x) - areaRank(y) || x.localeCompare(y)).map((cat) => (
+                        <button key={cat} className={`mfs-bank mfs-bank-all${categoryFilter === cat ? " is-on" : ""}`} onClick={() => setCategoryFilter(cat)}>{cat}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mfs-sec">
+                  <p className="mfs-h">Type</p>
+                  <div className="mfs-seg">
+                    {[["all", "All"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([key, label]) => (
+                      <button key={key} className={jobType === key ? "is-on" : ""} onClick={() => setJobType(key)}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mfs-sec">
+                  <label className="mfs-h" htmlFor="mfs-city">City</label>
+                  <select id="mfs-city" className="mfs-select" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                    <option value="">All cities</option>
+                    {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}
+                  </select>
+                </div>
+                <div className="mfs-foot">
+                  <button className="mfs-clear" onClick={() => { setActiveBank("all"); setJobType("all"); setLocationFilter(""); setCategoryFilter(""); setSearchQuery(""); }}>Clear</button>
+                  <button className="mfs-go" onClick={() => setFilterSheetOpen(false)}>
+                    {isGatedBank ? "Show roles" : `Show ${displayJobs.length} ${displayJobs.length === 1 ? "role" : "roles"}`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SIDEBAR (not on the Alerts tab: bank picking happens inside the alert setup) */}
+          {!viewNotifications && sidebar}
+
+          {/* MAIN CONTENT */}
+          <main className="content">
+            {/* Notifications view */}
             {/* Saved jobs view */}
             {viewingSaved && !viewNotifications && !isSignedIn && (
               <div className="notif-panel">
@@ -2691,9 +2628,11 @@ export default function Home() {
                         <option value="">All Categories</option>
                         {withSelected(categoryOptions, categoryFilter).map(([cat, n]) => <option key={cat} value={cat}>{cat} ({n})</option>)}
                       </select>
+                      {alertsButton("filter-alerts")}
                     </div>
                   </div>
                 )}
+                {alertsPanel}
 
                 {!isGatedBank && !loading && !error && (
                   <div className="results-bar">
@@ -2777,13 +2716,14 @@ export default function Home() {
                         key={index}
                         onClick={(e) => {
                           capture("job_opened", { view: viewingSaved ? "saved" : "browse", bank: job.bank || BANKS[job.bankKey]?.name, category: job.category, title: job.title, position: index + 1, signed_in: Boolean(isSignedIn) });
+                          if (isSignedIn) patchJobStatus(job.link, { viewedAt: jobStatus[job.link]?.viewedAt || new Date().toISOString() });
                           // Signed out: a free account first (see SignUpGate).
                           if (isLoaded && !isSignedIn) { e.preventDefault(); askToSignUp("job", { title: job.title, link: job.link, bank: job.bank, bankKey: job.bankKey, location: job.location }); }
                         }}
                       >
                         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
                         <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
-                        <span className="job-title">{job.title}</span>
+                        <span className="job-title">{job.title}{rowTags(job)}</span>
                         <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
                         <span className="job-location">{job.location || "—"}</span>
                         <span className="job-posted tnum">{formatPostedAt(job)}</span>
@@ -2896,6 +2836,15 @@ export default function Home() {
           </div>
         </div>
       )}
+      {alertsWelcome && (
+        <div className="pp-toast" role="status" aria-live="polite">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+          You&rsquo;re in. We&rsquo;ll alert you the moment a match posts.
+          <button className="pp-toast-close" onClick={() => setAlertsWelcome(false)} aria-label="Dismiss">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      )}
       {savedToast && (
         <div className="pp-toast" role="status" aria-live="polite">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
@@ -2908,10 +2857,10 @@ export default function Home() {
 
       {showProWelcome && (
         <ProWelcomeModal
-          activated={isSubscribed}
+          activated={isPaid}
           timedOut={proWelcomeTimedOut}
           onClose={() => setShowProWelcome(false)}
-          onSetupAlerts={() => { setShowProWelcome(false); router.push("/notifications"); }}
+          onSetupAlerts={() => { setShowProWelcome(false); openAlerts(); }}
         />
       )}
 

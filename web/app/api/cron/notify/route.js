@@ -398,6 +398,7 @@ export async function GET(request) {
           prefs,
           jobs: matchingJobs,
           isFree: user.publicMetadata?.subscribed !== true,
+          createdAt: user.createdAt,
         });
         if (sent.emailSent) emailsSent++;
         if (sent.smsSent) smsSent++;

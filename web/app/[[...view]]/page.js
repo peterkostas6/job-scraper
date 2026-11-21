@@ -16,6 +16,7 @@ import { trialFor } from "@/lib/alert-trial-days";
 import { openBillingPortal } from "@/lib/billing";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
+import PremiumTimer from "@/lib/premium-timer";
 
 const FREE_BANKS = new Set(Object.keys(BANKS));
 
@@ -1406,6 +1407,7 @@ export default function Home() {
   const [notifLoading, setNotifLoading] = useState(false);
   // Free accounts: { used, limit } of their free alerts; null for Pro (unlimited).
   const [alertTrial, setAlertTrial] = useState(null);
+  const [hasSavedPrefs, setHasSavedPrefs] = useState(false); // saved preferences at least once, alerts on or off
   const [alertsPanelOpen, setAlertsPanelOpen] = useState(false);
   // Browse: "mine" = only roles matching their alert preferences, "all" = everything. Remembered per browser.
   const [browseMode, setBrowseModeState] = useState("mine");
@@ -1550,6 +1552,7 @@ export default function Home() {
         setNotifPrefs(loaded);
         setSavedNotifPrefs(loaded);
         setAlertTrial(data.trial || null);
+        setHasSavedPrefs(Boolean(data.hasPrefs));
       })
       .catch(() => setSavedNotifPrefs((prev) => prev ?? NOTIF_DEFAULTS))
       .finally(() => setNotifLoading(false));
@@ -1799,7 +1802,7 @@ export default function Home() {
       body: JSON.stringify(notifPrefs),
     })
       .then((res) => res.json())
-      .then((data) => { if (data.success) { setNotifSaved(true); setSavedToast(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); setAlertsPanelOpen(false); } })
+      .then((data) => { if (data.success) { setHasSavedPrefs(true); setNotifSaved(true); setSavedToast(true); setSavedNotifPrefs(notifPrefs); setOpenAlertRow(null); setEditingPhone(false); setAlertsPanelOpen(false); } })
       .catch(() => {})
       .finally(() => setNotifSaving(false));
   }
@@ -1808,9 +1811,9 @@ export default function Home() {
   const okType = (job) => jobType === "all" || typeOf(job) === jobType;
   const okLocation = (job) => locationFilter === "" || (job.cities || []).includes(locationFilter);
   const okCategory = (job) => categoryFilter === "" || (job.category || "") === categoryFilter;
-  // Browse shows the roles that match their alert preferences ("My preferences") until they
-  // switch to "All roles". Only for signed-in people with alerts on.
-  const hasAlertPrefs = Boolean(isSignedIn && alertsOn && savedNotifPrefs);
+  // Browse shows the roles that match their saved preferences ("My preferences") until they
+  // switch to "All roles". For anyone signed in who has saved preferences, alerts on or off.
+  const hasAlertPrefs = Boolean(isSignedIn && savedNotifPrefs && (hasSavedPrefs || alertsOn));
   const usePrefs = hasAlertPrefs && browseMode === "mine";
   const matchesMine = (job) => matchesAlertPrefs(job, { ...savedNotifPrefs, location: (savedNotifPrefs.location || "").trim() });
   const okPrefs = (job) => !usePrefs || matchesMine(job);
@@ -2103,6 +2106,7 @@ export default function Home() {
           <div className="nav-right">
             {!isLoaded ? null : isSignedIn ? (
               <>
+              {trialActive && <PremiumTimer endsAt={trialFor(user.createdAt).endsAt} />}
               {savedNotifPrefs !== null && !alertsOn && !alertsPanelOpen && (
                 <button className="nav-cta" onClick={() => { capture("home_cta_clicked", { where: "nav_signed_in" }); openAlerts(); }}>Get SMS alerts</button>
               )}

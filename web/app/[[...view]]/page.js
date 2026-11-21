@@ -1809,7 +1809,8 @@ export default function Home() {
   // switch to "All roles". Only for signed-in people with alerts on.
   const hasAlertPrefs = Boolean(isSignedIn && alertsOn && savedNotifPrefs);
   const usePrefs = hasAlertPrefs && browseMode === "mine";
-  const okPrefs = (job) => !usePrefs || matchesAlertPrefs(job, { ...savedNotifPrefs, location: (savedNotifPrefs.location || "").trim() });
+  const matchesMine = (job) => matchesAlertPrefs(job, { ...savedNotifPrefs, location: (savedNotifPrefs.location || "").trim() });
+  const okPrefs = (job) => !usePrefs || matchesMine(job);
   const searched = jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okPrefs(job));
   const filteredJobs = searched.filter((job) => okType(job) && okLocation(job) && okCategory(job));
   // Each dropdown counts the jobs left after the OTHER filters, so its numbers always add up to what you'd see.
@@ -1819,6 +1820,9 @@ export default function Home() {
   const withSelected = (opts, sel) => (sel && !opts.some(([v]) => v === sel) ? [[sel, 0], ...opts] : opts);
 
   const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link)) : filteredJobs;
+  // Counts for the My preferences | All roles switch, after search and the dropdown filters.
+  const modeBase = hasAlertPrefs ? jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okType(job) && okLocation(job) && okCategory(job)) : [];
+  const mineCount = hasAlertPrefs ? modeBase.filter(matchesMine).length : 0;
   // The roles Browse leaves out without Pro, for the locked rows at the top of the list.
   const lockedRecent = (isSignedIn && isSubscribed) || showSavedOnly ? [] : allJobs
     .filter((j) => isLast48h(j) && (activeBank === "all" || j.bankKey === activeBank))
@@ -1934,7 +1938,6 @@ export default function Home() {
     <aside className="sidebar" aria-label="Your tools and banks">
       <div className="sidebar-header">
         <span>Your tools</span>
-        {!isPaid && <Link href="/pricing" className="sidebar-pro-pill">Upgrade</Link>}
       </div>
       <button
         className={`sidebar-item${viewNewPostings ? " sidebar-item-active" : ""}${!isSubscribed ? " sidebar-item-locked" : ""}`}
@@ -2490,8 +2493,8 @@ export default function Home() {
                   <div className="results-bar">
                     {hasAlertPrefs ? (
                       <div className="browse-mode" role="group" aria-label="Which roles to show">
-                        <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My preferences</button>
-                        <button aria-pressed={browseMode === "all"} onClick={() => setBrowseMode("all")}>All roles</button>
+                        <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My preferences <span className="browse-mode-n tnum">{mineCount}</span></button>
+                        <button aria-pressed={browseMode === "all"} onClick={() => setBrowseMode("all")}>All roles <span className="browse-mode-n tnum">{modeBase.length}</span></button>
                       </div>
                     ) : <span className="results-text" />}
                     <button className={`saved-toggle ${viewingSaved ? "saved-toggle-active" : ""}`} onClick={() => {

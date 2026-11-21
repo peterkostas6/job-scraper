@@ -2350,15 +2350,12 @@ export default function Home() {
                             : "Choose what you want, turn on texts or email, then save."}
                         </p>
                       </div>
-                      {alertTrial && (
+                      {/* Nothing about cost until their free days are over: the texts sell it first. */}
+                      {alertTrial?.over && (
                         <div className="al-quota">
                           <p>
-                            {alertTrial.over
-                              ? "Your 3 free days are up. Alerts still arrive, and opening them takes Premium. "
-                              : alertTrial.endsAt
-                                ? `Free until ${new Date(alertTrial.endsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}. After that, opening roles from alerts takes Premium. `
-                                : "Your first 3 days of alerts are free, starting with your first alert. "}
-                            <Link href="/pricing" className="al-link">{alertTrial.over ? "Get first in the stack" : "See Premium"}</Link>
+                            Alerts still arrive, and opening them takes Premium.{" "}
+                            <Link href="/pricing" className="al-link">Get first in the stack</Link>
                           </p>
                         </div>
                       )}

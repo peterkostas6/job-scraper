@@ -2009,6 +2009,10 @@ export default function Home() {
           </div>
           <div className="nav-right">
             {!isLoaded ? null : isSignedIn ? (
+              <>
+              {savedNotifPrefs !== null && !alertsOn && !viewNotifications && (
+                <Link href="/notifications" className="nav-cta" onClick={() => capture("home_cta_clicked", { where: "nav_signed_in" })}>Get SMS alerts</Link>
+              )}
               <UserButton>
                 {user?.publicMetadata?.stripeCustomerId && (
                   <UserButton.MenuItems>
@@ -2016,6 +2020,7 @@ export default function Home() {
                   </UserButton.MenuItems>
                 )}
               </UserButton>
+              </>
             ) : (
               <>
                 <SignInButton mode="modal">

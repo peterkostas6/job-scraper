@@ -662,14 +662,17 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
         <div className="ss-plans ss-plans-one">
           <div className="ss-card ss-plan ss-plan-dark" data-reveal>
             <span className="ss-plan-banner">Premium</span>
-            <p className="ss-plan-name">Get first in the stack</p>
+            <p className="ss-plan-name">First.</p>
             <p className="ss-plan-price">${PLANS.monthly.price}<span>/mo</span></p>
+            <p className="ss-plan-free">Every new account gets Premium free for 3 days.</p>
             <ul>
-              <li>Open every text and email alert, the second a role posts</li>
-              <li>Everything posted in the last 48 hours</li>
-              <li>Alerts free for your first 3 days, cancel anytime</li>
+              <li>Unlimited text messages</li>
+              <li>Unlimited access to Recent postings: every role from the last 48 hours</li>
+              <li>Save jobs</li>
+              <li>Track applications</li>
+              <li>Request banks for us to add</li>
             </ul>
-            <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>Get first in the stack {ARROW}</Link>
+            <Link href="/pricing" className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("home_cta_clicked", { where: "pricing_pro" })}>See Premium {ARROW}</Link>
           </div>
         </div>
       </section>
@@ -890,7 +893,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
       <div className="paywall-header">
         <div className="paywall-badge">Premium</div>
         <h2 className="paywall-title">
-          {newCount > 0 ? `${newCount} new ${newCount === 1 ? "role" : "roles"} in the last 48 hours` : "Get first in the stack"}
+          {newCount > 0 ? `${newCount} new ${newCount === 1 ? "role" : "roles"} in the last 48 hours` : "Premium"}
         </h2>
         <p className="paywall-desc">
           Premium shows you every role posted in the last 48 hours and texts you the moment new ones go live.
@@ -926,7 +929,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
                 <span className="paywall-plan-period">/{plan.period}</span>
               </div>
               <p className="paywall-plan-billing">{plan.perMonth ? `$${plan.perMonth.toFixed(2)}/mo, billed yearly` : plan.billed}</p>
-              {ctaBtn(key, plan.trialDays ? `Start ${plan.trialDays}-day free trial` : "Get first in the stack", featured)}
+              {ctaBtn(key, plan.trialDays ? `Start ${plan.trialDays}-day free trial` : "Get Premium", featured)}
             </div>
           );
         })}

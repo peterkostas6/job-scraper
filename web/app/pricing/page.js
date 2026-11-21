@@ -167,6 +167,9 @@ export default function PricingPage() {
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
   const isSubscribed = user?.publicMetadata?.subscribed === true;
+  // Every account has Premium for its first 3 days (lib/alert-trial-days.js).
+  const trial = user && !isSubscribed ? trialFor(user.createdAt) : null;
+  const inTrial = Boolean(trial && !trial.over);
   // /pricing?alert=<code>: they tapped an alert after their 3 free days.
   const [alertLocked, setAlertLocked] = useState(false);
   useEffect(() => {
@@ -260,7 +263,7 @@ export default function PricingPage() {
       <div className="pp">
         {alertLocked && (
           <div className="pp-alert-locked" role="status">
-            <strong>Your 3 free days of alerts are up.</strong> Get first in the stack to open the roles we text you. Your alerts keep coming either way.
+            <strong>Your 3 free days of Premium are up.</strong> Get Premium to open the roles we text you. Your alerts keep coming either way.
           </div>
         )}
         <section className="pp-head">
@@ -272,28 +275,31 @@ export default function PricingPage() {
         <section className="pp-plans pp-plans-one">
           <div className="pp-plan pp-plan-pro">
             <span className="pp-banner">Premium</span>
-            <p className="pp-plan-name">Get first in the stack</p>
+            <p className="pp-plan-name">First.</p>
             <p className="pp-price">
               ${PLANS.monthly.price}
               <span>/month</span>
             </p>
-            <p className="pp-billed">Billed monthly. Cancel anytime.</p>
-            {isSubscribed ? (
-              <p className="pp-have">You have Premium.</p>
-            ) : isSignedIn ? (
+            <p className="pp-billed">
+              {isSubscribed ? "You have Premium."
+                : inTrial ? `You have Premium free until ${new Date(trial.endsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}.`
+                : "Every new account gets Premium free for 3 days."}
+            </p>
+            {isSubscribed ? null : isSignedIn ? (
               <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
-                {checkoutLoading ? "Redirecting…" : "Get first in the stack"}
+                {checkoutLoading ? "Redirecting…" : inTrial ? "Keep Premium" : "Get Premium"}
               </button>
             ) : (
-              <SignUpButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signInForceRedirectUrl="/pricing?checkout=monthly">
-                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Get first in the stack</button>
+              <SignUpButton mode="modal" forceRedirectUrl="/start?setup=1" signInForceRedirectUrl="/pricing">
+                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free</button>
               </SignUpButton>
             )}
+            <p className="pp-includes">Premium includes</p>
             <ul className="pp-list">
-              <li><strong>Open every alert</strong>: texts and emails the second a role posts</li>
-              <li><strong>Every role</strong> from the last 48 hours</li>
-              <li>All open roles at {BANK_COUNT} banks</li>
-              <li>Save jobs and track applications</li>
+              <li><strong>Unlimited</strong> text messages</li>
+              <li><strong>Unlimited</strong> access to Recent postings: every role from the last 48 hours</li>
+              <li>Save jobs</li>
+              <li>Track applications</li>
               <li>Request banks for us to add</li>
             </ul>
           </div>

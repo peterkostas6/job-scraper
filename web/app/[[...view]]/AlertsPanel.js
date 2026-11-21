@@ -41,7 +41,7 @@ export default function AlertsPanel({
           </button>
         </header>
         {trialOver && (
-          <p className="alx-note">Alerts still arrive, and opening them takes Premium. <Link href="/pricing">Get first in the stack</Link></p>
+          <p className="alx-note">Alerts still arrive, and opening them takes Premium. <Link href="/pricing">Get Premium</Link></p>
         )}
 
         {loading || !prefs ? (

@@ -6288,3 +6288,5 @@ footer a, .footer a { color: var(--pp-cream); }
   .al-apply { min-width: 92px; }
   .al-more { max-width: 320px; margin-inline: auto; }
 }
+.al-similar-head { margin-top: 1.75rem; }
+.al-similar-edit { color: var(--pp-cream); font-size: inherit; }

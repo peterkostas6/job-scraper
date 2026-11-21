@@ -1688,6 +1688,24 @@ export default function Home() {
   const notifMatches = allJobs
     .filter((job) => matchesAlertPrefs(job, { ...notifPrefs, location: (notifPrefs.location || "").trim() }))
     .sort((x, y) => postedAt(y) - postedAt(x));
+  // Too few matches to fill the page: add similar roles, loosening the picks one at a time
+  // (city, then banks, then areas, then internship/full-time) until the feed has FEED_MIN rows.
+  const FEED_MIN = 15;
+  const similarJobs = [];
+  if (notifMatches.length < FEED_MIN) {
+    const seen = new Set(notifMatches.map((j) => j.link));
+    const base = { ...notifPrefs, location: (notifPrefs.location || "").trim() };
+    const steps = [{ location: "" }, { location: "", banks: [] }, { location: "", banks: [], categories: [] }, { location: "", banks: [], categories: [], jobType: "all" }];
+    for (const step of steps) {
+      if (notifMatches.length + similarJobs.length >= FEED_MIN) break;
+      const loose = allJobs.filter((j) => !seen.has(j.link) && matchesAlertPrefs(j, { ...base, ...step })).sort((x, y) => postedAt(y) - postedAt(x));
+      for (const j of loose) {
+        if (notifMatches.length + similarJobs.length >= FEED_MIN) break;
+        seen.add(j.link);
+        similarJobs.push(j);
+      }
+    }
+  }
   const notifDirty = savedNotifPrefs !== null && alertSettingsKey(notifPrefs) !== alertSettingsKey(savedNotifPrefs);
   const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled));
   // Alerts are free, so anyone signed in with alerts on (or on Premium) gets the settings page.
@@ -1707,7 +1725,41 @@ export default function Home() {
   }
   // New roles stay locked for free accounts once their free alert days are over (same rule as Browse).
   const feedLocked = (job) => !isSubscribed && Boolean(alertTrial?.over) && isLast48h(job);
-  const maskedPhone = (num) => { const d = (num || "").replace(/\D/g, "").slice(-4); return d ? `(•••) •••-${d}` : "your phone"; };
+  // One row of the Alerts feed: the job, what we've done about it, and Apply / Mark applied.
+  const renderFeedJob = (job) => {
+                            const st = jobStatus[job.link] || {};
+                            const locked = feedLocked(job);
+                            return (
+                              <li key={job.link} className={`al-job${st.appliedAt ? " al-job-applied" : ""}${locked ? " al-job-locked" : ""}`}>
+                                <BankLogo bankKey={job.bankKey} bank={job.bank} size={30} className="al-job-logo" />
+                                <div className="al-job-main">
+                                  <p className="al-job-title">{locked ? <span className="job-locked-title" aria-hidden="true">{job.title}</span> : job.title}</p>
+                                  <p className="al-job-meta">{job.bank}{job.location ? ` \u00b7 ${cleanLocation(job.location)}` : ""} &middot; {formatPostedAt(job)}</p>
+                                  <div className="al-job-tags">
+                                    {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : "Texted you"}</span>}
+                                    {st.viewedAt && <span className="al-tag al-tag-viewed">Viewed</span>}
+                                    {st.appliedAt && <span className="al-tag al-tag-applied">Applied</span>}
+                                  </div>
+                                </div>
+                                <div className="al-job-actions">
+                                  {locked ? (
+                                    <Link href="/pricing" className="al-apply al-apply-locked" onClick={() => capture("paywall_clicked", { where: "alerts_feed" })}>Unlock</Link>
+                                  ) : (
+                                    <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="al-apply"
+                                      onClick={() => { patchJobStatus(job.link, { viewedAt: st.viewedAt || new Date().toISOString() }); capture("job_opened", { view: "alerts", bank: job.bank, category: job.category, title: job.title, texted: Boolean(st.alertedAt) }); }}>
+                                      Apply &#8599;
+                                    </a>
+                                  )}
+                                  {!locked && (
+                                    <button className="al-mark" aria-pressed={Boolean(st.appliedAt)} onClick={() => toggleApplied(job)}>
+                                      {st.appliedAt ? "\u2713 Applied" : "Mark applied"}
+                                    </button>
+                                  )}
+                                </div>
+                              </li>
+                            );
+  };
+  const maskedPhone = (num) => { const d = (num || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : num || "your phone"; };
   const alertAreasLabel = notifPrefs.categories.length === 0
     ? "Open to anything"
     : [...AREAS.filter((a) => a.categories.every((c) => notifPrefs.categories.includes(c))).map((a) => a.label),
@@ -2530,43 +2582,20 @@ export default function Home() {
                         <p className="al-feed-empty">Nothing open matches yet. You&rsquo;ll hear the moment something does, or <button className="gate-link" onClick={() => setAlertsEditOpen(true)}>widen your preferences</button>.</p>
                       ) : (
                         <ul className="al-feed-list">
-                          {notifMatches.slice(0, feedLimit).map((job) => {
-                            const st = jobStatus[job.link] || {};
-                            const locked = feedLocked(job);
-                            return (
-                              <li key={job.link} className={`al-job${st.appliedAt ? " al-job-applied" : ""}${locked ? " al-job-locked" : ""}`}>
-                                <BankLogo bankKey={job.bankKey} bank={job.bank} size={30} className="al-job-logo" />
-                                <div className="al-job-main">
-                                  <p className="al-job-title">{locked ? <span className="job-locked-title" aria-hidden="true">{job.title}</span> : job.title}</p>
-                                  <p className="al-job-meta">{job.bank}{job.location ? ` \u00b7 ${cleanLocation(job.location)}` : ""} &middot; {formatPostedAt(job)}</p>
-                                  <div className="al-job-tags">
-                                    {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : "Texted you"}</span>}
-                                    {st.viewedAt && <span className="al-tag al-tag-viewed">Viewed</span>}
-                                    {st.appliedAt && <span className="al-tag al-tag-applied">Applied</span>}
-                                  </div>
-                                </div>
-                                <div className="al-job-actions">
-                                  {locked ? (
-                                    <Link href="/pricing" className="al-apply al-apply-locked" onClick={() => capture("paywall_clicked", { where: "alerts_feed" })}>Unlock</Link>
-                                  ) : (
-                                    <a href={trackedLink(job.link)} target="_blank" rel="noopener noreferrer" className="al-apply"
-                                      onClick={() => { patchJobStatus(job.link, { viewedAt: st.viewedAt || new Date().toISOString() }); capture("job_opened", { view: "alerts", bank: job.bank, category: job.category, title: job.title, texted: Boolean(st.alertedAt) }); }}>
-                                      Apply &#8599;
-                                    </a>
-                                  )}
-                                  {!locked && (
-                                    <button className="al-mark" aria-pressed={Boolean(st.appliedAt)} onClick={() => toggleApplied(job)}>
-                                      {st.appliedAt ? "\u2713 Applied" : "Mark applied"}
-                                    </button>
-                                  )}
-                                </div>
-                              </li>
-                            );
-                          })}
+                          {notifMatches.slice(0, feedLimit).map((job) => renderFeedJob(job))}
                         </ul>
                       )}
                       {notifMatches.length > feedLimit && (
                         <button className="al-more" onClick={() => setFeedLimit((n) => n + 30)}>Show more ({notifMatches.length - feedLimit} left)</button>
+                      )}
+                      {similarJobs.length > 0 && (
+                        <>
+                          <div className="al-feed-head al-similar-head">
+                            <h3 className="al-feed-title">Similar roles</h3>
+                            <p className="al-feed-sub">Close to what you picked. We won&rsquo;t text you about these unless you <button className="gate-link al-similar-edit" onClick={() => setAlertsEditOpen(true)}>widen your alerts</button>.</p>
+                          </div>
+                          <ul className="al-feed-list">{similarJobs.map((job) => renderFeedJob(job))}</ul>
+                        </>
                       )}
                     </section>
                   </>

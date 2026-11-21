@@ -102,33 +102,75 @@ export function welcomeEmail({ firstName, bankCount = 20 }) {
 }
 
 // ---------- Alert preferences confirmation (transactional) ----------
-export function prefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phoneNumber, bankNames, categories, jobTypeLabel, userId }) {
-  const subject = isFirstSetup ? "Your job alerts are on" : "Your alert preferences changed";
-  const rows = [
-    ["Email alerts", enabled ? "On" : "Off"],
-    ["Text alerts", smsEnabled ? `On${phoneNumber ? ` · ${maskPhone(phoneNumber)}` : ""}` : "Off"],
+// Settings as stacked label/value pairs (not a two-column table), so they read well on a phone.
+function settingsRows({ enabled, smsEnabled, phoneNumber, bankNames, categories, jobTypeLabel, city }) {
+  return [
+    ["Texts", smsEnabled ? `On${phoneNumber ? `, to ${formatPhone(phoneNumber)}` : ""}` : "Off"],
+    ["Emails", enabled ? "On" : "Off"],
+    ["Roles", jobTypeLabel],
+    ["Areas", categories.length ? categories.join(", ") : "Open to anything"],
     ["Banks", bankNames.length ? bankNames.join(", ") : "All banks"],
-    ["Categories", categories.length ? categories.join(", ") : "All categories"],
-    ["Role type", jobTypeLabel],
+    ["City", city || "Anywhere"],
   ];
-  const table = `
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:4px 0 20px;border-collapse:collapse;">
-  <caption style="text-align:left;font-size:14px;line-height:20px;font-weight:700;color:${C.muted};padding:0 0 8px;">Your alert settings</caption>
-  <tbody>
-    ${rows.map(([k, v]) => `<tr><th scope="row" style="text-align:left;padding:10px 12px 10px 0;font-size:15px;line-height:20px;font-weight:500;color:${C.muted};border-top:1px solid ${C.hairline};width:40%;">${escapeHtml(k)}</th><td style="padding:10px 0;font-size:15px;line-height:20px;font-weight:600;color:${C.navy};border-top:1px solid ${C.hairline};">${escapeHtml(v)}</td></tr>`).join("")}
-  </tbody>
+}
+function settingsHtml(rows) {
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:4px 0 20px;border-collapse:collapse;">
+  ${rows.map(([k, v], i) => `<tr><td style="padding:10px 0;${i ? `border-top:1px solid ${C.hairline};` : ""}">
+    <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:${C.muted};">${escapeHtml(k)}</div>
+    <div style="margin-top:2px;font-size:16px;line-height:22px;font-weight:600;color:${C.navy};">${escapeHtml(v)}</div>
+  </td></tr>`).join("")}
 </table>`;
+}
+
+export function prefsEmail({ firstName, isFirstSetup, enabled, smsEnabled, phoneNumber, bankNames, categories, jobTypeLabel, city, userId }) {
+  const subject = isFirstSetup ? "Your job alerts are on" : "Your alert preferences changed";
+  const rows = settingsRows({ enabled, smsEnabled, phoneNumber, bankNames, categories, jobTypeLabel, city });
   const footer = { reason: "You get this email because you changed your alert settings on Pete&rsquo;s Postings.", unsubscribeUrl: unsubscribeUrl(userId), preferencesUrl, contactCard: true };
   const html = layout({
     title: subject,
-    preheader: enabled || smsEnabled ? "Alerts arrive within minutes of a matching posting." : "Alerts are off. Turn them back on any time.",
+    preheader: enabled || smsEnabled ? "You'll hear within minutes of a matching posting." : "Alerts are off. Turn them back on any time.",
     heading: subject,
     intro: `${firstName ? `Hi ${escapeHtml(firstName)}, ` : ""}${isFirstSetup ? "here is what you will be alerted about." : "here is what is active now."}`,
-    body: table + `<p style="margin:0 0 4px;font-size:16px;line-height:24px;color:${C.text};">Alerts go out within minutes of a matching posting, any time of day. Change these settings whenever you like.</p>`,
-    cta: { label: "Review alert settings", url: preferencesUrl },
+    body: settingsHtml(rows) + `<p style="margin:0 0 4px;font-size:16px;line-height:24px;color:${C.text};">Alerts go out within minutes of a matching posting, any time of day. Change these settings whenever you like.</p>`,
+    cta: { label: "See your matching roles", url: preferencesUrl },
     footer,
   });
-  const text = textVersion([subject, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Alerts go out within minutes of a matching posting.", `Review alert settings: ${preferencesUrl}`], footer);
+  const text = textVersion([subject, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Alerts go out within minutes of a matching posting.", `See your matching roles: ${preferencesUrl}`], footer);
+  return { subject, html, text };
+}
+
+// ---------- Welcome + first alert setup, in one email ----------
+// Sent instead of both the welcome and "Your job alerts are on" when someone sets up alerts
+// right after signing up (the scheduled welcome is cancelled; see lib/alert-prefs.js).
+export function welcomeAlertsEmail({ firstName, bankCount, userId, ...prefs }) {
+  const subject = "Welcome to Pete's Postings. Your alerts are on.";
+  const rows = settingsRows(prefs);
+  const footer = { reason: "You get this email because you created an account and set up alerts on Pete&rsquo;s Postings.", unsubscribeUrl: unsubscribeUrl(userId), preferencesUrl, contactCard: true };
+  const how = prefs.smsEnabled ? "text you" : "email you";
+  const html = layout({
+    title: subject,
+    preheader: `We check ${bankCount} banks every 5 minutes and ${how} the moment a match posts.`,
+    heading: `Welcome${firstName ? `, ${escapeHtml(firstName)}` : ""}. You're set.`,
+    intro: `We check ${bankCount} bank career sites every 5 minutes. The moment a role matching your alerts goes up, we&rsquo;ll ${how}, so you can apply before it hits the job boards.`,
+    body: `<p style="margin:0 0 4px;font-size:14px;line-height:20px;font-weight:700;color:${C.muted};">Your alerts</p>` + settingsHtml(rows)
+      + `<p style="margin:0 0 4px;font-size:16px;line-height:24px;color:${C.text};">Every open role that already matches is waiting on your Alerts page. Change your alerts there anytime.</p>`,
+    cta: { label: "See your matching roles", url: preferencesUrl },
+    outro: "Questions? Reply to this email and it reaches Pete directly.",
+    footer,
+  });
+  const text = textVersion([
+    `Welcome${firstName ? `, ${firstName}` : ""}. You're set.`,
+    "",
+    `We check ${bankCount} bank career sites every 5 minutes. The moment a role matching your alerts goes up, we'll ${how}.`,
+    "",
+    "Your alerts:",
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    "",
+    `See your matching roles: ${preferencesUrl}`,
+    "",
+    "Questions? Reply to this email and it reaches Pete directly.",
+  ], footer);
   return { subject, html, text };
 }
 
@@ -201,4 +243,4 @@ export function newMemberEmail({ subject, heading, rows }) {
 }
 
 function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
-function maskPhone(p) { const d = String(p).replace(/\D/g, ""); return d.length >= 4 ? `***-***-${d.slice(-4)}` : p; }
+function formatPhone(p) { const d = String(p).replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : p; }

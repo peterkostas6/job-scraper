@@ -1,7 +1,8 @@
 // Saving alert settings for one account: the Alerts page (POST /api/notifications) and the
 // after-checkout step for people who paid before having an account both go through here,
 // so consent rules, the confirmation email and the welcome text behave the same everywhere.
-import { prefsEmail } from "@/lib/email-templates";
+import { prefsEmail, welcomeAlertsEmail } from "@/lib/email-templates";
+import { BANK_COUNT } from "@/lib/banks";
 import { sendEmail } from "@/lib/email";
 import { smsConfig, sendSms, logNotification } from "@/lib/notif-send";
 import { BANK_NAMES } from "@/lib/banks";
@@ -78,18 +79,34 @@ export async function saveAlertPrefs({ userId, body, origin }) {
   if (email) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const { subject, html, text } = prefsEmail({
+      const prefs = {
         firstName,
-        isFirstSetup,
         enabled: Boolean(enabled),
         smsEnabled: Boolean(smsEnabled),
         phoneNumber: phoneNumber || "",
         bankNames: (Array.isArray(banks) ? banks : []).map((k) => BANK_NAMES[k] || k),
         categories: Array.isArray(categories) ? categories : [],
         jobTypeLabel: JOB_TYPE_LABELS[jobType] || "All types",
+        city: typeof body.location === "string" ? body.location.trim().slice(0, 60) : "",
         userId,
-      });
-      await sendEmail(resend, { to: email, subject, html, text, tags: [{ name: "type", value: "prefs" }] });
+      };
+      // First setup while the sign-up welcome is still held: cancel it and send one email that
+      // welcomes them and lists their alerts. If it already went out, send the usual confirmation.
+      let combined = false;
+      const welcomeId = user.privateMetadata?.welcomeEmailId;
+      if (isFirstSetup && welcomeId && !user.privateMetadata?.welcomeDone) {
+        const { error } = await resend.emails.cancel(welcomeId).catch((e) => ({ error: e }));
+        if (!error) {
+          const { subject, html, text } = welcomeAlertsEmail({ ...prefs, bankCount: BANK_COUNT });
+          await sendEmail(resend, { to: email, subject, html, text, idempotencyKey: `welcome-alerts-${userId}`, tags: [{ name: "type", value: "welcome" }] });
+          combined = true;
+        }
+        await client.users.updateUserMetadata(userId, { privateMetadata: { welcomeDone: true } }).catch(() => {});
+      }
+      if (!combined) {
+        const { subject, html, text } = prefsEmail({ ...prefs, isFirstSetup });
+        await sendEmail(resend, { to: email, subject, html, text, tags: [{ name: "type", value: "prefs" }] });
+      }
     } catch (emailErr) {
       console.error("Prefs confirmation email failed:", emailErr);
     }

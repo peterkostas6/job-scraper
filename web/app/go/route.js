@@ -5,6 +5,7 @@ import { sql } from "@vercel/postgres";
 import { auth } from "@clerk/nextjs/server";
 import { BOT_UA } from "@/lib/notif-helpers";
 import { captureServer, distinctIdFromRequest } from "@/lib/posthog-server";
+import { markViewed } from "@/lib/job-status";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export async function GET(request) {
         VALUES (${code}, ${link}, ${who}, 'web', 1, NOW(), NOW())
         ON CONFLICT (code) DO UPDATE SET clicks = short_links.clicks + 1, last_clicked_at = NOW()
       `;
+      if (userId) await markViewed(userId, link);
       await captureServer(userId || distinctIdFromRequest(request), "job_link_clicked", { source: "web", bank_site: target.hostname, link, signed_in: Boolean(userId) });
     }
   } catch (err) {

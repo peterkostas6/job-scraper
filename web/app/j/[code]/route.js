@@ -7,6 +7,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { BOT_UA } from "@/lib/notif-helpers";
 import { captureServer } from "@/lib/posthog-server";
 import { alertTrial } from "@/lib/alert-trial";
+import { markViewed } from "@/lib/job-status";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,7 @@ export async function GET(request, { params }) {
       pay.searchParams.set("alert", params.code);
       return Response.redirect(pay, 302);
     }
+    if (counted) await markViewed(row.user_id, row.link);
     return Response.redirect(row.link, 302);
   } catch (err) {
     console.error("short link error:", err);

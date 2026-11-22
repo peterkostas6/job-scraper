@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 // True only when we know the account is unpaid and its trial is over. Any failed lookup
 // lets the click through: a paying user must never hit the paywall by mistake.
 async function alertLinkLocked(userId) {
+  if (userId === "test-locked") return true; // /api/admin/test-notification?locked=1
   if (!userId || !userId.startsWith("user_")) return false;
   try {
     const client = await clerkClient();

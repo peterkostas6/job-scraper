@@ -1,5 +1,6 @@
 // GET /api/admin/test-notification?to=<email>[&phone=<e164>] — sends one sample alert through the
 // shared sender so email and SMS delivery can be checked without waiting for a real posting.
+// Add &locked=1 to send the text someone without Premium gets (its link opens /pricing).
 // Add &resendLast=1 to send the jobs from the most recent real text alert instead of the samples.
 // GET ...?preview=alert|welcome|prefs|club — returns the rendered HTML instead of sending.
 // Guarded by CRON_SECRET (Authorization: Bearer, or ?key= for browser previews).
@@ -60,11 +61,12 @@ export async function GET(request) {
   const result = await sendUserNotification({
     resend: new Resend(process.env.RESEND_API_KEY),
     sms,
-    userId: "test-user",
+    userId: url.searchParams.get("locked") === "1" ? "test-locked" : "test-user",
     email: to,
     firstName: "",
     prefs: { smsEnabled: !!phone, phoneNumber: phone },
     jobs,
+    forceLocked: url.searchParams.get("locked") === "1",
   });
   return Response.json({ ...result, smsConfigured: !!sms });
 }

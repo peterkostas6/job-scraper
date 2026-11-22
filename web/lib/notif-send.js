@@ -126,14 +126,14 @@ export async function logNotification({ userId = null, channel, status, recipien
  * Returns { emailSent, smsSent, failed } — failed is true only when the email could not
  * be delivered, so the caller queues the jobs for the retry sweep.
  */
-export async function sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree = false, createdAt = null }) {
+export async function sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree = false, createdAt = null, forceLocked = false }) {
   const result = { emailSent: false, smsSent: false, failed: false };
   if (!jobs || jobs.length === 0) return result;
   const smsTo = sms && prefs?.smsEnabled && prefs?.phoneNumber ? prefs.phoneNumber : "";
   // Free accounts always get the alert; once their 3 free days are up the /j/ links
   // send them to /pricing instead of the job.
   const trial = isFree && createdAt ? alertTrial(createdAt) : null;
-  const trialOver = Boolean(trial?.over);
+  const trialOver = forceLocked || Boolean(trial?.over);
   const uid = userId || email || "anon";
   const jobLinks = jobs.map((j) => j.link);
 

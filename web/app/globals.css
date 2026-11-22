@@ -6296,11 +6296,15 @@ footer a, .footer a { color: var(--pp-cream); }
    Its own ap-* classes so nothing from the old Alerts page leaks in. */
 .filter-alerts, .mfb-alerts {
   display: inline-flex; align-items: center; gap: 0.45rem; flex-shrink: 0; white-space: nowrap;
-  min-height: 40px; padding: 0 1rem; border-radius: 999px; border: 1px solid rgba(244, 237, 224, 0.28);
-  background: transparent; color: var(--pp-cream); font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  min-height: 40px; padding: 0 1rem; border-radius: 999px; border: 1.5px solid var(--pp-coral);
+  background: rgba(255, 107, 91, 0.08); color: var(--pp-cream); font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
-.filter-alerts:hover, .mfb-alerts:hover { border-color: rgba(244, 237, 224, 0.6); }
-.filter-alerts.is-open, .mfb-alerts.is-open { background: var(--pp-cream); color: var(--pp-navy); border-color: var(--pp-cream); }
+/* Thin coral outline so the button reads as important; the bell picks up the coral too */
+.filter-alerts svg, .mfb-alerts svg { color: var(--pp-coral); }
+.filter-alerts:hover, .mfb-alerts:hover { border-color: var(--pp-coral-hover); background: rgba(255, 107, 91, 0.16); }
+.filter-alerts.is-open, .mfb-alerts.is-open { background: var(--pp-cream); color: var(--pp-navy); border-color: var(--pp-coral); }
+.filter-alerts.is-open svg, .mfb-alerts.is-open svg { color: var(--pp-navy); }
 .filter-alerts { margin-left: auto; }
 
 .alx-wrap { margin: 0.9rem 0 1.1rem; }

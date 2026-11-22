@@ -3,6 +3,7 @@
 // its jobs are live, dead, or hidden because the link no longer works.
 import { sql } from "@vercel/postgres";
 import { BANKS } from "@/lib/banks";
+import { isAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export async function GET(request) {
   const cronSecret = process.env.CRON_SECRET;
   const url = new URL(request.url);
   const authHeader = request.headers.get("authorization");
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}` && url.searchParams.get("key") !== cronSecret) {
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}` && url.searchParams.get("key") !== cronSecret && !(await isAdmin())) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

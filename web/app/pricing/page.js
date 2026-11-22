@@ -272,7 +272,7 @@ export default function PricingPage() {
         <section className="pp-head">
           <p className="ss-eyebrow">Pricing</p>
           <h1 className="ss-h2 pp-title">Your application, first in the stack.</h1>
-          <p className="ss-lead">Banks read applications as they come in, and the first ones in get read first. Premium texts you the second a role that fits you posts at any of {BANK_COUNT} banks, so you apply in minutes while everyone else is still scrolling.</p>
+          <p className="ss-lead">A text the second your role posts at {BANK_COUNT} banks. You apply before the crowd even sees it.</p>
         </section>
 
         <section className="pp-plans pp-plans-one">

@@ -6439,3 +6439,78 @@ footer a, .footer a { color: var(--pp-cream); }
   .pp-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 150px); min-height: calc(100svh - 150px); }
   .pp-hero .pp-title { margin: 0 auto; max-width: none; text-wrap: balance; }
 }
+
+/* ---- /admin (Pete only) ---- */
+.adm { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 4rem; color: var(--pp-cream); }
+.adm .spinner { margin: 2rem auto; }
+.adm-denied { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; }
+.adm-denied a, .adm-card a { color: inherit; }
+.adm-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+.adm-back { font-size: 0.85rem; color: rgba(244, 237, 224, 0.7); text-decoration: none; }
+.adm-back:hover { color: var(--pp-cream); }
+.adm-title { margin: 0.25rem 0 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
+.adm-error { padding: 0.75rem 1rem; border-radius: 10px; background: rgba(255, 107, 91, 0.15); color: var(--pp-cream); }
+.adm-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.adm-stat { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem 1rem; border-radius: 12px; background: rgba(244, 237, 224, 0.06); border: 1px solid rgba(244, 237, 224, 0.1); }
+.adm-stat-value { font-size: 1.5rem; font-weight: 800; }
+.adm-stat-label { font-size: 0.78rem; color: rgba(244, 237, 224, 0.65); }
+.adm-card { margin-top: 1rem; padding: 1.1rem 1.2rem; border-radius: 14px; background: var(--pp-cream); color: var(--pp-navy); }
+.adm-h { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1.05rem; font-weight: 800; }
+.adm-count { font-size: 0.85rem; font-weight: 600; opacity: 0.55; }
+.adm-sub { margin: 0.35rem 0 0; font-size: 0.88rem; color: rgba(20, 33, 61, 0.7); }
+.adm-result { font-weight: 600; color: var(--pp-navy); }
+.adm-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.adm-btn { min-height: 40px; padding: 0 1rem; border-radius: 999px; border: 1.5px solid var(--pp-navy); background: transparent; color: var(--pp-navy); font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.adm-btn:hover { background: rgba(20, 33, 61, 0.06); }
+.adm-btn-coral { border-color: var(--pp-coral); background: var(--pp-coral); color: var(--pp-navy); }
+.adm-btn-coral:hover { background: var(--pp-coral-hover, var(--pp-coral)); }
+.adm-btn:disabled { opacity: 0.6; cursor: default; }
+.adm-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+.adm-toolbar .adm-h { margin-right: auto; }
+.adm-input { min-height: 38px; padding: 0 0.75rem; border-radius: 10px; border: 1px solid rgba(20, 33, 61, 0.2); background: #fff; color: var(--pp-navy); font: inherit; font-size: 0.88rem; }
+.adm-input[type="search"] { width: 240px; max-width: 100%; }
+.adm-table-wrap { overflow-x: auto; margin: 0 -1.2rem; padding: 0 1.2rem; }
+.adm-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.adm-table th { padding: 0.5rem 0.6rem; text-align: left; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(20, 33, 61, 0.55); border-bottom: 1px solid rgba(20, 33, 61, 0.12); white-space: nowrap; }
+.adm-table td { padding: 0.6rem; border-bottom: 1px solid rgba(20, 33, 61, 0.07); vertical-align: top; }
+.adm-table .num { text-align: right; }
+.adm-row { cursor: pointer; }
+.adm-row:hover td, .adm-row.is-open td { background: rgba(20, 33, 61, 0.04); }
+.adm-name { display: block; font-weight: 700; }
+.adm-email { display: block; font-size: 0.8rem; color: rgba(20, 33, 61, 0.7) !important; text-decoration: none; }
+.adm-email:hover { text-decoration: underline; }
+.adm-nowrap { white-space: nowrap; }
+.adm-muted { color: rgba(20, 33, 61, 0.45); }
+.adm-on { color: #15803d; font-weight: 600; }
+.adm-bad { color: #b42318; }
+.adm-mono { font-family: var(--mono, ui-monospace, monospace); font-size: 0.78rem; }
+.adm-pill { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.adm-pill-premium { background: var(--pp-coral); color: var(--pp-navy); }
+.adm-pill-trial { background: rgba(20, 33, 61, 0.1); color: var(--pp-navy); }
+.adm-pill-free { background: transparent; color: rgba(20, 33, 61, 0.6); box-shadow: inset 0 0 0 1px rgba(20, 33, 61, 0.2); }
+.adm-pill-bad { background: rgba(180, 35, 24, 0.12); color: #b42318; }
+.adm-detail td { background: rgba(20, 33, 61, 0.04); }
+.adm-dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.6rem 1.25rem; margin: 0; }
+.adm-dl dt { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(20, 33, 61, 0.55); }
+.adm-dl dd { margin: 0.1rem 0 0; }
+@media (max-width: 900px) { .adm-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) {
+  .adm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .adm-input[type="search"] { width: 100%; }
+  .adm-select { flex: 1; }
+}
+/* Phones: each user becomes a small card instead of a wide table row. */
+@media (max-width: 640px) {
+  .adm-users thead { display: none; }
+  .adm-users, .adm-users tbody { display: block; }
+  .adm-users .adm-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem 0.75rem; padding: 0.8rem 0; border-bottom: 1px solid rgba(20, 33, 61, 0.1); }
+  .adm-users .adm-row td { display: block; padding: 0; border: none; text-align: left; white-space: normal; background: none !important; }
+  .adm-users .adm-row td.adm-user { grid-column: 1 / -1; }
+  .adm-users .adm-row td[data-label="Phone"] { grid-column: span 2; }
+  .adm-users .adm-row td[data-label="Alerts"] { grid-column: span 3; }
+  .adm-users .adm-row td[data-label]::before { content: attr(data-label); display: block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(20, 33, 61, 0.5); }
+  .adm-users .adm-row td[data-label="Alerts"]::before { display: inline; margin-right: 0.5rem; }
+  .adm-users .adm-detail { display: block; }
+  .adm-users .adm-detail td { display: block; padding: 0.75rem; border-radius: 10px; }
+  .adm-dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

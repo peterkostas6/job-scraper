@@ -8,6 +8,7 @@ import { Resend } from "resend";
 import { sql } from "@vercel/postgres";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { isAdmin } from "@/lib/admin";
 import { alertEmail, welcomeEmail, prefsEmail, clubConfirmationEmail } from "@/lib/email-templates";
 import { BANK_COUNT } from "@/lib/banks";
 
@@ -40,7 +41,7 @@ export async function GET(request) {
   const keyed = !cronSecret || request.headers.get("authorization") === `Bearer ${cronSecret}` || url.searchParams.get("key") === cronSecret;
   // Without the key, a signed-in user may send themselves the no-Premium sample text
   // (?locked=1, no email), and only to the phone number saved in their own alert preferences.
-  const authed = keyed || (await ownPhoneSample(url));
+  const authed = keyed || (await isAdmin()) || (await ownPhoneSample(url));
   if (!authed) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const preview = url.searchParams.get("preview");

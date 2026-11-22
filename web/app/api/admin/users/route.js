@@ -4,7 +4,8 @@ import { sql } from "@vercel/postgres";
 
 export const dynamic = "force-dynamic";
 
-const ADMIN_USER_ID = "user_39bPOyYQAsr7t2Cki8GNEql1mY1";
+import { ADMIN_USER_ID } from "@/lib/admin";
+import { alertTrial } from "@/lib/alert-trial";
 
 // Every message on the Twilio account with the price Twilio charged. Outbound texts are
 // keyed by the number they went to, inbound replies by the number they came from.
@@ -68,7 +69,7 @@ async function smsCosts(allUsers) {
 
 const money = (n) => `$${n.toFixed(n > 0 && n < 1 ? 4 : 2)}`;
 
-export async function GET() {
+export async function GET(request) {
   const { userId } = await auth();
 
   if (userId !== ADMIN_USER_ID) {
@@ -94,6 +95,50 @@ export async function GET() {
     if (!costs) costError = "Twilio credentials not set";
   } catch (err) {
     costError = err?.message || String(err);
+  }
+
+  // What we sent each person, from our own log (texts, emails, jobs in those texts).
+  const { rows: sent } = await sql`
+    SELECT user_id,
+      count(*) FILTER (WHERE channel = 'sms' AND status = 'sent')::int AS texts,
+      count(*) FILTER (WHERE channel = 'email' AND status = 'sent')::int AS emails,
+      COALESCE(sum(cardinality(job_links)) FILTER (WHERE channel = 'sms' AND status = 'sent'), 0)::int AS jobs_texted,
+      max(created_at) FILTER (WHERE channel = 'sms' AND status = 'sent') AS last_text_at
+    FROM notification_log WHERE user_id IS NOT NULL GROUP BY user_id
+  `;
+  const sentBy = new Map(sent.map((r) => [r.user_id, r]));
+
+  if (new URL(request.url).searchParams.get("format") === "json") {
+    return Response.json({
+      textCost: costError ? null : { total: costs.total, count: costs.count, unmatched: costs.unmatched },
+      costError,
+      users: allUsers.map((u) => {
+        const prefs = u.unsafeMetadata?.notifications || null;
+        const s = sentBy.get(u.id);
+        const paid = u.publicMetadata?.subscribed === true;
+        return {
+          id: u.id,
+          name: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
+          email: u.emailAddresses?.[0]?.emailAddress || "",
+          phone: prefs?.phoneNumber || u.phoneNumbers?.[0]?.phoneNumber || "",
+          createdAt: u.createdAt,
+          lastSignInAt: u.lastSignInAt,
+          plan: paid ? "premium" : alertTrial(u.createdAt).over ? "free" : "trial",
+          textsOn: Boolean(prefs?.smsEnabled),
+          emailsOn: Boolean(prefs?.enabled),
+          hasPrefs: Boolean(prefs),
+          banks: prefs?.banks || [],
+          jobType: prefs?.jobType || "all",
+          categories: prefs?.categories || [],
+          location: prefs?.location || "",
+          texts: s?.texts || 0,
+          emails: s?.emails || 0,
+          jobsTexted: s?.jobs_texted || 0,
+          lastTextAt: s?.last_text_at || null,
+          textCost: costs?.byUser.get(u.id) || null,
+        };
+      }),
+    });
   }
 
   const users = allUsers.map((u) => {

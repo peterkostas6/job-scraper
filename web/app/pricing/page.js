@@ -263,16 +263,18 @@ export default function PricingPage() {
       </nav>
 
       <div className="pp">
-        {alertLocked && (
-          <div className="pp-alert-locked" role="status">
-            <strong>To open our text alerts, you need Premium.</strong> Your alerts keep coming either way.
-          </div>
-        )}
         <div className="pp-hero">
         <section className="pp-head">
-          <p className="ss-eyebrow">Pricing</p>
-          <h1 className="ss-h2 pp-title">Your application, first in the stack.</h1>
-          <p className="ss-lead">A text the second your role posts at {BANK_COUNT} banks. You apply before the crowd even sees it.</p>
+          {alertLocked ? (
+            // Tapped an alert link without Premium (/pricing?alert=<code>): one line, one button.
+            <h1 className="ss-h2 pp-title">To open alerts, you need Premium.</h1>
+          ) : (
+            <>
+              <p className="ss-eyebrow">Pricing</p>
+              <h1 className="ss-h2 pp-title">Your application, first in the stack.</h1>
+              <p className="ss-lead">A text the second your role posts at {BANK_COUNT} banks. You apply before the crowd even sees it.</p>
+            </>
+          )}
         </section>
 
         <section className="pp-plans pp-plans-one">
@@ -283,14 +285,21 @@ export default function PricingPage() {
               ${PLANS.monthly.price}
               <span>/month</span>
             </p>
-            <p className="pp-billed">
-              {isSubscribed || inTrial ? "You have Premium."
-                : "Every new account gets Premium free for 3 days."}
-            </p>
+            {(!alertLocked || isSubscribed || inTrial) && (
+              <p className="pp-billed">
+                {isSubscribed || inTrial ? "You have Premium."
+                  : "Every new account gets Premium free for 3 days."}
+              </p>
+            )}
             {isSubscribed ? null : isSignedIn ? (
               <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
                 {checkoutLoading ? "Redirecting…" : inTrial ? "Keep Premium" : "Get Premium"}
               </button>
+            ) : alertLocked ? (
+              // They already have an account (the alert came to them): sign in, then straight to checkout.
+              <SignInButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signUpForceRedirectUrl="/pricing?checkout=monthly">
+                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false, from: "alert_link" })}>Get Premium</button>
+              </SignInButton>
             ) : (
               <SignUpButton mode="modal" forceRedirectUrl="/start?setup=1" signInForceRedirectUrl="/pricing">
                 <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free</button>
@@ -314,6 +323,7 @@ export default function PricingPage() {
           <span>Keep access until your period ends</span>
         </p>
 
+        {!alertLocked && <>
         <section className="pp-club">
           <div className="pp-club-copy">
             <p className="pp-plan-name">For finance clubs</p>
@@ -342,6 +352,7 @@ export default function PricingPage() {
             </details>
           ))}
         </section>
+        </>}
       </div>
 
       <footer>

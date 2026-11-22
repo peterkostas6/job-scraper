@@ -6,7 +6,8 @@
 // Guarded by CRON_SECRET (Authorization: Bearer, or ?key= for browser previews).
 import { Resend } from "resend";
 import { sql } from "@vercel/postgres";
-import { sendUserNotification, smsConfig } from "@/lib/notif-send";
+import { sendUserNotification, smsConfig, sendSms } from "@/lib/notif-send";
+import { welcomeText } from "@/lib/alert-prefs";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { isAdmin } from "@/lib/admin";
 import { alertEmail, welcomeEmail, prefsEmail, clubConfirmationEmail } from "@/lib/email-templates";
@@ -41,8 +42,22 @@ export async function GET(request) {
   const keyed = !cronSecret || request.headers.get("authorization") === `Bearer ${cronSecret}` || url.searchParams.get("key") === cronSecret;
   // Without the key, a signed-in user may send themselves the no-Premium sample text
   // (?locked=1, no email), and only to the phone number saved in their own alert preferences.
-  const authed = keyed || (await isAdmin()) || (await ownPhoneSample(url));
+  const admin = keyed || (await isAdmin());
+  const authed = admin || (await ownPhoneSample(url));
   if (!authed) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  // ?welcome=1 (admin only): the welcome text with the contact card, as a new texter gets it.
+  if (url.searchParams.get("welcome") === "1") {
+    const phone = url.searchParams.get("phone");
+    const sms = smsConfig();
+    if (!admin || !phone || !sms) return Response.json({ smsSent: false, smsConfigured: !!sms, error: !admin ? "Unauthorized" : "Pass ?phone=" }, { status: admin ? 400 : 401 });
+    try {
+      await sendSms(sms, phone, welcomeText(""), `${url.origin}/petes-postings.vcf`);
+      return Response.json({ smsSent: true });
+    } catch (err) {
+      return Response.json({ smsSent: false, smsError: err?.message || String(err) });
+    }
+  }
 
   const preview = url.searchParams.get("preview");
   if (preview) {

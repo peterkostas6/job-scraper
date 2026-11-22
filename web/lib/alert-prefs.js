@@ -16,6 +16,11 @@ const JOB_TYPE_LABELS = {
   fulltime: "Analyst only",
 };
 
+// The first text someone gets when they turn texts on (sent with the contact card).
+export function welcomeText(firstName) {
+  return `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
+}
+
 export async function saveAlertPrefs({ userId, body, origin }) {
   const { enabled, banks, categories, jobType } = body;
 
@@ -118,7 +123,7 @@ export async function saveAlertPrefs({ userId, body, origin }) {
   if (smsEnabled && newPhone && (newPhone !== oldPhone || !oldSmsEnabled)) {
     const sms = smsConfig();
     if (sms) {
-      const welcomeMsg = `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
+      const welcomeMsg = welcomeText(firstName);
       // Awaited: Vercel freezes the function once the response is sent, which would drop an in-flight send.
       // Attach the contact card so the number saves as "Pete's Postings" in one tap.
       const contactCard = `${origin}/petes-postings.vcf`;

@@ -67,11 +67,12 @@ export default function AdminPage() {
       .sort(SORTS[sort].fn);
   }, [users, query, plan, sort]);
 
-  async function sendTest(locked) {
-    setSending(locked ? "locked" : "normal");
+  async function sendTest(kind) {
+    setSending(kind);
     setSendResult("");
     try {
-      const r = await fetch(`/api/admin/test-notification?phone=${encodeURIComponent(myPhone)}${locked ? "&locked=1" : ""}`);
+      const extra = kind === "locked" ? "&locked=1" : kind === "welcome" ? "&welcome=1" : "";
+      const r = await fetch(`/api/admin/test-notification?phone=${encodeURIComponent(myPhone)}${extra}`);
       const body = await r.json();
       setSendResult(body.smsSent ? `Sent to ${fmtPhone(myPhone)}.` : `Not sent: ${body.error || body.smsError || (body.smsConfigured === false ? "texting isn't set up here" : "unknown error")}`);
     } catch (e) {
@@ -129,8 +130,9 @@ export default function AdminPage() {
           <>
             <p className="adm-sub">Goes to {fmtPhone(myPhone)}, the number in your alert preferences.</p>
             <div className="adm-actions">
-              <button className="adm-btn" onClick={() => sendTest(false)} disabled={Boolean(sending)}>{sending === "normal" ? "Sending…" : "Normal alert"}</button>
-              <button className="adm-btn adm-btn-coral" onClick={() => sendTest(true)} disabled={Boolean(sending)}>{sending === "locked" ? "Sending…" : "No-Premium alert"}</button>
+              <button className="adm-btn" onClick={() => sendTest("normal")} disabled={Boolean(sending)}>{sending === "normal" ? "Sending…" : "Normal alert"}</button>
+              <button className="adm-btn adm-btn-coral" onClick={() => sendTest("locked")} disabled={Boolean(sending)}>{sending === "locked" ? "Sending…" : "No-Premium alert"}</button>
+              <button className="adm-btn" onClick={() => sendTest("welcome")} disabled={Boolean(sending)}>{sending === "welcome" ? "Sending…" : "Welcome text + contact card"}</button>
             </div>
             {sendResult && <p className="adm-sub adm-result" role="status">{sendResult}</p>}
           </>

@@ -50,6 +50,18 @@ export function buildSmsText(jobs, withOptOut, shortUrls) {
   return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}${footer}${withOptOut ? "\n\nReply STOP to unsubscribe" : ""}`;
 }
 
+// Text for accounts past their free days: no titles, just enough to want to open it.
+// The link is a /j/ link, which sends them to /pricing until they have Premium.
+export function buildLockedSmsText(jobs, withOptOut, url) {
+  const clean = (s) => String(s).replace(/[^\x20-\x7E]/g, "");
+  const banks = [...new Set(jobs.map((j) => clean(j.bank)))];
+  const at = banks.length === 1 ? banks[0]
+    : banks.length === 2 ? `${banks[0]} and ${banks[1]}`
+    : `${banks[0]}, ${banks[1]} and ${banks.length - 2} more ${banks.length === 3 ? "bank" : "banks"}`;
+  const found = jobs.length === 1 ? `We found 1 new role at ${at} that matches your preferences` : `We found ${jobs.length} new roles at ${at} that match your preferences`;
+  return `Pete's Postings: ${found}. Posted just now.\n\nGet Premium to see ${jobs.length === 1 ? "it" : "them"}: ${url || "petespostings.com/pricing"}${withOptOut ? "\n\nReply STOP to unsubscribe" : ""}`;
+}
+
 // Returns petespostings.com/j/<code> for this user + job, or null if it can't be saved.
 // The code comes from a hash, so a resend of the same job reuses the same link. Email links
 // get their own code (source 'email') so clicks show which channel they came from.
@@ -163,8 +175,14 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
   if (sms && prefs?.smsEnabled && prefs?.phoneNumber) {
     try {
       const withOptOut = await needsOptOutReminder(prefs.phoneNumber);
-      const shortUrls = jobs.length <= 3 ? await Promise.all(jobs.map((j) => shortLink(uid, j.link))) : null;
-      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs, withOptOut, shortUrls));
+      let text;
+      if (trialOver) {
+        text = buildLockedSmsText(jobs, withOptOut, await shortLink(uid, jobs[0].link));
+      } else {
+        const shortUrls = jobs.length <= 3 ? await Promise.all(jobs.map((j) => shortLink(uid, j.link))) : null;
+        text = buildSmsText(jobs, withOptOut, shortUrls);
+      }
+      const messageId = await sendSms(sms, prefs.phoneNumber, text);
       result.smsSent = true;
       await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
       await markAlerted(userId, jobLinks, "sms");

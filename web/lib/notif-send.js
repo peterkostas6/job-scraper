@@ -41,14 +41,13 @@ export async function freeAlertsUsed(userId, phone) {
   }
 }
 
-export function buildSmsText(jobs, withOptOut, shortUrls, trialOver) {
+export function buildSmsText(jobs, withOptOut, shortUrls) {
   const clean = (s) => String(s).replace(/[\u2013\u2014]/g, "-").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[^\x20-\x7E\n]/g, "");
   const perJob = jobs.length <= 3 && shortUrls?.length === jobs.length && shortUrls.every(Boolean);
   const jobLines = jobs.slice(0, 3).map((j, i) => `- ${clean(j.title).slice(0, 48)} @ ${clean(j.bank)}${perJob ? `\n${shortUrls[i]}` : ""}`).join("\n");
   const more = jobs.length > 3 ? `\n+ ${jobs.length - 3} more` : "";
   const footer = perJob ? "" : "\n\npetespostings.com/recent";
-  const upgrade = trialOver ? "\n\nYour 3 free days are up. Get Premium to open these: petespostings.com/pricing" : "";
-  return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}${footer}${upgrade}${withOptOut ? "\n\nReply STOP to unsubscribe" : ""}`;
+  return `Pete's Postings: ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"} posted:\n${jobLines}${more}${footer}${withOptOut ? "\n\nReply STOP to unsubscribe" : ""}`;
 }
 
 // Returns petespostings.com/j/<code> for this user + job, or null if it can't be saved.
@@ -119,8 +118,8 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
   const result = { emailSent: false, smsSent: false, failed: false };
   if (!jobs || jobs.length === 0) return result;
   const smsTo = sms && prefs?.smsEnabled && prefs?.phoneNumber ? prefs.phoneNumber : "";
-  // Free accounts always get the alert; once their 3 free days are up the text says the
-  // links need Premium (the /j/ links themselves enforce it).
+  // Free accounts always get the alert; once their 3 free days are up the /j/ links
+  // send them to /pricing instead of the job.
   const trial = isFree && createdAt ? alertTrial(createdAt) : null;
   const trialOver = Boolean(trial?.over);
   const uid = userId || email || "anon";
@@ -165,7 +164,7 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
     try {
       const withOptOut = await needsOptOutReminder(prefs.phoneNumber);
       const shortUrls = jobs.length <= 3 ? await Promise.all(jobs.map((j) => shortLink(uid, j.link))) : null;
-      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs, withOptOut, shortUrls, trialOver));
+      const messageId = await sendSms(sms, prefs.phoneNumber, buildSmsText(jobs, withOptOut, shortUrls));
       result.smsSent = true;
       await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
       await markAlerted(userId, jobLinks, "sms");

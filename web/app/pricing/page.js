@@ -9,7 +9,6 @@ import { PLANS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 import { BANK_COUNT } from "@/lib/banks";
 import { trialFor } from "@/lib/alert-trial-days";
-import PremiumTimer from "@/lib/premium-timer";
 
 function ClubInquiryModal({ onClose }) {
   const [form, setForm] = useState({
@@ -231,7 +230,6 @@ export default function PricingPage() {
             {isLoaded && (
               isSignedIn ? (
                 <>
-                {inTrial && <PremiumTimer endsAt={trial.endsAt} />}
                 <UserButton>
                   {user?.publicMetadata?.stripeCustomerId && (
                     <UserButton.MenuItems>
@@ -267,7 +265,7 @@ export default function PricingPage() {
       <div className="pp">
         {alertLocked && (
           <div className="pp-alert-locked" role="status">
-            <strong>Your 3 free days of Premium are up.</strong> Get Premium to open the roles we text you. Your alerts keep coming either way.
+            <strong>To open our text alerts, you need Premium.</strong> Your alerts keep coming either way.
           </div>
         )}
         <section className="pp-head">
@@ -285,8 +283,7 @@ export default function PricingPage() {
               <span>/month</span>
             </p>
             <p className="pp-billed">
-              {isSubscribed ? "You have Premium."
-                : inTrial ? `You have Premium free until ${new Date(trial.endsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}.`
+              {isSubscribed || inTrial ? "You have Premium."
                 : "Every new account gets Premium free for 3 days."}
             </p>
             {isSubscribed ? null : isSignedIn ? (

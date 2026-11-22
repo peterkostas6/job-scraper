@@ -16,7 +16,6 @@ import { trialFor } from "@/lib/alert-trial-days";
 import { openBillingPortal } from "@/lib/billing";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
-import PremiumTimer from "@/lib/premium-timer";
 
 const FREE_BANKS = new Set(Object.keys(BANKS));
 
@@ -2109,7 +2108,6 @@ export default function Home() {
           <div className="nav-right">
             {!isLoaded ? null : isSignedIn ? (
               <>
-              {trialActive && <PremiumTimer endsAt={trialFor(user.createdAt).endsAt} />}
               {savedNotifPrefs !== null && !alertsOn && !alertsPanelOpen && (
                 <button className="nav-cta" onClick={() => { capture("home_cta_clicked", { where: "nav_signed_in" }); openAlerts(); }}>Get SMS alerts</button>
               )}

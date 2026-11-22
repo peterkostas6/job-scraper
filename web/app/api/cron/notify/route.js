@@ -6,6 +6,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
 import { isGraduateProgram, isInternship, isAnalystOrIntern, isFinanceRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
+import { locationMatches } from "@/lib/alert-options";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
 import { BANKS, BANK_NAMES } from "@/lib/banks";
@@ -378,7 +379,7 @@ export async function GET(request) {
           if (prefCategories.length > 0 && !prefCategories.includes(job.category)) return false;
           if (prefJobType === "internship" && !isInternship(job.title)) return false;
           if (prefJobType === "fulltime" && isInternship(job.title)) return false;
-          if (prefLocation && !(job.location || "").toLowerCase().includes(prefLocation)) return false;
+          if (!locationMatches(job.location, prefLocation)) return false;
           return true;
         });
 

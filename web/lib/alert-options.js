@@ -24,6 +24,31 @@ export function isInternship(title) {
   return /\bintern\b/.test(t) || t.includes("internship") || t.includes("summer") || t.includes("co-op") || t.includes("coop");
 }
 
+// What people type for a city -> the words banks use for it in job locations.
+// "NYC", "Manhattan" or "New York, NY" all match a job in "New York, NY, United States".
+const CITY_ALIASES = [
+  { typed: ["new york", "new york city", "nyc", "ny", "manhattan"], job: ["new york", "nyc", "manhattan"] },
+  { typed: ["san francisco", "sf", "san fran", "bay area"], job: ["san francisco"] },
+  { typed: ["dallas", "dfw", "dallas fort worth", "irving", "plano"], job: ["dallas", "irving", "plano", "fort worth"] },
+  { typed: ["chicago", "chi"], job: ["chicago"] },
+  { typed: ["charlotte", "clt"], job: ["charlotte"] },
+  { typed: ["los angeles", "la"], job: ["los angeles"] },
+  { typed: ["washington", "washington dc", "dc", "d.c."], job: ["washington"] },
+  { typed: ["boston"], job: ["boston"] },
+  { typed: ["london"], job: ["london"] },
+];
+
+// True when a job's location fits the city someone typed (blank = anywhere).
+export function locationMatches(jobLocation, typed) {
+  const want = (typed || "").trim().toLowerCase();
+  if (!want) return true;
+  const loc = (jobLocation || "").toLowerCase();
+  const city = want.split(",")[0].trim(); // "New York, NY" -> "new york"
+  const group = CITY_ALIASES.find((g) => g.typed.includes(city) || g.typed.includes(want));
+  if (group) return group.job.some((w) => loc.includes(w));
+  return loc.includes(city);
+}
+
 // Mirrors the notify cron's filter, so a preview shows what alerts would send.
 // prefs: { jobType, categories, banks, location }
 export function matchesAlertPrefs(job, prefs) {
@@ -31,6 +56,6 @@ export function matchesAlertPrefs(job, prefs) {
   if (prefs.categories.length > 0 && !prefs.categories.includes(job.category)) return false;
   if (prefs.jobType === "internship" && !isInternship(job.title)) return false;
   if (prefs.jobType === "fulltime" && isInternship(job.title)) return false;
-  if (prefs.location && !(job.location || "").toLowerCase().includes(prefs.location.toLowerCase())) return false;
+  if (!locationMatches(job.location, prefs.location)) return false;
   return true;
 }

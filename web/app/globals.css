@@ -6514,3 +6514,4 @@ footer a, .footer a { color: var(--pp-cream); }
   .adm-users .adm-detail td { display: block; padding: 0.75rem; border-radius: 10px; }
   .adm-dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.adm-sub-dark { margin: 0; font-size: 0.85rem; color: rgba(244, 237, 224, 0.6); }

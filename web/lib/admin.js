@@ -1,14 +1,14 @@
-// Pete's own Clerk account: the only one that can open /admin and the admin API routes
-// without the CRON_SECRET key.
-import { auth } from "@clerk/nextjs/server";
-import { ADMIN_USER_ID } from "@/lib/admin-id";
-
-export { ADMIN_USER_ID };
+// Server check for Pete's admin routes: the signed-in account must pass isAdminUser.
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { ADMIN_USER_ID, isAdminUser } from "@/lib/admin-id";
 
 export async function isAdmin() {
   try {
     const { userId } = await auth();
-    return userId === ADMIN_USER_ID;
+    if (!userId) return false;
+    if (userId === ADMIN_USER_ID) return true;
+    const client = await clerkClient();
+    return isAdminUser(await client.users.getUser(userId));
   } catch {
     return false;
   }

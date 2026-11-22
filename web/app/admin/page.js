@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
-import { ADMIN_USER_ID } from "@/lib/admin-id";
+import { isAdminUser } from "@/lib/admin-id";
 
 const fmtPhone = (raw) => {
   const d = (raw || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
@@ -32,7 +32,7 @@ const SORTS = {
 
 export default function AdminPage() {
   const { isLoaded, isSignedIn, user } = useUser();
-  const isAdmin = isLoaded && user?.id === ADMIN_USER_ID;
+  const isAdmin = isLoaded && isAdminUser(user);
   const [data, setData] = useState(null);
   const [banks, setBanks] = useState(null);
   const [error, setError] = useState("");
@@ -85,6 +85,7 @@ export default function AdminPage() {
     return (
       <div className="adm adm-denied">
         <p>This page isn&rsquo;t available.</p>
+        {isSignedIn && <p className="adm-sub-dark">Signed in as {user?.primaryEmailAddress?.emailAddress}</p>}
         <Link href="/jobs">Browse jobs</Link>
       </div>
     );

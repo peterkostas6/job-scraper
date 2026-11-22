@@ -6415,3 +6415,17 @@ footer a, .footer a { color: var(--pp-cream); }
   .pp-hero .ss-lead { margin: 1.25rem 0 0; max-width: 44ch; }
   .pp-hero .pp-plans { margin: 0; max-width: none; grid-template-columns: minmax(0, 1fr); }
 }
+@media (max-width: 899px) {
+  .pp-hero .pp-head { padding-top: 1.25rem; }
+  .pp-hero .ss-eyebrow { display: none; }
+  .pp-hero .pp-title { font-size: 1.95rem; }
+  .pp-hero .ss-lead { margin-top: 0.6rem; font-size: 0.92rem; line-height: 1.5; }
+  .pp-hero .pp-plans { margin-top: 1.6rem; }
+  .pp-hero .pp-plan:has(.pp-banner) { padding: 1.7rem 1.25rem 1.25rem; }
+  .pp-hero .pp-plan:has(.pp-banner) .pp-plan-name { font-size: 1.45rem; }
+  .pp-hero .pp-price { margin-top: 0.4rem; font-size: 2.4rem; }
+  .pp-hero .pp-billed { margin: 0.35rem 0 0.8rem; font-size: 0.82rem; }
+  .pp-hero .pp-includes { margin-top: 0.8rem; padding-top: 0.7rem; }
+  .pp-hero .pp-list { gap: 0.4rem; }
+  .pp-hero .pp-list li { font-size: 0.88rem; }
+}

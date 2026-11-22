@@ -8,6 +8,7 @@ import { Resend } from "resend";
 import { createHmac } from "crypto";
 import { clerkClient } from "@clerk/nextjs/server";
 import Stripe from "stripe";
+import { captureServer } from "@/lib/posthog-server";
 import { sendMetaServerEvent } from "@/lib/meta-capi";
 import { sendRedditServerEvent } from "@/lib/reddit-capi";
 import { BANK_COUNT } from "@/lib/banks";
@@ -67,6 +68,7 @@ export async function POST(req) {
     const userData = event.data;
     const email = userData.email_addresses?.[0]?.email_address;
     const firstName = userData.first_name || "";
+    await captureServer(userData.id, "signed_up", { $set: { email, signed_up_at: new Date(userData.created_at || Date.now()).toISOString() } });
 
     if (!email) return Response.json({ received: true });
 

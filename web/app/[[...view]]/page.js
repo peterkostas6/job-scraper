@@ -1654,7 +1654,9 @@ export default function Home() {
     });
     setSavedJobs((prev) => {
       let next;
-      if (prev.some((j) => j.link === link)) {
+      const removing = prev.some((j) => j.link === link);
+      capture(removing ? "job_unsaved" : "job_saved", { bank: job.bank || BANKS[activeBank]?.name || "", title: job.title });
+      if (removing) {
         next = prev.filter((j) => j.link !== link);
       } else {
         next = [...prev, { title: job.title, link: job.link, location: job.location || "", bank: job.bank || BANKS[activeBank]?.name || "" }];

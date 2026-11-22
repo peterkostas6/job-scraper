@@ -6429,3 +6429,8 @@ footer a, .footer a { color: var(--pp-cream); }
   .pp-hero .pp-list { gap: 0.4rem; }
   .pp-hero .pp-list li { font-size: 0.88rem; }
 }
+/* Desktop: the hero fills the screen so the club plan starts below the fold. */
+@media (min-width: 900px) {
+  .pp-hero { min-height: calc(100vh - 140px); min-height: calc(100svh - 140px); padding: 1.5rem 0 0; }
+  .pp-hero + .pp-trust { margin-top: 1.25rem; }
+}

@@ -56,7 +56,7 @@ const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" ari
 
 // embedded: rendered inside the Alerts tab under its own hero, so no header or hero here;
 // the Alerts tab's button bumps openSignal and the preferences slide open on the same page.
-export default function StartFlow({ embedded = false, openSignal = 0 }) {
+export default function StartFlow({ embedded = false, openSignal = 0, setup = false }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const clerk = useClerk();
   const isSubscribed = user?.publicMetadata?.subscribed === true;
@@ -102,7 +102,10 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
     if (url.searchParams.get("setup") !== "1") return;
     url.searchParams.delete("setup");
     window.history.replaceState(null, "", url.pathname + url.search);
-    reveal(1);
+    capture("start_step_viewed", { step: 1 });
+    setActive(1);
+    setReached((r) => Math.max(r, 1));
+    window.scrollTo(0, 0);
   }, [restored]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -308,7 +311,7 @@ export default function StartFlow({ embedded = false, openSignal = 0 }) {
 
       <main className="sf-main">
         {/* HERO: the promise, what it looks like, and one button */}
-        {!embedded && <section className="sf-hero">
+        {!embedded && !setup && <section className="sf-hero">
           <h1 className="st-q sf-title">Be first to apply. Not last to find out.</h1>
           <div className="sf-texts" aria-label="Example text alerts" role="img">
             <span className="sf-texts-label">What lands on your phone</span>

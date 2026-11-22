@@ -13,6 +13,7 @@ export const metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function StartPage() {
-  return <StartFlow />;
+export default function StartPage({ searchParams }) {
+  // ?setup=1 (fresh sign-up): open right on step 1, no intro and no scroll.
+  return <StartFlow setup={searchParams?.setup === "1"} />;
 }

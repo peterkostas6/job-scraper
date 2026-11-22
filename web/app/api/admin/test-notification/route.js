@@ -7,6 +7,7 @@
 import { Resend } from "resend";
 import { sql } from "@vercel/postgres";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { alertEmail, welcomeEmail, prefsEmail, clubConfirmationEmail } from "@/lib/email-templates";
 import { BANK_COUNT } from "@/lib/banks";
 
@@ -18,10 +19,28 @@ const SAMPLE_JOBS = [
   { title: "2027 Summer Analyst Program, Markets", bank: "JPMorgan Chase", link: "https://petespostings.com/jobs?bank=jpmc", location: "Chicago, IL", category: "Sales & Trading" },
 ];
 
+async function ownPhoneSample(url) {
+  if (url.searchParams.get("locked") !== "1" || url.searchParams.get("to") || url.searchParams.get("preview")) return false;
+  const digits = (v) => String(v || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+  try {
+    const { userId } = await auth();
+    if (!userId) return false;
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const saved = digits(user.unsafeMetadata?.notifications?.phoneNumber);
+    return saved.length === 10 && saved === digits(url.searchParams.get("phone"));
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request) {
   const url = new URL(request.url);
   const cronSecret = process.env.CRON_SECRET;
-  const authed = !cronSecret || request.headers.get("authorization") === `Bearer ${cronSecret}` || url.searchParams.get("key") === cronSecret;
+  const keyed = !cronSecret || request.headers.get("authorization") === `Bearer ${cronSecret}` || url.searchParams.get("key") === cronSecret;
+  // Without the key, a signed-in user may send themselves the no-Premium sample text
+  // (?locked=1, no email), and only to the phone number saved in their own alert preferences.
+  const authed = keyed || (await ownPhoneSample(url));
   if (!authed) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const preview = url.searchParams.get("preview");

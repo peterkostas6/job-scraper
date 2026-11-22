@@ -1,10 +1,10 @@
 // GET /api/admin/users — Pete only, must be logged in via Clerk
-import { clerkClient, auth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 
 export const dynamic = "force-dynamic";
 
-import { ADMIN_USER_ID } from "@/lib/admin";
+import { isAdmin } from "@/lib/admin";
 import { alertTrial } from "@/lib/alert-trial";
 
 // Every message on the Twilio account with the price Twilio charged. Outbound texts are
@@ -70,9 +70,7 @@ async function smsCosts(allUsers) {
 const money = (n) => `$${n.toFixed(n > 0 && n < 1 ? 4 : 2)}`;
 
 export async function GET(request) {
-  const { userId } = await auth();
-
-  if (userId !== ADMIN_USER_ID) {
+  if (!(await isAdmin())) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

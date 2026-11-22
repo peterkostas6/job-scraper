@@ -8,6 +8,7 @@ import { useUser } from "@clerk/nextjs";
 import { track } from "@/lib/track";
 import { isInternalBrowser } from "@/lib/internal";
 import { setRedditMatchKeys } from "@/lib/reddit-pixel";
+import { trialFor } from "@/lib/alert-trial-days";
 
 export function PostHogProvider({ children }) {
   useEffect(() => {
@@ -61,11 +62,21 @@ function IdentifyUser() {
     if (!isLoaded) return;
     if (isSignedIn && user && identified.current !== user.id) {
       const meta = user.publicMetadata || {};
+      const prefs = user.unsafeMetadata?.notifications;
+      const premium = meta.subscribed === true;
       posthog.identify(user.id, {
         email: user.primaryEmailAddress?.emailAddress,
         name: user.fullName || undefined,
-        subscribed: meta.subscribed === true,
-        plan: meta.plan || (meta.subscribed ? "pro" : "free"),
+        subscribed: premium,
+        plan: meta.plan || (premium ? "pro" : "free"),
+        // premium / trial (first 3 days) / no_premium, for splitting every chart by status.
+        premium_status: premium ? "premium" : trialFor(user.createdAt).over ? "no_premium" : "trial",
+        has_alert_prefs: Boolean(prefs),
+        texts_on: Boolean(prefs?.smsEnabled),
+        emails_on: Boolean(prefs?.enabled),
+        alert_banks: prefs?.banks?.length ? prefs.banks.length : "all",
+        alert_job_type: prefs?.jobType || "all",
+        saved_jobs: user.unsafeMetadata?.savedJobs?.length || 0,
         signed_up_at: user.createdAt ? new Date(user.createdAt).toISOString() : undefined,
       });
       if (!isInternalBrowser()) setRedditMatchKeys({ email: user.primaryEmailAddress?.emailAddress, externalId: user.id }).catch(() => {});

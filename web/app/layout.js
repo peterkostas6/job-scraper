@@ -103,7 +103,9 @@ const clerkAppearance = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider appearance={clerkAppearance}>
+    // Any sign-up without its own redirect (the nav's Sign in -> Sign up, Google, etc.)
+    // lands on the preferences questions.
+    <ClerkProvider appearance={clerkAppearance} signUpForceRedirectUrl="/start?setup=1">
       <html lang="en">
         <head>
           <Script

@@ -3,7 +3,7 @@
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { track } from "@/lib/track";
 import { isInternalBrowser } from "@/lib/internal";
@@ -48,6 +48,7 @@ export function PostHogProvider({ children }) {
   return (
     <PHProvider client={posthog}>
       <IdentifyUser />
+      <NewAccountToSetup />
       {children}
     </PHProvider>
   );
@@ -86,5 +87,28 @@ function IdentifyUser() {
       identified.current = null;
     }
   }, [isLoaded, isSignedIn, user]);
+  return null;
+}
+
+// Safety net: a brand-new account (made in the last 15 minutes) with no preferences yet
+// goes to the preferences questions once, whichever way it signed up. Skips pages that
+// are mid-flow on purpose: the questions themselves, checkout and post-payment.
+function NewAccountToSetup() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const pathname = usePathname();
+  const router = useRouter();
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user?.createdAt) return;
+    if (Date.now() - new Date(user.createdAt).getTime() > 15 * 60 * 1000) return;
+    if (user.unsafeMetadata?.notifications) return;
+    if (/^\/(start|welcome|pricing|admin)/.test(pathname || "")) return;
+    if (new URLSearchParams(window.location.search).has("checkout")) return;
+    const key = `pp-setup-sent-${user.id}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {}
+    router.replace("/start?setup=1");
+  }, [isLoaded, isSignedIn, user, pathname, router]);
   return null;
 }

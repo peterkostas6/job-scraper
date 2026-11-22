@@ -268,10 +268,11 @@ export default function PricingPage() {
             <strong>To open our text alerts, you need Premium.</strong> Your alerts keep coming either way.
           </div>
         )}
+        <div className="pp-hero">
         <section className="pp-head">
           <p className="ss-eyebrow">Pricing</p>
-          <h1 className="ss-h2 pp-title">Browse free.<br />Get first in the stack.</h1>
-          <p className="ss-lead">Every job at {BANK_COUNT} top banks is free to browse, and alerts are free for your first 3 days. Premium keeps every alert opening the second a role posts, so you apply before the crowd.</p>
+          <h1 className="ss-h2 pp-title">Your application, first in the stack.</h1>
+          <p className="ss-lead">Banks read applications as they come in, and the first ones in get read first. Premium texts you the second a role that fits you posts at any of {BANK_COUNT} banks, so you apply in minutes while everyone else is still scrolling.</p>
         </section>
 
         <section className="pp-plans pp-plans-one">
@@ -305,6 +306,7 @@ export default function PricingPage() {
             </ul>
           </div>
         </section>
+        </div>
 
         <p className="pp-trust">
           <span>Cancel anytime</span>

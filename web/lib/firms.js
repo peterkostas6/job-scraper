@@ -30,3 +30,6 @@ export function registryBatch(now = Date.now()) {
   const i = Math.floor(now / (5 * 60 * 1000)) % batches;
   return keys.slice(i * REGISTRY_BATCH_SIZE, (i + 1) * REGISTRY_BATCH_SIZE);
 }
+
+// For copy: "350+ firms". Rounds down to the nearest 50 so the claim stays true as firms come and go.
+export const FIRM_LABEL = `${Math.floor(FIRM_COUNT / 50) * 50}+`;

@@ -11,7 +11,7 @@ import { welcomeText } from "@/lib/alert-prefs";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { isAdmin } from "@/lib/admin";
 import { alertEmail, welcomeEmail, prefsEmail, clubConfirmationEmail } from "@/lib/email-templates";
-import { BANK_COUNT } from "@/lib/banks";
+import { FIRM_LABEL } from "@/lib/firms";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +63,7 @@ export async function GET(request) {
   if (preview) {
     const built = {
       alert: () => alertEmail({ jobs: SAMPLE_JOBS, firstName: "Alex", userId: "preview-user" }),
-      welcome: () => welcomeEmail({ firstName: "Alex", bankCount: BANK_COUNT }),
+      welcome: () => welcomeEmail({ firstName: "Alex", bankCount: FIRM_LABEL }),
       prefs: () => prefsEmail({ firstName: "Alex", isFirstSetup: true, enabled: true, smsEnabled: true, phoneNumber: "+12125550147", bankNames: ["Goldman Sachs", "JPMorgan Chase"], categories: [], jobTypeLabel: "Internships only", userId: "preview-user" }),
       club: () => clubConfirmationEmail({ contactName: "Alex", clubName: "Finance Society", schoolName: "NYU Stern" }),
     }[preview];

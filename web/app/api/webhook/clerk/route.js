@@ -11,7 +11,7 @@ import Stripe from "stripe";
 import { captureServer } from "@/lib/posthog-server";
 import { sendMetaServerEvent } from "@/lib/meta-capi";
 import { sendRedditServerEvent } from "@/lib/reddit-capi";
-import { BANK_COUNT } from "@/lib/banks";
+import { FIRM_LABEL } from "@/lib/firms";
 
 export const dynamic = "force-dynamic";
 
@@ -95,7 +95,7 @@ export async function POST(req) {
     // after signing up), lib/alert-prefs.js cancels it and sends one welcome + alerts email.
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const { subject, html, text } = welcomeEmail({ firstName, bankCount: BANK_COUNT });
+      const { subject, html, text } = welcomeEmail({ firstName, bankCount: FIRM_LABEL });
       const sent = await sendEmail(resend, {
         to: email, subject, html, text,
         scheduledAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),

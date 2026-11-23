@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import HowItWorksDemo from "../[[...view]]/HowItWorksDemo";
+import { FIRM_LABEL } from "@/lib/firms";
 
-const BANK_COUNT = Object.keys(BANKS).length;
 
 const POINTS = [
   "A text the instant a matching role posts",
-  `Every analyst and internship job from ${BANK_COUNT} banks in one place`,
+  `Every finance job from ${FIRM_LABEL} firms in one place`,
   "Straight from bank career sites, not LinkedIn or Indeed",
 ];
 
@@ -90,12 +90,12 @@ export default function AlertsLanding() {
         </section>
 
         <section className="lp-section">
-          <h2 className="lp-heading">{BANK_COUNT} banks, one place</h2>
+          <h2 className="lp-heading">{FIRM_LABEL} firms, one place</h2>
           <p className="lp-banks">{Object.values(BANKS).map((b) => b.name).join(" · ")}</p>
         </section>
 
         <section className="lp-section">
-          <h2 className="lp-heading">Stop refreshing {BANK_COUNT} career sites.</h2>
+          <h2 className="lp-heading">Stop refreshing {FIRM_LABEL} career sites.</h2>
           {button}
         </section>
       </main>

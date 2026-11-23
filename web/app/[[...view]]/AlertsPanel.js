@@ -8,8 +8,8 @@ import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
 import { AREAS, CITIES } from "@/lib/alert-options";
 import { LEVELS, levelsFromPrefs } from "@/lib/levels";
+import { FIRM_LABEL } from "@/lib/firms";
 
-const BANK_COUNT = Object.keys(BANKS).length;
 const formatPhone = (raw) => {
   const d = (raw || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
   return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : raw || "";
@@ -79,7 +79,7 @@ export default function AlertsPanel({
                 <div className="alx-field">
                   <p className="alx-label">Banks</p>
                   <div className="alx-chips">
-                    <button className="alx-chip" aria-pressed={!showBanks} onClick={() => { onPickBanks(false); onChange({ banks: [] }); }}>All {BANK_COUNT} banks</button>
+                    <button className="alx-chip" aria-pressed={!showBanks} onClick={() => { onPickBanks(false); onChange({ banks: [] }); }}>All {FIRM_LABEL} firms</button>
                     <button className="alx-chip" aria-pressed={showBanks} onClick={() => onPickBanks(true)}>Choose banks</button>
                   </div>
                   {showBanks && (

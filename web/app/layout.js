@@ -2,15 +2,14 @@ import "./globals.css";
 import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { PostHogProvider } from "./providers";
-import { BANKS } from "@/lib/banks";
 import { META_PIXEL_ID } from "@/lib/meta-pixel";
 import { REDDIT_PIXEL_ID } from "@/lib/reddit-pixel";
+import { FIRM_LABEL } from "@/lib/firms";
 
 // Every page inherits this, so link previews (iMessage, Instagram, Slack, LinkedIn)
 // show the current pitch. The preview image lives in opengraph-image.js.
-const BANK_COUNT = Object.keys(BANKS).length;
 const TITLE = "Pete\u2019s Postings \u2014 Get a text the instant a bank posts a job";
-const DESCRIPTION = `Live analyst and internship postings from ${BANK_COUNT} banks, including JPMorgan, Goldman Sachs, Morgan Stanley, Bank of America, and Citi. Get a text the instant a role matching your filters goes live.`;
+const DESCRIPTION = `Live finance jobs, from internships to VP, at ${FIRM_LABEL} firms including JPMorgan, Goldman Sachs, Morgan Stanley, Jane Street and Citadel Securities. Get a text the instant a role matching your filters goes live.`;
 
 export const metadata = {
   title: "Pete\u2019s Postings \u2014 Analyst and Intern Jobs at Top Banks",

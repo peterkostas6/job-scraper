@@ -7060,3 +7060,31 @@ footer a, .footer a { color: var(--pp-cream); }
 .sidebar-more:hover { color: var(--pp-cream); }
 /* Filter panel: search box above the full firm grid. */
 .mfs-search { width: 100%; min-height: 42px; margin-bottom: 0.5rem; padding: 0 0.85rem; border: 1px solid rgba(20, 33, 61, 0.16); border-radius: 12px; background: #FBF7EF; font: inherit; color: var(--pp-navy); }
+
+/* Sidebar rows: long firm names ("Fidelity National Information Services") stay on one line,
+   left-aligned, with an ellipsis, so every row is the same height. */
+.sidebar-item .sidebar-bank { display: flex; align-items: center; flex: 1; min-width: 0; text-align: left; }
+.sidebar-item .sidebar-bank .bank-name-full, .sidebar-item .sidebar-bank .bank-name-short { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-item .sidebar-bank .bank-logo { flex: none; }
+.sidebar-item .sidebar-count, .sidebar-item .sidebar-lock { flex: none; margin-left: 0.5rem; }
+
+/* Firm picker (app/FirmPicker.js): search, then firms grouped by type. */
+.firm-picker { display: flex; flex-direction: column; gap: 0.9rem; width: 100%; }
+.firm-search { width: 100%; min-height: 42px; padding: 0 0.85rem; border: 1px solid rgba(20, 33, 61, 0.16); border-radius: 12px; background: #FBF7EF; font: inherit; color: var(--pp-navy); }
+.firm-group-label { margin: 0 0 0.4rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(20, 33, 61, 0.74); }
+.firm-group-label span { margin-left: 0.25rem; font-weight: 600; opacity: 0.8; }
+.firm-group-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.firm-group-chips > button { display: inline-flex; align-items: center; gap: 0.4rem; }
+.firm-count { margin-left: 0.15rem; font-size: 0.75em; opacity: 0.7; }
+.firm-more { min-height: 36px; padding: 0 0.5rem; border: 0; background: none; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--pp-navy); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.firm-empty { margin: 0; font-size: 0.9rem; color: rgba(20, 33, 61, 0.74); }
+/* Filter panel: firm chips (compact, not the big logo tiles). */
+.mfs-firms { display: flex; flex-direction: column; gap: 0.75rem; }
+.mfs .mfs-bank.mfs-chip { flex-direction: row; width: auto; min-height: 36px; padding: 0 0.8rem 0 0.45rem; border: 0; border-radius: 999px; background: #FBF7EF; box-shadow: inset 0 0 0 1px rgba(20, 33, 61, 0.14); font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--pp-navy); cursor: pointer; white-space: nowrap; }
+.mfs .mfs-firms > .mfs-bank.mfs-chip { align-self: flex-start; padding-left: 0.85rem; }
+.mfs .mfs-bank.mfs-chip.is-on, .mfs .mfs-bank.mfs-chip[aria-pressed="true"] { background: var(--pp-navy); color: var(--pp-cream); box-shadow: none; }
+/* /start: the picker sits inside the scrolling pill box. */
+.sf-pills .firm-picker { margin-top: 0.25rem; }
+.sf-pills .firm-group-label { color: rgba(244, 237, 224, 0.75); }
+.sf-pills .firm-more { color: var(--pp-cream); }
+.sf-firm-search { background: rgba(244, 237, 224, 0.08); border-color: rgba(244, 237, 224, 0.22); color: var(--pp-cream); }

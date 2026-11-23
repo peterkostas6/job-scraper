@@ -36,7 +36,7 @@ export async function POST(request) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const notice = companyRequestEmail({ company, name, email: email || "No email on file" });
     await sendEmail(resend, {
-      to: process.env.CONTACT_EMAIL || "pete@petespostings.com",
+      to: "pete@petespostings.com",
       ...(email && { replyTo: email }),
       ...notice,
       tags: [{ name: "type", value: "company-request" }],

@@ -18,7 +18,7 @@ export async function POST(req) {
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const inboxEmail = process.env.CONTACT_EMAIL || "pete@petespostings.com";
+  const inboxEmail = "pete@petespostings.com";
 
   try {
     // Notice to Pete, then confirmation to the requester

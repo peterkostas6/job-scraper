@@ -2148,6 +2148,17 @@ export default function Home() {
               </>
             )}
           </div>
+          {/* Phones (pages with the tab bar): account top right, like every app's header. */}
+          {!viewHome && (
+            <button className="nav-acct" onClick={() => setAccountOpen(true)} aria-haspopup="dialog" aria-label="Account">
+              {isSignedIn && user?.imageUrl ? <img src={user.imageUrl} alt="" /> : (
+                <>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+                  {isLoaded && !isSignedIn && <span>Sign in</span>}
+                </>
+              )}
+            </button>
+          )}
           {/* Phones only: the nav links don't fit in the bar, so they open as a menu. */}
           <button
             className="nav-menu-btn"
@@ -2194,12 +2205,10 @@ export default function Home() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           <span>Saved</span>
         </button>
-        <button className={`tab${accountOpen ? " is-on" : ""}`} onClick={() => setAccountOpen(true)} aria-haspopup="dialog">
-          {isSignedIn && user?.imageUrl ? <img className="tab-avatar" src={user.imageUrl} alt="" /> : (
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
-          )}
-          <span>{isSignedIn ? "Account" : "Sign in"}</span>
-        </button>
+        <Link href="/pricing" className="tab" onClick={() => capture("tabbar_premium")}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
+          <span>Premium</span>
+        </Link>
       </div>}
 
       {accountOpen && (
@@ -2224,7 +2233,6 @@ export default function Home() {
             <div className="acct-list">
               {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
               {isSignedIn && user?.publicMetadata?.stripeCustomerId && <button onClick={openBillingPortal}>Manage subscription</button>}
-              {!isSubscribed && <Link href="/pricing">Get Premium</Link>}
               <button onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
               <Link href="/about">About</Link>
               <Link href="/">Home</Link>

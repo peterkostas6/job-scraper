@@ -23,7 +23,8 @@ export async function GET() {
     // Rows saved before the cron dropped Associate/VP roles are closed on its next run;
     // filtering here too keeps them off the site in the meantime (and on preview builds,
     // where the cron never runs).
-    const jobs = rows.filter((row) => isAnalystOrIntern(row.title)).map((row) => ({
+    // Banks taken off the site (e.g. Manulife) keep their rows; the cron no longer checks them.
+    const jobs = rows.filter((row) => isAnalystOrIntern(row.title) && (!row.bank_key || BANKS[row.bank_key])).map((row) => ({
       link: row.link,
       title: decodeEntities(row.title),
       location: row.location,

@@ -6521,3 +6521,27 @@ footer a, .footer a { color: var(--pp-cream); }
 .adm-sub-dark { margin: 0; font-size: 0.85rem; color: rgba(244, 237, 224, 0.6); }
 /* No billed line under the price (alert-link paywall): give the button room. */
 .pp-price + .ss-btn { margin-top: 1.25rem; }
+
+/* ---- Pricing refine (Nov 23): one lit card, one primary button, AA contrast ---- */
+/* Contrast: banner text navy on coral (was white, 2.8:1); "/month" and "Premium includes" at full-strength secondary ink. */
+.pp-banner { color: var(--pp-navy); box-shadow: none; }
+.pp-plan .pp-price span { color: rgba(20, 33, 61, 0.74); }
+.pp-includes { opacity: 1; color: rgba(20, 33, 61, 0.74); }
+/* Spacing: one rhythm inside the card (8px steps), reassurance sits under the button. */
+.pp-hero .pp-plan:has(.pp-banner) .pp-plan-name { margin-bottom: 0.5rem; }
+.pp-hero .pp-billed { margin: 0.75rem 0 1.25rem; }
+.pp-fine { margin: 0.75rem 0 0; text-align: center; font-size: 0.8rem; color: rgba(20, 33, 61, 0.74); }
+.pp-hero .pp-plan:has(.pp-banner) .pp-includes { margin-top: 1.5rem; padding-top: 1.25rem; }
+.pp-hero .pp-list { gap: 0.75rem; }
+/* Hierarchy: club plan steps back. Outline on navy instead of a second cream card, and a text link instead of a second coral button. */
+.pp-club {
+  --ss-ink: var(--pp-cream); --text-secondary: rgba(244, 237, 224, 0.78);
+  background: transparent; color: var(--pp-cream);
+  box-shadow: inset 0 0 0 1px rgba(244, 237, 224, 0.18);
+}
+.pp-club .pp-plan-name { color: rgba(244, 237, 224, 0.78); }
+.pp-club-side { border-color: rgba(244, 237, 224, 0.14); }
+.pp-club .pp-price span { color: rgba(244, 237, 224, 0.78); }
+.pp-club-link { padding: 0.5rem 0; min-height: 44px; border: 0; background: none; font: inherit; font-size: 1rem; font-weight: 600; color: var(--pp-cream); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(244, 237, 224, 0.4); cursor: pointer; }
+.pp-club-link:hover { text-decoration-color: var(--pp-cream); }
+@media (max-width: 899px) { .pp-club-side { border-color: rgba(244, 237, 224, 0.14); } }

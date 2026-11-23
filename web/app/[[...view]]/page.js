@@ -2428,18 +2428,34 @@ export default function Home() {
           {/* Phones, /jobs: one filter bar that sums up bank · type · city and opens the filter panel */}
           {!viewingSaved && (
             <div className="mfb">
-              <button className="mfb-bar" onClick={() => setFilterSheetOpen(true)} aria-haspopup="dialog">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/>
-                </svg>
-                <span className="mfb-summary">
-                  <b>{activeBank === "all" ? "All banks" : BANKS[activeBank]?.name}</b>
-                  {categoryFilter && <>{" \u00b7 "}{categoryFilter}</>}
-                  {" \u00b7 "}{jobType === "all" ? "All types" : JOB_TYPES[jobType]}
-                  {" \u00b7 "}{locationFilter || "All cities"}
-                </span>
-                <svg className="mfb-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-              </button>
+              {/* Filter chips (the row every job/listing app uses): each shows its value and opens the filter sheet. */}
+              <div className="mfb-chips" role="group" aria-label="Filters">
+                {(() => {
+                  const n = (activeBank !== "all") + (jobType !== "all") + Boolean(locationFilter) + Boolean(categoryFilter);
+                  const chev = <svg className="mfb-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>;
+                  const open = () => setFilterSheetOpen(true);
+                  return (
+                    <>
+                      <button className={`mfb-chip mfb-chip-all${n ? " is-on" : ""}`} onClick={open} aria-haspopup="dialog">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+                        Filters{n > 0 && <b>{n}</b>}
+                      </button>
+                      <button className={`mfb-chip${activeBank !== "all" ? " is-on" : ""}`} onClick={open} aria-haspopup="dialog">
+                        {activeBank === "all" ? "Bank" : <><BankLogo bankKey={activeBank} size={16} />{BANKS[activeBank]?.shortName}</>}{chev}
+                      </button>
+                      <button className={`mfb-chip${jobType !== "all" ? " is-on" : ""}`} onClick={open} aria-haspopup="dialog">
+                        {jobType === "all" ? "Type" : JOB_TYPES[jobType]}{chev}
+                      </button>
+                      <button className={`mfb-chip${locationFilter ? " is-on" : ""}`} onClick={open} aria-haspopup="dialog">
+                        {locationFilter || "City"}{chev}
+                      </button>
+                      <button className={`mfb-chip${categoryFilter ? " is-on" : ""}`} onClick={open} aria-haspopup="dialog">
+                        {categoryFilter || "Area"}{chev}
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
               {alertsButton("mfb-alerts")}
             </div>
           )}

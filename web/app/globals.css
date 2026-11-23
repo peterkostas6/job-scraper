@@ -6883,3 +6883,29 @@ footer a, .footer a { color: var(--pp-cream); }
 }
 @media (max-width: 900px) { .mfs-row { scroll-padding-inline: 1rem; } }
 @media (max-width: 900px) { .mfs-grid .mfs-bank, .mfs-row:not(.mfs-areas) .mfs-bank { white-space: normal; line-height: 1.15; overflow-wrap: anywhere; } }
+
+/* ---- Phone filter chips on Browse (replace the one long summary bar) ---- */
+@media (max-width: 900px) {
+  .mfb { padding: 0.75rem 0 0; }
+  .mfb-chips {
+    display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.1rem 1rem 0.25rem;
+    scrollbar-width: none; scroll-padding-inline: 1rem;
+  }
+  .mfb-chips::-webkit-scrollbar { display: none; }
+  .mfb-chip {
+    flex: none; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; padding: 0 0.85rem;
+    border: 0; border-radius: 999px; background: rgba(244, 237, 224, 0.08); box-shadow: inset 0 0 0 1px rgba(244, 237, 224, 0.22);
+    font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--pp-cream); white-space: nowrap; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mfb-chip:active { transform: scale(0.97); }
+  .mfb-chip .mfb-chev { opacity: 0.7; margin-right: -0.15rem; }
+  .mfb-chip img { border-radius: 4px; }
+  /* Set: cream fill, navy text — reads as "on" against the navy page. */
+  .mfb-chip.is-on { background: var(--pp-cream); color: var(--pp-navy); box-shadow: none; }
+  .mfb-chip.is-on .mfb-chev { opacity: 0.6; }
+  .mfb-chip-all b {
+    display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 0.3rem; border-radius: 999px;
+    background: var(--pp-coral); color: var(--pp-navy); font-size: 0.72rem; font-weight: 800;
+  }
+}

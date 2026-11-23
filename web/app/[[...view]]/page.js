@@ -2205,10 +2205,13 @@ export default function Home() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           <span>Saved</span>
         </button>
-        <Link href="/pricing" className="tab" onClick={() => capture("tabbar_premium")}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
-          <span>Premium</span>
-        </Link>
+        <button
+          className={`tab${showCompanyRequest ? " is-on" : ""}`}
+          onClick={() => { capture("tabbar_request"); if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/><path d="M12 8.5v4M10 10.5h4"/></svg>
+          <span>Request</span>
+        </button>
       </div>}
 
       {accountOpen && (
@@ -2233,7 +2236,6 @@ export default function Home() {
             <div className="acct-list">
               {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
               {isSignedIn && user?.publicMetadata?.stripeCustomerId && <button onClick={openBillingPortal}>Manage subscription</button>}
-              <button onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
               <Link href="/about">About</Link>
               <Link href="/">Home</Link>
               {isSignedIn && <button className="acct-out" onClick={() => clerk.signOut({ redirectUrl: "/jobs" })}>Sign out</button>}
@@ -2450,8 +2452,11 @@ export default function Home() {
                   <button className="mfs-x" aria-label="Close filters" onClick={() => setFilterSheetOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                 </div>
                 <div className="mfs-sec">
-                  <p className="mfs-h">Bank</p>
-                  <div className="mfs-banks">
+                  <div className="mfs-h-row">
+                    <p className="mfs-h">Bank</p>
+                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>See all {Object.keys(BANKS).length}</button>}
+                  </div>
+                  <div className={`mfs-banks${sheetAllBanks ? " mfs-grid" : " mfs-row"}`}>
                     <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All {BANK_COUNT}</button>
                     {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
                     {(() => { const ranked = Object.keys(BANKS).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)); return sheetAllBanks ? ranked : ranked.slice(0, 6); })().map((key) => (
@@ -2459,13 +2464,12 @@ export default function Home() {
                         <BankLogo bankKey={key} size={18} />{BANKS[key].shortName}
                       </button>
                     ))}
-                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>+{Object.keys(BANKS).length - 6} more</button>}
                   </div>
                 </div>
                 {availableCategories.length > 0 && (
                   <div className="mfs-sec">
                     <p className="mfs-h">Area</p>
-                    <div className="mfs-banks">
+                    <div className="mfs-banks mfs-row mfs-areas">
                       <button className={`mfs-bank mfs-bank-all${categoryFilter === "" ? " is-on" : ""}`} onClick={() => setCategoryFilter("")}>All</button>
                       {[...availableCategories].sort((x, y) => areaRank(x) - areaRank(y) || x.localeCompare(y)).map((cat) => (
                         <button key={cat} className={`mfs-bank mfs-bank-all${categoryFilter === cat ? " is-on" : ""}`} onClick={() => setCategoryFilter(cat)}>{cat}</button>

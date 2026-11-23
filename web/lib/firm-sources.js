@@ -30,6 +30,7 @@ export const FIRM_SOURCES = {
   rothschild: { type: "workday", host: "rothschildandco.wd3.myworkdayjobs.com", tenant: "rothschildandco", site: "Rothschildandco_Lateral" },
   scotiabank: { type: "rmk", base: "https://jobs.scotiabank.com" },
   schwab: { type: "radancy", base: "https://www.schwabjobs.com" },
+  manulife: { type: "workday", host: "manulife.wd3.myworkdayjobs.com", tenant: "manulife", site: "MFCJH_Jobs", facets: { Location_Country: ["bc33aa3152ec42d4995f4791a106ed09"] } }, // US jobs only (mostly Canada otherwise)
 };
 
 // Same short UA as the older Workday routes; Workday refuses a full Chrome UA from Vercel.
@@ -119,7 +120,7 @@ async function workday(src) {
       const data = await getJSON(api, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appliedFacets: {}, limit: 20, offset, searchText }),
+        body: JSON.stringify({ appliedFacets: src.facets || {}, limit: 20, offset, searchText }),
       });
       for (const j of data.jobPostings || []) {
         out.push({ title: j.title || "", link: `${linkBase}${j.externalPath}`, location: j.locationsText || j.bulletFields?.[0] || "", postedDate: workdayDate(j.postedOn) });

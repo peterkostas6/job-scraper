@@ -2674,9 +2674,10 @@ export default function Home() {
                     {lockedRecent.length > 0 && (
                       // Phones: one grouped card (header, compact redacted rows, one Unlock). Desktop: display: contents, rows as before.
                       <div className="locked-group">
-                        <div className="locked-head" aria-hidden="true">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                          <span><b className="tnum">{lockedRecent.length}</b> new {lockedRecent.length === 1 ? "role" : "roles"} in the last 48 hours</span>
+                        <div className="locked-head">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                          <span><b className="tnum">{lockedRecent.length}</b> new in the last 48 hours</span>
+                          <Link href="/pricing" className="locked-cta" onClick={() => capture("browse_locked_unlock_clicked", { where: "phone_group" })}>Unlock all</Link>
                         </div>
                         {lockedRecent.slice(0, 3).map((job) => (
                           <Link href="/recent" className="job-row job-row-locked" key={`locked-${job.link}`} onClick={() => capture("browse_locked_row_clicked", { bank: job.bank })}>
@@ -2697,9 +2698,6 @@ export default function Home() {
                             <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                           </Link>
                         ))}
-                        <Link href="/pricing" className="locked-cta" onClick={() => capture("browse_locked_unlock_clicked", { where: "phone_group" })}>
-                          Unlock all {lockedRecent.length} &middot; ${PLANS.monthly.price}/mo
-                        </Link>
                       </div>
                     )}
                     {displayJobs.map((job, index) => (

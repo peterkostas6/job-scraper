@@ -6978,3 +6978,12 @@ footer a, .footer a { color: var(--pp-cream); }
   .locked-group .job-row-locked:last-of-type { border-bottom: 0; }
 }
 @media (max-width: 900px) { .locked-group .job-row-locked .job-logo { grid-row: 1 / span 2; align-self: center !important; transform: none !important; top: auto !important; } .locked-head { padding-bottom: 0.5rem; } }
+/* Unlock all: a small pill at the right of the header line, not a full-width bar. */
+@media (max-width: 900px) {
+  .locked-head { padding: 0.7rem 1rem 0.45rem; }
+  .locked-head > span { flex: 1; min-width: 0; }
+  .locked-head .locked-cta {
+    display: inline-flex; flex: none; min-height: 32px; margin: 0; padding: 0 0.8rem; border-radius: 999px;
+    background: var(--pp-coral); color: var(--pp-navy); font-size: 0.8rem; font-weight: 700; text-decoration: none;
+  }
+}

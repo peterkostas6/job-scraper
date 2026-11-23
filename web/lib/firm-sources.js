@@ -2,7 +2,9 @@
 // the adapters below speak the job-board APIs those firms use (Workday, Greenhouse, Lever,
 // Ashby, Oracle Recruiting Cloud, Oleeo/tal.net, SAP SuccessFactors). /api/firm/[key] runs them.
 // Every adapter returns [{ title, link, location, category, postedDate }] like the older
-// per-bank routes, filtered to analyst/intern-type titles in the US.
+// per-bank routes, filtered to US roles. FIRM_REGISTRY (lib/firm-registry.js) adds hundreds
+// more firms on the same adapters; the cron checks those in rotating batches.
+import { FIRM_REGISTRY } from "./firm-registry";
 
 export const FIRM_SOURCES = {
   evercore: { type: "talnet", host: "evercore.tal.net", brand: 5, boards: [1, 2, 3] },
@@ -34,8 +36,9 @@ export const FIRM_SOURCES = {
 
 // Same short UA as the older Workday routes; Workday refuses a full Chrome UA from Vercel.
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)";
-// Big retail/commercial banks: search these terms instead of paging through 1,000+ jobs.
-const SEARCH_TERMS = ["analyst", "intern", "summer"];
+// Big retail/commercial banks: search these terms instead of paging through 1,000+ jobs
+// (most of which are branch and call-centre roles). The terms cover every experience level.
+const SEARCH_TERMS = ["analyst", "intern", "summer", "associate", "vice president", "director", "trader", "banker", "portfolio", "quant", "investment"];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -58,10 +61,6 @@ export function isUSLocation(loc) {
   return false;
 }
 
-export function isEntryTitle(title) {
-  const t = title.toLowerCase();
-  return t.includes("analyst") || /\bintern(ship)?s?\b/.test(t) || t.includes("summer") || t.includes("trainee") || t.includes("placement") || t.includes("co-op") || t.includes("off-cycle") || t.includes("graduate");
-}
 
 export function categorizeJob(title) {
   const t = title.toLowerCase();
@@ -251,11 +250,73 @@ async function radancy(src) {
 
 const decode = (s) => s.replace(/&amp;/g, "&").replace(/&#039;|&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 
-const ADAPTERS = { workday, greenhouse, lever, ashby, oracle, talnet, rmk, radancy };
+// SmartRecruiters' public postings API (country + location on every posting).
+async function smartrecruiters(src) {
+  const out = [];
+  for (let offset = 0; offset < 1000; offset += 100) {
+    const data = await getJSON(`https://api.smartrecruiters.com/v1/companies/${src.company}/postings?limit=100&offset=${offset}`);
+    for (const j of data.content || []) {
+      const loc = j.location || {};
+      out.push({
+        title: j.name || "",
+        link: `https://jobs.smartrecruiters.com/${src.company}/${j.id}`,
+        location: loc.country && loc.country !== "us" ? "Non-US" : (loc.fullLocation || [loc.city, loc.region].filter(Boolean).join(", ")),
+        postedDate: isoDay(j.releasedDate),
+      });
+    }
+    if (offset + 100 >= (data.totalFound || 0)) break;
+  }
+  return out;
+}
+
+// iCIMS career sites have no JSON list API: read the search pages for titles and links, then
+// each job page's schema.org JobPosting block for its location and posted date.
+async function icims(src) {
+  const base = `https://${src.host}`;
+  const found = new Map();
+  for (let page = 0; page < 30; page++) {
+    const res = await fetch(`${base}/jobs/search?ss=1&in_iframe=1&pr=${page}`, { headers: { "User-Agent": UA } });
+    if (!res.ok) break;
+    const html = await res.text();
+    const before = found.size;
+    for (const m of html.matchAll(/<a href="(https:\/\/[^"]+\/jobs\/\d+\/[^"?]+\/job)\?in_iframe=1"[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g)) {
+      if (!found.has(m[1])) found.set(m[1], m[2].replace(/<[^>]+>/g, "").trim());
+    }
+    if (found.size === before) break;
+  }
+  const items = [...found].slice(0, 250);
+  const out = [];
+  for (let i = 0; i < items.length; i += 8) {
+    await Promise.all(items.slice(i, i + 8).map(async ([link, title]) => {
+      try {
+        const html = await (await fetch(`${link}?in_iframe=1`, { headers: { "User-Agent": UA } })).text();
+        const ld = html.match(/"jobLocation":\[(.*?)\]/);
+        const places = ld ? [...ld[1].matchAll(/"addressLocality":"([^"]*)","addressRegion":"([^"]*)"|"addressCountry":"([^"]*)"/g)] : [];
+        const countries = places.map((p) => p[3]).filter(Boolean);
+        const towns = places.filter((p) => p[1]).map((p) => `${p[1]}, ${p[2]}`);
+        const posted = html.match(/"datePosted":"([^"]+)"/);
+        out.push({
+          title,
+          link,
+          location: countries.length && !countries.includes("US") ? "Non-US" : towns.join("; ") || "United States",
+          postedDate: posted ? isoDay(posted[1]) : undefined,
+        });
+      } catch {}
+    }));
+  }
+  return out;
+}
+
+const ADAPTERS = { workday, greenhouse, lever, ashby, oracle, talnet, rmk, radancy, smartrecruiters, icims };
 
 export async function fetchFirmJobs(key) {
-  const cfg = FIRM_SOURCES[key];
+  const cfg = FIRM_SOURCES[key] || FIRM_REGISTRY[key]?.src;
   if (!cfg) throw new Error(`Unknown firm ${key}`);
+  return fetchSourceJobs(cfg);
+}
+
+// One firm's US jobs at every experience level (lib/levels.js sorts them on the site).
+export async function fetchSourceJobs(cfg) {
   const raw = (await Promise.all([].concat(cfg).map((src) => ADAPTERS[src.type](src)))).flat();
   const seen = new Set();
   const jobs = [];
@@ -263,7 +324,6 @@ export async function fetchFirmJobs(key) {
     const title = decode(j.title).replace(/\s+/g, " ").trim();
     if (!title || !j.link || seen.has(j.link)) continue;
     seen.add(j.link);
-    if (!isEntryTitle(title)) continue;
     if (!isUSLocation(j.location) || NON_US.test(title)) continue;
     jobs.push({ title, link: j.link, location: j.location === "Non-US" ? "" : j.location, category: categorizeJob(title), postedDate: j.postedDate });
   }

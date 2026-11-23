@@ -10,6 +10,7 @@ import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { JOB_TYPES as ALERT_JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { jobLevel, LEVEL_LABEL, LEVELS } from "@/lib/levels";
+import { ALL_FIRMS, FIRM_TYPES, FIRM_COUNT } from "@/lib/firms";
 import { track } from "@/lib/track";
 import { capture } from "@/lib/analytics";
 import { useTrackSignup } from "@/lib/use-track-signup";
@@ -19,7 +20,7 @@ import { openBillingPortal } from "@/lib/billing";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
 
-const FREE_BANKS = new Set(Object.keys(BANKS));
+const FREE_BANKS = new Set(Object.keys(ALL_FIRMS));
 
 // Browse/Recent "Level" filter (lib/levels.js sorts each title into one of these).
 const JOB_TYPES = { all: "All levels", ...LEVEL_LABEL };
@@ -740,7 +741,7 @@ function SignUpGate({ gate, onClose }) {
         {gate.job && (
           <p className="gate-job">
             <strong>{gate.job.title}</strong>
-            <span><BankLogo bankKey={gate.job.bankKey} bank={gate.job.bank} size={16} />{gate.job.bank || BANKS[gate.job.bankKey]?.name}{gate.job.location ? ` \u00b7 ${gate.job.location}` : ""}</span>
+            <span><BankLogo bankKey={gate.job.bankKey} bank={gate.job.bank} size={16} />{gate.job.bank || ALL_FIRMS[gate.job.bankKey]?.name}{gate.job.location ? ` \u00b7 ${gate.job.location}` : ""}</span>
           </p>
         )}
         <p className="gate-desc">{gate.desc}</p>
@@ -792,8 +793,8 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
             <span className="job-title">Title</span>
             <span className="job-location">Location</span>
             <span className="job-posted">Posted</span>
-            <span className="job-badges">Type</span>
-            <span className="new-bank-label">Bank</span>
+            <span className="job-badges">Level</span>
+            <span className="new-bank-label">Firm</span>
             <span style={{ width: 14 }} />
             <span style={{ width: 14 }} />
           </div>
@@ -1091,6 +1092,19 @@ function AboutPage({ onBrowse }) {
 }
 
 // ---- SKELETON ----
+// Long lists render 100 rows at a time; this loads the next 100 when it comes into view.
+function ShowMore({ onMore, left }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) onMore(); }, { rootMargin: "600px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [onMore, left]);
+  return <button ref={ref} className="show-more" onClick={onMore}>Show more roles ({left.toLocaleString()} left)</button>;
+}
+
 function SkeletonRows() {
   return (
     <div className="jobs-list">
@@ -1109,6 +1123,7 @@ function SkeletonRows() {
 // ---- RECENT POSTINGS VIEW ----
 function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlerts, liveJobs }) {
   const [rpSearch, setRpSearch] = useState("");
+  const [shown, setShown] = useState(100);
   const [rpJobType, setRpJobType] = useState("all");
   const [rpBank, setRpBank] = useState("");
   const [rpCategory, setRpCategory] = useState("");
@@ -1121,6 +1136,8 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
     return () => window.removeEventListener("keydown", onKey);
   }, [rpSheetOpen]);
 
+  // A new filter starts the list over at the first 100 rows (before the early return: hooks keep their order).
+  useEffect(() => { setShown(100); }, [rpSearch, rpJobType, rpBank, rpCategory, rpCity]);
   if (loading) return <SkeletonRows />;
 
   const { last48h = [], last48hCount = 0 } = data || {};
@@ -1173,8 +1190,8 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
       <span className="job-logo-spacer" aria-hidden="true" />
       <span className="job-title">Title</span>
       <span className="job-location">Location</span>
-      <span className="job-badges job-badges-wide">Type / Posted</span>
-      <span className="new-bank-label" style={{ fontSize: "0.62rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)" }}>Bank</span>
+      <span className="job-badges job-badges-wide">Level / Posted</span>
+      <span className="new-bank-label" style={{ fontSize: "0.62rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)" }}>Firm</span>
       <span style={{ width: 14 }} />
     </div>
   );
@@ -1209,12 +1226,12 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
                     <button className="mfs-x" aria-label="Close filters" onClick={() => setRpSheetOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                   </div>
                   <div className="mfs-sec">
-                    <p className="mfs-h">Bank</p>
+                    <p className="mfs-h">Firm</p>
                     <div className="mfs-banks">
                       <button className={`mfs-bank mfs-bank-all${rpBank === "" ? " is-on" : ""}`} onClick={() => setRpBank("")}>All</button>
                       {rankCounts(last48h.map((j) => j.bank)).map(([bank]) => (
                         <button key={bank} className={`mfs-bank${rpBank === bank ? " is-on" : ""}`} onClick={() => setRpBank(bank)}>
-                          <BankLogo bankKey={rpBankKeys[bank]} bank={bank} size={18} />{BANKS[rpBankKeys[bank]]?.shortName || bank}
+                          <BankLogo bankKey={rpBankKeys[bank]} bank={bank} size={18} />{ALL_FIRMS[rpBankKeys[bank]]?.shortName || bank}
                         </button>
                       ))}
                     </div>
@@ -1300,7 +1317,8 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
             ) : (
               <div className="jobs-list fade-in">
                 {tableHeader}
-                {displayJobs.map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
+                {displayJobs.slice(0, shown).map((job, i) => <JobCard key={job.link} job={job} index={i} />)}
+                {displayJobs.length > shown && <ShowMore onMore={() => setShown((n) => n + 100)} left={displayJobs.length - shown} />}
               </div>
             )}
           </>
@@ -1326,7 +1344,7 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined" || window.location.pathname !== "/jobs") return;
     const b = new URLSearchParams(window.location.search).get("bank");
-    if (b && (BANKS[b] || b === "all")) setActiveBank(b);
+    if (b && (ALL_FIRMS[b] || b === "all")) setActiveBank(b);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -1340,6 +1358,7 @@ export default function Home() {
     }
   }, [activeBank]);
   const [jobType, setJobType] = useState("all");
+  const [shown, setShown] = useState(100);
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [allJobs, setAllJobs] = useState([]);
@@ -1371,7 +1390,7 @@ export default function Home() {
   }, [locationFilter, jobType, categoryFilter]);
   useEffect(() => {
     if (!browseTracked.current) { browseTracked.current = true; return; }
-    capture("bank_selected", { bank: activeBank, bank_name: BANKS[activeBank]?.name || "All banks" });
+    capture("bank_selected", { bank: activeBank, bank_name: ALL_FIRMS[activeBank]?.name || "All banks" });
   }, [activeBank]);
   const [availableCategories, setAvailableCategories] = useState([]);
   // Signed-out visitors who try something that needs an account see why first (see SignUpGate).
@@ -1522,6 +1541,7 @@ export default function Home() {
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   useNavMenuLock(navMenuOpen, () => setNavMenuOpen(false));
   const [bankSearch, setBankSearch] = useState("");
+  const [openGroups, setOpenGroups] = useState({});
 
   // Load saved jobs from Clerk unsafeMetadata
   useEffect(() => {
@@ -1571,7 +1591,7 @@ export default function Home() {
   // Sidebar counts are every live role at each bank, the last 48 hours included.
   useEffect(() => {
     if (!allJobs.length) return;
-    const counts = Object.fromEntries(Object.keys(BANKS).map((key) => [key, 0]));
+    const counts = Object.fromEntries(Object.keys(ALL_FIRMS).map((key) => [key, 0]));
     for (const job of allJobs) if (job.bankKey in counts) counts[job.bankKey]++;
     setBankCounts(counts);
   }, [allJobs]);
@@ -1642,7 +1662,7 @@ export default function Home() {
     e.stopPropagation();
     if (!isSignedIn) { askToSignUp("save"); return; }
     const link = job.link;
-    capture(bookmarks.has(link) ? "job_unsaved" : "job_saved", { bank: job.bank || BANKS[activeBank]?.name, title: job.title, category: job.category });
+    capture(bookmarks.has(link) ? "job_unsaved" : "job_saved", { bank: job.bank || ALL_FIRMS[activeBank]?.name, title: job.title, category: job.category });
     // Exaggerated feedback: saving plays a squash-and-stretch pop with a small burst.
     if (!bookmarks.has(link)) {
       setJustSaved(link);
@@ -1657,11 +1677,11 @@ export default function Home() {
     setSavedJobs((prev) => {
       let next;
       const removing = prev.some((j) => j.link === link);
-      capture(removing ? "job_unsaved" : "job_saved", { bank: job.bank || BANKS[activeBank]?.name || "", title: job.title });
+      capture(removing ? "job_unsaved" : "job_saved", { bank: job.bank || ALL_FIRMS[activeBank]?.name || "", title: job.title });
       if (removing) {
         next = prev.filter((j) => j.link !== link);
       } else {
-        next = [...prev, { title: job.title, link: job.link, location: job.location || "", bank: job.bank || BANKS[activeBank]?.name || "" }];
+        next = [...prev, { title: job.title, link: job.link, location: job.location || "", bank: job.bank || ALL_FIRMS[activeBank]?.name || "" }];
       }
       user.update({ unsafeMetadata: { ...user.unsafeMetadata, savedJobs: next } });
       return next;
@@ -1757,7 +1777,7 @@ export default function Home() {
        ...notifPrefs.categories.filter((c) => !AREAS.some((a) => a.categories.includes(c)))].join(", ") || "Open to anything";
   const alertBanksLabel = notifPrefs.banks.length === 0
     ? `All ${BANK_COUNT} banks`
-    : notifPrefs.banks.length <= 2 ? notifPrefs.banks.map((k) => BANKS[k]?.shortName || k).join(", ") : `${notifPrefs.banks.length} banks`;
+    : notifPrefs.banks.length <= 2 ? notifPrefs.banks.map((k) => ALL_FIRMS[k]?.shortName || k).join(", ") : `${notifPrefs.banks.length} banks`;
 
   // One expandable settings row: label and current value; tapping opens its choices.
   const alertRow = (key, label, value, body) => {
@@ -1834,6 +1854,8 @@ export default function Home() {
   const withSelected = (opts, sel) => (sel && !opts.some(([v]) => v === sel) ? [[sel, 0], ...opts] : opts);
 
   const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link)) : filteredJobs;
+  // A new filter starts the list over at the first 100 rows.
+  useEffect(() => { setShown(100); }, [activeBank, jobType, locationFilter, categoryFilter, searchQuery, showSavedOnly, browseMode]);
   // Counts for the My preferences | All roles switch, after search and the dropdown filters.
   const modeBase = hasAlertPrefs ? jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okType(job) && okLocation(job) && okCategory(job)) : [];
   const mineCount = hasAlertPrefs ? modeBase.filter(matchesMine).length : 0;
@@ -1866,24 +1888,29 @@ export default function Home() {
   // ---- Sidebar (shared by the browse and recent views) ----
   const BULGE = ["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays"];
   const bankQuery = bankSearch.trim().toLowerCase();
-  const matchesBank = (bank) => !bankQuery || bank.name.toLowerCase().includes(bankQuery) || bank.shortName.toLowerCase().includes(bankQuery);
+  const matchesBank = (bank) => !bankQuery || bank.name.toLowerCase().includes(bankQuery) || (bank.shortName || "").toLowerCase().includes(bankQuery);
   // Keep source order, but sink banks with zero open roles to the end of their group.
   const orderBanks = (keys) => {
     const known = keys.filter((k) => bankCounts[k] === undefined || bankCounts[k] > 0);
     const empty = keys.filter((k) => bankCounts[k] === 0);
     return [...known, ...empty];
   };
+  // Registry firms (lib/firm-registry.js) appear under their type once they have open roles,
+  // most roles first; each type shows its top firms until "Show all" is clicked.
+  const byCount = (keys) => [...keys].sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0));
+  const extraOfType = (type) => byCount(Object.keys(ALL_FIRMS).filter((k) => !BANKS[k] && ALL_FIRMS[k].type === type && bankCounts[k] > 0));
   const bankGroups = bankQuery
-    ? [{ label: null, keys: Object.keys(BANKS).filter((k) => matchesBank(BANKS[k])) }]
+    ? [{ label: null, keys: byCount(Object.keys(ALL_FIRMS).filter((k) => matchesBank(ALL_FIRMS[k]) && (BANKS[k] || bankCounts[k] > 0))) }]
     : [
         { label: "Bulge bracket", keys: orderBanks(BULGE) },
-        { label: "More banks", keys: orderBanks(Object.keys(BANKS).filter((k) => !BULGE.includes(k))) },
+        { label: "More banks", keys: orderBanks([...Object.keys(BANKS).filter((k) => !BULGE.includes(k)), ...extraOfType("bank")]) },
+        ...FIRM_TYPES.filter((t) => t.key !== "bank").map((t) => ({ label: t.label, keys: extraOfType(t.key), collapsible: true })).filter((g) => g.keys.length > 0),
       ];
   const totalOpen = Object.values(bankCounts).reduce((sum, c) => sum + c, 0);
   const countsLoaded = Object.keys(bankCounts).length;
 
   const renderBankRow = (key) => {
-    const bank = BANKS[key];
+    const bank = ALL_FIRMS[key];
     const needsAuth = !FREE_BANKS.has(key) && (!isSignedIn || !isSubscribed);
     const count = bankCounts[key];
     const isActive = activeBank === key && !viewingSaved && !viewNewPostings;
@@ -1894,7 +1921,7 @@ export default function Home() {
         onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}
         aria-current={isActive ? "page" : undefined}
       >
-        <span className="sidebar-bank"><BankLogo bankKey={key} size={18} /><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName}</span></span>
+        <span className="sidebar-bank"><BankLogo bankKey={key} size={18} /><span className="bank-name-full">{bank.name}</span><span className="bank-name-short">{bank.shortName || bank.name}</span></span>
         {needsAuth ? (
           <svg className="sidebar-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         ) : count === undefined ? (
@@ -2029,8 +2056,8 @@ export default function Home() {
         <input
           className="bank-search-input"
           type="text"
-          placeholder="Find a bank"
-          aria-label="Find a bank"
+          placeholder="Find a firm"
+          aria-label="Find a firm"
           value={bankSearch}
           onChange={(e) => setBankSearch(e.target.value)}
         />
@@ -2048,7 +2075,7 @@ export default function Home() {
             onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank("all"); }}
             aria-current={activeBank === "all" && !viewingSaved && !viewNewPostings ? "page" : undefined}
           >
-            <span>All banks</span>
+            <span>All firms</span>
             {countsLoaded > 0 && <span className="sidebar-count tnum">{totalOpen}</span>}
           </button>
         )}
@@ -2056,8 +2083,13 @@ export default function Home() {
           <div key={group.label || "results"} className="sidebar-group">
             {group.label && <div className="sidebar-group-label">{group.label}</div>}
             {group.keys.length === 0 ? (
-              <p className="sidebar-empty">No bank matches &ldquo;{bankSearch.trim()}&rdquo;</p>
-            ) : group.keys.map(renderBankRow)}
+              <p className="sidebar-empty">No firm matches &ldquo;{bankSearch.trim()}&rdquo;</p>
+            ) : (group.collapsible && !openGroups[group.label] ? group.keys.slice(0, 6) : group.keys).map(renderBankRow)}
+            {group.collapsible && group.keys.length > 6 && (
+              <button className="sidebar-more" onClick={() => setOpenGroups((g) => ({ ...g, [group.label]: !g[group.label] }))}>
+                {openGroups[group.label] ? "Show fewer" : `Show all ${group.keys.length}`}
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -2464,15 +2496,18 @@ export default function Home() {
                 </div>
                 <div className="mfs-sec">
                   <div className="mfs-h-row">
-                    <p className="mfs-h">Bank</p>
-                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>See all {Object.keys(BANKS).length}</button>}
+                    <p className="mfs-h">Firm</p>
+                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>See all {Object.keys(bankCounts).filter((k) => bankCounts[k] > 0).length}</button>}
                   </div>
+                  {sheetAllBanks && (
+                    <input className="mfs-search" type="search" placeholder="Search firms" aria-label="Search firms" value={bankSearch} onChange={(e) => setBankSearch(e.target.value)} />
+                  )}
                   <div className={`mfs-banks${sheetAllBanks ? " mfs-grid" : " mfs-row"}`}>
-                    <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All {BANK_COUNT}</button>
+                    <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All</button>
                     {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
-                    {(() => { const ranked = Object.keys(BANKS).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)); return sheetAllBanks ? ranked : ranked.slice(0, 6); })().map((key) => (
+                    {(() => { const ranked = Object.keys(ALL_FIRMS).filter((k) => bankCounts[k] > 0 && matchesBank(ALL_FIRMS[k])).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)); return sheetAllBanks ? ranked : ranked.slice(0, 6); })().map((key) => (
                       <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
-                        <BankLogo bankKey={key} size={18} />{BANKS[key].shortName}
+                        <BankLogo bankKey={key} bank={ALL_FIRMS[key].name} size={18} />{ALL_FIRMS[key].shortName || ALL_FIRMS[key].name}
                       </button>
                     ))}
                   </div>
@@ -2549,7 +2584,7 @@ export default function Home() {
                       <span className="job-index">#</span>
                       <span className="job-logo-spacer" aria-hidden="true" />
                       <span className="job-title">Title</span>
-                      <span className="job-location">Bank</span>
+                      <span className="job-location">Firm</span>
                       <span className="job-badges">Location</span>
                       <span style={{ width: 14 }} />
                       <span style={{ width: 14 }} />
@@ -2678,8 +2713,8 @@ export default function Home() {
                       <span className="job-title">Title</span>
                       <span className="job-location">Location</span>
                       <span className="job-posted">Posted</span>
-                      <span className="job-badges">Type</span>
-                      {activeBank === "all" && <span className="new-bank-label">Bank</span>}
+                      <span className="job-badges">Level</span>
+                      {activeBank === "all" && <span className="new-bank-label">Firm</span>}
                       <span style={{ width: 14 }} />
                       <span style={{ width: 14 }} />
                     </div>
@@ -2713,7 +2748,7 @@ export default function Home() {
                         ))}
                       </div>
                     )}
-                    {displayJobs.map((job, index) => (
+                    {displayJobs.slice(0, shown).map((job, index) => (
                       <a
                         href={trackedLink(job.link)}
                         target="_blank"
@@ -2749,6 +2784,7 @@ export default function Home() {
                         </svg>
                       </a>
                     ))}
+                    {displayJobs.length > shown && <ShowMore onMore={() => setShown((n) => n + 100)} left={displayJobs.length - shown} />}
                   </div>
                 )}
               </>

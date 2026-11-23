@@ -5,6 +5,7 @@ import { sql } from "@vercel/postgres";
 import { decodeEntities } from "@/lib/text";
 import { isListedRole } from "@/lib/notif-helpers";
 import { BANKS, BANK_NAMES } from "@/lib/banks";
+import { ALL_FIRMS } from "@/lib/firms";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -22,7 +23,7 @@ export async function GET() {
 
     // All experience levels (the page sorts them with lib/levels.js); finance roles only.
     // Banks taken off the site (e.g. Manulife) keep their rows; the cron no longer checks them.
-    const jobs = rows.filter((row) => isListedRole(row.title) && (!row.bank_key || BANKS[row.bank_key])).map((row) => ({
+    const jobs = rows.filter((row) => isListedRole(row.title) && (!row.bank_key || ALL_FIRMS[row.bank_key])).map((row) => ({
       link: row.link,
       title: decodeEntities(row.title),
       location: row.location,

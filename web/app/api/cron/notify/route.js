@@ -11,6 +11,7 @@ import { locationMatches } from "@/lib/alert-options";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
 import { BANKS, BANK_NAMES } from "@/lib/banks";
+import { ALL_FIRMS, registryBatch } from "@/lib/firms";
 
 export const dynamic = "force-dynamic";
 // The Postgres driver talks to Neon over HTTP. In production Next.js can serve a repeated,
@@ -63,7 +64,7 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, ba
 
   // Bank breakdown table
   const bankRows = Object.entries(bankStats).map(([bankKey, stats]) => {
-    const name = BANK_NAMES[bankKey] || bankKey;
+    const name = ALL_FIRMS[bankKey]?.name || bankKey;
     const statusHtml = stats.error
       ? `<span style="color:#ef4444;">&#10007; Error: ${stats.error}</span>`
       : `<span style="color:#16a34a;">&#10003; ${stats.total} fetched &nbsp;&#183;&nbsp; ${stats.kept} entry-level</span>`;
@@ -159,8 +160,12 @@ export async function GET(request) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://petespostings.com";
 
-    // 1. Fetch jobs from all banks in parallel
-    const bankEntries = Object.entries(BANKS).map(([k, b]) => [k, b.endpoint]);
+    // 1. Fetch jobs from all banks in parallel, plus this run's batch of registry firms
+    //    (lib/firms.js rotates through them, so each is checked about once an hour).
+    const bankEntries = [
+      ...Object.entries(BANKS).map(([k, b]) => [k, b.endpoint]),
+      ...registryBatch().map((k) => [k, `/api/firm/${k}`]),
+    ];
     const rawResults = await Promise.allSettled(
       bankEntries.map(async ([bankKey, endpoint]) => {
         const res = await fetch(`${baseUrl}${endpoint}`, {
@@ -186,7 +191,7 @@ export async function GET(request) {
         for (const job of jobs) {
           // Every experience level of finance role is kept; alerts filter by level below.
           if (!isListedRole(job.title)) continue;
-          allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
+          allJobs.push({ ...job, bank: ALL_FIRMS[bankKey]?.name || BANK_NAMES[bankKey], bankKey });
           kept++;
         }
         bankStats[bankKey] = { total: jobs.length, kept, error: null };

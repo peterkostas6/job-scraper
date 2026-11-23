@@ -2602,6 +2602,22 @@ export default function Home() {
                       )}
                     </button>
                     <div className={`filters${mobileFiltersOpen ? " filters-mobile-open" : ""}`}>
+                      {/* Desktop: one Filters button (same panel as phones); the dropdowns below are hidden there. */}
+                      {(() => {
+                        const n = (activeBank !== "all") + (jobType !== "all") + Boolean(locationFilter) + Boolean(categoryFilter);
+                        return (
+                          <button className={`dfb${n ? " is-on" : ""}`} onClick={() => setFilterSheetOpen(true)} aria-haspopup="dialog">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+                            Filters{n > 0 && <b>{n}</b>}
+                          </button>
+                        );
+                      })()}
+                      {hasAlertPrefs && !loading && !error && (
+                        <div className="browse-mode dfb-mode" role="group" aria-label="Which roles to show">
+                          <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My preferences <span className="browse-mode-n tnum">{mineCount}</span></button>
+                          <button aria-pressed={browseMode === "all"} onClick={() => setBrowseMode("all")}>All roles <span className="browse-mode-n tnum">{modeBase.length}</span></button>
+                        </div>
+                      )}
                       <select className="filter-dropdown" aria-label="Location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
                         <option value="">All Locations</option>
                         {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}

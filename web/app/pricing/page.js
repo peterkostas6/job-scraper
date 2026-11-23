@@ -9,6 +9,9 @@ import { PLANS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
 import { BANK_COUNT } from "@/lib/banks";
 import { trialFor } from "@/lib/alert-trial-days";
+import BankLogo from "@/lib/bank-logo";
+
+const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
 function ClubInquiryModal({ onClose }) {
   const [form, setForm] = useState({
@@ -166,6 +169,7 @@ export default function PricingPage() {
   const { isSignedIn, isLoaded, user } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
+  const [plan, setPlan] = useState("premium");
   const isSubscribed = user?.publicMetadata?.subscribed === true;
   // Every account has Premium for its first 3 days (lib/alert-trial-days.js).
   const trial = user && !isSubscribed ? trialFor(user.createdAt) : null;
@@ -263,75 +267,75 @@ export default function PricingPage() {
       </nav>
 
       <div className="pp">
-        <div className="pp-hero">
-        <section className="pp-head">
-          {alertLocked ? (
-            // Tapped an alert link without Premium (/pricing?alert=<code>): one line, one button.
-            <h1 className="ss-h2 pp-title">To open alerts, you need Premium.</h1>
-          ) : (
-            <>
-              <p className="ss-eyebrow">Pricing</p>
-              <h1 className="ss-h2 pp-title">Your application, first in the stack.</h1>
-              <p className="ss-lead">A text the second your role posts at {BANK_COUNT} banks. You apply before the crowd even sees it.</p>
-            </>
-          )}
-        </section>
+        {/* Paywall card (video layout): full-bleed art fading into the card, headline, two plan rows
+            with Premium highlighted, one ink button, plain-text "Maybe later". */}
+        <section className="pw">
+          <div className="pw-art" aria-label="Example text alerts" role="img">
+            {[
+              { bankKey: "gs", bank: "Goldman Sachs", title: "2027 Investment Banking Summer Analyst", when: "now" },
+              { bankKey: "ms", bank: "Morgan Stanley", title: "2027 Sales & Trading Summer Analyst", when: "4m ago" },
+            ].map((job) => (
+              <div key={job.bankKey} className="st-text">
+                <span className="st-text-icon">{SMS_ICON}</span>
+                <div>
+                  <div className="st-text-head"><strong>Pete&rsquo;s Postings</strong><span>{job.when}</span></div>
+                  <p><BankLogo bankKey={job.bankKey} bank={job.bank} size={14} /> {job.bank} just posted: {job.title}. Apply &rarr;</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-        <section className="pp-plans pp-plans-one">
-          <div className="pp-plan pp-plan-pro">
-            <span className="pp-banner">Premium</span>
-            <p className="pp-plan-name">Apply first.</p>
-            <p className="pp-price">
-              ${PLANS.monthly.price}
-              <span>/month</span>
+          <div className="pw-body">
+            <h1 className="pw-title">{alertLocked ? "To open alerts, you need Premium." : "Your application, first in the stack."}</h1>
+            <p className="pw-sub">A text the second your role posts at {BANK_COUNT} banks. You apply before the crowd even sees it.</p>
+
+            <div className="pw-plans" role="radiogroup" aria-label="Plan">
+              <button type="button" role="radio" aria-checked={plan === "premium"} className={`pw-plan${plan === "premium" ? " on" : ""}`} onClick={() => setPlan("premium")}>
+                {!isSubscribed && !inTrial && <span className="pw-badge">3 days free</span>}
+                <span className="pw-plan-left">
+                  <strong>Premium</strong>
+                  <span>{isSubscribed || inTrial ? "You have Premium" : "Texts, Recent postings, save & track"}</span>
+                </span>
+                <span className="pw-plan-price">${PLANS.monthly.price}/mo</span>
+              </button>
+              {!alertLocked && (
+                <button type="button" role="radio" aria-checked={plan === "club"} className={`pw-plan${plan === "club" ? " on" : ""}`} onClick={() => setPlan("club")}>
+                  <span className="pw-plan-left">
+                    <strong>Finance club</strong>
+                    <span>Premium for every member</span>
+                  </span>
+                  <span className="pw-plan-price">$50/mo</span>
+                </button>
+              )}
+            </div>
+
+            <p className="pw-fine">
+              {plan === "club" ? "One invoice for the club. Members verify with their school email."
+                : isSubscribed ? "Manage billing from your account menu."
+                : "Cancel anytime. Secure checkout with Stripe."}
             </p>
-            {(!alertLocked || isSubscribed || inTrial) && (
-              <p className="pp-billed">
-                {isSubscribed || inTrial ? "You have Premium."
-                  : "Every new account gets Premium free for 3 days."}
-              </p>
-            )}
-            {isSubscribed ? null : isSignedIn ? (
-              <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
+
+            {plan === "club" ? (
+              <button className="pw-cta" onClick={() => { setShowInquiry(true); capture("club_inquiry_opened"); }}>Talk to us</button>
+            ) : isSubscribed ? null : isSignedIn ? (
+              <button className="pw-cta" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
                 {checkoutLoading ? "Redirecting…" : inTrial ? "Keep Premium" : "Get Premium"}
               </button>
             ) : alertLocked ? (
               // They already have an account (the alert came to them): sign in, then straight to checkout.
               <SignInButton mode="modal" forceRedirectUrl="/pricing?checkout=monthly" signUpForceRedirectUrl="/pricing?checkout=monthly">
-                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false, from: "alert_link" })}>Get Premium</button>
+                <button className="pw-cta" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false, from: "alert_link" })}>Get Premium</button>
               </SignInButton>
             ) : (
               <SignUpButton mode="modal" forceRedirectUrl="/start?setup=1" signInForceRedirectUrl="/pricing">
-                <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free</button>
+                <button className="pw-cta" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free</button>
               </SignUpButton>
             )}
-            {!isSubscribed && <p className="pp-fine">Cancel anytime. Secure checkout with Stripe.</p>}
-            <p className="pp-includes">Premium includes</p>
-            <ul className="pp-list">
-              <li><strong>Unlimited</strong> text messages</li>
-              <li><strong>Unlimited</strong> access to Recent postings</li>
-              <li>Save jobs</li>
-              <li>Track applications</li>
-              <li>Request banks for us to add</li>
-            </ul>
+            {!isSubscribed && <Link href="/jobs" className="pw-later">Maybe later</Link>}
           </div>
         </section>
-        </div>
 
         {!alertLocked && <>
-        <section className="pp-club">
-          <div className="pp-club-copy">
-            <p className="pp-plan-name">For finance clubs</p>
-            <h2 className="pp-club-title">Premium for your whole club.</h2>
-            <p className="pp-club-desc">Every member gets full Premium access and verifies with their school email. One invoice for the club.</p>
-          </div>
-          <div className="pp-club-side">
-            <p className="pp-club-label">Club plan</p>
-            <p className="pp-price">$50<span>/month</span></p>
-            <button className="pp-club-link" onClick={() => { setShowInquiry(true); capture("club_inquiry_opened"); }}>Talk to us &rarr;</button>
-          </div>
-        </section>
-
         <section className="ss-faq pp-faq">
           <h2 className="ss-h2">Questions</h2>
           {[

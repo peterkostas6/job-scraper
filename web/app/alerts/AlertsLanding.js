@@ -73,7 +73,7 @@ export default function AlertsLanding() {
             </>
           )}
         </p>
-        <Link href="/jobs?bank=all" className="lp-browse">or browse jobs &rarr;</Link>
+        <Link href="/jobs" className="lp-browse">or browse jobs &rarr;</Link>
 
         <HowItWorksDemo />
 

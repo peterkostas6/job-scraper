@@ -4,11 +4,10 @@
 // Desktop: a card under the filters (what you hear about | how we reach you).
 // Phones: a bottom sheet, one column. Every choice is visible at once: no accordions.
 import Link from "next/link";
-import { BANKS } from "@/lib/banks";
-import BankLogo from "@/lib/bank-logo";
 import { AREAS, CITIES } from "@/lib/alert-options";
 import { LEVELS, levelsFromPrefs } from "@/lib/levels";
 import { FIRM_LABEL } from "@/lib/firms";
+import FirmPicker from "@/app/FirmPicker";
 
 const formatPhone = (raw) => {
   const d = (raw || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
@@ -80,15 +79,11 @@ export default function AlertsPanel({
                   <p className="alx-label">Banks</p>
                   <div className="alx-chips">
                     <button className="alx-chip" aria-pressed={!showBanks} onClick={() => { onPickBanks(false); onChange({ banks: [] }); }}>All {FIRM_LABEL} firms</button>
-                    <button className="alx-chip" aria-pressed={showBanks} onClick={() => onPickBanks(true)}>Choose banks</button>
+                    <button className="alx-chip" aria-pressed={showBanks} onClick={() => onPickBanks(true)}>Choose firms</button>
                   </div>
                   {showBanks && (
-                    <div className="alx-chips alx-banks">
-                      {Object.entries(BANKS).map(([key, bank]) => (
-                        <button key={key} className="alx-chip" aria-pressed={prefs.banks.includes(key)} onClick={() => onToggleBank(key)}>
-                          <BankLogo bankKey={key} size={16} />{bank.shortName}
-                        </button>
-                      ))}
+                    <div className="alx-banks">
+                      <FirmPicker chipClass="alx-chip" searchClass="firm-search alx-input" on={(k) => prefs.banks.includes(k)} onPick={onToggleBank} />
                     </div>
                   )}
                 </div>

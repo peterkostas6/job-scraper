@@ -11,6 +11,7 @@ import { decodeEntities } from "@/lib/text";
 import { JOB_TYPES as ALERT_JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
 import { jobLevel, LEVEL_LABEL, LEVELS } from "@/lib/levels";
 import { ALL_FIRMS, FIRM_TYPES, FIRM_COUNT } from "@/lib/firms";
+import FirmPicker from "@/app/FirmPicker";
 import { track } from "@/lib/track";
 import { capture } from "@/lib/analytics";
 import { useTrackSignup } from "@/lib/use-track-signup";
@@ -1898,9 +1899,9 @@ export default function Home() {
   // Registry firms (lib/firm-registry.js) appear under their type once they have open roles,
   // most roles first; each type shows its top firms until "Show all" is clicked.
   const byCount = (keys) => [...keys].sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0));
-  const extraOfType = (type) => byCount(Object.keys(ALL_FIRMS).filter((k) => !BANKS[k] && ALL_FIRMS[k].type === type && bankCounts[k] > 0));
+  const extraOfType = (type) => byCount(Object.keys(ALL_FIRMS).filter((k) => !BANKS[k] && ALL_FIRMS[k].type === type));
   const bankGroups = bankQuery
-    ? [{ label: null, keys: byCount(Object.keys(ALL_FIRMS).filter((k) => matchesBank(ALL_FIRMS[k]) && (BANKS[k] || bankCounts[k] > 0))) }]
+    ? [{ label: null, keys: byCount(Object.keys(ALL_FIRMS).filter((k) => matchesBank(ALL_FIRMS[k]))) }]
     : [
         { label: "Bulge bracket", keys: orderBanks(BULGE) },
         { label: "More banks", keys: orderBanks([...Object.keys(BANKS).filter((k) => !BULGE.includes(k)), ...extraOfType("bank")]) },
@@ -2497,20 +2498,25 @@ export default function Home() {
                 <div className="mfs-sec">
                   <div className="mfs-h-row">
                     <p className="mfs-h">Firm</p>
-                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>See all {Object.keys(bankCounts).filter((k) => bankCounts[k] > 0).length}</button>}
+                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>See all {FIRM_COUNT}</button>}
                   </div>
-                  {sheetAllBanks && (
-                    <input className="mfs-search" type="search" placeholder="Search firms" aria-label="Search firms" value={bankSearch} onChange={(e) => setBankSearch(e.target.value)} />
-                  )}
-                  <div className={`mfs-banks${sheetAllBanks ? " mfs-grid" : " mfs-row"}`}>
+                  {sheetAllBanks ? (
+                    <div className="mfs-firms">
+                      <button className={`mfs-bank mfs-chip${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All firms</button>
+                      <FirmPicker chipClass="mfs-bank mfs-chip" searchClass="firm-search mfs-search" counts={bankCounts} on={(k) => activeBank === k}
+                        onPick={(k) => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(k); }} />
+                    </div>
+                  ) : (
+                  <div className="mfs-banks mfs-row">
                     <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All</button>
                     {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
-                    {(() => { const ranked = Object.keys(ALL_FIRMS).filter((k) => bankCounts[k] > 0 && matchesBank(ALL_FIRMS[k])).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)); return sheetAllBanks ? ranked : ranked.slice(0, 6); })().map((key) => (
+                    {Object.keys(ALL_FIRMS).filter((k) => bankCounts[k] > 0).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)).slice(0, 6).map((key) => (
                       <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
                         <BankLogo bankKey={key} bank={ALL_FIRMS[key].name} size={18} />{ALL_FIRMS[key].shortName || ALL_FIRMS[key].name}
                       </button>
                     ))}
                   </div>
+                  )}
                 </div>
                 {availableCategories.length > 0 && (
                   <div className="mfs-sec">

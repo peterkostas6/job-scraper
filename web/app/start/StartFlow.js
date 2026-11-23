@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { capture } from "@/lib/analytics";
 import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
-import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { AREAS, CITIES } from "@/lib/alert-options";
@@ -12,7 +11,8 @@ import { LEVELS, DEFAULT_ALERT_LEVELS, LEVEL_KEYS } from "@/lib/levels";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { track } from "@/lib/track";
 import { PLANS } from "@/lib/plans";
-import { FIRM_LABEL } from "@/lib/firms";
+import { FIRM_LABEL, ALL_FIRMS } from "@/lib/firms";
+import FirmPicker from "@/app/FirmPicker";
 
 const STORAGE_KEY = "pp-start-v3";
 
@@ -20,8 +20,8 @@ const STORAGE_KEY = "pp-start-v3";
 // steps (banks, roles, location, where to reach you). Step 4's Save preferences turns the
 // alerts on (signed-out visitors make a free account first) and they land on Alerts; saving
 // with a phone number sends the welcome text.
-const STEP_LABELS = ["What banks?", "What roles?", "What location?", "Where should we alert you?"];
-const STEP_NAMES = ["Banks", "Roles", "Location", "Alerts go to"];
+const STEP_LABELS = ["What firms?", "What roles?", "What location?", "Where should we alert you?"];
+const STEP_NAMES = ["Firms", "Roles", "Location", "Alerts go to"];
 // Every step starts ready, so Next works right away: all banks, internships and entry-level
 // roles, any area, anywhere. Picking something changes it.
 const EMPTY = { banks: [], areas: [], levels: DEFAULT_ALERT_LEVELS, city: "" };
@@ -51,7 +51,7 @@ function describe(a) {
   const area = areas.length === 0 ? "" : areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(" or ") + " ";
   const lv = a.levels?.length ? a.levels : DEFAULT_ALERT_LEVELS;
   const type = lv.length === 1 && lv[0] === "intern" ? "internships" : lv.length === LEVEL_KEYS.length ? "roles" : `${lv.map((k) => LEVELS.find((l) => l.key === k)?.label.toLowerCase()).join(" and ")} roles`;
-  const banks = !a.banks?.length ? `all ${FIRM_LABEL} firms` : a.banks.length === 1 ? BANKS[a.banks[0]].name : `${a.banks.length} banks`;
+  const banks = !a.banks?.length ? `all ${FIRM_LABEL} firms` : a.banks.length === 1 ? ALL_FIRMS[a.banks[0]]?.name : `${a.banks.length} firms`;
   return `${area}${type} at ${banks}${a.city ? ` in ${a.city}` : ""}`;
 }
 
@@ -291,7 +291,7 @@ export default function StartFlow({ embedded = false, openSignal = 0, setup = fa
 
   // One-line answers for the steps that are done.
   const summaries = [
-    !answers.banks ? "" : answers.banks.length === 0 ? `All ${FIRM_LABEL} firms` : answers.banks.map((k) => BANKS[k]?.shortName).join(", "),
+    !answers.banks ? "" : answers.banks.length === 0 ? `All ${FIRM_LABEL} firms` : answers.banks.map((k) => ALL_FIRMS[k]?.shortName || ALL_FIRMS[k]?.name).join(", "),
     !answers.areas ? "" : `${(answers.levels || []).map((k) => LEVELS.find((l) => l.key === k)?.label).join(", ") || "No level"} \u00b7 ${answers.areas.length === 0 ? "Open to anything" : answers.areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(", ")}`,
     answers.city === null ? "" : answers.city || "Anywhere",
     reached >= 5 ? [formatPhone(phone), email.trim()].filter(Boolean).join(" \u00b7 ") : "",
@@ -366,11 +366,7 @@ export default function StartFlow({ embedded = false, openSignal = 0, setup = fa
                 {/* Scrolls inside its own box so the Next button below is always on screen. */}
                 <div className="sf-pills sf-pills-scroll">
                   <button className="sf-pill sf-pill-strong" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => set({ banks: [] })}>All {FIRM_LABEL} firms</button>
-                  {Object.entries(BANKS).map(([key, b]) => (
-                    <button key={key} className="sf-pill" aria-pressed={(answers.banks || []).includes(key)} onClick={() => toggle("banks", key)}>
-                      <BankLogo bankKey={key} size={16} />{b.shortName}
-                    </button>
-                  ))}
+                  <FirmPicker chipClass="sf-pill" searchClass="firm-search sf-firm-search" on={(k) => (answers.banks || []).includes(k)} onPick={(k) => toggle("banks", k)} />
                 </div>
                 <button className="sf-next" disabled={answers.banks === null} onClick={() => reveal(2)}>Next</button>
                             </>

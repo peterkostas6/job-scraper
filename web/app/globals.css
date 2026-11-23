@@ -7051,3 +7051,12 @@ footer a, .footer a { color: var(--pp-cream); }
 }
 /* Level is the quickest decision, so it leads the filter panel (it replaced Type). */
 .mfs-sec:has(.mfs-levels) { order: -1; }
+
+/* Long job lists: 100 rows at a time; this loads the next batch (auto when scrolled near). */
+.show-more { display: block; width: 100%; min-height: 52px; border: 0; border-top: 1px solid rgba(20, 33, 61, 0.08); background: transparent; font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--pp-navy); cursor: pointer; }
+.show-more:hover { background: rgba(20, 33, 61, 0.04); }
+/* Sidebar: "Show all N" under a firm-type group. */
+.sidebar-more { display: block; width: 100%; padding: 0.35rem 0.75rem 0.6rem; border: 0; background: none; font: inherit; font-size: 0.78rem; font-weight: 600; color: rgba(244, 237, 224, 0.7); text-align: left; cursor: pointer; }
+.sidebar-more:hover { color: var(--pp-cream); }
+/* Filter panel: search box above the full firm grid. */
+.mfs-search { width: 100%; min-height: 42px; margin-bottom: 0.5rem; padding: 0 0.85rem; border: 1px solid rgba(20, 33, 61, 0.16); border-radius: 12px; background: #FBF7EF; font: inherit; color: var(--pp-navy); }

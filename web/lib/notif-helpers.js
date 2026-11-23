@@ -206,10 +206,17 @@ export function isAnalystOrIntern(title) {
   return /analyst/i.test(title) || isInternship(title);
 }
 
+// Retail-branch and back-office roles that big banks and insurers post by the hundred.
+const NOT_CAREER_FINANCE = /\bteller\b|\bbranch\b|personal banker|universal banker|relationship banker|\bcall cent(er|re)\b|contact cent(er|re)|customer (service|care|support)|\bcollections?\b|\bclaims?\b|\bnurse\b|\bdriver\b|receptionist|administrative assistant|executive assistant|facilities|security officer|sales associate|\bstore\b|warehouse|mortgage loan officer|loan officer assistant|\brecruit(er|ing)\b|\bpayroll\b/i;
+// The title names a finance job: a function, an asset class or a markets word.
+const FINANCE_FUNCTION = /analyst|associate|invest|portfolio|trad(er|ing)|quant|research|\brisk\b|credit|underwrit|actuar|treasury|capital|markets?\b|banking|banker|financ|accounting|accountant|\baudit|\btax\b|valuation|m&a|merger|wealth|advis[eo]r|\bfunds?\b|\basset|equit(y|ies)|fixed income|derivative|structured|lending|\bloans?\b|economist|strateg|compliance|controller|fp&a|pricing|\brates\b|\bfx\b|commodit|securities|brokerage|private (credit|equity|bank|markets|wealth)|real estate|restructuring|leveraged|syndicat|coverage|origination|\bdeal|fiduciary|custody|clearing|settlement|reconciliation|operations analyst|data analyst/i;
+
 // Every list, count and the alert cron use this: finance roles at any experience level.
-// (Levels are sorted by lib/levels.js; tech roles like software engineering stay out.)
+// (Levels are sorted by lib/levels.js; tech roles like software engineering stay out, and
+// so do the branch/claims/call-centre roles big retail banks and insurers post in bulk.)
 export function isListedRole(title) {
-  return Boolean(title) && isFinanceRole(title);
+  if (!title || !isFinanceRole(title) || NOT_CAREER_FINANCE.test(title)) return false;
+  return FINANCE_FUNCTION.test(title) || isInternship(title) || /\bprogram(me)?\b|\bgraduate\b/i.test(title);
 }
 
 // Returns true for entry-level banking roles worth showing.

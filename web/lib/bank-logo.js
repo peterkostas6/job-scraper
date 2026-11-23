@@ -1,4 +1,5 @@
 import { BANKS } from "@/lib/banks";
+import { ALL_FIRMS } from "@/lib/firms";
 
 // Bank logo tile (TrustMRR-style), used everywhere a bank or job shows up. Icons live in
 // public/banks/<key>.png. Banks without a sharp icon (BlackRock) or unknown banks get their
@@ -6,7 +7,7 @@ import { BANKS } from "@/lib/banks";
 const HAS_LOGO = new Set(["jpmc", "gs", "ms", "bofa", "citi", "db", "barclays", "wells", "mufg", "td", "mizuho", "bmo", "hl", "guggenheim", "macquarie", "piper", "stifel", "blackstone", "jefferies", "ubs", "evercore", "lazard", "moelis", "pjt", "pwp", "williamblair", "lincoln", "leerink", "raine", "ardea", "raymondjames", "truist", "pnc", "santander", "cibc", "rbc", "scotiabank", "rothschild", "schwab"]);
 
 export function bankKeyOf(bankKey, bankName) {
-  if (bankKey && BANKS[bankKey]) return bankKey;
+  if (bankKey && ALL_FIRMS[bankKey]) return bankKey;
   return Object.keys(BANKS).find((k) => BANKS[k].name === bankName) || null;
 }
 
@@ -16,5 +17,5 @@ export default function BankLogo({ bankKey, bank, size = 20, className = "" }) {
   if (HAS_LOGO.has(key)) {
     return <img className={`bank-logo ${className}`} style={style} src={`/banks/${key}.png`} alt="" width={size} height={size} loading="lazy" />;
   }
-  return <span className={`bank-logo bank-logo-letter ${className}`} style={style} aria-hidden="true">{(bank || BANKS[key]?.name || "?").slice(0, 1)}</span>;
+  return <span className={`bank-logo bank-logo-letter ${className}`} style={style} aria-hidden="true">{(bank || ALL_FIRMS[key]?.name || "?").slice(0, 1)}</span>;
 }

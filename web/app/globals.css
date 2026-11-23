@@ -7043,3 +7043,9 @@ footer a, .footer a { color: var(--pp-cream); }
   .mfs-go:hover { background: var(--pp-coral-hover); }
 }
 @media (min-width: 769px) { .mfs { width: min(680px, 92vw); } .mfs-banks:not(.mfs-areas):not(.mfs-grid) .mfs-bank { width: 80px; } }
+
+/* Phones: iPhone Safari zooms into any text field under 16px when it's tapped (Request a bank,
+   City in Filters, club inquiry, alert settings). 16px everywhere stops the zoom. */
+@media (max-width: 900px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
+}

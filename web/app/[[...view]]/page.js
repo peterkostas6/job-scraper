@@ -1,6 +1,6 @@
 "use client";
 
-import { useNavMenuLock } from "@/lib/use-nav-menu";
+import { useNavMenuLock, usePullToRefresh } from "@/lib/use-nav-menu";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
@@ -456,7 +456,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
           Apply before everyone else.
         </p>
         <div className="ss-discover-row" ref={heroCtaRef} data-reveal>
-          <Link href="/jobs?bank=all" className="ss-discover" onClick={() => capture("home_cta_clicked", { where: "hero_browse" })}>
+          <Link href="/jobs" className="ss-discover" onClick={() => capture("home_cta_clicked", { where: "hero_browse" })}>
             Browse {browseCount > 0 ? `${browseCount.toLocaleString()} ` : ""}open roles <span aria-hidden="true">&rarr;</span>
           </Link>
         </div>
@@ -842,7 +842,7 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
           </div>
         </div>
       </div>
-      <p className="rl-browse">Or <Link href="/jobs?bank=all" className="text-link">browse every open role</Link> for free.</p>
+      <p className="rl-browse">Or <Link href="/jobs" className="text-link">browse every open role</Link> for free.</p>
     </div>
   );
 }
@@ -1337,9 +1337,11 @@ export default function Home() {
   }, []);
   useEffect(() => {
     if (typeof window === "undefined" || window.location.pathname !== "/jobs") return;
+    // All banks is the default, so it gets no parameter: /jobs, not /jobs?bank=all.
     const url = new URL(window.location.href);
-    if (url.searchParams.get("bank") !== activeBank) {
-      url.searchParams.set("bank", activeBank);
+    const want = activeBank === "all" ? null : activeBank;
+    if (url.searchParams.get("bank") !== want) {
+      if (want) url.searchParams.set("bank", want); else url.searchParams.delete("bank");
       window.history.replaceState(null, "", url);
     }
   }, [activeBank]);
@@ -1347,6 +1349,10 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [allJobs, setAllJobs] = useState([]);
+  // Pull-to-refresh (phones) bumps this; the job loaders below re-run when it changes.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [accountOpen, setAccountOpen] = useState(false);
+  useNavMenuLock(accountOpen, () => setAccountOpen(false));
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1598,7 +1604,7 @@ export default function Home() {
         setError(err.message);
         setLoading(false);
       });
-  }, [isLoaded]);
+  }, [isLoaded, refreshKey]);
 
   // Fetch recent postings data when that view is opened
   useEffect(() => {
@@ -1611,7 +1617,7 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setNewPostingsLoading(false));
-  }, [viewNewPostings]);
+  }, [viewNewPostings, refreshKey]);
 
   // Show the active bank's jobs from the loaded list
   useEffect(() => {
@@ -1715,6 +1721,8 @@ export default function Home() {
     fetch("/api/job-status").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.statuses) setJobStatus(d.statuses); }).catch(() => {});
   }, [isSignedIn]);
   // There is no Alerts page any more: alerts are a panel on Browse. Signed out, alerts start at /start.
+  usePullToRefresh(!viewHome && !viewAbout, () => { setRefreshKey((k) => k + 1); capture("pull_to_refresh"); });
+
   function openAlerts() {
     if (!isSignedIn) { router.push("/start"); return; }
     // Recent postings opens the panel in place; anywhere else goes to Browse, where it lives.
@@ -2153,6 +2161,77 @@ export default function Home() {
           </button>
         </div>
       </nav>
+
+      {/* Phones: bottom tab bar (Jakob's law: the layout every app uses). Five tabs, Jobs far
+          left, Account far right, the main action (alerts) raised in the middle. */}
+      <div className="tabbar" role="navigation" aria-label="Main">
+        <Link href="/jobs" className={`tab${view === "browse" && !alertsPanelOpen ? " is-on" : ""}`} aria-current={view === "browse" && !alertsPanelOpen ? "page" : undefined}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></svg>
+          <span>Jobs</span>
+        </Link>
+        <Link href="/recent" className={`tab${viewNewPostings ? " is-on" : ""}`} aria-current={viewNewPostings ? "page" : undefined}>
+          {isSignedIn && isSubscribed ? (
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          ) : (
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          )}
+          <span>Recent</span>
+        </Link>
+        <button className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label="Text alerts">
+          <span className="tab-main-dot">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          </span>
+          <span>Alerts</span>
+        </button>
+        <button
+          className={`tab${viewingSaved && !viewNotifications ? " is-on" : ""}`}
+          onClick={() => {
+            if (!isSignedIn) { askToSignUp("save"); return; }
+            setAlertsPanelOpen(false); setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+          }}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span>Saved</span>
+        </button>
+        <button className={`tab${accountOpen ? " is-on" : ""}`} onClick={() => setAccountOpen(true)} aria-haspopup="dialog">
+          {isSignedIn && user?.imageUrl ? <img className="tab-avatar" src={user.imageUrl} alt="" /> : (
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+          )}
+          <span>{isSignedIn ? "Account" : "Sign in"}</span>
+        </button>
+      </div>
+
+      {accountOpen && (
+        <div className="acct-wrap" role="dialog" aria-modal="true" aria-label="Account">
+          <button className="acct-shade" aria-label="Close" onClick={() => setAccountOpen(false)} />
+          <div className="acct" onClick={(e) => { if (e.target.closest("a, button")) setAccountOpen(false); }}>
+            <span className="acct-grip" aria-hidden="true" />
+            {isSignedIn ? (
+              <div className="acct-head">
+                {user?.imageUrl && <img src={user.imageUrl} alt="" />}
+                <div>
+                  <strong>{user?.fullName || user?.primaryEmailAddress?.emailAddress}</strong>
+                  <span>{isSubscribed ? "Premium" : "Free account"}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="acct-actions">
+                <button className="acct-primary" onClick={() => clerk.openSignIn({})}>Sign in</button>
+                <button className="acct-secondary" onClick={() => clerk.openSignUp({ forceRedirectUrl: "/start?setup=1" })}>Create account</button>
+              </div>
+            )}
+            <div className="acct-list">
+              {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
+              {isSignedIn && user?.publicMetadata?.stripeCustomerId && <button onClick={openBillingPortal}>Manage subscription</button>}
+              {!isSubscribed && <Link href="/pricing">Get Premium</Link>}
+              <button onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
+              <Link href="/about">About</Link>
+              <Link href="/">Home</Link>
+              {isSignedIn && <button className="acct-out" onClick={() => clerk.signOut({ redirectUrl: "/jobs" })}>Sign out</button>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {viewHome && !viewAbout && !viewNewPostings && (
         <HomePage

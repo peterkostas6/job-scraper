@@ -6736,3 +6736,92 @@ footer a, .footer a { color: var(--pp-cream); }
 @media (max-width: 899px) { .pw-art { flex-grow: 2; } }
 /* Desktop has the site nav, so no close (X) on the pricing split screen. */
 @media (min-width: 900px) { .pw-close { display: none; } }
+
+/* ---- Phones: bottom tab bar (Nov 23, Jakob's law video) ----
+   Jobs · Recent · [Alerts] · Saved · Account. Top bar is just the logo; the ☰ menu, the
+   pill row and the separate alerts button are gone on phones because the tabs cover them. */
+.tabbar, .acct-wrap, .ptr { display: none; }
+@media (max-width: 900px) {
+  :root { --tabbar-h: calc(62px + env(safe-area-inset-bottom)); }
+  body:has(.tabbar) { padding-bottom: var(--tabbar-h); }
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+    display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
+    height: var(--tabbar-h); padding: 0 0.25rem env(safe-area-inset-bottom);
+    background: rgba(20, 33, 61, 0.94); border-top: 1px solid rgba(244, 237, 224, 0.1);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    height: 62px; border: 0; background: none; font: inherit; text-decoration: none; cursor: pointer;
+    color: rgba(244, 237, 224, 0.72); -webkit-tap-highlight-color: transparent;
+  }
+  .tab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .tab span { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.01em; }
+  .tab.is-on { color: var(--pp-cream); }
+  .tab.is-on svg { stroke-width: 2.3; }
+  .tab:active { transform: scale(0.94); }
+  .tab-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1.5px rgba(244, 237, 224, 0.5); }
+  .tab.is-on .tab-avatar { box-shadow: 0 0 0 2px var(--pp-cream); }
+  /* The main action, raised in the middle. */
+  .tab-main { justify-content: flex-end; padding-bottom: 7px; }
+  .tab-main-dot {
+    display: grid; place-items: center; width: 52px; height: 52px; margin-top: -22px; border-radius: 50%;
+    background: var(--pp-coral); color: var(--pp-navy);
+    box-shadow: 0 0 0 4px var(--pp-navy), 0 10px 22px -8px rgba(255, 107, 91, 0.7);
+  }
+  .tab-main-dot svg { width: 24px; height: 24px; stroke-width: 2.2; }
+  .tab-main > span:last-child { margin-top: 1px; }
+  .tab-main.is-on > span:last-child { color: var(--pp-cream); }
+
+  /* Top bar: logo only on phones. */
+  nav:has(+ .tabbar) .nav-right, nav:has(+ .tabbar) .nav-menu-btn, nav:has(+ .tabbar) .nav-center { display: none !important; }
+  nav:has(+ .tabbar) .logo-text { display: inline; }
+  /* Pill row (Last 48h / Saved / Alerts / Request) and the extra alerts button: the tabs do these now. */
+  .mobile-top-bar-pro-row, .mfb-alerts { display: none !important; }
+  .mfb-bar { flex: 1; }
+
+  /* Account sheet (far-right tab). */
+  .acct-wrap { display: block; position: fixed; inset: 0; z-index: 80; }
+  .acct-shade { position: absolute; inset: 0; border: 0; background: rgba(5, 10, 22, 0.55); cursor: pointer; animation: acct-fade 200ms ease both; }
+  .acct {
+    position: absolute; left: 0; right: 0; bottom: 0; max-height: 85vh; overflow-y: auto;
+    padding: 0.5rem 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0; background: var(--pp-cream); color: var(--pp-navy);
+    animation: acct-up 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .acct-grip { display: block; width: 40px; height: 5px; margin: 0.25rem auto 1rem; border-radius: 3px; background: rgba(20, 33, 61, 0.2); }
+  .acct-head { display: flex; align-items: center; gap: 0.85rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(20, 33, 61, 0.1); }
+  .acct-head img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+  .acct-head strong { display: block; font-size: 1.05rem; }
+  .acct-head span { font-size: 0.85rem; color: rgba(20, 33, 61, 0.74); }
+  .acct-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(20, 33, 61, 0.1); }
+  .acct-primary, .acct-secondary { min-height: 50px; border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer; }
+  .acct-primary { border: 0; background: var(--pp-navy); color: var(--pp-cream); }
+  .acct-secondary { border: 1.5px solid rgba(20, 33, 61, 0.25); background: transparent; color: var(--pp-navy); }
+  .acct-list { display: flex; flex-direction: column; }
+  .acct-list > a, .acct-list > button {
+    display: flex; align-items: center; min-height: 54px; padding: 0 0.25rem; border: 0; border-bottom: 1px solid rgba(20, 33, 61, 0.08);
+    background: none; font: inherit; font-size: 1.02rem; font-weight: 600; color: var(--pp-navy); text-align: left; text-decoration: none; cursor: pointer;
+  }
+  .acct-list > :last-child { border-bottom: 0; }
+  .acct-out { color: #b42318 !important; }
+
+  /* Pull-to-refresh pill. */
+  .ptr {
+    display: block; position: fixed; top: 64px; left: 50%; z-index: 65; transform: translate(-50%, -50px); opacity: 0;
+    padding: 0.45rem 0.9rem; border-radius: 999px; background: var(--pp-cream); color: var(--pp-navy);
+    font-size: 0.8rem; font-weight: 700; box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.6); pointer-events: none;
+    transition: opacity 150ms ease;
+  }
+}
+@keyframes acct-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes acct-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .acct, .acct-shade { animation: none; } }
+@media (max-width: 900px) { .results-bar .saved-toggle { display: none; } }
+@media (max-width: 900px) { .results-bar:not(:has(> :not(.saved-toggle))) { display: none; } }
+@media (max-width: 900px) {
+  /* Both are empty on phones (filters live in the filter sheet, Saved is a tab); drop their margins. */
+  .content > .filters-container:not(:has(> :not(.filters-toggle-mobile):not(.filters))) { display: none; }
+  .content > .results-bar:has(> .results-text:empty) { display: none; }
+}

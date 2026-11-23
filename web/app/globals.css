@@ -6932,3 +6932,49 @@ footer a, .footer a { color: var(--pp-cream); }
   .acct-list > .acct-upgrade { justify-content: space-between; color: var(--pp-navy); }
   .acct-upgrade span { padding: 0.25rem 0.6rem; border-radius: 999px; background: var(--pp-coral); font-size: 0.8rem; font-weight: 700; }
 }
+
+/* ---- Locked newest roles on phones: one grouped card ----
+   Header, compact rows with clean redaction bars (not a 4-line blur), bank · city and the
+   coral posted time still visible, and one Unlock for the group. Desktop is unchanged. */
+.locked-group { display: contents; }
+.locked-head, .locked-cta { display: none; }
+@media (max-width: 900px) {
+  .locked-group {
+    display: block; margin: 0 0 0.75rem; overflow: hidden; border-radius: 18px;
+    background: #EFE5D3; box-shadow: inset 0 0 0 1px rgba(20, 33, 61, 0.08);
+  }
+  .locked-head {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1rem 0.35rem;
+    font-size: 0.85rem; font-weight: 600; color: var(--pp-navy);
+  }
+  .locked-head b { color: var(--pp-coral); font-weight: 800; }
+  .locked-group .job-row-locked {
+    display: grid !important; grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-areas: "logo title time" "logo meta time";
+    align-items: center; column-gap: 0.75rem; row-gap: 0.3rem; padding: 0.7rem 1rem !important; min-height: 0 !important;
+    background: transparent; border-bottom: 1px solid rgba(20, 33, 61, 0.07);
+  }
+  .locked-group .job-row-locked > :not(.job-logo):not(.job-title):not(.job-meta-mobile):not(.job-posted) { display: none !important; }
+  .locked-group .job-row-locked .job-logo { grid-area: logo; width: 36px !important; height: 36px !important; }
+  .locked-group .job-row-locked .job-title { grid-area: title; display: block; }
+  .locked-group .job-row-locked .job-meta-mobile { grid-area: meta; display: block; font-size: 0.8rem; color: rgba(20, 33, 61, 0.74); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .locked-group .job-row-locked .job-posted { grid-area: time; align-self: center; font-size: 0.8rem; }
+  /* Redaction: two rounded bars in place of the title (the real title stays out of view). */
+  .locked-group .job-locked-title {
+    display: block; height: 10px; width: 88%; overflow: hidden; color: transparent; filter: none;
+    border-radius: 6px; background: rgba(20, 33, 61, 0.16);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  .locked-group .job-row-locked:nth-of-type(odd) .job-locked-title { width: 72%; }
+  .locked-group .job-row-locked .ss-new, .locked-group .job-row-locked .sr-only + .ss-new { display: none; }
+  .locked-cta {
+    display: flex; align-items: center; justify-content: center; min-height: 48px; margin: 0.75rem 1rem 1rem; border-radius: 999px;
+    background: var(--pp-coral); color: var(--pp-navy); font-size: 0.92rem; font-weight: 700; text-decoration: none;
+  }
+}
+@media (max-width: 900px) {
+  .locked-group { margin: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid rgba(20, 33, 61, 0.1); }
+  .locked-group .job-row-locked .job-logo { margin: 0 !important; position: static !important; }
+  .locked-group .job-locked-title { text-shadow: none !important; -webkit-text-fill-color: transparent; font-size: 0 !important; line-height: 0; }
+  .locked-group .job-row-locked:last-of-type { border-bottom: 0; }
+}
+@media (max-width: 900px) { .locked-group .job-row-locked .job-logo { grid-row: 1 / span 2; align-self: center !important; transform: none !important; top: auto !important; } .locked-head { padding-bottom: 0.5rem; } }

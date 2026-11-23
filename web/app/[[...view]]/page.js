@@ -2149,8 +2149,11 @@ export default function Home() {
             )}
           </div>
           {/* Phones (pages with the tab bar): account top right, like every app's header. */}
-          {/* Non-paying (incl. signed out): an always-visible way to upgrade. */}
-          {!viewHome && isLoaded && !isSubscribed && (
+          {/* Signed out: set up alerts (the sign-up path). Signed in but not paying: upgrade. */}
+          {!viewHome && isLoaded && !isSignedIn && (
+            <Link href="/start" className="nav-upgrade" onClick={() => capture("home_cta_clicked", { where: "nav_phone" })}>Set up alerts</Link>
+          )}
+          {!viewHome && isLoaded && isSignedIn && !isSubscribed && (
             <Link href="/pricing" className="nav-upgrade" onClick={() => capture("header_upgrade_clicked")}>Get Premium</Link>
           )}
           {!viewHome && (

@@ -6597,7 +6597,24 @@ footer a, .footer a { color: var(--pp-cream); }
     min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column;
   }
   .pw-close { top: max(0.75rem, env(safe-area-inset-top)); }
-  .pw-art { flex: 1 0 auto; justify-content: flex-end; padding-top: max(4.25rem, calc(env(safe-area-inset-top) + 3.5rem)); }
+  .pw-art { flex: 1 0 auto; gap: 0.5rem; padding: max(3.5rem, calc(env(safe-area-inset-top) + 3rem)) 1rem 2rem; }
+  .pw-art .st-text { padding: 0.6rem 0.75rem; border-radius: 16px; }
+  .pw-art .st-text:nth-child(2) { margin: 0 0.6rem; }
+  .pw-close { width: 36px; height: 36px; }
+  /* Spare height goes above the plans, so the button lands at the bottom (thumb zone), not as empty sky. */
+  .pw-body { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .pw-plans { margin-top: auto; padding-top: 1.25rem; }
+  .pw-title { font-size: 1.6rem; }
+  .pw-sub { font-size: 0.9rem; }
+  .pw-plan { min-height: 58px; padding: 0.75rem 0.9rem; }
+  .pw-fine { margin-top: 0.75rem; }
+  .pw-later { margin-top: 0.25rem; padding: 0.5rem; }
   .pw-body { padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
   .pw + .pp-faq { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+.pw-apply { white-space: nowrap; }
+/* Third alert: only on phones with room for it (and on desktop the card has two). */
+.pw-art .st-text:nth-child(3) { display: none; }
+@media (max-width: 899px) and (min-height: 760px) {
+  .pw-art .st-text:nth-child(3) { display: flex; margin: 0 1.2rem; opacity: 0.8; animation-delay: 320ms; }
 }

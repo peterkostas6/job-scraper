@@ -176,6 +176,7 @@ export default function PricingPage() {
   // Every account has Premium for its first 3 days (lib/alert-trial-days.js).
   const trial = user && !isSubscribed ? trialFor(user.createdAt) : null;
   const inTrial = Boolean(trial && !trial.over);
+  const trialDaysLeft = inTrial ? Math.max(1, Math.ceil((trial.endsAt - Date.now()) / 86400000)) : 0;
   // /pricing?alert=<code>: they tapped an alert after their 3 free days.
   const [alertLocked, setAlertLocked] = useState(false);
   useEffect(() => {
@@ -306,10 +307,10 @@ export default function PricingPage() {
 
             <div className="pw-plans" role="radiogroup" aria-label="Plan">
               <button type="button" role="radio" aria-checked={plan === "premium"} className={`pw-plan${plan === "premium" ? " on" : ""}`} onClick={() => setPlan("premium")}>
-                {!isSubscribed && !inTrial && <span className="pw-badge">3 days free</span>}
+                {inTrial && <span className="pw-badge">{trialDaysLeft} free {trialDaysLeft === 1 ? "day" : "days"} left</span>}
                 <span className="pw-plan-left">
                   <strong>Premium</strong>
-                  <span>{isSubscribed || inTrial ? "You have Premium" : "Texts, Recent postings, save & track"}</span>
+                  <span>{isSubscribed ? "You have Premium" : "Texts, Recent postings, save & track"}</span>
                 </span>
                 <span className="pw-plan-price">${PLANS.monthly.price}/mo</span>
               </button>
@@ -327,7 +328,7 @@ export default function PricingPage() {
             <p className="pw-fine">
               {plan === "club" ? "One invoice for the club. Members verify with their school email."
                 : isSubscribed ? "Change your plan or cancel anytime."
-                : "Cancel anytime. Secure checkout with Stripe."}
+                : "Billed monthly. Cancel anytime. Secure checkout with Stripe."}
             </p>
 
             {plan === "club" ? (
@@ -336,7 +337,7 @@ export default function PricingPage() {
               user?.publicMetadata?.stripeCustomerId ? <button className="pw-cta" onClick={openBillingPortal}>Manage subscription</button> : null
             ) : isSignedIn ? (
               <button className="pw-cta" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
-                {checkoutLoading ? "Redirecting…" : inTrial ? "Keep Premium" : "Get Premium"}
+                {checkoutLoading ? "Redirecting…" : "Get Premium"}
               </button>
             ) : alertLocked ? (
               // They already have an account (the alert came to them): sign in, then straight to checkout.
@@ -344,11 +345,20 @@ export default function PricingPage() {
                 <button className="pw-cta" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false, from: "alert_link" })}>Get Premium</button>
               </SignInButton>
             ) : (
-              <SignUpButton mode="modal" forceRedirectUrl="/start?setup=1" signInForceRedirectUrl="/pricing">
-                <button className="pw-cta" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free</button>
-              </SignUpButton>
+              // Signed out: straight to Stripe. Checkout works without an account (Stripe takes the
+              // email; the account is made after payment and /welcome signs them in).
+              <button className="pw-cta" onClick={() => { capture("pro_clicked", { billing: "monthly", signed_in: false }); handleSubscribe(); }} disabled={checkoutLoading !== null}>
+                {checkoutLoading ? "Redirecting…" : "Get Premium"}
+              </button>
             )}
-            {!isSubscribed && <Link href="/jobs" className="pw-later">Maybe later</Link>}
+            {plan !== "club" && !isSubscribed && (isLoaded && !isSignedIn && !alertLocked ? (
+              // The free days are the quieter option: make an account, get alerts, see the value.
+              <SignUpButton mode="modal" forceRedirectUrl="/start?setup=1" signInForceRedirectUrl="/pricing">
+                <button className="pw-later" onClick={() => capture("trial_clicked", { from: "pricing" })}>Try it free for 3 days</button>
+              </SignUpButton>
+            ) : (
+              <Link href="/jobs" className="pw-later">Maybe later</Link>
+            ))}
           </div>
         </section>
 

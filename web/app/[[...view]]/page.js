@@ -2439,6 +2439,13 @@ export default function Home() {
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
                         Filters{n > 0 && <b>{n}</b>}
                       </button>
+                      {/* Same switch as above the list on desktop; on phones it shares this row. */}
+                      {hasAlertPrefs && !isGatedBank && !loading && !error && (
+                        <div className="browse-mode mfb-mode" role="group" aria-label="Which roles to show">
+                          <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My preferences <span className="browse-mode-n tnum">{mineCount}</span></button>
+                          <button aria-pressed={browseMode === "all"} onClick={() => setBrowseMode("all")}>All roles <span className="browse-mode-n tnum">{modeBase.length}</span></button>
+                        </div>
+                      )}
                     </>
                   );
                 })()}

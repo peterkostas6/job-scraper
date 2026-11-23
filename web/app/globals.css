@@ -6825,3 +6825,15 @@ footer a, .footer a { color: var(--pp-cream); }
   .content > .filters-container:not(:has(> :not(.filters-toggle-mobile):not(.filters))) { display: none; }
   .content > .results-bar:has(> .results-text:empty) { display: none; }
 }
+/* Account, top right of the phone header (opens the account sheet). */
+.nav-acct { display: none; }
+@media (max-width: 900px) {
+  nav:has(+ .tabbar) .nav-inner { display: flex; align-items: center; }
+  nav:has(+ .tabbar) .nav-acct {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-left: auto;
+    min-height: 44px; min-width: 44px; justify-content: center; padding: 0 0.25rem; border: 0; background: none;
+    font: inherit; font-size: 0.92rem; font-weight: 600; color: var(--pp-cream); cursor: pointer;
+  }
+  .nav-acct svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-acct img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1.5px rgba(244, 237, 224, 0.5); }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useNavMenuLock } from "@/lib/use-nav-menu";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
@@ -1519,6 +1520,7 @@ export default function Home() {
   }, [filterSheetOpen]);
   const [sheetAllBanks, setSheetAllBanks] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
+  useNavMenuLock(navMenuOpen, () => setNavMenuOpen(false));
   const [bankSearch, setBankSearch] = useState("");
 
   // Load saved jobs from Clerk unsafeMetadata
@@ -2106,6 +2108,14 @@ export default function Home() {
             <Link href="/pricing" className="nav-link">Pricing</Link>
             <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
             <button className="nav-link nav-link-mobile-only" onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
+            {isLoaded && !isSignedIn && (
+              <div className="nav-sheet-cta">
+                <Link href="/start" className="nav-sheet-btn" onClick={() => capture("home_cta_clicked", { where: "nav_menu" })}>Get SMS alerts</Link>
+                <p>Already have an account?{" "}
+                  <SignInButton mode="modal"><button className="nav-sheet-signin">Sign in</button></SignInButton>
+                </p>
+              </div>
+            )}
           </div>
           <div className="nav-right">
             {!isLoaded ? null : isSignedIn ? (

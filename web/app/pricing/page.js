@@ -10,6 +10,7 @@ import { openBillingPortal } from "@/lib/billing";
 import { BANK_COUNT } from "@/lib/banks";
 import { trialFor } from "@/lib/alert-trial-days";
 import BankLogo from "@/lib/bank-logo";
+import { useNavMenuLock } from "@/lib/use-nav-menu";
 
 const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
@@ -166,6 +167,7 @@ function ClubInquiryModal({ onClose }) {
 
 export default function PricingPage() {
   const [navMenuOpen, setNavMenuOpen] = useState(false);
+  useNavMenuLock(navMenuOpen, () => setNavMenuOpen(false));
   const { isSignedIn, isLoaded, user } = useUser();
   const [showInquiry, setShowInquiry] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(null);
@@ -227,7 +229,7 @@ export default function PricingPage() {
               )}
               Recent Postings
             </Link>
-            <Link href="/pricing" className="nav-link nav-link-active">Pricing</Link>
+            <Link href="/pricing" className="nav-link nav-link-active" aria-current="page">Pricing</Link>
             <Link href="/about" className="nav-link">About</Link>
           </div>
           <div className="nav-right">

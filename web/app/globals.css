@@ -6658,3 +6658,55 @@ footer a, .footer a { color: var(--pp-cream); }
   .pw-cta { min-height: 56px; font-size: 1.05rem; }
   .pw + .pp-faq { padding: 5rem 1.5rem 0; max-width: 760px; }
 }
+
+/* ---- Phone menu (Nov 23): full-screen sheet under the bar ----
+   Covers the page (no half-visible content), big rows with a chevron, the current page marked
+   in coral, "Request a bank" as a quieter row, and the SMS CTA pinned at the bottom for visitors. */
+.nav-sheet-cta { display: none; }
+@media (max-width: 900px) {
+  .nav-center-open {
+    /* nav has backdrop-filter, which makes it the containing block for fixed children,
+       so the sheet's size is set from the screen, not with bottom: 0. */
+    position: fixed; top: 56px; left: 0; right: 0; bottom: auto; z-index: 60;
+    height: calc(100vh - 56px); height: calc(100dvh - 56px);
+    display: flex; flex-direction: column; gap: 0;
+    padding: 0.5rem 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    background: var(--pp-navy); border-bottom: 0; overflow-y: auto; overscroll-behavior: contain;
+    animation: nav-sheet-in 220ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .nav-center-open .nav-link {
+    position: relative; display: flex; align-items: center; gap: 0.6rem;
+    min-height: 60px; padding: 0 2rem 0 0.25rem; border-radius: 0;
+    border-bottom: 1px solid rgba(244, 237, 224, 0.1);
+    font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; color: var(--pp-cream); background: none;
+  }
+  .nav-center-open .nav-link::after {
+    content: ""; position: absolute; right: 0.4rem; top: 50%; width: 9px; height: 9px;
+    border-top: 2px solid currentColor; border-right: 2px solid currentColor;
+    transform: translateY(-50%) rotate(45deg); opacity: 0.45;
+  }
+  .nav-center-open .nav-link svg { width: 16px; height: 16px; opacity: 0.8; }
+  /* Current page: coral bar + coral chevron. */
+  .nav-center-open .nav-link-active { background: none; color: var(--pp-cream); }
+  .nav-center-open .nav-link-active::before {
+    content: ""; position: absolute; left: -1.25rem; top: 14px; bottom: 14px; width: 4px;
+    border-radius: 0 4px 4px 0; background: var(--pp-coral);
+  }
+  .nav-center-open .nav-link-active::after { opacity: 1; color: var(--pp-coral); }
+  /* Request a bank: a quieter, smaller row. */
+  .nav-center-open .nav-link-mobile-only { min-height: 52px; font-size: 1rem; font-weight: 500; color: rgba(244, 237, 224, 0.78); border-bottom: 0; }
+  .nav-center-open .nav-link-mobile-only::after { display: none; }
+  .nav-center-open .nav-sheet-cta { display: block; margin-top: auto; padding-top: 1.5rem; text-align: center; }
+  .nav-sheet-btn {
+    display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px;
+    background: var(--pp-coral); color: var(--pp-navy); font-size: 1.05rem; font-weight: 700; text-decoration: none;
+  }
+  .nav-sheet-cta p { margin: 0.6rem 0 0; font-size: 0.85rem; color: rgba(244, 237, 224, 0.78); }
+}
+@keyframes nav-sheet-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .nav-center-open { animation: none; } }
+@media (max-width: 900px) {
+  /* Menu open: the bar keeps just the logo and the X; the sheet holds the actions. */
+  nav:has(.nav-center-open) .nav-right { visibility: hidden; }
+  .nav-sheet-signin { min-height: 44px; padding: 0 0.25rem; border: 0; background: none; font: inherit; font-weight: 700; color: var(--pp-cream); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+}

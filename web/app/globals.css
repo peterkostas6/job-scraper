@@ -6577,3 +6577,27 @@ footer a, .footer a { color: var(--pp-cream); }
 }
 @media (prefers-reduced-motion: reduce) { .pw, .pw-art .st-text { animation: none; } }
 .pw-art .st-text-head span { color: rgba(20, 33, 61, 0.74); }
+/* Close (X), top-right over the art like a native paywall. */
+.pw { position: relative; }
+.pw-close {
+  position: absolute; top: 0.9rem; right: 0.9rem; z-index: 2;
+  display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22); color: #fff; cursor: pointer;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.pw-close:hover { background: rgba(255, 255, 255, 0.34); }
+.pw-close:focus-visible { outline: 2px solid var(--pp-coral); outline-offset: 2px; }
+.pw-art { padding-top: 4.25rem; }
+/* Phones: the paywall IS the screen. No card frame, no site nav (the X is the way out). */
+@media (max-width: 899px) {
+  body:has(.pw) > nav, body:has(.pw) nav:has(.nav-inner) { display: none; }
+  .pp:has(.pw) { padding-left: 0; padding-right: 0; }
+  .pw {
+    max-width: none; margin: 0; border-radius: 0; box-shadow: none;
+    min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column;
+  }
+  .pw-close { top: max(0.75rem, env(safe-area-inset-top)); }
+  .pw-art { flex: 1 0 auto; justify-content: flex-end; padding-top: max(4.25rem, calc(env(safe-area-inset-top) + 3.5rem)); }
+  .pw-body { padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
+  .pw + .pp-faq { padding-left: 1.5rem; padding-right: 1.5rem; }
+}

@@ -114,9 +114,12 @@ async function workday(src) {
   const api = `https://${src.host.match(/wd\d+/)[0]}.myworkdaysite.com/wday/cxs/${src.tenant}/${src.site}/jobs`;
   const linkBase = src.linkBase || `https://${src.host}/en-US/${src.site}`;
   const out = [];
-  for (const searchText of src.search ? SEARCH_TERMS : [""]) {
+  // Searches run side by side. Workday's "intern" search also matches internal/international
+  // roles (1,000+ at Truist), sorted by relevance: real matches sit in the first 300, so a
+  // search stops there to stay inside the route's 60-second limit.
+  await Promise.all((src.search ? SEARCH_TERMS : [""]).map(async (searchText) => {
     let total = 0;
-    for (let offset = 0; offset < 1000; offset += 20) {
+    for (let offset = 0; offset < (searchText ? 300 : 1000); offset += 20) {
       const data = await getJSON(api, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,7 +133,7 @@ async function workday(src) {
       if (offset + 20 >= total || !data.jobPostings?.length) break;
       await sleep(300);
     }
-  }
+  }));
   return out;
 }
 

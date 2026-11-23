@@ -12,8 +12,8 @@ import { LEVELS, DEFAULT_ALERT_LEVELS, LEVEL_KEYS } from "@/lib/levels";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { track } from "@/lib/track";
 import { PLANS } from "@/lib/plans";
+import { FIRM_LABEL } from "@/lib/firms";
 
-const BANK_COUNT = Object.keys(BANKS).length;
 const STORAGE_KEY = "pp-start-v3";
 
 // One scrolling page: the promise and sample texts, then the button scrolls into four short
@@ -51,7 +51,7 @@ function describe(a) {
   const area = areas.length === 0 ? "" : areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(" or ") + " ";
   const lv = a.levels?.length ? a.levels : DEFAULT_ALERT_LEVELS;
   const type = lv.length === 1 && lv[0] === "intern" ? "internships" : lv.length === LEVEL_KEYS.length ? "roles" : `${lv.map((k) => LEVELS.find((l) => l.key === k)?.label.toLowerCase()).join(" and ")} roles`;
-  const banks = !a.banks?.length ? `all ${BANK_COUNT} banks` : a.banks.length === 1 ? BANKS[a.banks[0]].name : `${a.banks.length} banks`;
+  const banks = !a.banks?.length ? `all ${FIRM_LABEL} firms` : a.banks.length === 1 ? BANKS[a.banks[0]].name : `${a.banks.length} banks`;
   return `${area}${type} at ${banks}${a.city ? ` in ${a.city}` : ""}`;
 }
 
@@ -291,7 +291,7 @@ export default function StartFlow({ embedded = false, openSignal = 0, setup = fa
 
   // One-line answers for the steps that are done.
   const summaries = [
-    !answers.banks ? "" : answers.banks.length === 0 ? `All ${BANK_COUNT} banks` : answers.banks.map((k) => BANKS[k]?.shortName).join(", "),
+    !answers.banks ? "" : answers.banks.length === 0 ? `All ${FIRM_LABEL} firms` : answers.banks.map((k) => BANKS[k]?.shortName).join(", "),
     !answers.areas ? "" : `${(answers.levels || []).map((k) => LEVELS.find((l) => l.key === k)?.label).join(", ") || "No level"} \u00b7 ${answers.areas.length === 0 ? "Open to anything" : answers.areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(", ")}`,
     answers.city === null ? "" : answers.city || "Anywhere",
     reached >= 5 ? [formatPhone(phone), email.trim()].filter(Boolean).join(" \u00b7 ") : "",
@@ -365,7 +365,7 @@ export default function StartFlow({ embedded = false, openSignal = 0, setup = fa
                             <>
                 {/* Scrolls inside its own box so the Next button below is always on screen. */}
                 <div className="sf-pills sf-pills-scroll">
-                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => set({ banks: [] })}>All {BANK_COUNT} banks</button>
+                  <button className="sf-pill sf-pill-strong" aria-pressed={answers.banks !== null && answers.banks.length === 0} onClick={() => set({ banks: [] })}>All {FIRM_LABEL} firms</button>
                   {Object.entries(BANKS).map(([key, b]) => (
                     <button key={key} className="sf-pill" aria-pressed={(answers.banks || []).includes(key)} onClick={() => toggle("banks", key)}>
                       <BankLogo bankKey={key} size={16} />{b.shortName}

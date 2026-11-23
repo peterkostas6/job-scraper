@@ -2,7 +2,6 @@
 // after-checkout step for people who paid before having an account both go through here,
 // so consent rules, the confirmation email and the welcome text behave the same everywhere.
 import { prefsEmail, welcomeAlertsEmail } from "@/lib/email-templates";
-import { BANK_COUNT } from "@/lib/banks";
 import { sendEmail } from "@/lib/email";
 import { smsConfig, sendSms, logNotification } from "@/lib/notif-send";
 import { BANK_NAMES } from "@/lib/banks";
@@ -10,6 +9,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
 import { captureServer } from "@/lib/posthog-server";
 import { levelsFromPrefs, LEVEL_LABEL, LEVEL_KEYS } from "@/lib/levels";
+import { FIRM_LABEL } from "@/lib/firms";
 
 
 // The first text someone gets when they turn texts on (sent with the contact card).
@@ -102,7 +102,7 @@ export async function saveAlertPrefs({ userId, body, origin }) {
       if (isFirstSetup && welcomeId && !user.privateMetadata?.welcomeDone) {
         const { error } = await resend.emails.cancel(welcomeId).catch((e) => ({ error: e }));
         if (!error) {
-          const { subject, html, text } = welcomeAlertsEmail({ ...prefs, bankCount: BANK_COUNT });
+          const { subject, html, text } = welcomeAlertsEmail({ ...prefs, bankCount: FIRM_LABEL });
           await sendEmail(resend, { to: email, subject, html, text, idempotencyKey: `welcome-alerts-${userId}`, tags: [{ name: "type", value: "welcome" }] });
           combined = true;
         }

@@ -19,6 +19,7 @@ import { trialFor } from "@/lib/alert-trial-days";
 import { openBillingPortal } from "@/lib/billing";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
+import { FIRM_LABEL } from "@/lib/firms";
 
 const FREE_BANKS = new Set(Object.keys(ALL_FIRMS));
 
@@ -158,7 +159,6 @@ const NOTIF_DEFAULTS = { enabled: false, banks: [], categories: [], jobType: "al
 const alertSettingsKey = (p) => JSON.stringify(Object.keys(NOTIF_DEFAULTS).map((k) => p?.[k] ?? null));
 
 // ---- HOMEPAGE ----
-const BANK_COUNT = Object.keys(BANKS).length;
 // Every posting is US-based, so ", United States" only pushes the city out of view.
 // Job links go through /go so clicks are counted before the visitor reaches the bank's site.
 const trackedLink = (link) => `/go?u=${encodeURIComponent(link)}`;
@@ -197,7 +197,7 @@ function rankCounts(values, last) {
 
 // Homepage comparison chart: [row label, on your own, Pete's Postings]
 const COMPARE_ROWS = [
-  ["Coverage", `${BANK_COUNT} career sites, checked one by one`, `All ${BANK_COUNT} banks in one feed`],
+  ["Coverage", `${FIRM_LABEL} career sites, checked one by one`, `All ${FIRM_LABEL} firms in one feed`],
   ["Speed", "You find out whenever you happen to check", "A text or email within 5 minutes of posting"],
   ["Your applications", "Scattered across tabs and spreadsheets", "Saved jobs, all in one place"],
 ];
@@ -247,7 +247,7 @@ const HERO_NOTIFS = [
 const HOME_QUOTES = [TESTIMONIALS[5], TESTIMONIALS[3], TESTIMONIALS[1]];
 
 const HOME_FAQ = [
-  ["Is it really free?", `Browsing is. A free account gets you every open role at all ${BANK_COUNT} banks and saved jobs, with no credit card. Text and email alerts are free too. After your first 3 days, opening roles from your alerts and the feed of everything posted in the last 48 hours take Premium, $4.99 a month.`],
+  ["Is it really free?", `Browsing is. A free account gets you every open role at all ${FIRM_LABEL} firms and saved jobs, with no credit card. Text and email alerts are free too. After your first 3 days, opening roles from your alerts and the feed of everything posted in the last 48 hours take Premium, $4.99 a month.`],
   ["How fast are the alerts?", "We check every bank's career site every 5 minutes, around the clock. When a new role matches what you picked, your text or email goes out right away."],
   ["Will I get spammed?", "No. You only hear about roles at the banks, job types and cities you choose. Change them or turn alerts off whenever you like."],
   ["Where do the jobs come from?", "Straight from each bank's own careers site, not LinkedIn or Indeed, with a direct link to apply."],
@@ -503,7 +503,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
       {/* STATS · live numbers with small visuals */}
       <section className="ss-section">
         <h2 className="ss-h2" data-reveal>Every bank, one feed.</h2>
-        <p className="ss-lead" data-reveal>Live totals across the {BANK_COUNT} banks we track.</p>
+        <p className="ss-lead" data-reveal>Live totals across the {FIRM_LABEL} firms we track.</p>
         <div className="ss-stats">
           <div className="ss-card ss-stat" data-reveal>
             <p className="ss-stat-num"><CountUp value={liveCount} /></p>
@@ -565,7 +565,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
           <div className="ss-step ss-step-flip" data-reveal>
             <div className="ss-step-copy">
               <p className="ss-step-n">02 <span>We watch every bank</span></p>
-              <h3>{BANK_COUNT} career sites, checked every 5 minutes.</h3>
+              <h3>{FIRM_LABEL} career sites, checked around the clock.</h3>
               <p>Straight from each bank&rsquo;s own careers system, not LinkedIn or Indeed. You never refresh a page again.</p>
             </div>
             <div className="ss-visual">
@@ -618,7 +618,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
         <h2 className="ss-h2" data-reveal>Built for students without a pipeline.</h2>
         <div className="ss-proof">
           <div className="ss-card ss-card-tint" data-reveal>
-            <p className="ss-proof-num">{BANK_COUNT} <small>banks</small></p>
+            <p className="ss-proof-num">{FIRM_LABEL} <small>firms</small></p>
             <p className="ss-proof-sub">Bulge brackets, elite boutiques and asset managers in one feed.</p>
           </div>
           <figure className="ss-card ss-quote" data-reveal>
@@ -705,7 +705,7 @@ const SIGNUP_GATES = {
   },
   save: {
     title: "Save jobs with a free account",
-    desc: `Keep track of what you\u2019ve saved and applied to across all ${BANK_COUNT} banks.`,
+    desc: `Keep track of what you\u2019ve saved and applied to across all ${FIRM_LABEL} firms.`,
     cta: "Create free account",
   },
   request: {
@@ -895,7 +895,7 @@ function PaywallOverlay({ isSignedIn, newCount }) {
           {[
             ["Unlimited text alerts", "A text the moment a bank posts a role matching your banks, job type and city."],
             ["Unlimited email alerts", "The same alerts in your inbox, if you want them there too."],
-            ["Recent postings", `Every job posted in the last 48 hours across all ${BANK_COUNT} banks, in one list.`],
+            ["Recent postings", `Every job posted in the last 48 hours across all ${FIRM_LABEL} firms, in one list.`],
           ].map(([name, desc]) => (
             <li key={name}>
               <span className="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -943,11 +943,11 @@ function PaywallOverlay({ isSignedIn, newCount }) {
 // every bank's listings. The FAQ below doubles as FAQPage structured data for Google.
 const ABOUT_FAQ = [
   ["Is Pete's Postings free?",
-    `Yes. Browsing every open analyst and internship posting across all ${BANK_COUNT} banks is free. A free account adds saved jobs, with no credit card. Text and email alerts are free for your first 3 days. Premium keeps them opening and adds the 48-hour recent postings feed for $4.99 a month.`],
+    `Yes. Browsing every open finance role across all ${FIRM_LABEL} firms is free. A free account adds saved jobs, with no credit card. Text and email alerts are free for your first 3 days. Premium keeps them opening and adds the 48-hour recent postings feed for $4.99 a month.`],
   ["How fast will I hear about a new posting?",
     "Within minutes. We check every bank every 5 minutes, and as soon as a role that matches your alert settings goes live, you get a text (and an email if you want one) with the title, bank, and a direct link to apply."],
   ["Which banks do you track?",
-    `${BANK_COUNT} banks, including JPMorgan Chase, Goldman Sachs, Morgan Stanley, Bank of America, Citi, Deutsche Bank, Barclays, Wells Fargo, Jefferies, Blackstone, and BlackRock. The full list is above.`],
+    `${FIRM_LABEL} firms: banks like JPMorgan Chase, Goldman Sachs, Morgan Stanley and Bank of America, trading firms like Jane Street and Susquehanna, asset managers like Fidelity and PIMCO, plus hedge funds, private equity, exchanges and insurers.`],
   ["Are the listings real and up to date?",
     "Yes. Every posting comes straight from each bank's own careers system, not from reposts or aggregators, and each one links to the official application page. Roles that are taken down disappear from the site."],
   ["What kinds of roles are listed?",
@@ -983,7 +983,7 @@ function AboutPage({ onBrowse }) {
         <span className="hero-tag">About</span>
         <h1 className="about-title">Instant alerts for investment banking internships and analyst jobs</h1>
         <p className="about-subtitle">
-          Pete&rsquo;s Postings tracks every analyst and internship posting at {BANK_COUNT} banks and texts you the moment a role you want goes live.
+          Pete&rsquo;s Postings tracks every finance job posting at {FIRM_LABEL} firms and texts you the moment a role you want goes live.
         </p>
       </section>
 
@@ -1006,7 +1006,7 @@ function AboutPage({ onBrowse }) {
           </div>
           <div className="about-feature">
             <strong>Every bank in one place</strong>
-            <span>All open analyst and internship roles across {BANK_COUNT} banks in one searchable list, instead of checking {BANK_COUNT} different career sites every day.</span>
+            <span>Every open finance role, from internships to VP, across {FIRM_LABEL} firms in one searchable list, instead of checking {FIRM_LABEL} different career sites every day.</span>
           </div>
           <div className="about-feature">
             <strong>Straight from the source</strong>
@@ -1776,7 +1776,7 @@ export default function Home() {
     : [...AREAS.filter((a) => a.categories.every((c) => notifPrefs.categories.includes(c))).map((a) => a.label),
        ...notifPrefs.categories.filter((c) => !AREAS.some((a) => a.categories.includes(c)))].join(", ") || "Open to anything";
   const alertBanksLabel = notifPrefs.banks.length === 0
-    ? `All ${BANK_COUNT} banks`
+    ? `All ${FIRM_LABEL} firms`
     : notifPrefs.banks.length <= 2 ? notifPrefs.banks.map((k) => ALL_FIRMS[k]?.shortName || k).join(", ") : `${notifPrefs.banks.length} banks`;
 
   // One expandable settings row: label and current value; tapping opens its choices.

@@ -3,12 +3,12 @@
 // after checkout, texts are on and they land on Alerts to fine-tune.
 // Kept out of search results; the homepage and /alerts stay as they are.
 import StartFlow from "./StartFlow";
-import { BANK_COUNT } from "@/lib/banks";
+import { FIRM_LABEL } from "@/lib/firms";
 
 export const metadata = {
   title: "Be First in the Pile | Pete’s Postings",
   description:
-    `Get a text the moment a bank posts an analyst or internship role, so your resume is one of the first they read. ${BANK_COUNT} banks, checked every 5 minutes.`,
+    `Get a text the moment a firm posts a role you want, so your resume is one of the first they read. ${FIRM_LABEL} firms, checked around the clock.`,
   alternates: { canonical: "https://petespostings.com/start" },
   robots: { index: false, follow: true },
 };

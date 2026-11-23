@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { capture } from "@/lib/analytics";
-import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
+import { FIRM_LABEL, FIRM_COUNT } from "@/lib/firms";
 
-const BANK_COUNT = Object.keys(BANKS).length;
 const LOGO_BANKS = ["gs", "jpmc", "ms", "bofa", "citi"];
 
 export default function EdgeLanding() {
@@ -38,14 +37,14 @@ export default function EdgeLanding() {
       <main className="edge-main">
         <h1 className="edge-title">Your recruiting edge.</h1>
         <p className="edge-sub">
-          We check {BANK_COUNT} banks&rsquo; career sites for you, put every analyst and intern role in one place, and text you the second a new one comes out.
+          We check {FIRM_LABEL} firms&rsquo; career sites for you, put every finance role in one place, and text you the second a new one comes out.
         </p>
 
         <div className="edge-banks">
           <span className="edge-logos">
             {LOGO_BANKS.map((key) => <BankLogo key={key} bankKey={key} size={30} />)}
           </span>
-          <span>Goldman, JPM, Morgan Stanley <span className="edge-nowrap">+ {BANK_COUNT - 3} more</span></span>
+          <span>Goldman, JPM, Morgan Stanley <span className="edge-nowrap">+ {FIRM_COUNT - 3} more</span></span>
         </div>
 
         <p className="edge-ask">What would you like to do?</p>

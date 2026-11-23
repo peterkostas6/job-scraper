@@ -70,9 +70,9 @@ export function welcomeEmail({ firstName, bankCount = 20 }) {
   const subject = "Welcome to Pete's Postings";
   const html = layout({
     title: subject,
-    preheader: `Analyst and intern roles from ${bankCount} banks, checked every 5 minutes.`,
+    preheader: `Finance roles from ${bankCount} firms, checked around the clock.`,
     heading: `Welcome${firstName ? `, ${escapeHtml(firstName)}` : ""}`,
-    intro: `Your account is ready. Pete&rsquo;s Postings pulls analyst and intern roles straight from ${bankCount} bank career sites and checks them every 5 minutes, so you see a posting before it reaches the job boards.`,
+    intro: `Your account is ready. Pete&rsquo;s Postings pulls finance roles, from internships to VP, straight from ${bankCount} firms&rsquo; career sites and checks them around the clock, so you see a posting before it reaches the job boards.`,
     body: `
 <h2 style="margin:8px 0 8px;font-size:16px;line-height:22px;font-weight:700;color:${C.navy};">Three things to do first</h2>
 <ol style="margin:0 0 20px;padding-left:22px;font-size:16px;line-height:26px;color:${C.text};">
@@ -88,7 +88,7 @@ export function welcomeEmail({ firstName, bankCount = 20 }) {
   const text = textVersion([
     `Welcome${firstName ? `, ${firstName}` : ""}`,
     "",
-    `Your account is ready. Pete's Postings pulls analyst and intern roles straight from ${bankCount} bank career sites and checks them every 5 minutes.`,
+    `Your account is ready. Pete's Postings pulls finance roles, from internships to VP, straight from ${bankCount} firms' career sites and checks them around the clock.`,
     "",
     "Three things to do first:",
     `1. Browse the live feed: ${BRAND.site}/jobs`,
@@ -151,9 +151,9 @@ export function welcomeAlertsEmail({ firstName, bankCount, userId, ...prefs }) {
   const how = prefs.smsEnabled ? "text you" : "email you";
   const html = layout({
     title: subject,
-    preheader: `We check ${bankCount} banks every 5 minutes and ${how} the moment a match posts.`,
+    preheader: `We check ${bankCount} firms around the clock and ${how} the moment a match posts.`,
     heading: `Welcome${firstName ? `, ${escapeHtml(firstName)}` : ""}. You're set.`,
-    intro: `We check ${bankCount} bank career sites every 5 minutes. The moment a role matching your alerts goes up, we&rsquo;ll ${how}, so you can apply before it hits the job boards.`,
+    intro: `We check ${bankCount} firms&rsquo; career sites around the clock. The moment a role matching your alerts goes up, we&rsquo;ll ${how}, so you can apply before it hits the job boards.`,
     body: `<p style="margin:0 0 4px;font-size:14px;line-height:20px;font-weight:700;color:${C.muted};">Your alerts</p>` + settingsHtml(rows)
       + `<p style="margin:0 0 4px;font-size:16px;line-height:24px;color:${C.text};">Every open role is on Browse. Change your alerts anytime from the Alerts button next to the filters.</p>`,
     cta: { label: "Browse open roles", url: `${BRAND.site}/jobs` },
@@ -163,7 +163,7 @@ export function welcomeAlertsEmail({ firstName, bankCount, userId, ...prefs }) {
   const text = textVersion([
     `Welcome${firstName ? `, ${firstName}` : ""}. You're set.`,
     "",
-    `We check ${bankCount} bank career sites every 5 minutes. The moment a role matching your alerts goes up, we'll ${how}.`,
+    `We check ${bankCount} firms' career sites around the clock. The moment a role matching your alerts goes up, we'll ${how}.`,
     "",
     "Your alerts:",
     ...rows.map(([k, v]) => `${k}: ${v}`),

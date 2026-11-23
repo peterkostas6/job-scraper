@@ -7,10 +7,10 @@ import { track } from "@/lib/track";
 import { capture } from "@/lib/analytics";
 import { PLANS, planPrice } from "@/lib/plans";
 import { openBillingPortal } from "@/lib/billing";
-import { BANK_COUNT } from "@/lib/banks";
 import { trialFor } from "@/lib/alert-trial-days";
 import BankLogo from "@/lib/bank-logo";
 import { useNavMenuLock } from "@/lib/use-nav-menu";
+import { FIRM_LABEL } from "@/lib/firms";
 
 const SMS_ICON = <svg width="16" height="16" viewBox="0 0 64 64" fill="#fff" aria-hidden="true"><path d="M32 9C17.6 9 6 18.4 6 30c0 6.1 3.3 11.7 8.6 15.6-.5 3.7-2 7.2-4.5 10.1-.3.4 0 1 .5 1 5.5-.5 10.6-2.4 14.6-5.4C27.4 51.7 29.7 52 32 52c14.4 0 26-9.4 26-21S46.4 9 32 9z"/></svg>;
 
@@ -304,7 +304,7 @@ export default function PricingPage() {
           <div className="pw-body">
             <h1 className="pw-title">{alertLocked ? "To open alerts, you need Premium." : "Your application, first in the stack."}</h1>
             <ul className="pw-gets">
-              <li>Instant texts from {BANK_COUNT} banks</li>
+              <li>Instant texts from {FIRM_LABEL} firms</li>
               <li>Every role from the last 48 hours</li>
               <li>Save jobs and track applications</li>
             </ul>
@@ -366,7 +366,7 @@ export default function PricingPage() {
             ["How much is Premium?", "$4.99 a month. Alerts are free for your first 3 days; after that, Premium lets you open every alert and see the 48-hour recent postings feed. It renews monthly until you cancel."],
             ["Can I cancel anytime?", "Yes. Cancel from your account settings at any time. You keep access until the end of your billing period."],
             ["How do text alerts work?", "Add a phone number in your alert settings. When a new posting matches your preferences, you get a text with the role, the bank and a direct link to apply. Alerts are free for everyone with an account. For your first 3 days you can open every one; after that, opening them takes Premium."],
-            ["What does the recent postings feed include?", `Every role posted in the last 48 hours across all ${BANK_COUNT} banks, updated every 5 minutes.`],
+            ["What does the recent postings feed include?", `Every role posted in the last 48 hours across all ${FIRM_LABEL} firms, updated around the clock.`],
             ["How do club memberships work?", "The club pays $50 a month. Members verify with their school email and get Premium automatically, so nobody manages individual subscriptions."],
           ].map(([q, a]) => (
             <details key={q} onToggle={(e) => { if (e.currentTarget.open) capture("faq_opened", { question: q, page: "pricing" }); }}>

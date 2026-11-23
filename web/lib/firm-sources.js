@@ -30,7 +30,7 @@ export const FIRM_SOURCES = {
   rothschild: { type: "workday", host: "rothschildandco.wd3.myworkdayjobs.com", tenant: "rothschildandco", site: "Rothschildandco_Lateral" },
   scotiabank: { type: "rmk", base: "https://jobs.scotiabank.com" },
   schwab: { type: "radancy", base: "https://www.schwabjobs.com" },
-  manulife: { type: "workday", host: "manulife.wd3.myworkdayjobs.com", tenant: "manulife", site: "MFCJH_Jobs", facets: { Location_Country: ["bc33aa3152ec42d4995f4791a106ed09"] } }, // US jobs only (mostly Canada otherwise)
+  manulife: { type: "workday", host: "manulife.wd3.myworkdayjobs.com", tenant: "manulife", site: "MFCJH_Jobs", facets: { Location_Country: ["bc33aa3152ec42d4995f4791a106ed09", "a30a87ed25634629aa6c3958aa2b91ea"] }, keepNonUS: true }, // US + Canada (Workday country filter), so the US-only check is skipped
 };
 
 // Same short UA as the older Workday routes; Workday refuses a full Chrome UA from Vercel.
@@ -116,6 +116,7 @@ async function workday(src) {
   const linkBase = src.linkBase || `https://${src.host}/en-US/${src.site}`;
   const out = [];
   for (const searchText of src.search ? SEARCH_TERMS : [""]) {
+    let total = 0;
     for (let offset = 0; offset < 1000; offset += 20) {
       const data = await getJSON(api, {
         method: "POST",
@@ -125,7 +126,9 @@ async function workday(src) {
       for (const j of data.jobPostings || []) {
         out.push({ title: j.title || "", link: `${linkBase}${j.externalPath}`, location: j.locationsText || j.bulletFields?.[0] || "", postedDate: workdayDate(j.postedOn) });
       }
-      if (offset + 20 >= (data.total || 0)) break;
+      // Workday only reports the total on the first page; later pages say 0.
+      if (offset === 0) total = data.total || 0;
+      if (offset + 20 >= total || !data.jobPostings?.length) break;
       await sleep(300);
     }
   }
@@ -259,7 +262,7 @@ export async function fetchFirmJobs(key) {
     if (!title || !j.link || seen.has(j.link)) continue;
     seen.add(j.link);
     if (!isEntryTitle(title)) continue;
-    if (!isUSLocation(j.location) || NON_US.test(title)) continue;
+    if (!cfg.keepNonUS && (!isUSLocation(j.location) || NON_US.test(title))) continue;
     jobs.push({ title, link: j.link, location: j.location === "Non-US" ? "" : j.location, category: categorizeJob(title), postedDate: j.postedDate });
   }
   return jobs;

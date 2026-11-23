@@ -324,13 +324,15 @@ export default function PricingPage() {
 
             <p className="pw-fine">
               {plan === "club" ? "One invoice for the club. Members verify with their school email."
-                : isSubscribed ? "Manage billing from your account menu."
+                : isSubscribed ? "Change your plan or cancel anytime."
                 : "Cancel anytime. Secure checkout with Stripe."}
             </p>
 
             {plan === "club" ? (
               <button className="pw-cta" onClick={() => { setShowInquiry(true); capture("club_inquiry_opened"); }}>Talk to us</button>
-            ) : isSubscribed ? null : isSignedIn ? (
+            ) : isSubscribed ? (
+              user?.publicMetadata?.stripeCustomerId ? <button className="pw-cta" onClick={openBillingPortal}>Manage subscription</button> : null
+            ) : isSignedIn ? (
               <button className="pw-cta" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
                 {checkoutLoading ? "Redirecting…" : inTrial ? "Keep Premium" : "Get Premium"}
               </button>

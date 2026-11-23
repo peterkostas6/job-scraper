@@ -6920,3 +6920,15 @@ footer a, .footer a { color: var(--pp-cream); }
 }
 @media (max-width: 370px) { .mfb-mode button { padding: 0 0.5rem; font-size: 0.75rem; } .mfb-chip-all { padding: 0 0.7rem; } }
 @media (max-width: 900px) { .mfb { width: 100%; box-sizing: border-box; } .mfb-chips { width: 100%; box-sizing: border-box; } }
+/* Phones: upgrade button in the header (non-paying only), left of the account icon. */
+.nav-upgrade { display: none; }
+@media (max-width: 900px) {
+  nav:has(+ .tabbar) .nav-upgrade {
+    display: inline-flex; align-items: center; min-height: 36px; margin-left: auto; padding: 0 0.85rem; border-radius: 999px;
+    background: var(--pp-coral); color: var(--pp-navy); font-size: 0.82rem; font-weight: 700; text-decoration: none; white-space: nowrap;
+  }
+  nav:has(+ .tabbar) .nav-upgrade + .nav-acct { margin-left: 0.35rem; }
+  /* Account sheet: Get Premium leads the list. */
+  .acct-list > .acct-upgrade { justify-content: space-between; color: var(--pp-navy); }
+  .acct-upgrade span { padding: 0.25rem 0.6rem; border-radius: 999px; background: var(--pp-coral); font-size: 0.8rem; font-weight: 700; }
+}

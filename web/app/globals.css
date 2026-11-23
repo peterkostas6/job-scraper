@@ -6734,3 +6734,5 @@ footer a, .footer a { color: var(--pp-cream); }
   .pw-art .st-text:nth-child(2) { display: none; }
 }
 @media (max-width: 899px) { .pw-art { flex-grow: 2; } }
+/* Desktop has the site nav, so no close (X) on the pricing split screen. */
+@media (min-width: 900px) { .pw-close { display: none; } }

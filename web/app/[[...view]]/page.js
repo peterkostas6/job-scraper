@@ -2101,6 +2101,7 @@ export default function Home() {
             </Link>
             <Link href="/pricing" className="nav-link">Pricing</Link>
             <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
+            <a href="mailto:pete@petespostings.com" className="nav-link" onClick={() => capture("contact_clicked", { where: "nav" })}>Contact</a>
             <button className="nav-link nav-link-mobile-only" onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
             {isLoaded && !isSignedIn && (
               <div className="nav-sheet-cta">
@@ -2762,6 +2763,8 @@ export default function Home() {
               <Link href="/privacy" className="text-link">Privacy Policy</Link>
               <span aria-hidden="true"> &middot; </span>
               <Link href="/terms" className="text-link">Terms of Service</Link>
+              <span aria-hidden="true"> &middot; </span>
+              <a href="mailto:pete@petespostings.com" className="text-link" onClick={() => capture("contact_clicked", { where: "footer" })}>Contact</a>
             </p>
           </div>
         </div>

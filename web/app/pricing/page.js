@@ -270,6 +270,18 @@ export default function PricingPage() {
         {/* Paywall card (video layout): full-bleed art fading into the card, headline, two plan rows
             with Premium highlighted, one ink button, plain-text "Maybe later". */}
         <section className="pw">
+          <button
+            type="button"
+            className="pw-close"
+            aria-label="Close"
+            onClick={() => {
+              // Back to where they came from on this site; otherwise to Browse.
+              if (document.referrer.startsWith(window.location.origin)) window.history.back();
+              else window.location.href = "/jobs";
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
           <div className="pw-art" aria-label="Example text alerts" role="img">
             {[
               { bankKey: "gs", bank: "Goldman Sachs", title: "2027 Investment Banking Summer Analyst", when: "now" },

@@ -1071,6 +1071,14 @@ function AboutPage({ onBrowse }) {
         </div>
       </section>
 
+      <section className="about-section">
+        <h2 className="about-heading">Contact</h2>
+        <p className="about-text">Questions, feedback, or a bank you want added? Email me and I&rsquo;ll get back to you.</p>
+        <div className="about-ctas" style={{ justifyContent: "flex-start" }}>
+          <a href="mailto:pete@petespostings.com" className="about-cta-secondary" onClick={() => capture("contact_clicked", { where: "about" })}>Contact me</a>
+        </div>
+      </section>
+
       <section className="about-section about-section-last" style={{ textAlign: "center" }}>
         <h2 className="about-heading">Hear about the next posting first</h2>
         <div className="about-ctas">
@@ -2101,7 +2109,6 @@ export default function Home() {
             </Link>
             <Link href="/pricing" className="nav-link">Pricing</Link>
             <Link href="/about" className={`nav-link${viewAbout ? " nav-link-active" : ""}`}>About</Link>
-            <a href="mailto:pete@petespostings.com" className="nav-link" onClick={() => capture("contact_clicked", { where: "nav" })}>Contact</a>
             <button className="nav-link nav-link-mobile-only" onClick={() => { if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}>Request a bank</button>
             {isLoaded && !isSignedIn && (
               <div className="nav-sheet-cta">

@@ -6597,17 +6597,23 @@ footer a, .footer a { color: var(--pp-cream); }
     min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column;
   }
   .pw-close { top: max(0.75rem, env(safe-area-inset-top)); }
-  .pw-art { flex: 1 0 auto; gap: 0.5rem; padding: max(3.5rem, calc(env(safe-area-inset-top) + 3rem)) 1rem 2rem; }
-  .pw-art .st-text { padding: 0.6rem 0.75rem; border-radius: 16px; }
+  /* Height-aware: sizes and gaps scale with the screen's height (svh), so a tall phone gets a
+     bigger layout instead of empty gaps; a short one stays compact. Content flows top-down. */
+  .pw { justify-content: space-between; }
+  .pw-art { flex: 1 0 auto; justify-content: center; gap: clamp(0.5rem, 1.1svh, 0.8rem); padding: max(3.5rem, calc(env(safe-area-inset-top) + 3rem)) 1rem clamp(1.5rem, 4svh, 2.75rem); }
+  .pw-art .st-text { padding: clamp(0.6rem, 1.4svh, 0.85rem) 0.75rem; border-radius: 16px; }
+  .pw-art .st-text p { font-size: clamp(0.8rem, 1.9svh, 0.95rem); }
   .pw-art .st-text:nth-child(2) { margin: 0 0.6rem; }
   .pw-close { width: 36px; height: 36px; }
-  /* Spare height goes above the plans, so the button lands at the bottom (thumb zone), not as empty sky. */
+  /* Leftover height is shared: half around the alerts (art grows, alerts centred), half above the plans. */
   .pw-body { flex: 1 0 auto; display: flex; flex-direction: column; }
-  .pw-plans { margin-top: auto; padding-top: 1.25rem; }
-  .pw-title { font-size: 1.6rem; }
-  .pw-sub { font-size: 0.9rem; }
-  .pw-plan { min-height: 58px; padding: 0.75rem 0.9rem; }
-  .pw-fine { margin-top: 0.75rem; }
+  .pw-plans { margin-bottom: 0; }
+  .pw-title { font-size: clamp(1.6rem, 4.2svh, 2.3rem); }
+  .pw-sub { margin-top: clamp(0.4rem, 1.2svh, 0.75rem); font-size: clamp(0.9rem, 2svh, 1.05rem); }
+  .pw-plans { margin-top: auto; padding-top: clamp(1.25rem, 3.5svh, 2.25rem); gap: clamp(0.75rem, 1.6svh, 1rem); }
+  .pw-plan { min-height: clamp(58px, 8svh, 74px); padding: 0.75rem 0.9rem; }
+  .pw-fine { margin-top: clamp(0.75rem, 1.8svh, 1.1rem); }
+  .pw-cta { min-height: clamp(52px, 6.6svh, 58px); }
   .pw-later { margin-top: 0.25rem; padding: 0.5rem; }
   .pw-body { padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
   .pw + .pp-faq { padding-left: 1.5rem; padding-right: 1.5rem; }
@@ -6615,6 +6621,7 @@ footer a, .footer a { color: var(--pp-cream); }
 .pw-apply { white-space: nowrap; }
 /* Third alert: only on phones with room for it (and on desktop the card has two). */
 .pw-art .st-text:nth-child(3) { display: none; }
-@media (max-width: 899px) and (min-height: 760px) {
+/* XL phones only (Pro Max / Plus, ~900px+ tall): room for a third alert. */
+@media (max-width: 899px) and (min-height: 900px) {
   .pw-art .st-text:nth-child(3) { display: flex; margin: 0 1.2rem; opacity: 0.8; animation-delay: 320ms; }
 }

@@ -619,7 +619,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
         <div className="ss-proof">
           <div className="ss-card ss-card-tint" data-reveal>
             <p className="ss-proof-num">{FIRM_LABEL} <small>firms</small></p>
-            <p className="ss-proof-sub">Bulge brackets, elite boutiques and asset managers in one feed.</p>
+            <p className="ss-proof-sub">Banks, trading firms, hedge funds and asset managers in one feed.</p>
           </div>
           <figure className="ss-card ss-quote" data-reveal>
             <blockquote>&ldquo;{HOME_QUOTES[0].quote}&rdquo;</blockquote>
@@ -635,7 +635,7 @@ function HomePage({ onBrowse, isSignedIn, last48hCount, liveJobs }) {
           </div>
           <div className="ss-card ss-card-tint" data-reveal>
             <p className="ss-proof-num"><CountUp value={liveCount} /> <small>roles</small></p>
-            <p className="ss-proof-sub">Open analyst and internship postings right now.</p>
+            <p className="ss-proof-sub">Open finance roles right now, internship to VP.</p>
           </div>
           <figure className="ss-card ss-quote" data-reveal>
             <blockquote>&ldquo;{HOME_QUOTES[2].quote}&rdquo;</blockquote>

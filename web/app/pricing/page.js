@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser, SignUpButton, SignInButton, UserButton } from "@clerk/nextjs";
+import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { track } from "@/lib/track";
 import { capture } from "@/lib/analytics";
@@ -303,14 +303,18 @@ export default function PricingPage() {
 
           <div className="pw-body">
             <h1 className="pw-title">{alertLocked ? "To open alerts, you need Premium." : "Your application, first in the stack."}</h1>
-            <p className="pw-sub">A text the second your role posts at {BANK_COUNT} banks. You apply before the crowd even sees it.</p>
+            <ul className="pw-gets">
+              <li>Instant texts from {BANK_COUNT} banks</li>
+              <li>Every role from the last 48 hours</li>
+              <li>Save jobs and track applications</li>
+            </ul>
 
             <div className="pw-plans" role="radiogroup" aria-label="Plan">
               <button type="button" role="radio" aria-checked={plan === "premium"} className={`pw-plan${plan === "premium" ? " on" : ""}`} onClick={() => setPlan("premium")}>
                 {inTrial && <span className="pw-badge">{trialDaysLeft} free {trialDaysLeft === 1 ? "day" : "days"} left</span>}
                 <span className="pw-plan-left">
                   <strong>Premium</strong>
-                  <span>{isSubscribed ? "You have Premium" : "Texts, Recent postings, save & track"}</span>
+                  <span>{isSubscribed ? "You have Premium" : "Everything above"}</span>
                 </span>
                 <span className="pw-plan-price">${PLANS.monthly.price}/mo</span>
               </button>
@@ -328,7 +332,7 @@ export default function PricingPage() {
             <p className="pw-fine">
               {plan === "club" ? "One invoice for the club. Members verify with their school email."
                 : isSubscribed ? "Change your plan or cancel anytime."
-                : "Billed monthly. Cancel anytime. Secure checkout with Stripe."}
+                : "Billed monthly. Cancel anytime."}
             </p>
 
             {plan === "club" ? (
@@ -351,14 +355,7 @@ export default function PricingPage() {
                 {checkoutLoading ? "Redirecting…" : "Get Premium"}
               </button>
             )}
-            {plan !== "club" && !isSubscribed && (isLoaded && !isSignedIn && !alertLocked ? (
-              // The free days are the quieter option: make an account, get alerts, see the value.
-              <SignUpButton mode="modal" forceRedirectUrl="/start?setup=1" signInForceRedirectUrl="/pricing">
-                <button className="pw-later" onClick={() => capture("trial_clicked", { from: "pricing" })}>Try it free for 3 days</button>
-              </SignUpButton>
-            ) : (
-              <Link href="/jobs" className="pw-later">Maybe later</Link>
-            ))}
+            {!isSubscribed && <Link href="/jobs" className="pw-later">Maybe later</Link>}
           </div>
         </section>
 

@@ -7,6 +7,7 @@ import { liveSubscriptionsForEmail } from "@/lib/stripe-subs";
 import { sql } from "@vercel/postgres";
 import { clerkClient } from "@clerk/nextjs/server";
 import { saveAlertPrefs } from "@/lib/alert-prefs";
+import { levelsFromPrefs } from "@/lib/levels";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -24,6 +25,7 @@ export function guestMetadata(body) {
       p_banks: list(prefs.banks).join(",").slice(0, 490),
       p_cats: list(prefs.categories).join("|").slice(0, 490),
       p_type: ["all", "internship", "fulltime"].includes(prefs.jobType) ? prefs.jobType : "all",
+      p_levels: levelsFromPrefs(prefs).join(","),
       p_city: typeof prefs.location === "string" ? prefs.location.slice(0, 60) : "",
       p_phone: typeof body.phone === "string" ? body.phone.replace(/\D/g, "").slice(0, 15) : "",
       p_sms: body.smsConsent === true ? "1" : "",
@@ -41,6 +43,7 @@ function prefsFromMetadata(m) {
     banks: m.p_banks ? m.p_banks.split(",") : [],
     categories: m.p_cats ? m.p_cats.split("|") : [],
     jobType: m.p_type || "all",
+    levels: m.p_levels ? m.p_levels.split(",") : undefined,
     location: m.p_city || "",
     smsEnabled: sms,
     smsConsent: sms,

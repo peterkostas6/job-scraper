@@ -5,7 +5,8 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { Resend } from "resend";
-import { isGraduateProgram, isInternship, isAnalystOrIntern, isFinanceRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
+import { isAnalystOrIntern, isListedRole, isJobLinkDead, checkJobLinkAndDate } from "@/lib/notif-helpers";
+import { jobLevel, levelsFromPrefs, LEVEL_LABEL } from "@/lib/levels";
 import { locationMatches } from "@/lib/alert-options";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
@@ -45,8 +46,9 @@ function buildOwnerSummaryHtml({ runAt, allJobs, newJobs, skippedBrokenLinks, ba
       </tr>`;
   } else {
     newJobsSection = newJobs.map((job) => {
-      const type = isInternship(job.title) ? "Internship" : "Analyst";
-      const typeColor = type === "Internship" ? "#d97706" : "#2563eb";
+      const level = jobLevel(job.title);
+      const type = LEVEL_LABEL[level];
+      const typeColor = level === "intern" ? "#d97706" : "#2563eb";
       return `
         <tr>
           <td style="padding:8px 12px 8px 0;font-size:13px;border-bottom:1px solid #f1f5f9;">
@@ -182,9 +184,8 @@ export async function GET(request) {
         const { jobs } = result.value;
         let kept = 0;
         for (const job of jobs) {
-          if (isGraduateProgram(job.title)) continue;
-          if (!isAnalystOrIntern(job.title)) continue;
-          if (!isFinanceRole(job.title)) continue;
+          // Every experience level of finance role is kept; alerts filter by level below.
+          if (!isListedRole(job.title)) continue;
           allJobs.push({ ...job, bank: BANK_NAMES[bankKey], bankKey });
           kept++;
         }
@@ -371,14 +372,17 @@ export async function GET(request) {
         const prefs = user.unsafeMetadata.notifications;
         const prefBanks = prefs.banks || [];
         const prefCategories = prefs.categories || [];
-        const prefJobType = prefs.jobType || "all";
+        const prefLevels = levelsFromPrefs(prefs);
         const prefLocation = (prefs.location || "").trim().toLowerCase();
 
         const matchingJobs = verifiedNewJobs.filter((job) => {
           if (prefBanks.length > 0 && !prefBanks.includes(job.bankKey)) return false;
           if (prefCategories.length > 0 && !prefCategories.includes(job.category)) return false;
-          if (prefJobType === "internship" && !isInternship(job.title)) return false;
-          if (prefJobType === "fulltime" && isInternship(job.title)) return false;
+          if (!prefLevels.includes(jobLevel(job.title))) return false;
+          // Roles the cron used to skip (no "analyst"/"intern" in the title) can show up as
+          // "new" the first time they're kept. Only text those if the bank posted them in the
+          // last 48 hours, so turning on levels doesn't send a burst of old roles.
+          if (!isAnalystOrIntern(job.title) && !(job.postedDate && Date.now() - new Date(job.postedDate).getTime() < 48 * 3600 * 1000)) return false;
           if (!locationMatches(job.location, prefLocation)) return false;
           return true;
         });

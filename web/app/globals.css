@@ -7049,3 +7049,5 @@ footer a, .footer a { color: var(--pp-cream); }
 @media (max-width: 900px) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
 }
+/* Level is the quickest decision, so it leads the filter panel (it replaced Type). */
+.mfs-sec:has(.mfs-levels) { order: -1; }

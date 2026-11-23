@@ -206,6 +206,12 @@ export function isAnalystOrIntern(title) {
   return /analyst/i.test(title) || isInternship(title);
 }
 
+// Every list, count and the alert cron use this: finance roles at any experience level.
+// (Levels are sorted by lib/levels.js; tech roles like software engineering stay out.)
+export function isListedRole(title) {
+  return Boolean(title) && isFinanceRole(title);
+}
+
 // Returns true for entry-level banking roles worth showing.
 // Catches analyst/intern titles as well as common variations that don't use those exact words.
 export function isBankingEntryLevel(title) {

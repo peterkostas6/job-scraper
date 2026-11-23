@@ -7,7 +7,8 @@ import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
 import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
-import { JOB_TYPES, AREAS, CITIES } from "@/lib/alert-options";
+import { AREAS, CITIES } from "@/lib/alert-options";
+import { LEVELS, DEFAULT_ALERT_LEVELS, LEVEL_KEYS } from "@/lib/levels";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { track } from "@/lib/track";
 import { PLANS } from "@/lib/plans";
@@ -21,9 +22,9 @@ const STORAGE_KEY = "pp-start-v3";
 // with a phone number sends the welcome text.
 const STEP_LABELS = ["What banks?", "What roles?", "What location?", "Where should we alert you?"];
 const STEP_NAMES = ["Banks", "Roles", "Location", "Alerts go to"];
-// Every step starts on its broadest answer, so Next works right away: all banks, internships
-// and full-time, any area, anywhere. Picking something narrows it.
-const EMPTY = { banks: [], areas: [], jobType: "all", city: "" };
+// Every step starts ready, so Next works right away: all banks, internships and entry-level
+// roles, any area, anywhere. Picking something changes it.
+const EMPTY = { banks: [], areas: [], levels: DEFAULT_ALERT_LEVELS, city: "" };
 
 // "2125550123" -> "(212) 555-0123"; anything else is shown as typed.
 const formatPhone = (raw) => {
@@ -37,7 +38,8 @@ const postedAt = (j) => Date.parse(j.postedDate) || j.detectedAt || 0;
 // The alert settings these answers become; the same shape the notify cron matches on.
 function toPrefs(a) {
   return {
-    jobType: a.jobType || "all",
+    levels: a.levels?.length ? a.levels : DEFAULT_ALERT_LEVELS,
+    jobType: "all",
     categories: (a.areas || []).flatMap((k) => AREAS.find((x) => x.key === k)?.categories || []),
     banks: a.banks || [],
     location: a.city || "",
@@ -47,7 +49,8 @@ function toPrefs(a) {
 function describe(a) {
   const areas = a.areas || [];
   const area = areas.length === 0 ? "" : areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(" or ") + " ";
-  const type = a.jobType === "internship" ? "internships" : a.jobType === "fulltime" ? "analyst roles" : "roles";
+  const lv = a.levels?.length ? a.levels : DEFAULT_ALERT_LEVELS;
+  const type = lv.length === 1 && lv[0] === "intern" ? "internships" : lv.length === LEVEL_KEYS.length ? "roles" : `${lv.map((k) => LEVELS.find((l) => l.key === k)?.label.toLowerCase()).join(" and ")} roles`;
   const banks = !a.banks?.length ? `all ${BANK_COUNT} banks` : a.banks.length === 1 ? BANKS[a.banks[0]].name : `${a.banks.length} banks`;
   return `${area}${type} at ${banks}${a.city ? ` in ${a.city}` : ""}`;
 }
@@ -289,7 +292,7 @@ export default function StartFlow({ embedded = false, openSignal = 0, setup = fa
   // One-line answers for the steps that are done.
   const summaries = [
     !answers.banks ? "" : answers.banks.length === 0 ? `All ${BANK_COUNT} banks` : answers.banks.map((k) => BANKS[k]?.shortName).join(", "),
-    !answers.areas ? "" : `${answers.jobType === "internship" ? "Internships" : answers.jobType === "fulltime" ? "Full-time" : "Internships and full-time"} \u00b7 ${answers.areas.length === 0 ? "Open to anything" : answers.areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(", ")}`,
+    !answers.areas ? "" : `${(answers.levels || []).map((k) => LEVELS.find((l) => l.key === k)?.label).join(", ") || "No level"} \u00b7 ${answers.areas.length === 0 ? "Open to anything" : answers.areas.map((k) => AREAS.find((x) => x.key === k)?.label).join(", ")}`,
     answers.city === null ? "" : answers.city || "Anywhere",
     reached >= 5 ? [formatPhone(phone), email.trim()].filter(Boolean).join(" \u00b7 ") : "",
   ];
@@ -374,9 +377,9 @@ export default function StartFlow({ embedded = false, openSignal = 0, setup = fa
                           )}
                           {n === 2 && (
                             <>
-                <div className="sf-seg" role="group" aria-label="Internship or full-time">
-                  {JOB_TYPES.map((t) => (
-                    <button key={t.key} aria-pressed={answers.jobType === t.key} onClick={() => set({ jobType: t.key })}>{t.key === "all" ? "Both" : t.label}</button>
+                <div className="sf-pills sf-levels" role="group" aria-label="Experience level">
+                  {LEVELS.map((l) => (
+                    <button key={l.key} className="sf-pill" aria-pressed={(answers.levels || []).includes(l.key)} onClick={() => toggle("levels", l.key)}>{l.label}</button>
                   ))}
                 </div>
                 <div className="sf-pills">
@@ -385,8 +388,8 @@ export default function StartFlow({ embedded = false, openSignal = 0, setup = fa
                   ))}
                   <button className="sf-pill sf-pill-strong" aria-pressed={answers.areas !== null && answers.areas.length === 0} onClick={() => set({ areas: [] })}>Open to anything</button>
                 </div>
-                <button className="sf-next" disabled={!answers.jobType || answers.areas === null} onClick={() => reveal(3)}>Next</button>
-                {(!answers.jobType || answers.areas === null) && <p className="sf-need">{!answers.jobType && answers.areas === null ? "Pick internship or full-time, and an area." : !answers.jobType ? "Pick internship, full-time or both." : "Pick an area, or Open to anything."}</p>}
+                <button className="sf-next" disabled={!answers.levels?.length || answers.areas === null} onClick={() => reveal(3)}>Next</button>
+                {(!answers.levels?.length || answers.areas === null) && <p className="sf-need">{!answers.levels?.length && answers.areas === null ? "Pick at least one level, and an area." : !answers.levels?.length ? "Pick at least one level." : "Pick an area, or Open to anything."}</p>}
                             </>
                           )}
                           {n === 3 && (

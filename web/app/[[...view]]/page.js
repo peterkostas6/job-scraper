@@ -9,6 +9,7 @@ import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { JOB_TYPES as ALERT_JOB_TYPES, AREAS, CITIES, matchesAlertPrefs } from "@/lib/alert-options";
+import { jobLevel, LEVEL_LABEL, LEVELS } from "@/lib/levels";
 import { track } from "@/lib/track";
 import { capture } from "@/lib/analytics";
 import { useTrackSignup } from "@/lib/use-track-signup";
@@ -20,11 +21,8 @@ import AlertsPanel from "./AlertsPanel";
 
 const FREE_BANKS = new Set(Object.keys(BANKS));
 
-const JOB_TYPES = {
-  all: "All Types",
-  internship: "Internship",
-  fulltime: "Analyst",
-};
+// Browse/Recent "Level" filter (lib/levels.js sorts each title into one of these).
+const JOB_TYPES = { all: "All levels", ...LEVEL_LABEL };
 
 // Postel's law: accept the way people actually type a search. Case, punctuation,
 // "&" vs "and", word order and common shorthand ("gs", "s&t", "nyc") all match.
@@ -52,17 +50,6 @@ function matchesQuery(job, query) {
 // Posted column shows), otherwise when we first saw it. Same rule as /api/jobs-new.
 const postedAt = (job) => Date.parse(job.postedDate) || job.detectedAt || 0;
 const isLast48h = (job) => postedAt(job) > Date.now() - 48 * 3600 * 1000;
-
-function isInternship(title) {
-  const t = title.toLowerCase();
-  return (
-    /\bintern\b/.test(t) ||
-    t.includes("internship") ||
-    t.includes("summer") ||
-    t.includes("co-op") ||
-    t.includes("coop")
-  );
-}
 
 function formatRelativeDate(effectiveTime, hasActualDate) {
   const now = Date.now();
@@ -819,7 +806,7 @@ function RecentLockedFeed({ isSignedIn, count, liveJobs }) {
               <span className="job-location">{job.location || "\u2014"}</span>
               <span className="job-posted tnum">{formatPostedAt(job)}</span>
               <div className="job-badges">
-                <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>{isInternship(job.title) ? "Internship" : "Analyst"}</span>
+                <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>{LEVEL_LABEL[jobLevel(job.title)]}</span>
               </div>
               <span className="new-bank-label">{job.bank}</span>
               <span style={{ width: 14 }} />
@@ -1135,8 +1122,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
 
   const displayJobs = last48h.filter((job) => {
     if (rpSearch && !job.title.toLowerCase().includes(rpSearch.toLowerCase())) return false;
-    if (rpJobType === "internship" && !isInternship(job.title)) return false;
-    if (rpJobType === "fulltime" && isInternship(job.title)) return false;
+    if (rpJobType !== "all" && jobLevel(job.title) !== rpJobType) return false;
     if (rpBank && job.bank !== rpBank) return false;
     if (rpCategory && job.category !== rpCategory) return false;
     if (rpCity && !cityKeys(job.location).includes(rpCity)) return false;
@@ -1160,8 +1146,8 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
         <span className="job-title">{job.title}</span>
         <span className="job-location">{cleanLocation(job.location) || "—"}</span>
         <div className="job-badges job-badges-wide">
-          <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>
-            {isInternship(job.title) ? "Internship" : "Analyst"}
+          <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>
+            {LEVEL_LABEL[jobLevel(job.title)]}
           </span>
           <span className="job-badge badge-new-time">{timeLabel}</span>
         </div>
@@ -1200,7 +1186,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
                 <span className="mfb-summary">
                   <b>{rpBank || "All banks"}</b>
                   {rpCategory && <>{" \u00b7 "}{rpCategory}</>}
-                  {" \u00b7 "}{rpJobType === "all" ? "All types" : JOB_TYPES[rpJobType]}
+                  {" \u00b7 "}{rpJobType === "all" ? "All levels" : JOB_TYPES[rpJobType]}
                   {" \u00b7 "}{rpCity || "All cities"}
                 </span>
                 <svg className="mfb-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -1237,10 +1223,10 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
                     </div>
                   )}
                   <div className="mfs-sec">
-                    <p className="mfs-h">Type</p>
-                    <div className="mfs-seg">
-                      {[["all", "All"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([key, label]) => (
-                        <button key={key} className={rpJobType === key ? "is-on" : ""} onClick={() => setRpJobType(key)}>{label}</button>
+                    <p className="mfs-h">Level</p>
+                    <div className="mfs-banks mfs-row mfs-areas mfs-levels">
+                      {[["all", "All"], ...LEVELS.map((l) => [l.key, l.label])].map(([key, label]) => (
+                        <button key={key} className={`mfs-bank mfs-bank-all${rpJobType === key ? " is-on" : ""}`} onClick={() => setRpJobType(key)}>{label}</button>
                       ))}
                     </div>
                   </div>
@@ -1821,7 +1807,7 @@ export default function Home() {
       .finally(() => setNotifSaving(false));
   }
 
-  const typeOf = (job) => (isInternship(job.title) ? "internship" : "fulltime");
+  const typeOf = (job) => jobLevel(job.title);
   const okType = (job) => jobType === "all" || typeOf(job) === jobType;
   const okLocation = (job) => locationFilter === "" || (job.cities || []).includes(locationFilter);
   const okCategory = (job) => categoryFilter === "" || (job.category || "") === categoryFilter;
@@ -2495,10 +2481,10 @@ export default function Home() {
                   </div>
                 )}
                 <div className="mfs-sec">
-                  <p className="mfs-h">Type</p>
-                  <div className="mfs-seg">
-                    {[["all", "All"], ["fulltime", "Analyst"], ["internship", "Internship"]].map(([key, label]) => (
-                      <button key={key} className={jobType === key ? "is-on" : ""} onClick={() => setJobType(key)}>{label}</button>
+                  <p className="mfs-h">Level</p>
+                  <div className="mfs-banks mfs-row mfs-areas mfs-levels">
+                    {[["all", "All"], ...LEVELS.map((l) => [l.key, l.label])].map(([key, label]) => (
+                      <button key={key} className={`mfs-bank mfs-bank-all${jobType === key ? " is-on" : ""}`} onClick={() => setJobType(key)}>{label}</button>
                     ))}
                   </div>
                 </div>
@@ -2622,7 +2608,7 @@ export default function Home() {
                         <option value="">All Locations</option>
                         {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}
                       </select>
-                      <select className="filter-dropdown" aria-label="Type" value={jobType} onChange={(e) => setJobType(e.target.value)}>
+                      <select className="filter-dropdown" aria-label="Level" value={jobType} onChange={(e) => setJobType(e.target.value)}>
                         {Object.entries(JOB_TYPES).map(([key, label]) => <option key={key} value={key}>{key === "all" ? label : `${label} (${typeCounts[key] || 0})`}</option>)}
                       </select>
                       <select className="filter-dropdown" aria-label="Category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
@@ -2710,7 +2696,7 @@ export default function Home() {
                             <span className="job-location">{job.location || "\u2014"}</span>
                             <span className="job-posted tnum">{feedAge(job)}</span>
                             <div className="job-badges">
-                              <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>{isInternship(job.title) ? "Internship" : "Analyst"}</span>
+                              <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>{LEVEL_LABEL[jobLevel(job.title)]}</span>
                             </div>
                             {activeBank === "all" && <span className="new-bank-label"><span className="job-unlock">Unlock</span></span>}
                             <span style={{ width: 14 }} />
@@ -2740,8 +2726,8 @@ export default function Home() {
                         <span className="job-location">{job.location || "—"}</span>
                         <span className="job-posted tnum">{formatPostedAt(job)}</span>
                         <div className="job-badges">
-                          <span className={`job-badge ${isInternship(job.title) ? "badge-intern" : "badge-analyst"}`}>
-                            {isInternship(job.title) ? "Internship" : "Analyst"}
+                          <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>
+                            {LEVEL_LABEL[jobLevel(job.title)]}
                           </span>
                         </div>
                         {activeBank === "all" && <span className="new-bank-label">{job.bank}</span>}

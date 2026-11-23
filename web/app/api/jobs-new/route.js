@@ -3,7 +3,7 @@
 import { sql } from "@vercel/postgres";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
-import { isAnalystOrIntern } from "@/lib/notif-helpers";
+import { isListedRole } from "@/lib/notif-helpers";
 import { BANKS } from "@/lib/banks";
 import { trialFor } from "@/lib/alert-trial-days";
 
@@ -61,7 +61,7 @@ export async function GET() {
       if (effectiveAt < fortyEightHoursAgo) continue;
 
       // Same roles as /api/jobs-live, so the 48-hour count matches Browse and the homepage.
-      if (!isAnalystOrIntern(row.title)) continue;
+      if (!isListedRole(row.title)) continue;
       // Banks taken off the site (e.g. Manulife) keep their rows; the cron no longer checks them.
       if (row.bank_key && !BANKS[row.bank_key]) continue;
 

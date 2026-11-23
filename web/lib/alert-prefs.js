@@ -9,12 +9,8 @@ import { BANK_NAMES } from "@/lib/banks";
 import { clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
 import { captureServer } from "@/lib/posthog-server";
+import { levelsFromPrefs, LEVEL_LABEL, LEVEL_KEYS } from "@/lib/levels";
 
-const JOB_TYPE_LABELS = {
-  all: "All types (analyst + internship)",
-  internship: "Internship only",
-  fulltime: "Analyst only",
-};
 
 // The first text someone gets when they turn texts on (sent with the contact card).
 export function welcomeText(firstName) {
@@ -23,6 +19,7 @@ export function welcomeText(firstName) {
 
 export async function saveAlertPrefs({ userId, body, origin }) {
   const { enabled, banks, categories, jobType } = body;
+  const levels = levelsFromPrefs(body);
 
   // Normalize phone number to E.164 format (+1XXXXXXXXXX)
   let phoneNumber = (body.phoneNumber || "").replace(/\D/g, "");
@@ -50,6 +47,7 @@ export async function saveAlertPrefs({ userId, body, origin }) {
         banks: Array.isArray(banks) ? banks : [],
         categories: Array.isArray(categories) ? categories : [],
         jobType: jobType || "all",
+        levels,
         location: typeof body.location === "string" ? body.location.trim().slice(0, 60) : "",
         smsEnabled,
         phoneNumber: phoneNumber || "",
@@ -69,6 +67,7 @@ export async function saveAlertPrefs({ userId, body, origin }) {
     email_alerts: Boolean(enabled),
     sms_alerts: smsEnabled,
     job_type: jobType || "all",
+    levels,
     banks: Array.isArray(banks) && banks.length ? banks : ["all"],
     categories: Array.isArray(categories) && categories.length ? categories : ["all"],
     city: typeof body.location === "string" && body.location.trim() ? body.location.trim().slice(0, 60) : "anywhere",
@@ -92,7 +91,7 @@ export async function saveAlertPrefs({ userId, body, origin }) {
         phoneNumber: phoneNumber || "",
         bankNames: (Array.isArray(banks) ? banks : []).map((k) => BANK_NAMES[k] || k),
         categories: Array.isArray(categories) ? categories : [],
-        jobTypeLabel: JOB_TYPE_LABELS[jobType] || "All types",
+        jobTypeLabel: levels.length === LEVEL_KEYS.length ? "All levels" : levels.map((k) => LEVEL_LABEL[k]).join(", "),
         city: typeof body.location === "string" ? body.location.trim().slice(0, 60) : "",
         userId,
       };

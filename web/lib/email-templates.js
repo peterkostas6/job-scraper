@@ -1,6 +1,6 @@
 // Every customer-facing email, built on the shared layout in lib/email.js.
 import { layout, textVersion, escapeHtml, unsubscribeUrl, preferencesUrl, BRAND } from "@/lib/email";
-import { isInternship } from "@/lib/notif-helpers";
+import { jobLevel, LEVEL_LABEL } from "@/lib/levels";
 
 const C = { navy: "#1e293b", text: "#1f2937", muted: "#4b5563", hairline: "#e2e8f0", blue: "#2563eb", amber: "#b45309" };
 
@@ -26,8 +26,9 @@ export function alertEmail({ jobs: allJobs, firstName, userId }) {
     body += `<h2 style="margin:20px 0 4px;font-size:14px;line-height:20px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${C.muted};">${escapeHtml(bank)}</h2>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">`;
     for (const job of grouped[bank]) {
-      const type = isInternship(job.title) ? "Internship" : "Analyst";
-      const typeColor = type === "Internship" ? C.amber : C.blue;
+      const level = jobLevel(job.title);
+      const type = LEVEL_LABEL[level];
+      const typeColor = level === "intern" ? C.amber : C.blue;
       body += `
   <tr>
     <td style="padding:12px 0;border-top:1px solid ${C.hairline};">

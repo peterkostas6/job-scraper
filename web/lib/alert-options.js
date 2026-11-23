@@ -1,3 +1,4 @@
+import { jobLevel, levelsFromPrefs } from "./levels";
 // The choices behind job alerts, shared by the /start quiz and the Alerts tab so both
 // ask the same questions in the same words and save the same settings.
 
@@ -54,8 +55,7 @@ export function locationMatches(jobLocation, typed) {
 export function matchesAlertPrefs(job, prefs) {
   if (prefs.banks.length > 0 && !prefs.banks.includes(job.bankKey)) return false;
   if (prefs.categories.length > 0 && !prefs.categories.includes(job.category)) return false;
-  if (prefs.jobType === "internship" && !isInternship(job.title)) return false;
-  if (prefs.jobType === "fulltime" && isInternship(job.title)) return false;
+  if (!levelsFromPrefs(prefs).includes(jobLevel(job.title))) return false;
   if (!locationMatches(job.location, prefs.location)) return false;
   return true;
 }

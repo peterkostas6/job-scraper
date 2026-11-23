@@ -6,7 +6,8 @@
 import Link from "next/link";
 import { BANKS } from "@/lib/banks";
 import BankLogo from "@/lib/bank-logo";
-import { JOB_TYPES, AREAS, CITIES } from "@/lib/alert-options";
+import { AREAS, CITIES } from "@/lib/alert-options";
+import { LEVELS, levelsFromPrefs } from "@/lib/levels";
 
 const BANK_COUNT = Object.keys(BANKS).length;
 const formatPhone = (raw) => {
@@ -53,11 +54,15 @@ export default function AlertsPanel({
                 <h3 className="alx-h">What you&rsquo;ll hear about</h3>
 
                 <div className="alx-field">
-                  <p className="alx-label">Roles</p>
+                  <p className="alx-label">Level</p>
                   <div className="alx-chips">
-                    {JOB_TYPES.map((t) => (
-                      <button key={t.key} className="alx-chip" aria-pressed={(prefs.jobType || "all") === t.key} onClick={() => onChange({ jobType: t.key })}>{t.key === "all" ? "Both" : t.label}</button>
-                    ))}
+                    {LEVELS.map((l) => {
+                      const cur = levelsFromPrefs(prefs);
+                      const on = cur.includes(l.key);
+                      // At least one level stays picked.
+                      const next = on ? (cur.length > 1 ? cur.filter((k) => k !== l.key) : cur) : [...cur, l.key];
+                      return <button key={l.key} className="alx-chip" aria-pressed={on} onClick={() => onChange({ levels: next })}>{l.label}</button>;
+                    })}
                   </div>
                 </div>
 

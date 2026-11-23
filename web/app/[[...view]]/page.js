@@ -2149,12 +2149,15 @@ export default function Home() {
             )}
           </div>
           {/* Phones (pages with the tab bar): account top right, like every app's header. */}
+          {/* Non-paying (incl. signed out): an always-visible way to upgrade. */}
+          {!viewHome && isLoaded && !isSubscribed && (
+            <Link href="/pricing" className="nav-upgrade" onClick={() => capture("header_upgrade_clicked")}>Get Premium</Link>
+          )}
           {!viewHome && (
             <button className="nav-acct" onClick={() => setAccountOpen(true)} aria-haspopup="dialog" aria-label="Account">
               {isSignedIn && user?.imageUrl ? <img src={user.imageUrl} alt="" /> : (
                 <>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
-                  {isLoaded && !isSignedIn && <span>Sign in</span>}
                 </>
               )}
             </button>
@@ -2234,6 +2237,7 @@ export default function Home() {
               </div>
             )}
             <div className="acct-list">
+              {!isSubscribed && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}
               {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
               {isSignedIn && user?.publicMetadata?.stripeCustomerId && <button onClick={openBillingPortal}>Manage subscription</button>}
               <Link href="/about">About</Link>

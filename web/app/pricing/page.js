@@ -305,6 +305,7 @@ export default function PricingPage() {
                 <button className="ss-btn ss-btn-blue ss-btn-block" onClick={() => capture("pro_clicked", { billing: "monthly", signed_in: false })}>Start free</button>
               </SignUpButton>
             )}
+            {!isSubscribed && <p className="pp-fine">Cancel anytime. Secure checkout with Stripe.</p>}
             <p className="pp-includes">Premium includes</p>
             <ul className="pp-list">
               <li><strong>Unlimited</strong> text messages</li>
@@ -317,12 +318,6 @@ export default function PricingPage() {
         </section>
         </div>
 
-        <p className="pp-trust">
-          <span>Cancel anytime</span>
-          <span>Secure checkout with Stripe</span>
-          <span>Keep access until your period ends</span>
-        </p>
-
         {!alertLocked && <>
         <section className="pp-club">
           <div className="pp-club-copy">
@@ -333,7 +328,7 @@ export default function PricingPage() {
           <div className="pp-club-side">
             <p className="pp-club-label">Club plan</p>
             <p className="pp-price">$50<span>/month</span></p>
-            <button className="ss-btn ss-btn-block" onClick={() => { setShowInquiry(true); capture("club_inquiry_opened"); }}>Talk to us</button>
+            <button className="pp-club-link" onClick={() => { setShowInquiry(true); capture("club_inquiry_opened"); }}>Talk to us &rarr;</button>
           </div>
         </section>
 

@@ -2164,7 +2164,8 @@ export default function Home() {
 
       {/* Phones: bottom tab bar (Jakob's law: the layout every app uses). Five tabs, Jobs far
           left, Account far right, the main action (alerts) raised in the middle. */}
-      <div className="tabbar" role="navigation" aria-label="Main">
+      {/* Not on the landing page (/): that page keeps its own top bar and calls to action. */}
+      {!viewHome && <div className="tabbar" role="navigation" aria-label="Main">
         <Link href="/jobs" className={`tab${view === "browse" && !alertsPanelOpen ? " is-on" : ""}`} aria-current={view === "browse" && !alertsPanelOpen ? "page" : undefined}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></svg>
           <span>Jobs</span>
@@ -2199,7 +2200,7 @@ export default function Home() {
           )}
           <span>{isSignedIn ? "Account" : "Sign in"}</span>
         </button>
-      </div>
+      </div>}
 
       {accountOpen && (
         <div className="acct-wrap" role="dialog" aria-modal="true" aria-label="Account">

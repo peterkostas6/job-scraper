@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1e293b" }}>
+    <div style={{ maxWidth: 720, width: "calc(100% - 32px)", margin: "32px auto 64px", padding: "40px 24px 56px", background: "var(--pp-cream)", borderRadius: 16, boxSizing: "border-box", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1e293b" }}>
       <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: September 26, 2026</p>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Privacy Policy</h1>
       <p style={{ fontSize: 15, color: "#475569", marginBottom: 40 }}>Pete's Postings · petespostings.com</p>

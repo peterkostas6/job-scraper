@@ -29,6 +29,7 @@ export const FIRM_SOURCES = {
   rbc: { type: "workday", host: "rbc.wd3.myworkdayjobs.com", tenant: "rbc", site: "RBCGLOBAL1", search: true },
   rothschild: { type: "workday", host: "rothschildandco.wd3.myworkdayjobs.com", tenant: "rothschildandco", site: "Rothschildandco_Lateral" },
   scotiabank: { type: "rmk", base: "https://jobs.scotiabank.com" },
+  schwab: { type: "radancy", base: "https://www.schwabjobs.com" },
 };
 
 // Same short UA as the older Workday routes; Workday refuses a full Chrome UA from Vercel.
@@ -224,9 +225,27 @@ async function rmk(src) {
   return out;
 }
 
+// Radancy (TalentBrew) career sites, e.g. schwabjobs.com: the search page's results endpoint
+// returns the job list as HTML, 100 a page. Schwab has a few hundred jobs, so read them all.
+async function radancy(src) {
+  const out = [];
+  for (let page = 1; page <= 20; page++) {
+    const data = await getJSON(`${src.base}/search-jobs/results?ActiveFacetID=0&CurrentPage=${page}&RecordsPerPage=100&SearchResultsModuleName=Search+Results&SearchFiltersModuleName=Search+Filters&SortCriteria=0&SortDirection=0&SearchType=5&ResultsType=0`, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+    const html = data.results || "";
+    for (const [, path, body] of html.matchAll(/<a href="(\/job\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+      const title = body.match(/<h2>([\s\S]*?)<\/h2>/)?.[1].trim();
+      if (!title) continue;
+      out.push({ title, link: `${src.base}${path}`, location: decode(body.match(/class="job-location">([^<]*)/)?.[1].trim() || ""), postedDate: null });
+    }
+    if (page >= parseInt(html.match(/data-total-pages="(\d+)"/)?.[1] || "1", 10)) break;
+    await sleep(300);
+  }
+  return out;
+}
+
 const decode = (s) => s.replace(/&amp;/g, "&").replace(/&#039;|&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 
-const ADAPTERS = { workday, greenhouse, lever, ashby, oracle, talnet, rmk };
+const ADAPTERS = { workday, greenhouse, lever, ashby, oracle, talnet, rmk, radancy };
 
 export async function fetchFirmJobs(key) {
   const cfg = FIRM_SOURCES[key];

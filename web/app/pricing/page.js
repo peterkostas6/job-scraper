@@ -286,12 +286,13 @@ export default function PricingPage() {
             {[
               { bankKey: "gs", bank: "Goldman Sachs", title: "2027 Investment Banking Summer Analyst", when: "now" },
               { bankKey: "ms", bank: "Morgan Stanley", title: "2027 Sales & Trading Summer Analyst", when: "4m ago" },
+              { bankKey: "jpmc", bank: "JPMorgan Chase", title: "2027 Markets Summer Analyst", when: "11m ago" },
             ].map((job) => (
               <div key={job.bankKey} className="st-text">
                 <span className="st-text-icon">{SMS_ICON}</span>
                 <div>
                   <div className="st-text-head"><strong>Pete&rsquo;s Postings</strong><span>{job.when}</span></div>
-                  <p><BankLogo bankKey={job.bankKey} bank={job.bank} size={14} /> {job.bank} just posted: {job.title}. Apply &rarr;</p>
+                  <p><BankLogo bankKey={job.bankKey} bank={job.bank} size={14} /> {job.bank} just posted: {job.title}. <span className="pw-apply">Apply &rarr;</span></p>
                 </div>
               </div>
             ))}

@@ -21,6 +21,8 @@ export async function POST(req) {
     body = await req.json();
     if (body.returnTo === "/start") returnTo = body.returnTo;
   } catch {}
+  // Backing out of Stripe returns to the page they came from (only /pricing asks; default is home).
+  const cancelTo = body.cancelTo === "/pricing" ? "/pricing" : returnTo;
   const guest = !userId;
   const guestEmail = guest && typeof body.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim() : "";
 
@@ -89,7 +91,7 @@ export async function POST(req) {
       : returnTo
       ? `${siteUrl}${returnTo}?paid=true&session_id={CHECKOUT_SESSION_ID}`
       : `${siteUrl}?subscribed=true&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}${returnTo}`,
+    cancel_url: `${siteUrl}${cancelTo}`,
   });
 
   return Response.json({ url: session.url });

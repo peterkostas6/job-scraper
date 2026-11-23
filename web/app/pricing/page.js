@@ -188,7 +188,7 @@ export default function PricingPage() {
     fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, cancelTo: "/pricing" }),
     })
       .then((res) => res.json())
       .then((data) => {

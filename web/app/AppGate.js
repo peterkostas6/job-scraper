@@ -12,6 +12,8 @@ import AppTour from "./AppTour";
 // Drives the app's native tab bar from the page: shows it on screens that have the site's
 // .tabbar (hidden in the app), keeps its selected tab in step, and turns native taps into clicks
 // on the matching site tab, so each tab keeps doing exactly what it does on the website.
+const SHEETS = ".alx-wrap, .acct-wrap, .mfs-wrap, .modal-overlay, .cl-modalBackdrop";
+
 function NativeTabBridge() {
   useEffect(() => {
     if (!isApp()) return;
@@ -21,7 +23,9 @@ function NativeTabBridge() {
     const sync = () => {
       if (!ready) return;
       const bar = document.querySelector(".tabbar");
-      const vis = Boolean(bar);
+      // Like any iPhone app, the tab bar steps aside while a sheet is up (it would cover the
+      // sheet's buttons): alerts, account, filters, pop-ups, and Clerk's sign-in/profile.
+      const vis = Boolean(bar) && !document.querySelector(SHEETS);
       if (vis !== last.vis) {
         last.vis = vis;
         nativeTabs.call("setVisible", { visible: vis }).then((r) => { if (vis && r?.height) html.style.setProperty("--tabbar-h", `${r.height}px`); }).catch(() => {});

@@ -17,6 +17,7 @@ import { PLANS } from "@/lib/plans";
 import { hasAppAccess, isTestHost, unlockForTesting } from "@/lib/app-access";
 import FirmPicker from "@/app/FirmPicker";
 import Pete from "./Pete";
+import { TOUR_KEY } from "@/app/AppTour";
 
 const STORAGE_KEY = "pp-onboarding-v1";
 const STEPS = ["welcome", "why", "firms", "level", "location", "match", "paywall", "account", "notify"];
@@ -183,7 +184,8 @@ export default function OnboardingFlow() {
   }
 
   function finish() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    // The app tour runs once on the jobs screen after onboarding.
+    try { localStorage.removeItem(STORAGE_KEY); localStorage.setItem(TOUR_KEY, "pending"); } catch {}
     window.location.href = "/jobs";
   }
 

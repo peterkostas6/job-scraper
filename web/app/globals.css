@@ -7203,3 +7203,27 @@ footer a, .footer a { color: var(--pp-cream); }
 .ob-push b { display: flex; justify-content: space-between; font-size: 0.85rem; }
 .ob-push i { font-style: normal; font-weight: 500; color: var(--ob-muted); }
 @media (prefers-reduced-motion: reduce) { .ob-wave { animation: none; } .ob-progress span { transition: none; } }
+
+/* ---- iPhone app first-time tour (app/AppTour.js) ----
+   Dims the screen except the highlighted element; Pete explains it from a speech bubble. */
+.tour { position: fixed; inset: 0; z-index: 3000; }
+.tour-catch { position: absolute; inset: 0; }
+.tour-spot { position: fixed; box-shadow: 0 0 0 9999px rgba(8, 14, 30, 0.74); outline: 3px solid var(--pp-coral); outline-offset: 2px; pointer-events: none; transition: left 300ms var(--ease-out, ease-out), top 300ms var(--ease-out, ease-out), width 300ms var(--ease-out, ease-out), height 300ms var(--ease-out, ease-out), border-radius 300ms; }
+.tour-card { position: fixed; left: 16px; right: 16px; display: flex; flex-direction: column; gap: 10px; animation: tour-in 260ms var(--ease-out, ease-out); }
+@keyframes tour-in { from { opacity: 0; transform: translateY(8px); } }
+.tour-say { display: flex; align-items: flex-end; gap: 10px; }
+.tour-say svg { flex: none; }
+.tour-say-down { align-items: flex-start; }
+.tour-bubble { flex: 1; padding: 14px 16px; border-radius: 18px 18px 18px 4px; background: var(--pp-cream); color: var(--pp-navy); }
+.tour-say-down .tour-bubble { border-radius: 4px 18px 18px 18px; }
+.tour-bubble strong { display: block; font-size: 1.1rem; font-weight: 800; }
+.tour-bubble p { margin: 4px 0 0; font-size: 0.95rem; line-height: 1.4; color: #3B4763; }
+.tour-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.tour-skip { min-height: 44px; padding: 0 4px; border: 0; background: none; font: inherit; font-size: 0.95rem; font-weight: 600; color: rgba(244, 237, 224, 0.8); cursor: pointer; }
+.tour-skip-space { width: 70px; }
+.tour-dots { display: flex; gap: 6px; }
+.tour-dots span { width: 6px; height: 6px; border-radius: 3px; background: rgba(244, 237, 224, 0.35); transition: width 200ms; }
+.tour-dots span.is-on { width: 18px; background: var(--pp-coral); }
+.tour-next { min-height: 48px; padding: 0 22px; border: 0; border-radius: 16px; background: var(--pp-coral); color: var(--pp-navy); font: inherit; font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; box-shadow: 0 4px 0 #C8402F; cursor: pointer; }
+.tour-next:active { transform: translateY(3px); box-shadow: 0 1px 0 #C8402F; }
+@media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; animation: none; } }

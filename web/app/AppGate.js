@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { isApp, hasAppAccess, APP_OPEN_PATHS, APP_WEB_ONLY_PATHS } from "@/lib/app-access";
 import { onPushTap } from "@/lib/native";
+import AppTour from "./AppTour";
 
 export default function AppGate() {
   const pathname = usePathname();
@@ -22,5 +23,6 @@ export default function AppGate() {
   // Tapping a job notification opens that role.
   useEffect(() => onPushTap((url) => { window.location.href = url; }), []);
 
-  return null;
+  // The first-time tour (flag set at the end of onboarding) runs on the jobs screen.
+  return isLoaded && pathname === "/jobs" ? <AppTour /> : null;
 }

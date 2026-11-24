@@ -2,7 +2,7 @@
 
 // The iPhone app's hard paywall: inside the app, anyone without a paid account is sent to the
 // onboarding (which ends at the paywall). Does nothing on the website.
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { isApp, hasAppAccess, APP_OPEN_PATHS, APP_WEB_ONLY_PATHS } from "@/lib/app-access";
@@ -12,7 +12,7 @@ import AppTour from "./AppTour";
 // Drives the app's native tab bar from the page: shows it on screens that have the site's
 // .tabbar (hidden in the app), keeps its selected tab in step, and turns native taps into clicks
 // on the matching site tab, so each tab keeps doing exactly what it does on the website.
-const SHEETS = ".alx-wrap, .acct-wrap, .mfs-wrap, .modal-overlay, .cl-modalBackdrop";
+const SHEETS = ".alx-wrap, .acct-wrap, .mfs-wrap, .modal-overlay, .cl-modalBackdrop, .app-splash";
 
 // A light buzz on every tap of a button or link, a softer tick on switches and chips, and a
 // firmer one on the big coral buttons, like a native iPhone app. Only real taps (not the clicks
@@ -60,6 +60,29 @@ function NativeTabBridge() {
   return null;
 }
 
+// The app's launch screen: Pete hopping on navy for at least ~1.5 s and until nothing is still
+// loading (max 7 s), then the whole screen fades in. Rendered for everyone but only visible in
+// the app (CSS keys on .in-app, set before first paint); the website removes it on mount.
+function AppSplash() {
+  const [phase, setPhase] = useState("on"); // on -> out (fading) -> done
+  useEffect(() => {
+    if (!isApp()) { setPhase("done"); return; }
+    const start = Date.now();
+    const t = setInterval(() => {
+      const waited = Date.now() - start;
+      const busy = document.querySelector(".spinner, .ob-loading");
+      if ((waited > 1500 && !busy) || waited > 7000) {
+        clearInterval(t);
+        setPhase("out");
+        setTimeout(() => setPhase("done"), 600);
+      }
+    }, 100);
+    return () => clearInterval(t);
+  }, []);
+  if (phase === "done") return null;
+  return <div className={`app-splash${phase === "out" ? " is-out" : ""}`} aria-hidden="true"><span className="pete-hop" /></div>;
+}
+
 export default function AppGate() {
   const pathname = usePathname();
   const { isLoaded, user } = useUser();
@@ -77,6 +100,7 @@ export default function AppGate() {
   // The first-time tour (flag set at the end of onboarding) runs on the jobs screen.
   return (
     <>
+      <AppSplash />
       <NativeTabBridge />
       {isLoaded && pathname === "/jobs" && <AppTour />}
     </>

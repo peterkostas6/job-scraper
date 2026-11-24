@@ -7289,3 +7289,24 @@ footer a, .footer a { color: var(--pp-cream); }
 
 /* Recent (Premium): the Jobs list limited to the last 48 hours; the time since posting is coral. */
 .job-posted.job-posted-new, .jobs-list-browse .job-posted.job-posted-new { color: var(--pp-coral-ink, #C8402F); font-weight: 700; }
+
+/* ---- App: Pete hands off smoothly to the roles ----
+   Pete fades in when loading starts; when the roles arrive, the rows fade and rise in as a quick
+   top-to-bottom cascade instead of the whole list popping in at once. */
+.in-app .spinner, .pete-hop { animation: pete-hop 900ms cubic-bezier(0.45, 0, 0.55, 1) infinite, pete-in 260ms ease-out both; }
+@keyframes pete-in { from { opacity: 0; } }
+.in-app .jobs-list.fade-in { animation: none; }
+.in-app .jobs-list > .job-row { animation: row-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.in-app .jobs-list > .job-row:nth-child(2) { animation-delay: 35ms; }
+.in-app .jobs-list > .job-row:nth-child(3) { animation-delay: 70ms; }
+.in-app .jobs-list > .job-row:nth-child(4) { animation-delay: 105ms; }
+.in-app .jobs-list > .job-row:nth-child(5) { animation-delay: 140ms; }
+.in-app .jobs-list > .job-row:nth-child(6) { animation-delay: 175ms; }
+.in-app .jobs-list > .job-row:nth-child(7) { animation-delay: 210ms; }
+.in-app .jobs-list > .job-row:nth-child(8) { animation-delay: 245ms; }
+.in-app .jobs-list > .job-row:nth-child(9) { animation-delay: 280ms; }
+.in-app .jobs-list > .job-row:nth-child(n+10) { animation-delay: 315ms; }
+@keyframes row-in { from { opacity: 0; transform: translateY(14px); } }
+@media (prefers-reduced-motion: reduce) {
+  .in-app .jobs-list > .job-row, .in-app .spinner, .pete-hop { animation: none; }
+}

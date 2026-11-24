@@ -7095,3 +7095,4 @@ footer a, .footer a { color: var(--pp-cream); }
    nav (sidebar, phone menu) moves down by the same amount through --app-top. */
 .in-app { --app-top: env(safe-area-inset-top, 0px); }
 .in-app nav { padding-top: var(--app-top); }
+.in-app .st-header { padding-top: calc(1.25rem + var(--app-top)); }

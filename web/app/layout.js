@@ -108,10 +108,11 @@ export default function RootLayout({ children }) {
       <html lang="en">
         <head>
           {/* Inside the iPhone app (ios-app/): mark <html> and let the page reach under the
-              status bar, before first paint, so the nav can pad itself below the clock. */}
+              status bar, before first paint, so the nav can pad itself below the clock. React
+              resets both when it takes over the page, so put them back whenever that happens. */}
           <script
             dangerouslySetInnerHTML={{
-              __html: `if(/PetesPostingsApp/.test(navigator.userAgent)){document.documentElement.classList.add('in-app');var v=document.querySelector('meta[name=viewport]');if(v&&!/viewport-fit/.test(v.content))v.content+=', viewport-fit=cover';}`,
+              __html: `if(/PetesPostingsApp/.test(navigator.userAgent)){var d=document.documentElement,f=function(){if(!d.classList.contains('in-app'))d.classList.add('in-app');document.querySelectorAll('meta[name=viewport]').forEach(function(v){if(!/viewport-fit/.test(v.content))v.content+=', viewport-fit=cover';});};f();var m=new MutationObserver(f);m.observe(d,{attributes:true,attributeFilter:['class']});m.observe(document.head,{childList:true,subtree:true,attributes:true,attributeFilter:['content']});}`,
             }}
           />
           <Script

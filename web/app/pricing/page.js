@@ -6,7 +6,7 @@ import Link from "next/link";
 import { track } from "@/lib/track";
 import { capture } from "@/lib/analytics";
 import { PLANS, planPrice } from "@/lib/plans";
-import { openBillingPortal } from "@/lib/billing";
+import { openBillingPortal, canManageSubscription } from "@/lib/billing";
 import { trialFor } from "@/lib/alert-trial-days";
 import BankLogo from "@/lib/bank-logo";
 import { useNavMenuLock } from "@/lib/use-nav-menu";
@@ -238,7 +238,7 @@ export default function PricingPage() {
               isSignedIn ? (
                 <>
                 <UserButton>
-                  {user?.publicMetadata?.stripeCustomerId && (
+                  {canManageSubscription(user) && (
                     <UserButton.MenuItems>
                       <UserButton.Action label="Manage subscription" labelIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>} onClick={openBillingPortal} />
                     </UserButton.MenuItems>
@@ -338,7 +338,7 @@ export default function PricingPage() {
             {plan === "club" ? (
               <button className="pw-cta" onClick={() => { setShowInquiry(true); capture("club_inquiry_opened"); }}>Talk to us</button>
             ) : isSubscribed ? (
-              user?.publicMetadata?.stripeCustomerId ? <button className="pw-cta" onClick={openBillingPortal}>Manage subscription</button> : null
+              canManageSubscription(user) ? <button className="pw-cta" onClick={openBillingPortal}>Manage subscription</button> : null
             ) : isSignedIn ? (
               <button className="pw-cta" onClick={() => handleSubscribe()} disabled={checkoutLoading !== null}>
                 {checkoutLoading ? "Redirecting…" : "Get Premium"}

@@ -17,7 +17,8 @@ import { capture } from "@/lib/analytics";
 import { useTrackSignup } from "@/lib/use-track-signup";
 import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { trialFor } from "@/lib/alert-trial-days";
-import { openBillingPortal } from "@/lib/billing";
+import { openBillingPortal, canManageSubscription, deleteAccount } from "@/lib/billing";
+import { isApp } from "@/lib/app-access";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
 import { FIRM_LABEL } from "@/lib/firms";
@@ -2035,7 +2036,7 @@ export default function Home() {
           Request a company
         </span>
       </button>
-      {user?.publicMetadata?.stripeCustomerId && (
+      {canManageSubscription(user) && (
         <button className="sidebar-item" onClick={openBillingPortal}>
           <span className="sidebar-saved-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -2159,7 +2160,7 @@ export default function Home() {
                 <button className="nav-cta" onClick={() => { capture("home_cta_clicked", { where: "nav_signed_in" }); openAlerts(); }}>Get SMS alerts</button>
               )}
               <UserButton>
-                {user?.publicMetadata?.stripeCustomerId && (
+                {canManageSubscription(user) && (
                   <UserButton.MenuItems>
                     <UserButton.Action label="Manage subscription" labelIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>} onClick={openBillingPortal} />
                   </UserButton.MenuItems>
@@ -2269,10 +2270,11 @@ export default function Home() {
             <div className="acct-list">
               {!isSubscribed && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}
               {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
-              {isSignedIn && user?.publicMetadata?.stripeCustomerId && <button onClick={openBillingPortal}>Manage subscription</button>}
+              {isSignedIn && canManageSubscription(user) && <button onClick={openBillingPortal}>Manage subscription</button>}
               <Link href="/about">About</Link>
               <Link href="/">Home</Link>
               {isSignedIn && <button className="acct-out" onClick={() => clerk.signOut({ redirectUrl: "/jobs" })}>Sign out</button>}
+              {isSignedIn && isApp() && <button className="acct-out" onClick={() => deleteAccount(clerk)}>Delete account</button>}
             </div>
           </div>
         </div>

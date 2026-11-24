@@ -7,13 +7,14 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div style={{ maxWidth: 720, width: "calc(100% - 32px)", margin: "32px auto 64px", padding: "40px 24px 56px", background: "var(--pp-cream)", borderRadius: 16, boxSizing: "border-box", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1e293b" }}>
-      <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: September 26, 2026</p>
+      <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: November 24, 2026</p>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Privacy Policy</h1>
       <p style={{ fontSize: 15, color: "#475569", marginBottom: 40 }}>Pete's Postings · petespostings.com</p>
 
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>1. What We Collect</h2>
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>When you create an account, we collect your email address and name. If you enable SMS notifications, we also collect your phone number. We use Clerk for authentication, which may collect additional sign-in data.</p>
+        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>If you use our iPhone app, you can sign in with Apple, in which case Apple shares your name and email address with us (you can choose Apple&rsquo;s &ldquo;Hide My Email&rdquo;, which gives us a private relay address that forwards to you). If you turn on notifications, we store a push notification token for your phone so we can send you job alerts. Subscriptions bought in the app are processed by Apple; we receive only whether your subscription is active (through RevenueCat), never your payment details.</p>
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginBottom: 12 }}>If you subscribe, Stripe collects your payment details; we never see or store your full card number. We keep your subscription status and plan. We also keep your alert preferences, jobs you save, companies you request, and a record of which job links you open (on the site and from alert texts), so we can see which postings are useful.</p>
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>We use PostHog and Google Analytics to understand how the site is used, such as which pages are visited and which features are used. Both set cookies or similar browser storage so they can recognize repeat visits. You can block these cookies in your browser settings, or opt out of Google Analytics with Google&rsquo;s <a href="https://tools.google.com/dlpage/gaoptout" style={{ color: "#2563eb" }}>opt-out browser add-on</a>. </p>
         <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7, marginTop: 12 }}>We use the Meta Pixel and the Reddit Pixel to measure our Facebook, Instagram and Reddit ads. It uses cookies to record page visits and actions such as creating an account or starting a subscription, so Meta and Reddit can report how our ads perform and show them to people likely to find the site useful. Each may combine this with information it already has about you under its own privacy policy (<a href="https://www.facebook.com/privacy/policy" style={{ color: "#2563eb" }}>Meta</a>, <a href="https://www.reddit.com/policies/privacy-policy" style={{ color: "#2563eb" }}>Reddit</a>). You can control ad personalization in your <a href="https://accountscenter.facebook.com/ad_preferences" style={{ color: "#2563eb" }}>Meta ad preferences</a> and <a href="https://www.reddit.com/settings/privacy" style={{ color: "#2563eb" }}>Reddit privacy settings</a>.</p>
@@ -24,6 +25,7 @@ export default function PrivacyPage() {
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>2. How We Use Your Information</h2>
         <ul style={{ fontSize: 15, color: "#334155", lineHeight: 2, paddingLeft: 20 }}>
           <li><strong>Email address</strong> — to send transactional job alert emails and account-related messages you have opted into.</li>
+          <li><strong>Push notification token</strong> — to send job alert notifications to the iPhone app. Turn them off at any time in your iPhone&rsquo;s Settings, under Notifications.</li>
           <li><strong>Phone number</strong> — to send SMS job alert notifications you have explicitly opted into. You can opt out at any time by replying STOP.</li>
           <li><strong>Usage data</strong> — to improve the site and understand which features are used.</li>
         </ul>
@@ -43,7 +45,7 @@ export default function PrivacyPage() {
 
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>4. Data Storage & Security</h2>
-        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>Account data is stored securely via Clerk. Job preference data is stored in Vercel Postgres and Upstash Redis. We use industry-standard security practices and do not store payment information directly (handled by Stripe).</p>
+        <p style={{ fontSize: 15, color: "#334155", lineHeight: 1.7 }}>Account data is stored securely via Clerk. Job preference data is stored in Vercel Postgres and Upstash Redis. We use industry-standard security practices and do not store payment information directly (website payments are handled by Stripe, and iPhone app payments by Apple).</p>
       </section>
 
       <section style={{ marginBottom: 36 }}>
@@ -54,6 +56,8 @@ export default function PrivacyPage() {
           <li><strong>Resend</strong> — transactional email delivery</li>
           <li><strong>Twilio</strong> — SMS message delivery</li>
           <li><strong>Stripe</strong> — payment processing and subscription management</li>
+          <li><strong>Apple</strong> — Sign in with Apple, push notifications and App Store subscription payments in the iPhone app</li>
+          <li><strong>RevenueCat</strong> — tracking the status of App Store subscriptions</li>
           <li><strong>Vercel</strong> — hosting and infrastructure</li>
           <li><strong>PostHog</strong> — product usage analytics</li>
           <li><strong>Google Analytics</strong> — website traffic analytics</li>
@@ -65,8 +69,8 @@ export default function PrivacyPage() {
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>6. Your Rights</h2>
         <ul style={{ fontSize: 15, color: "#334155", lineHeight: 2, paddingLeft: 20 }}>
-          <li><strong>Delete your account</strong> from your profile settings. To also delete records we keep separately (such as link clicks, company requests and message logs), email us and we will remove them.</li>
-          <li><strong>Stop texts</strong> by replying STOP, and <strong>stop emails</strong> with the unsubscribe link in any email.</li>
+          <li><strong>Delete your account</strong> in the iPhone app (account menu, then Delete account) or on the website from your profile settings. To also delete records we keep separately (such as link clicks, company requests and message logs), email us and we will remove them.</li>
+          <li><strong>Stop texts</strong> by replying STOP, <strong>stop emails</strong> with the unsubscribe link in any email, and <strong>stop app notifications</strong> in your iPhone&rsquo;s Settings.</li>
           <li><strong>Limit ad measurement</strong> by blocking cookies in your browser and using your Meta and Reddit ad settings linked above.</li>
           <li><strong>Ask a question or request your data</strong> at <a href="mailto:pete@petespostings.com" style={{ color: "#2563eb" }}>pete@petespostings.com</a>.</li>
         </ul>

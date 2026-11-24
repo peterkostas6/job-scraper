@@ -12,6 +12,22 @@ import AppTour from "./AppTour";
 // Drives the app's native tab bar from the page: shows it on screens that have the site's
 // .tabbar (hidden in the app), keeps its selected tab in step, and turns native taps into clicks
 // on the matching site tab, so each tab keeps doing exactly what it does on the website.
+// Resolves once the page has stopped changing for `quiet` ms (data loaded, list drawn), or after
+// `max` ms, so a fade only ever reveals the finished screen, never an empty card mid-load.
+function whenSettled(quiet = 180, max = 2500) {
+  return new Promise((resolve) => {
+    let timer = setTimeout(done, quiet);
+    const hard = setTimeout(done, max);
+    const mo = new MutationObserver(() => { clearTimeout(timer); timer = setTimeout(done, quiet); });
+    mo.observe(document.body, { subtree: true, childList: true, characterData: true });
+    function done() {
+      if (document.querySelector(".spinner") && Date.now() - start < max) { timer = setTimeout(done, quiet); return; }
+      mo.disconnect(); clearTimeout(timer); clearTimeout(hard); resolve();
+    }
+    const start = Date.now();
+  });
+}
+
 const SHEETS = ".alx-wrap, .acct-wrap, .mfs-wrap, .modal-overlay, .cl-modalBackdrop, .app-splash";
 
 // A light buzz on every tap of a button or link, a softer tick on switches and chips, and a
@@ -60,11 +76,12 @@ function NativeTabBridge() {
         setTimeout(() => {
           tab.click();
           window.scrollTo(0, 0);
-          setTimeout(() => {
+          // Fade back in only once the new page has finished drawing.
+          whenSettled().then(() => {
             html.classList.remove("tab-out");
             html.classList.add("tab-in");
             setTimeout(() => html.classList.remove("tab-in"), 400);
-          }, 60);
+          });
         }, 160);
       });
       document.addEventListener("click", buzz, true);
@@ -90,8 +107,10 @@ function AppSplash() {
       const busy = document.querySelector(".spinner, .ob-loading");
       if ((waited > 1500 && !busy) || waited > 7000) {
         clearInterval(t);
-        setPhase("out");
-        setTimeout(() => setPhase("done"), 600);
+        whenSettled(200, 2000).then(() => {
+          setPhase("out");
+          setTimeout(() => setPhase("done"), 600);
+        });
       }
     }, 100);
     return () => clearInterval(t);

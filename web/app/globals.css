@@ -7257,3 +7257,32 @@ footer a, .footer a { color: var(--pp-cream); }
 .in-app .ob { animation: ob-step 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 @keyframes ob-step { from { opacity: 0; transform: translateX(18px); } }
 @media (prefers-reduced-motion: reduce) { .in-app .ob { animation: none; } }
+
+/* ---- Pete loading animation (app only) ----
+   Pete (public/pete.svg) hops, squashing a little as he lands, over a shadow that shrinks as he
+   rises. Shown while the app opens, and in place of every .spinner inside the app. */
+.pete-hop, .in-app .spinner {
+  position: relative; display: block; width: 56px; height: 63px; border: 0; border-radius: 0;
+  background: url(/pete.svg) center / contain no-repeat; transform-origin: 50% 100%;
+  animation: pete-hop 900ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.pete-hop::after, .in-app .spinner::after {
+  content: ""; position: absolute; left: 50%; bottom: -12px; width: 40px; height: 8px; margin-left: -20px;
+  border-radius: 50%; background: rgba(8, 14, 30, 0.45); animation: pete-shadow 900ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes pete-hop {
+  0%, 100% { transform: translateY(0) scale(1.08, 0.92); }
+  12% { transform: translateY(0) scale(0.96, 1.05); }
+  50% { transform: translateY(-22px) scale(1, 1); }
+  88% { transform: translateY(0) scale(0.98, 1.02); }
+}
+/* The shadow sits outside the hop (it doesn't jump): undo the parent's movement by animating
+   its own size only. */
+@keyframes pete-shadow {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 1; }
+  50% { transform: translateY(22px) scale(0.55); opacity: 0.5; }
+}
+.ob-loading { align-items: center; justify-content: center; }
+@media (prefers-reduced-motion: reduce) {
+  .pete-hop, .in-app .spinner, .pete-hop::after, .in-app .spinner::after { animation: none; }
+}

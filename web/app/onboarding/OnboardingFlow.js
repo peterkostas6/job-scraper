@@ -196,7 +196,9 @@ export default function OnboardingFlow() {
 
   // Wait for the sign-in to load before showing anything: a returning member goes straight to
   // their jobs instead of seeing "Hi!" flash first.
-  if (!restored || !isLoaded || (isSignedIn && paid && (step === "welcome" || step === "paywall"))) return <div className="ob ob-navy" />;
+  if (!restored || !isLoaded || (isSignedIn && paid && (step === "welcome" || step === "paywall"))) {
+    return <div className="ob ob-navy ob-loading" role="status" aria-label="Loading"><span className="pete-hop" aria-hidden="true" /></div>;
+  }
 
   const back = BACK[step] && (
     <button type="button" className="ob-back" aria-label="Back" onClick={() => go(BACK[step])}>

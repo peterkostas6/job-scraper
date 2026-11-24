@@ -49,7 +49,24 @@ function NativeTabBridge() {
     nativeTabs.call("select", { index: -1 }).then(() => {
       ready = true;
       html.classList.add("native-tabs");
-      off = nativeTabs.onTap((i) => document.querySelectorAll(".tabbar > *")[i]?.click());
+      off = nativeTabs.onTap((i) => {
+        const tab = document.querySelectorAll(".tabbar > *")[i];
+        if (!tab) return;
+        // Jobs, Recent, Saved switch the page: fade it out, switch, fade the new one in.
+        // Alerts (2) and Request (4) open sheets, which slide up on their own.
+        if (i === 2 || i === 4 || tab.classList.contains("is-on")) { tab.click(); return; }
+        html.classList.remove("tab-in");
+        html.classList.add("tab-out");
+        setTimeout(() => {
+          tab.click();
+          window.scrollTo(0, 0);
+          setTimeout(() => {
+            html.classList.remove("tab-out");
+            html.classList.add("tab-in");
+            setTimeout(() => html.classList.remove("tab-in"), 400);
+          }, 60);
+        }, 160);
+      });
       document.addEventListener("click", buzz, true);
       sync();
     }).catch(() => {});

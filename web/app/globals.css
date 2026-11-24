@@ -7306,3 +7306,14 @@ footer a, .footer a { color: var(--pp-cream); }
   .in-app .spinner, .pete-hop { animation: none; }
   .in-app .app-splash { transition: none; }
 }
+
+/* App: switching between Jobs, Recent and Saved cross-fades the page (AppGate NativeTabBridge). */
+.in-app .content { transition: opacity 160ms ease, transform 160ms ease; }
+.in-app.tab-out .content { opacity: 0; transform: translateY(4px); }
+.in-app.tab-in .content { animation: tab-in 340ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes tab-in { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .in-app .content { transition: none; }
+  .in-app.tab-out .content { transform: none; }
+  .in-app.tab-in .content { animation: none; }
+}

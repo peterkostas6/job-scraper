@@ -128,6 +128,14 @@ export default function AlertsPanel({
                           if (ok) onChange({ pushEnabled: true });
                         }}><span /></button>
                     </div>
+                    {saved?.pushEnabled && (
+                      <button className="alx-link" onClick={async () => {
+                        setPushAsk("Sending…");
+                        const res = await fetch("/api/app/test-push", { method: "POST" }).catch(() => null);
+                        const data = await res?.json().catch(() => ({}));
+                        setPushAsk(res?.ok ? "Sent. Check your lock screen." : (data?.error || "Couldn’t send a test.") + (data?.detail ? ` (${data.detail})` : ""));
+                      }}>Send me a test notification</button>
+                    )}
                   </div>
                 )}
 

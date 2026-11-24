@@ -7286,3 +7286,6 @@ footer a, .footer a { color: var(--pp-cream); }
 @media (prefers-reduced-motion: reduce) {
   .pete-hop, .in-app .spinner, .pete-hop::after, .in-app .spinner::after { animation: none; }
 }
+
+/* Recent (Premium): the Jobs list limited to the last 48 hours; the time since posting is coral. */
+.job-posted.job-posted-new, .jobs-list-browse .job-posted.job-posted-new { color: var(--pp-coral-ink, #C8402F); font-weight: 700; }

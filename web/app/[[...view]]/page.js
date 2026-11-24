@@ -1848,7 +1848,12 @@ export default function Home() {
   const usePrefs = hasAlertPrefs && browseMode === "mine";
   const matchesMine = (job) => matchesAlertPrefs(job, { ...savedNotifPrefs, location: (savedNotifPrefs.location || "").trim() });
   const okPrefs = (job) => !usePrefs || matchesMine(job);
-  const searched = jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okPrefs(job));
+  // Recent (Premium): the same Jobs list, filters and look, limited to the last 48 hours and
+  // newest first; each row shows how long ago it posted, in coral. Without Premium, Recent keeps
+  // its locked preview (NewPostingsView).
+  const recentMode = viewNewPostings && isSignedIn && isSubscribed;
+  const okRecent = (job) => !recentMode || isLast48h(job);
+  const searched = jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okPrefs(job) && okRecent(job));
   const filteredJobs = searched.filter((job) => okType(job) && okLocation(job) && okCategory(job));
   // Each dropdown counts the jobs left after the OTHER filters, so its numbers always add up to what you'd see.
   const locationOptions = rankCounts(searched.filter((j) => okType(j) && okCategory(j)).flatMap((j) => j.cities || []), MULTI_CITY);
@@ -1856,11 +1861,12 @@ export default function Home() {
   const categoryOptions = rankCounts(searched.filter((j) => okType(j) && okLocation(j)).map((j) => j.category), "Other");
   const withSelected = (opts, sel) => (sel && !opts.some(([v]) => v === sel) ? [[sel, 0], ...opts] : opts);
 
-  const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link)) : filteredJobs;
+  const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link))
+    : recentMode ? [...filteredJobs].sort((a, b) => postedAt(b) - postedAt(a)) : filteredJobs;
   // A new filter starts the list over at the first 100 rows.
-  useEffect(() => { setShown(100); }, [activeBank, jobType, locationFilter, categoryFilter, searchQuery, showSavedOnly, browseMode]);
+  useEffect(() => { setShown(100); }, [activeBank, jobType, locationFilter, categoryFilter, searchQuery, showSavedOnly, browseMode, recentMode]);
   // Counts for the My preferences | All roles switch, after search and the dropdown filters.
-  const modeBase = hasAlertPrefs ? jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okType(job) && okLocation(job) && okCategory(job)) : [];
+  const modeBase = hasAlertPrefs ? jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okType(job) && okLocation(job) && okCategory(job) && okRecent(job)) : [];
   const mineCount = hasAlertPrefs ? modeBase.filter(matchesMine).length : 0;
   // The roles Browse leaves out without Pro, for the locked rows at the top of the list.
   const lockedRecent = (isSignedIn && isSubscribed) || showSavedOnly ? [] : allJobs
@@ -2296,7 +2302,7 @@ export default function Home() {
         <AboutPage onBrowse={() => router.push("/jobs")} />
       )}
 
-      {viewNewPostings && (
+      {viewNewPostings && !recentMode && (
         <div className="app-layout">
           {/* Mobile top bar — not shown on Recent (Pro gets the filter bar below; everyone else just the locked list) */}
           <div className="mobile-top-bar mobile-top-bar-replaced">
@@ -2411,7 +2417,7 @@ export default function Home() {
         </div>
       )}
 
-      {!viewHome && !viewAbout && !viewNewPostings && (
+      {!viewHome && !viewAbout && (!viewNewPostings || recentMode) && (
         <div className="app-layout">
           {/* Mobile top bar — replaces sidebar on mobile (on /jobs the filter bar replaces it; on Alerts it isn't shown) */}
           <div className={`mobile-top-bar${!viewingSaved || viewNotifications ? " mobile-top-bar-replaced" : ""}`}>
@@ -2778,7 +2784,9 @@ export default function Home() {
                         <span className="job-title">{job.title}{rowTags(job)}</span>
                         <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
                         <span className="job-location">{job.location || "—"}</span>
-                        <span className="job-posted tnum">{formatPostedAt(job)}</span>
+                        {recentMode
+                          ? <span className="job-posted job-posted-new tnum">{feedAge(job)}</span>
+                          : <span className="job-posted tnum">{formatPostedAt(job)}</span>}
                         <div className="job-badges">
                           <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>
                             {LEVEL_LABEL[jobLevel(job.title)]}

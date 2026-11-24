@@ -7247,3 +7247,14 @@ footer a, .footer a { color: var(--pp-cream); }
 /* iPhone app with Apple's native tab bar (ios-app NativeTabs.swift): the site's bar stays in the
    page (the native taps click it, the tour measures it) but is invisible. */
 .native-tabs .tabbar { visibility: hidden; pointer-events: none; }
+
+/* ---- iPhone app: native-feeling touch (app only) ----
+   No grey flash on tap, no long-press copy/look-up menus or text selection on controls, and
+   onboarding screens slide in instead of swapping. */
+.in-app, .in-app * { -webkit-tap-highlight-color: transparent; }
+.in-app button, .in-app a, .in-app label, .in-app [role="switch"], .in-app nav, .in-app .tabbar {
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+}
+.in-app .ob { animation: ob-step 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes ob-step { from { opacity: 0; transform: translateX(18px); } }
+@media (prefers-reduced-motion: reduce) { .in-app .ob { animation: none; } }

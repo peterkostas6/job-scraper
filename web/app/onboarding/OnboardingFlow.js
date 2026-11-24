@@ -5,6 +5,7 @@
 // the hard paywall, saving the account, and turning on alerts. Answers are kept on the phone
 // until there is an account to save them to, in the same shape as the website's alert settings.
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useClerk, useUser, useSignIn, useSignUp } from "@clerk/nextjs";
 import { purchasesReady, getPremiumPackage, buyPremium, restorePremium, linkPurchaseToAccount, enablePush, appleSignInReady, appleIdentityToken } from "@/lib/native";
 import BankLogo from "@/lib/bank-logo";
@@ -41,6 +42,7 @@ const Check = () => (
 export default function OnboardingFlow() {
   const { isLoaded, isSignedIn, user } = useUser();
   const clerk = useClerk();
+  const router = useRouter();
   const { signIn: clerkSignIn, setActive } = useSignIn();
   const { signUp: clerkSignUp } = useSignUp();
   const [step, setStep] = useState("welcome");
@@ -186,7 +188,7 @@ export default function OnboardingFlow() {
   function finish() {
     // The app tour runs once on the jobs screen after onboarding.
     try { localStorage.removeItem(STORAGE_KEY); localStorage.setItem(TOUR_KEY, "pending"); } catch {}
-    window.location.href = "/jobs";
+    router.replace("/jobs"); // in place, no full-page reload flash
   }
 
   if (!restored) return <div className="ob ob-navy" />;
@@ -207,7 +209,7 @@ export default function OnboardingFlow() {
   );
 
   if (step === "welcome") return (
-    <main className="ob ob-navy">
+    <main key={step} className="ob ob-navy">
       <div className="ob-brand"><img src="/logo-mark.svg" alt="" width="22" height="22" /> Pete&rsquo;s Postings</div>
       <div className="ob-hero">
         <p className="ob-say">Hi! I&rsquo;m Pete. I&rsquo;ll notify you the second a firm posts a role you want.</p>
@@ -221,7 +223,7 @@ export default function OnboardingFlow() {
   );
 
   if (step === "why") return (
-    <main className="ob ob-navy">
+    <main key={step} className="ob ob-navy">
       {bar}
       <div className="ob-mid">
       <div className="ob-ask ob-ask-dark"><Pete size={60} /><p className="ob-bubble">Here&rsquo;s what changes for you.</p></div>
@@ -239,7 +241,7 @@ export default function OnboardingFlow() {
   );
 
   if (step === "firms") return (
-    <main className="ob ob-cream">
+    <main key={step} className="ob ob-cream">
       {bar}
       {ask("Which firms are you after?")}
       <button type="button" className="ob-tile ob-tile-big" aria-pressed={answers.banks.length === 0} onClick={() => set({ banks: [] })}>
@@ -252,7 +254,7 @@ export default function OnboardingFlow() {
   );
 
   if (step === "level") return (
-    <main className="ob ob-cream">
+    <main key={step} className="ob ob-cream">
       {bar}
       {ask("What kind of role? Pick as many as you like.")}
       <div className="ob-stack">
@@ -271,7 +273,7 @@ export default function OnboardingFlow() {
   );
 
   if (step === "location") return (
-    <main className="ob ob-cream">
+    <main key={step} className="ob ob-cream">
       {bar}
       {ask("Last one. Where do you want to work?")}
       <div className="ob-chips">
@@ -287,7 +289,7 @@ export default function OnboardingFlow() {
     const levels = answers.levels.map((k) => LEVELS.find((l) => l.key === k)?.label).join(" + ");
     const firms = answers.banks.length === 0 ? "all firms" : answers.banks.length === 1 ? ALL_FIRMS[answers.banks[0]]?.name : `${answers.banks.length} firms`;
     return (
-      <main className="ob ob-navy">
+      <main key={step} className="ob ob-navy">
         {bar}
         <div className="ob-center">
           <Pete size={100} mood="happy" />
@@ -312,7 +314,7 @@ export default function OnboardingFlow() {
   }
 
   if (step === "paywall") return (
-    <main className="ob ob-cream">
+    <main key={step} className="ob ob-cream">
       {bar}
       <div className="ob-mid">
       <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Unlock {matches?.length ? `your ${matches.length.toLocaleString()} roles` : "every role"}</h1></div>
@@ -337,7 +339,7 @@ export default function OnboardingFlow() {
   );
 
   if (step === "account") return (
-    <main className="ob ob-cream">
+    <main key={step} className="ob ob-cream">
       <div className="ob-center ob-center-top">
         <Pete size={96} mood="happy" />
         <h1 className="ob-h1">You&rsquo;re in!<br />Save your account</h1>
@@ -359,7 +361,7 @@ export default function OnboardingFlow() {
 
   // notify
   return (
-    <main className="ob ob-navy">
+    <main key={step} className="ob ob-navy">
       <div className="ob-center ob-center-top">
         <h1 className="ob-h1">The second a role posts,<br />you&rsquo;ll know</h1>
         <p className="ob-sub">Turn on notifications so you hear about new roles before other job platforms do.</p>

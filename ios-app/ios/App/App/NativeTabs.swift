@@ -83,8 +83,20 @@ public class NativeTabsPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func setVisible(_ call: CAPPluginCall) {
         let visible = call.getBool("visible") ?? true
         DispatchQueue.main.async {
-            self.bar?.isHidden = !visible
-            call.resolve(["height": visible ? Double(self.bar?.frame.height ?? 0) : 0])
+            guard let bar = self.bar else { return call.resolve(["height": 0]) }
+            // Slide and fade, like a system tab bar giving way to a sheet.
+            let away = CGAffineTransform(translationX: 0, y: bar.frame.height * 0.35)
+            if visible {
+                if bar.isHidden { bar.alpha = 0; bar.transform = away; bar.isHidden = false }
+                UIView.animate(withDuration: 0.28, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+                    bar.alpha = 1; bar.transform = .identity
+                }
+            } else if !bar.isHidden {
+                UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseIn, .beginFromCurrentState], animations: {
+                    bar.alpha = 0; bar.transform = away
+                }, completion: { done in if done && bar.alpha == 0 { bar.isHidden = true; bar.transform = .identity } })
+            }
+            call.resolve(["height": visible ? Double(bar.frame.height) : 0])
         }
     }
 

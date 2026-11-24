@@ -21,3 +21,8 @@ export function hasAppAccess(user) {
 
 // Pages a locked app user may still open: the onboarding itself and the policies it links to.
 export const APP_OPEN_PATHS = ["/onboarding", "/terms", "/privacy"];
+
+// Website-only pages (landing pages, the website sign-up and text-alert setup, pricing): the app
+// sends paying users to their jobs instead. Alerts in the app are push notifications, set in the
+// Alerts tab.
+export const APP_WEB_ONLY_PATHS = ["/", "/start", "/alerts", "/edge", "/welcome", "/pricing", "/about"];

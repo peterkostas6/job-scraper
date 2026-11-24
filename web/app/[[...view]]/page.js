@@ -1458,6 +1458,9 @@ export default function Home() {
   const [savedNotifPrefs, setSavedNotifPrefs] = useState(null);
   const [openAlertRow, setOpenAlertRow] = useState(null);
   const [editingPhone, setEditingPhone] = useState(false);
+  // Inside the iPhone app alerts are push notifications: no texts, no SMS wording.
+  const [inApp, setInApp] = useState(false);
+  useEffect(() => setInApp(isApp()), []);
   const [companyRequest, setCompanyRequest] = useState("");
   const [companyRequestStatus, setCompanyRequestStatus] = useState(null); // null | "sending" | "sent" | error message
   const [showCompanyRequest, setShowCompanyRequest] = useState(false);
@@ -1963,7 +1966,7 @@ export default function Home() {
     if (!st || !(st.alertedAt || st.viewedAt || st.appliedAt)) return null;
     return (
       <span className="row-tags">
-        {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : st.alertedVia === "push" ? "Notified you" : "Texted you"}</span>}
+        {st.alertedAt && <span className="al-tag al-tag-texted">{inApp || st.alertedVia === "push" ? "Notified you" : st.alertedVia === "email" ? "Emailed you" : "Texted you"}</span>}
         {st.viewedAt && <span className="al-tag al-tag-viewed">Viewed</span>}
         {st.appliedAt && <span className="al-tag al-tag-applied">Applied</span>}
       </span>
@@ -2157,7 +2160,7 @@ export default function Home() {
             {!isLoaded ? null : isSignedIn ? (
               <>
               {savedNotifPrefs !== null && !alertsOn && !alertsPanelOpen && (
-                <button className="nav-cta" onClick={() => { capture("home_cta_clicked", { where: "nav_signed_in" }); openAlerts(); }}>Get SMS alerts</button>
+                <button className="nav-cta" onClick={() => { capture("home_cta_clicked", { where: "nav_signed_in" }); openAlerts(); }}>{inApp ? "Turn on alerts" : "Get SMS alerts"}</button>
               )}
               <UserButton>
                 {canManageSubscription(user) && (
@@ -2223,7 +2226,7 @@ export default function Home() {
           )}
           <span>Recent</span>
         </Link>
-        <button className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label="Text alerts">
+        <button className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label="Alerts">
           <span className="tab-main-dot">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           </span>
@@ -2271,8 +2274,8 @@ export default function Home() {
               {!isSubscribed && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}
               {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
               {isSignedIn && canManageSubscription(user) && <button onClick={openBillingPortal}>Manage subscription</button>}
-              <Link href="/about">About</Link>
-              <Link href="/">Home</Link>
+              {!inApp && <Link href="/about">About</Link>}
+              {!inApp && <Link href="/">Home</Link>}
               {isSignedIn && <button className="acct-out" onClick={() => clerk.signOut({ redirectUrl: "/jobs" })}>Sign out</button>}
               {isSignedIn && isApp() && <button className="acct-out" onClick={() => deleteAccount(clerk)}>Delete account</button>}
             </div>
@@ -2365,7 +2368,7 @@ export default function Home() {
             </h1>
 
             {/* Shortcut to alert settings: only until their alerts are on (then it is just noise). */}
-            {!(notifPrefs.smsEnabled || notifPrefs.enabled) && (
+            {!(notifPrefs.smsEnabled || notifPrefs.enabled || notifPrefs.pushEnabled) && (
               <div className="welcome-banner alerts-callout">
                 <div className="alerts-callout-body">
                   <span className="alerts-callout-icon" aria-hidden="true">
@@ -2377,12 +2380,12 @@ export default function Home() {
                     <p className="welcome-title">
                       {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
                         ? `Your ${notifPrefs.smsEnabled ? "text" : "email"} alerts are on`
-                        : "Get a text the instant a new job posts"}
+                        : inApp ? "Get notified the instant a new job posts" : "Get a text the instant a new job posts"}
                     </p>
                     <p className="welcome-desc">
                       {isSubscribed && (notifPrefs.smsEnabled || notifPrefs.enabled)
                         ? "Change which banks, roles and cities you hear about."
-                        : "Set up text or email alerts for the banks and roles you want, so you never have to check this page."}
+                        : inApp ? "Turn on notifications for the banks and roles you want, so you never have to check this page." : "Set up text or email alerts for the banks and roles you want, so you never have to check this page."}
                     </p>
                   </div>
                 </div>
@@ -2390,7 +2393,7 @@ export default function Home() {
                   className="alerts-callout-cta"
                   onClick={openAlerts}
                 >
-                  {notifPrefs.smsEnabled || notifPrefs.enabled ? "Edit alerts" : "Set up free alerts"}
+                  {notifPrefs.smsEnabled || notifPrefs.enabled ? "Edit alerts" : inApp ? "Turn on alerts" : "Set up free alerts"}
                 </button>
               </div>
             )}

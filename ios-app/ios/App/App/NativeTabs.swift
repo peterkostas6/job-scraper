@@ -73,6 +73,7 @@ public class NativeTabsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setVisible", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "select", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "haptic", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setEnabled", returnType: CAPPluginReturnPromise),
     ]
     static weak var current: NativeTabsPlugin?
 
@@ -111,6 +112,15 @@ public class NativeTabsPlugin: CAPPlugin, CAPBridgedPlugin {
             case "medium": UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             default: UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
+            call.resolve()
+        }
+    }
+
+    // Turns taps on the bar off and on (off while the first-time tour is showing).
+    @objc func setEnabled(_ call: CAPPluginCall) {
+        let enabled = call.getBool("enabled") ?? true
+        DispatchQueue.main.async {
+            self.bar?.isUserInteractionEnabled = enabled
             call.resolve()
         }
     }

@@ -7211,7 +7211,6 @@ footer a, .footer a { color: var(--pp-cream); }
 .tour-bubble strong { display: block; font-size: 1.1rem; font-weight: 800; }
 .tour-bubble p { margin: 4px 0 0; font-size: 0.95rem; line-height: 1.4; color: #3B4763; }
 .tour-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
-.tour-skip { min-height: 44px; padding: 0 4px; border: 0; background: none; font: inherit; font-size: 0.95rem; font-weight: 600; color: rgba(244, 237, 224, 0.8); cursor: pointer; }
 .tour-skip-space { width: 70px; }
 .tour-dots { display: flex; gap: 6px; }
 .tour-dots span { width: 6px; height: 6px; border-radius: 3px; background: rgba(244, 237, 224, 0.35); transition: width 200ms; }

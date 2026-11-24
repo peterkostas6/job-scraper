@@ -2,7 +2,8 @@
 
 // First-time tour of the iPhone app, shown once on /jobs right after onboarding: Pete points out
 // the jobs list, Recent, Alerts, Saved and the account button. Onboarding sets the flag; finishing
-// or skipping clears it. Each step highlights the real element (dimming everything else).
+// clears it. It can't be skipped: while it's up, Next is the only thing that responds (the page
+// is covered and the native tab bar's taps are switched off).
 import { useEffect, useLayoutEffect, useState } from "react";
 import { capture } from "@/lib/analytics";
 import { nativeTabs } from "@/lib/native";
@@ -31,6 +32,7 @@ export default function AppTour() {
     if (!pending) return;
     window.scrollTo(0, 0);
     document.documentElement.classList.add("tour-on");
+    nativeTabs.call("setEnabled", { enabled: false }).catch(() => {});
     setStep(0);
     capture("app_tour_started");
   }, []);
@@ -69,12 +71,13 @@ export default function AppTour() {
     return () => { clearTimeout(timer); window.removeEventListener("resize", measure); };
   }, [step]);
 
-  const done = (how) => {
+  const done = () => {
     try { localStorage.removeItem(TOUR_KEY); localStorage.setItem(TOUR_SEEN_KEY, "1"); } catch {}
     document.documentElement.classList.remove("tour-on");
+    nativeTabs.call("setEnabled", { enabled: true }).catch(() => {});
     const on = [...(document.querySelector(".tabbar")?.children || [])].findIndex((t) => t.classList.contains("is-on"));
     nativeTabs.call("select", { index: on }).catch(() => {});
-    capture(how === "skip" ? "app_tour_skipped" : "app_tour_finished", { step });
+    capture("app_tour_finished", { step });
     setStep(STEPS.length);
   };
 
@@ -98,9 +101,9 @@ export default function AppTour() {
           </div>
         </div>
         <div className="tour-foot">
-          {last ? <span className="tour-skip-space" /> : <button type="button" className="tour-skip" onClick={() => done("skip")}>Skip tour</button>}
+          <span className="tour-skip-space" />
           <span className="tour-dots" aria-hidden="true">{STEPS.map((_, i) => <span key={i} className={i === step ? "is-on" : ""} />)}</span>
-          <button type="button" className="tour-next" onClick={() => (last ? done("finish") : setStep(step + 1))}>{last ? "Let’s go" : "Next"}</button>
+          <button type="button" className="tour-next" onClick={() => (last ? done() : setStep(step + 1))}>{last ? "Let’s go" : "Next"}</button>
         </div>
       </div>
     </div>

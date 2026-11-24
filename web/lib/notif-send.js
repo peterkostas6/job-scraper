@@ -7,6 +7,7 @@ import { sendEmail, unsubscribeUrl, BRAND } from "@/lib/email";
 import { captureServer } from "@/lib/posthog-server";
 import { alertTrial } from "@/lib/alert-trial";
 import { markAlerted } from "@/lib/job-status";
+import { smsSlot, holdJobs, heldJobs, clearHeld } from "@/lib/sms-pacing";
 
 // Sends go through the Twilio Messaging Service that the approved A2P campaign is attached to.
 export function smsConfig() {
@@ -126,7 +127,7 @@ export async function logNotification({ userId = null, channel, status, recipien
  * Returns { emailSent, smsSent, failed } — failed is true only when the email could not
  * be delivered, so the caller queues the jobs for the retry sweep.
  */
-export async function sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree = false, createdAt = null, forceLocked = false }) {
+export async function sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree = false, createdAt = null, forceLocked = false, smsOnly = false, paced = true }) {
   const result = { emailSent: false, smsSent: false, failed: false };
   if (!jobs || jobs.length === 0) return result;
   const smsTo = sms && prefs?.smsEnabled && prefs?.phoneNumber ? prefs.phoneNumber : "";
@@ -138,7 +139,8 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
   const jobLinks = jobs.map((j) => j.link);
 
   // prefs.enabled is the email switch; undefined (the admin test) still emails.
-  if (email && prefs?.enabled !== false) {
+  // smsOnly: the held-text sweep, whose jobs were already emailed when they were found.
+  if (email && prefs?.enabled !== false && !smsOnly) {
     try {
       // Job links go through /j/<code> so email clicks are counted like text clicks.
       const emailJobs = await Promise.all(jobs.map(async (j) => {
@@ -172,27 +174,47 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
     }
   }
 
-  if (sms && prefs?.smsEnabled && prefs?.phoneNumber) {
+  if (paced && sms && prefs?.smsEnabled && prefs?.phoneNumber) {
+    // Pacing (lib/sms-pacing.js): if this number had a text too recently or hit today's
+    // limit, hold these jobs for the next text instead of sending one now.
+    const slot = await smsSlot(prefs.phoneNumber);
+    if (!slot.allowed) {
+      try {
+        await holdJobs(uid, jobs);
+        result.smsHeld = true;
+      } catch (err) {
+        console.error(`Failed to hold SMS jobs for ${uid}:`, err?.message || err);
+      }
+    }
+  }
+
+  if (sms && prefs?.smsEnabled && prefs?.phoneNumber && !result.smsHeld) {
+    // Jobs held from earlier runs go out in this same text, oldest first.
+    const held = paced ? await heldJobs(uid) : [];
+    const seen = new Set();
+    const smsJobs = [...held, ...jobs].filter((j) => !seen.has(j.link) && seen.add(j.link));
+    const smsLinks = smsJobs.map((j) => j.link);
     try {
       const withOptOut = await needsOptOutReminder(prefs.phoneNumber);
       let text;
       if (trialOver) {
-        text = buildLockedSmsText(jobs, withOptOut, await shortLink(uid, jobs[0].link));
+        text = buildLockedSmsText(smsJobs, withOptOut, await shortLink(uid, smsJobs[0].link));
       } else {
-        const shortUrls = jobs.length <= 3 ? await Promise.all(jobs.map((j) => shortLink(uid, j.link))) : null;
-        text = buildSmsText(jobs, withOptOut, shortUrls);
+        const shortUrls = smsJobs.length <= 3 ? await Promise.all(smsJobs.map((j) => shortLink(uid, j.link))) : null;
+        text = buildSmsText(smsJobs, withOptOut, shortUrls);
       }
       const messageId = await sendSms(sms, prefs.phoneNumber, text);
       result.smsSent = true;
-      await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks, providerId: messageId });
-      await markAlerted(userId, jobLinks, "sms");
+      if (held.length) await clearHeld(uid);
+      await logNotification({ userId, channel: "sms", status: "sent", recipient: prefs.phoneNumber, jobLinks: smsLinks, providerId: messageId });
+      await markAlerted(userId, smsLinks, "sms");
       if (withOptOut) await logNotification({ userId, channel: "sms-optout-notice", status: "sent", recipient: prefs.phoneNumber, providerId: messageId });
     } catch (err) {
       // SMS failures are logged but never queued: a retry would hit the same carrier or
       // account limit, and re-queuing would resend the email that already went out.
       console.error(`Failed to SMS ${prefs.phoneNumber}:`, err?.message || err);
       result.smsError = err?.message || String(err);
-      await logNotification({ userId, channel: "sms", status: "failed", recipient: prefs.phoneNumber, jobLinks, error: result.smsError });
+      await logNotification({ userId, channel: "sms", status: "failed", recipient: prefs.phoneNumber, jobLinks: smsLinks, error: result.smsError });
     }
   }
 

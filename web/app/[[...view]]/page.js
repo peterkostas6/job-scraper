@@ -2125,6 +2125,8 @@ export default function Home() {
             <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
+          {/* Phones with the tab bar: the page's name, centered (logo mark on the left). */}
+          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? "Alerts" : viewNewPostings ? "Recent" : viewingSaved ? "Saved" : "Jobs"}</span>}
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
             <Link

@@ -7219,3 +7219,27 @@ footer a, .footer a { color: var(--pp-cream); }
 .tour-next { min-height: 48px; padding: 0 22px; border: 0; border-radius: 16px; background: var(--pp-coral); color: var(--pp-navy); font: inherit; font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; box-shadow: 0 4px 0 #C8402F; cursor: pointer; }
 .tour-next:active { transform: translateY(3px); box-shadow: 0 1px 0 #C8402F; }
 @media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; animation: none; } }
+
+/* ---- Phone nav, option B (Nov 24) ----
+   Header: logo mark on the left, the page's name centered, account on the right.
+   Tab bar: Alerts is a coral tile sitting inside the bar (not raised above it); the current
+   tab's icon sits on a soft cream pill. */
+.nav-title { display: none; }
+@media (max-width: 900px) {
+  nav:has(+ .tabbar) .nav-inner { position: relative; }
+  nav:has(+ .tabbar) .logo-text { display: none; }
+  nav:has(+ .tabbar) .nav-title {
+    display: block; position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; color: var(--pp-cream); pointer-events: none;
+  }
+  .tab > svg { box-sizing: content-box; padding: 3px 14px; border-radius: 15px; transition: background-color 150ms; }
+  .tab.is-on > svg { background: rgba(244, 237, 224, 0.14); }
+  .tab-main { justify-content: center; padding-bottom: 0; }
+  .tab-main-dot {
+    width: 46px; height: 36px; margin-top: 0; border-radius: 13px;
+    box-shadow: 0 6px 16px -6px rgba(255, 107, 91, 0.65);
+  }
+  .tab-main-dot svg { width: 22px; height: 22px; }
+  .tab-main > span:last-child { color: var(--pp-coral); }
+  .tab-main.is-on .tab-main-dot { box-shadow: 0 0 0 2px var(--pp-cream), 0 6px 16px -6px rgba(255, 107, 91, 0.65); }
+}

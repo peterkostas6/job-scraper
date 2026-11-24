@@ -18,7 +18,7 @@ import { PLANS } from "@/lib/plans";
 import { hasAppAccess, isTestHost, unlockForTesting } from "@/lib/app-access";
 import FirmPicker from "@/app/FirmPicker";
 import Pete from "./Pete";
-import { TOUR_KEY } from "@/app/AppTour";
+import { TOUR_KEY, TOUR_SEEN_KEY } from "@/app/AppTour";
 
 const STORAGE_KEY = "pp-onboarding-v1";
 const STEPS = ["welcome", "why", "firms", "level", "location", "match", "paywall", "account", "notify"];
@@ -186,12 +186,17 @@ export default function OnboardingFlow() {
   }
 
   function finish() {
-    // The app tour runs once on the jobs screen after onboarding.
-    try { localStorage.removeItem(STORAGE_KEY); localStorage.setItem(TOUR_KEY, "pending"); } catch {}
+    // The app tour runs once on the jobs screen, the first time someone gets past onboarding.
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      if (!localStorage.getItem(TOUR_SEEN_KEY)) localStorage.setItem(TOUR_KEY, "pending");
+    } catch {}
     router.replace("/jobs"); // in place, no full-page reload flash
   }
 
-  if (!restored) return <div className="ob ob-navy" />;
+  // Wait for the sign-in to load before showing anything: a returning member goes straight to
+  // their jobs instead of seeing "Hi!" flash first.
+  if (!restored || !isLoaded || (isSignedIn && paid && (step === "welcome" || step === "paywall"))) return <div className="ob ob-navy" />;
 
   const back = BACK[step] && (
     <button type="button" className="ob-back" aria-label="Back" onClick={() => go(BACK[step])}>

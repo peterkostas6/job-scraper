@@ -10,6 +10,7 @@ import { FIRM_LABEL } from "@/lib/firms";
 import Pete from "./onboarding/Pete";
 
 export const TOUR_KEY = "pp_app_tour";
+export const TOUR_SEEN_KEY = "pp_app_tour_seen"; // set once finished or skipped: never again
 
 const STEPS = [
   { sel: ".jobs-list-browse", title: "These are your jobs", body: `Every open role from ${FIRM_LABEL} firms, already filtered to what you picked. Tap Filters to change it.`, radius: 22, maxH: 0.42 },
@@ -69,7 +70,7 @@ export default function AppTour() {
   }, [step]);
 
   const done = (how) => {
-    try { localStorage.removeItem(TOUR_KEY); } catch {}
+    try { localStorage.removeItem(TOUR_KEY); localStorage.setItem(TOUR_SEEN_KEY, "1"); } catch {}
     document.documentElement.classList.remove("tour-on");
     const on = [...(document.querySelector(".tabbar")?.children || [])].findIndex((t) => t.classList.contains("is-on"));
     nativeTabs.call("select", { index: on }).catch(() => {});

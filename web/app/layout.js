@@ -2,6 +2,7 @@ import "./globals.css";
 import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { PostHogProvider } from "./providers";
+import AppGate from "./AppGate";
 import { META_PIXEL_ID } from "@/lib/meta-pixel";
 import { REDDIT_PIXEL_ID } from "@/lib/reddit-pixel";
 import { FIRM_LABEL } from "@/lib/firms";
@@ -175,6 +176,7 @@ export default function RootLayout({ children }) {
             }}
           />
           <PostHogProvider>{children}</PostHogProvider>
+          <AppGate />
         </body>
       </html>
     </ClerkProvider>

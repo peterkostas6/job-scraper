@@ -1,0 +1,21 @@
+"use client";
+
+// The iPhone app's hard paywall: inside the app, anyone without a paid account is sent to the
+// onboarding (which ends at the paywall). Does nothing on the website.
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { isApp, hasAppAccess, APP_OPEN_PATHS } from "@/lib/app-access";
+
+export default function AppGate() {
+  const pathname = usePathname();
+  const { isLoaded, user } = useUser();
+
+  useEffect(() => {
+    if (!isLoaded || !isApp()) return;
+    if (APP_OPEN_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
+    if (!hasAppAccess(user)) window.location.replace("/onboarding");
+  }, [isLoaded, user, pathname]);
+
+  return null;
+}

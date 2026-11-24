@@ -3,7 +3,10 @@
 // Alert preferences, opened from the Alerts button next to the Browse filters.
 // Desktop: a card under the filters (what you hear about | how we reach you).
 // Phones: a bottom sheet, one column. Every choice is visible at once: no accordions.
+import { useState } from "react";
 import Link from "next/link";
+import { isApp } from "@/lib/app-access";
+import { enablePush } from "@/lib/native";
 import { AREAS, CITIES } from "@/lib/alert-options";
 import { LEVELS, levelsFromPrefs } from "@/lib/levels";
 import { FIRM_LABEL } from "@/lib/firms";
@@ -19,12 +22,15 @@ export default function AlertsPanel({
   pickBanks, onPickBanks, onChange, onToggleArea, onToggleBank,
   editingPhone, onEditPhone, onSave, saving, dirty, blocker, onClose,
 }) {
-  const on = Boolean(saved && (saved.enabled || saved.smsEnabled));
+  // Inside the iPhone app, alerts are push notifications only (no texts or email to set up).
+  const inApp = isApp();
+  const [pushAsk, setPushAsk] = useState("");
+  const on = Boolean(saved && (saved.enabled || saved.smsEnabled || saved.pushEnabled));
   const city = (prefs?.location || "").trim();
   const showBanks = pickBanks || (prefs?.banks || []).length > 0;
   const savedPhone = saved?.smsEnabled && saved?.phoneNumber && !editingPhone;
   const status = on
-    ? [saved.smsEnabled && `Texting ${formatPhone(saved.phoneNumber)}`, saved.enabled && `emailing ${email || "you"}`].filter(Boolean).join(" and ")
+    ? [saved.pushEnabled && "Notifying you on your iPhone", saved.smsEnabled && `Texting ${formatPhone(saved.phoneNumber)}`, saved.enabled && `emailing ${email || "you"}`].filter(Boolean).join(" and ")
     : "Off. Pick what you want below, then save.";
 
   return (
@@ -105,6 +111,27 @@ export default function AlertsPanel({
               <section className="alx-col" aria-label="How we reach you">
                 <h3 className="alx-h">How we reach you</h3>
 
+                {inApp && (
+                  <div className="alx-channel">
+                    <div className="alx-channel-row">
+                      <div>
+                        <p className="alx-channel-name">Push notifications</p>
+                        <p className="alx-channel-sub">{pushAsk || "On this iPhone, the second a matching role posts."}</p>
+                      </div>
+                      <button className={`alx-switch${prefs.pushEnabled ? " is-on" : ""}`} role="switch" aria-checked={Boolean(prefs.pushEnabled)} aria-label="Push notifications"
+                        onClick={async () => {
+                          if (prefs.pushEnabled) { onChange({ pushEnabled: false }); return; }
+                          // Registers this phone (asking iOS for permission the first time).
+                          setPushAsk("Asking your iPhone…");
+                          const ok = await enablePush();
+                          setPushAsk(ok ? "" : "Notifications are off for Pete’s Postings. Turn them on in iPhone Settings > Notifications.");
+                          if (ok) onChange({ pushEnabled: true });
+                        }}><span /></button>
+                    </div>
+                  </div>
+                )}
+
+                {!inApp && <>
                 <div className="alx-channel">
                   <div className="alx-channel-row">
                     <div>
@@ -139,6 +166,7 @@ export default function AlertsPanel({
                     <button className={`alx-switch${prefs.enabled ? " is-on" : ""}`} role="switch" aria-checked={Boolean(prefs.enabled)} aria-label="Email alerts" onClick={() => onChange({ enabled: !prefs.enabled })}><span /></button>
                   </div>
                 </div>
+                </>}
               </section>
             </div>
 

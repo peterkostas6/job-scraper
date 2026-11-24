@@ -54,8 +54,9 @@ export async function saveAlertPrefs({ userId, body, origin }) {
         smsConsent,
         smsConsentAt,
         smsOptOutAt: smsEnabled ? null : oldPrefs?.smsOptOutAt || null,
-        // iPhone app push (set by /api/app/push-token); saving the other settings keeps it.
-        pushEnabled: oldPrefs?.pushEnabled === true,
+        // iPhone app push: the phone is registered by /api/app/push-token; the Alerts switch can
+        // turn it off or back on (only with a registered phone). Saves without it keep it as is.
+        pushEnabled: typeof body.pushEnabled === "boolean" ? body.pushEnabled && (oldPrefs?.pushTokens || []).length > 0 : oldPrefs?.pushEnabled === true,
         pushTokens: oldPrefs?.pushTokens || [],
       },
     },

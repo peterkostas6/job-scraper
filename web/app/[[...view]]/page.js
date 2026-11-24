@@ -157,7 +157,7 @@ function ProWelcomeModal({ onClose, onSetupAlerts, activated, timedOut }) {
 }
 
 // Alert settings before anything is loaded; saved settings are merged over these.
-const NOTIF_DEFAULTS = { enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", smsConsent: false, location: "" };
+const NOTIF_DEFAULTS = { enabled: false, banks: [], categories: [], jobType: "all", smsEnabled: false, phoneNumber: "", smsConsent: false, location: "", pushEnabled: false };
 const alertSettingsKey = (p) => JSON.stringify(Object.keys(NOTIF_DEFAULTS).map((k) => p?.[k] ?? null));
 
 // ---- HOMEPAGE ----
@@ -1729,7 +1729,7 @@ export default function Home() {
     .filter((job) => matchesAlertPrefs(job, { ...notifPrefs, location: (notifPrefs.location || "").trim() }))
     .sort((x, y) => postedAt(y) - postedAt(x));
   const notifDirty = savedNotifPrefs !== null && alertSettingsKey(notifPrefs) !== alertSettingsKey(savedNotifPrefs);
-  const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled));
+  const alertsOn = Boolean(savedNotifPrefs && (savedNotifPrefs.enabled || savedNotifPrefs.smsEnabled || savedNotifPrefs.pushEnabled));
   // Alerts are free, so anyone signed in with alerts on (or on Premium) gets the settings page.
   // Texted / viewed / applied per job, from Postgres, shown on the Browse rows.
   useEffect(() => {

@@ -123,7 +123,8 @@ export async function POST(req) {
       );
       if (user) {
         await clerk.users.updateUserMetadata(user.id, {
-          publicMetadata: { subscribed: false },
+          // An App Store subscription (lib/app-store.js) keeps them Premium.
+          publicMetadata: { subscribed: user.publicMetadata?.appStoreActive === true },
         });
         await captureServer(user.id, "subscription_payment_failed", { status, $set: { subscribed: false } });
       }
@@ -143,7 +144,7 @@ export async function POST(req) {
     if (user) {
       await clerk.users.updateUserMetadata(user.id, {
         publicMetadata: {
-          subscribed: false,
+          subscribed: user.publicMetadata?.appStoreActive === true,
           stripeSubscriptionId: null,
         },
       });

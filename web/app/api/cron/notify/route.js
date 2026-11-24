@@ -368,8 +368,8 @@ export async function GET(request) {
 
       const notifyUsers = allUsers.filter(
         (u) =>
-          // Either channel counts: a texts-only user has email off.
-          (u.unsafeMetadata?.notifications?.enabled === true || u.unsafeMetadata?.notifications?.smsEnabled === true)
+          // Any channel counts: a texts-only or app-only (push) user has email off.
+          (u.unsafeMetadata?.notifications?.enabled === true || u.unsafeMetadata?.notifications?.smsEnabled === true || u.unsafeMetadata?.notifications?.pushEnabled === true)
       );
 
       eligibleUsers = notifyUsers.length;

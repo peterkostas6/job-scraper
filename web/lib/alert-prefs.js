@@ -54,6 +54,9 @@ export async function saveAlertPrefs({ userId, body, origin }) {
         smsConsent,
         smsConsentAt,
         smsOptOutAt: smsEnabled ? null : oldPrefs?.smsOptOutAt || null,
+        // iPhone app push (set by /api/app/push-token); saving the other settings keeps it.
+        pushEnabled: oldPrefs?.pushEnabled === true,
+        pushTokens: oldPrefs?.pushTokens || [],
       },
     },
   });

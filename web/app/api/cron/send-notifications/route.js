@@ -93,7 +93,8 @@ export async function GET(request) {
 
         if (dryRun) { emailsSent += email ? 1 : 0; continue; }
         const isFree = clerkUser.publicMetadata?.subscribed !== true;
-        const sent = await sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree, createdAt: clerkUser.createdAt });
+        // push: false — these jobs were already pushed when they were found; only the email failed.
+        const sent = await sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree, createdAt: clerkUser.createdAt, push: false });
         if (sent.emailSent) emailsSent++;
         if (sent.smsSent) smsSent++;
       }

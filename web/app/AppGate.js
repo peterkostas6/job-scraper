@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { isApp, hasAppAccess, APP_OPEN_PATHS } from "@/lib/app-access";
+import { onPushTap } from "@/lib/native";
 
 export default function AppGate() {
   const pathname = usePathname();
@@ -16,6 +17,9 @@ export default function AppGate() {
     if (APP_OPEN_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
     if (!hasAppAccess(user)) window.location.replace("/onboarding");
   }, [isLoaded, user, pathname]);
+
+  // Tapping a job notification opens that role.
+  useEffect(() => onPushTap((url) => { window.location.href = url; }), []);
 
   return null;
 }

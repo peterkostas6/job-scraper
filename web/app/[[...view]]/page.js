@@ -1962,7 +1962,7 @@ export default function Home() {
     if (!st || !(st.alertedAt || st.viewedAt || st.appliedAt)) return null;
     return (
       <span className="row-tags">
-        {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : "Texted you"}</span>}
+        {st.alertedAt && <span className="al-tag al-tag-texted">{st.alertedVia === "email" ? "Emailed you" : st.alertedVia === "push" ? "Notified you" : "Texted you"}</span>}
         {st.viewedAt && <span className="al-tag al-tag-viewed">Viewed</span>}
         {st.appliedAt && <span className="al-tag al-tag-applied">Applied</span>}
       </span>

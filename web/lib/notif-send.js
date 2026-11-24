@@ -8,6 +8,15 @@ import { captureServer } from "@/lib/posthog-server";
 import { alertTrial } from "@/lib/alert-trial";
 import { markAlerted } from "@/lib/job-status";
 import { smsSlot, holdJobs, heldJobs, clearHeld } from "@/lib/sms-pacing";
+import { sendPush, apnsConfigured } from "@/lib/apns";
+import { clerkClient } from "@clerk/nextjs/server";
+
+// One push for a batch: the single role's title, or a count with the firms.
+function pushMessage(jobs) {
+  if (jobs.length === 1) return { title: `${jobs[0].bank} just posted`, body: jobs[0].title };
+  const banks = [...new Set(jobs.map((j) => j.bank).filter(Boolean))];
+  return { title: `${jobs.length} new roles`, body: `${banks.slice(0, 3).join(", ")}${banks.length > 3 ? ` and ${banks.length - 3} more` : ""}` };
+}
 
 // Sends go through the Twilio Messaging Service that the approved A2P campaign is attached to.
 export function smsConfig() {
@@ -127,7 +136,7 @@ export async function logNotification({ userId = null, channel, status, recipien
  * Returns { emailSent, smsSent, failed } — failed is true only when the email could not
  * be delivered, so the caller queues the jobs for the retry sweep.
  */
-export async function sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree = false, createdAt = null, forceLocked = false, smsOnly = false, paced = true }) {
+export async function sendUserNotification({ resend, sms, userId, email, firstName, prefs, jobs, isFree = false, createdAt = null, forceLocked = false, smsOnly = false, paced = true, push = true }) {
   const result = { emailSent: false, smsSent: false, failed: false };
   if (!jobs || jobs.length === 0) return result;
   const smsTo = sms && prefs?.smsEnabled && prefs?.phoneNumber ? prefs.phoneNumber : "";
@@ -218,15 +227,41 @@ export async function sendUserNotification({ resend, sms, userId, email, firstNa
     }
   }
 
+  // iPhone app: one push to each of the person's phones. Not from the held-text sweep or the
+  // email retry sweep (push: false), whose jobs were already pushed when they were found.
+  if (push && !smsOnly && prefs?.pushEnabled && prefs?.pushTokens?.length && apnsConfigured()) {
+    try {
+      const short = jobs.length === 1 ? await shortLink(uid, jobs[0].link, "push") : null;
+      const out = await sendPush(prefs.pushTokens, { ...pushMessage(jobs), url: short ? `https://${short}` : "/recent" });
+      result.pushSent = out.sent > 0;
+      if (out.dead.length && userId) {
+        // Phones that deleted the app or turned notifications off.
+        const clerk = await clerkClient();
+        const u = await clerk.users.getUser(userId);
+        const n = u.unsafeMetadata?.notifications || {};
+        const pushTokens = (n.pushTokens || []).filter((t) => !out.dead.includes(t));
+        await clerk.users.updateUser(userId, { unsafeMetadata: { ...u.unsafeMetadata, notifications: { ...n, pushTokens, pushEnabled: pushTokens.length > 0 && n.pushEnabled } } });
+      }
+      if (out.errors.length) result.pushError = out.errors.join("; ");
+      await logNotification({ userId, channel: "push", status: result.pushSent ? "sent" : "failed", recipient: `${prefs.pushTokens.length} device(s)`, jobLinks, error: result.pushError || null });
+      if (result.pushSent) await markAlerted(userId, jobLinks, "push");
+    } catch (err) {
+      console.error(`Failed to push ${uid}:`, err?.message || err);
+      result.pushError = err?.message || String(err);
+    }
+  }
+
   if (isFree && (result.emailSent || result.smsSent)) {
     await logNotification({ userId, channel: "free-alert", status: "sent", recipient: smsTo || email || null, jobLinks });
   }
 
   // One event per person per alert, with what went out and what failed.
-  if (userId && (result.emailSent || result.smsSent || result.emailError || result.smsError)) {
+  if (userId && (result.emailSent || result.smsSent || result.pushSent || result.emailError || result.smsError || result.pushError)) {
     await captureServer(userId, "alert_sent", {
       email_sent: result.emailSent,
       sms_sent: result.smsSent,
+      push_sent: Boolean(result.pushSent),
+      push_failed: Boolean(result.pushError),
       email_failed: Boolean(result.emailError),
       sms_failed: Boolean(result.smsError),
       jobs: jobs.length,

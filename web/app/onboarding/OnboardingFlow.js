@@ -5,7 +5,8 @@
 // the hard paywall, saving the account, and turning on alerts. Answers are kept on the phone
 // until there is an account to save them to, in the same shape as the website's alert settings.
 import { useEffect, useMemo, useState } from "react";
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useClerk, useUser, useSignIn, useSignUp } from "@clerk/nextjs";
+import { purchasesReady, getPremiumPackage, buyPremium, restorePremium, linkPurchaseToAccount, enablePush, appleSignInReady, appleIdentityToken } from "@/lib/native";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { capture } from "@/lib/analytics";
@@ -20,7 +21,8 @@ import Pete from "./Pete";
 const STORAGE_KEY = "pp-onboarding-v1";
 const STEPS = ["welcome", "why", "firms", "level", "location", "match", "paywall", "account", "notify"];
 const PROGRESS = { firms: 25, level: 50, location: 75, match: 100 };
-const BACK = { why: "welcome", firms: "why", level: "firms", location: "level", match: "location" };
+// Every setup screen (and the paywall) has a back arrow so answers can be changed.
+const BACK = { why: "welcome", firms: "why", level: "firms", location: "level", match: "location", paywall: "match" };
 // Alert settings keep one location; CITY_ALIASES in lib/alert-options.js knows each of these.
 const CITIES = ["New York", "Charlotte", "Dallas", "Chicago", "San Francisco", "Boston", "Los Angeles", "Washington"];
 const price = PLANS.monthly.price.toFixed(2);
@@ -38,7 +40,10 @@ const Check = () => (
 export default function OnboardingFlow() {
   const { isLoaded, isSignedIn, user } = useUser();
   const clerk = useClerk();
+  const { signIn: clerkSignIn, setActive } = useSignIn();
+  const { signUp: clerkSignUp } = useSignUp();
   const [step, setStep] = useState("welcome");
+  const [pkg, setPkg] = useState(null); // Apple's Premium package (price in the local currency)
   const [answers, setAnswers] = useState({ banks: [], levels: DEFAULT_ALERT_LEVELS, city: "" });
   const [restored, setRestored] = useState(false);
   const [jobs, setJobs] = useState(null);
@@ -61,6 +66,10 @@ export default function OnboardingFlow() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, answers })); } catch {}
     capture("app_onboarding_step", { step });
   }, [restored, step, answers]);
+
+  useEffect(() => {
+    if (purchasesReady()) getPremiumPackage().then(setPkg).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/jobs-live")
@@ -95,16 +104,66 @@ export default function OnboardingFlow() {
     clerk.openSignIn({ forceRedirectUrl: back, signUpForceRedirectUrl: back });
   }
 
-  function subscribe() {
+  // A purchase made on this phone is recorded on the account once there is one.
+  async function attachPurchase() {
+    if (!purchasesReady() || !user?.id) return;
+    await linkPurchaseToAccount(user.id);
+    await user.reload().catch(() => {});
+  }
+
+  async function subscribe() {
     capture("app_subscribe_tapped");
-    // TODO(app IAP): buy the Premium product through RevenueCat here.
+    if (purchasesReady() && pkg) {
+      setBusy(true);
+      try {
+        const ok = await buyPremium(pkg, user?.id);
+        if (ok) { capture("app_subscribed"); go("account"); }
+      } catch {
+        setNote("The purchase didn’t go through. Try again.");
+      }
+      setBusy(false);
+      return;
+    }
     if (isTestHost()) { unlockForTesting(); go("account"); return; }
     setNote("Subscriptions open when the app launches on the App Store.");
+  }
+
+  async function restore() {
+    if (!purchasesReady()) { setNote(isSignedIn ? "No purchases to restore." : "Sign in to restore a purchase."); return; }
+    setBusy(true);
+    const ok = await restorePremium(user?.id).catch(() => false);
+    setBusy(false);
+    if (!ok) { setNote("No Premium purchase found for this Apple ID."); return; }
+    if (isSignedIn) { await attachPurchase(); finish(); } else go("account");
+  }
+
+  // Sign in with Apple: Apple's Face ID sheet gives a signed token Clerk checks. A new Apple ID
+  // comes back "transferable" from sign-in and becomes a new account.
+  async function appleSignIn() {
+    const token = await appleIdentityToken();
+    if (!token) return;
+    setBusy(true);
+    try {
+      let session;
+      const attempt = await clerkSignIn.create({ strategy: "oauth_token_apple", token });
+      if (attempt.status === "complete") session = attempt.createdSessionId;
+      else if (attempt.firstFactorVerification?.status === "transferable") {
+        const created = await clerkSignUp.create({ transfer: true });
+        session = created.createdSessionId;
+      }
+      if (!session) throw new Error("not complete");
+      await setActive({ session });
+      capture("app_apple_signin");
+    } catch {
+      setNote("Couldn’t sign in with Apple. Try email instead.");
+    }
+    setBusy(false);
   }
 
   async function saveAndNext() {
     if (busy) return;
     setBusy(true);
+    await attachPurchase();
     // Alerts stay off until notifications are on; the answers still power "My preferences".
     await fetch("/api/notifications", {
       method: "POST",
@@ -128,12 +187,15 @@ export default function OnboardingFlow() {
 
   if (!restored) return <div className="ob ob-navy" />;
 
-  const bar = PROGRESS[step] != null && (
+  const back = BACK[step] && (
+    <button type="button" className="ob-back" aria-label="Back" onClick={() => go(BACK[step])}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+    </button>
+  );
+  const bar = (
     <div className="ob-top">
-      <button type="button" className="ob-back" aria-label="Back" onClick={() => go(BACK[step])}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
-      </button>
-      <div className="ob-progress" role="progressbar" aria-valuenow={PROGRESS[step]} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${PROGRESS[step]}%` }} /></div>
+      {back}
+      {PROGRESS[step] != null && <div className="ob-progress" role="progressbar" aria-valuenow={PROGRESS[step]} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${PROGRESS[step]}%` }} /></div>}
     </div>
   );
   const ask = (text) => (
@@ -156,6 +218,7 @@ export default function OnboardingFlow() {
 
   if (step === "why") return (
     <main className="ob ob-navy">
+      {bar}
       <div className="ob-mid">
       <div className="ob-ask ob-ask-dark"><Pete size={60} /><p className="ob-bubble">Here&rsquo;s what changes for you.</p></div>
       <ul className="ob-why">
@@ -246,6 +309,7 @@ export default function OnboardingFlow() {
 
   if (step === "paywall") return (
     <main className="ob ob-cream">
+      {bar}
       <div className="ob-mid">
       <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Unlock {matches?.length ? `your ${matches.length.toLocaleString()} roles` : "every role"}</h1></div>
       <ul className="ob-checks">
@@ -256,13 +320,12 @@ export default function OnboardingFlow() {
       <div className="ob-plan"><span><strong>Premium</strong><small>Billed monthly</small></span><b className="tnum">${price}<small>/mo</small></b></div>
       </div>
       <div className="ob-actions">
-        <button className="ob-btn" onClick={subscribe}>Subscribe</button>
+        <button className="ob-btn" disabled={busy} onClick={subscribe}>Subscribe</button>
         {note && <p className="ob-note" role="status">{note}</p>}
-        <p className="ob-fine">${price}/month, charged to your Apple ID. Renews monthly until you cancel in Settings.</p>
+        <p className="ob-fine">{pkg?.product?.priceString || `$${price}`}/month, charged to your Apple ID. Renews monthly until you cancel in Settings.</p>
         <button type="button" className="ob-link" onClick={signIn}>Already pay on the website? Sign in</button>
         <p className="ob-legal">
-          {/* TODO(app IAP): Restore purchases through RevenueCat. */}
-          <button type="button" className="ob-link ob-link-quiet" onClick={() => setNote(isSignedIn ? "No purchases to restore yet." : "Sign in to restore a purchase.")}>Restore purchases</button>
+          <button type="button" className="ob-link ob-link-quiet" disabled={busy} onClick={restore}>Restore purchases</button>
           <a href="/terms">Terms</a><a href="/privacy">Privacy</a>
         </p>
       </div>
@@ -277,9 +340,15 @@ export default function OnboardingFlow() {
         <p className="ob-sub ob-sub-dark">So your subscription and picks follow you to a new phone.</p>
       </div>
       <div className="ob-actions">
-        {/* TODO(app): Sign in with Apple needs the Apple Developer Program + a Clerk Apple connection. */}
-        <button className="ob-btn" disabled={busy} onClick={createAccount}>{busy ? "Saving…" : isSignedIn ? "Continue" : "Continue with email"}</button>
-        <p className="ob-fine">We email you a 6-digit code. No passwords.</p>
+        {!isSignedIn && appleSignInReady() && (
+          <button className="ob-btn ob-btn-apple" disabled={busy} onClick={appleSignIn}>
+            <svg width="18" height="22" viewBox="0 0 384 512" aria-hidden="true"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" /></svg>
+            Sign in with Apple
+          </button>
+        )}
+        <button className={`ob-btn${!isSignedIn && appleSignInReady() ? " ob-btn-light" : ""}`} disabled={busy} onClick={createAccount}>{busy ? "Saving…" : isSignedIn ? "Continue" : "Continue with email"}</button>
+        {note && <p className="ob-note" role="status">{note}</p>}
+        <p className="ob-fine">Email sign-in sends you a 6-digit code. No passwords.</p>
       </div>
     </main>
   );
@@ -296,8 +365,13 @@ export default function OnboardingFlow() {
         <div><img src="/logo-mark.svg" alt="" width="22" height="22" /><p><b>Pete&rsquo;s Postings <i>4m ago</i></b>Morgan Stanley just posted: 2027 Sales &amp; Trading Summer Analyst. Apply →</p></div>
       </div>
       <div className="ob-actions">
-        {/* TODO(app push): ask for notification permission and register this phone. */}
-        <button className="ob-btn" onClick={() => { capture("app_notifications_tapped"); finish(); }}>Turn on alerts</button>
+        <button className="ob-btn" disabled={busy} onClick={async () => {
+          capture("app_notifications_tapped");
+          setBusy(true);
+          const on = await enablePush();
+          capture(on ? "app_notifications_on" : "app_notifications_declined");
+          finish();
+        }}>Turn on alerts</button>
         <button className="ob-btn ob-btn-text" onClick={finish}>Not now</button>
       </div>
     </main>

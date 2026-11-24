@@ -6740,7 +6740,7 @@ footer a, .footer a { color: var(--pp-cream); }
 /* ---- Phones: bottom tab bar (Nov 23, Jakob's law video) ----
    Jobs · Recent · [Alerts] · Saved · Account. Top bar is just the logo; the ☰ menu, the
    pill row and the separate alerts button are gone on phones because the tabs cover them. */
-.tabbar, .acct-wrap, .ptr { display: none; }
+.tabbar, .acct-wrap { display: none; }
 @media (max-width: 900px) {
   :root { --tabbar-h: calc(62px + env(safe-area-inset-bottom)); }
   body:has(.tabbar) { padding-bottom: var(--tabbar-h); }
@@ -6806,14 +6806,6 @@ footer a, .footer a { color: var(--pp-cream); }
   }
   .acct-list > :last-child { border-bottom: 0; }
   .acct-out { color: #b42318 !important; }
-
-  /* Pull-to-refresh pill. */
-  .ptr {
-    display: block; position: fixed; top: 64px; left: 50%; z-index: 65; transform: translate(-50%, -50px); opacity: 0;
-    padding: 0.45rem 0.9rem; border-radius: 999px; background: var(--pp-cream); color: var(--pp-navy);
-    font-size: 0.8rem; font-weight: 700; box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.6); pointer-events: none;
-    transition: opacity 150ms ease;
-  }
 }
 @keyframes acct-up { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes acct-fade { from { opacity: 0; } to { opacity: 1; } }

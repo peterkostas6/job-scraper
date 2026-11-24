@@ -1,6 +1,6 @@
 "use client";
 
-import { useNavMenuLock, usePullToRefresh } from "@/lib/use-nav-menu";
+import { useNavMenuLock } from "@/lib/use-nav-menu";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname, notFound } from "next/navigation";
 import { useUser, useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
@@ -1365,7 +1365,6 @@ export default function Home() {
   const [locationFilter, setLocationFilter] = useState("");
   const [allJobs, setAllJobs] = useState([]);
   // Pull-to-refresh (phones) bumps this; the job loaders below re-run when it changes.
-  const [refreshKey, setRefreshKey] = useState(0);
   const [accountOpen, setAccountOpen] = useState(false);
   useNavMenuLock(accountOpen, () => setAccountOpen(false));
   const [jobs, setJobs] = useState([]);
@@ -1623,7 +1622,7 @@ export default function Home() {
         setError(err.message);
         setLoading(false);
       });
-  }, [isLoaded, refreshKey]);
+  }, [isLoaded]);
 
   // Fetch recent postings data when that view is opened
   useEffect(() => {
@@ -1636,7 +1635,7 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setNewPostingsLoading(false));
-  }, [viewNewPostings, refreshKey]);
+  }, [viewNewPostings]);
 
   // Show the active bank's jobs from the loaded list
   useEffect(() => {
@@ -1740,7 +1739,6 @@ export default function Home() {
     fetch("/api/job-status").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.statuses) setJobStatus(d.statuses); }).catch(() => {});
   }, [isSignedIn]);
   // There is no Alerts page any more: alerts are a panel on Browse. Signed out, alerts start at /start.
-  usePullToRefresh(!viewHome && !viewAbout, () => { setRefreshKey((k) => k + 1); capture("pull_to_refresh"); });
 
   function openAlerts() {
     if (!isSignedIn) { router.push("/start"); return; }

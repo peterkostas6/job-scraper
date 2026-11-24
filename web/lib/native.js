@@ -97,7 +97,9 @@ export async function appleIdentityToken() {
   const A = plugin("SignInWithApple");
   if (!A) return null;
   try {
-    const { response } = await A.authorize({ clientId: "com.petespostings.app", redirectURI: "https://petespostings.com", scopes: "email name" });
+    // Clerk only accepts Apple tokens that carry a nonce (a fresh random value, against replays).
+    const nonce = crypto.randomUUID();
+    const { response } = await A.authorize({ clientId: "com.petespostings.app", redirectURI: "https://petespostings.com", scopes: "email name", nonce });
     return response?.identityToken || null;
   } catch { return null; }
 }

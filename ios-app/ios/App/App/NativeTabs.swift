@@ -72,6 +72,7 @@ public class NativeTabsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "setVisible", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "select", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "haptic", returnType: CAPPluginReturnPromise),
     ]
     static weak var current: NativeTabsPlugin?
 
@@ -84,6 +85,21 @@ public class NativeTabsPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async {
             self.bar?.isHidden = !visible
             call.resolve(["height": visible ? Double(self.bar?.frame.height ?? 0) : 0])
+        }
+    }
+
+    // The small buzz iPhone apps give on taps: "light" for buttons and links, "medium" for big
+    // actions, "selection" for switches and chips, "success" when something is saved.
+    @objc func haptic(_ call: CAPPluginCall) {
+        let style = call.getString("style") ?? "light"
+        DispatchQueue.main.async {
+            switch style {
+            case "selection": UISelectionFeedbackGenerator().selectionChanged()
+            case "success": UINotificationFeedbackGenerator().notificationOccurred(.success)
+            case "medium": UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            default: UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            }
+            call.resolve()
         }
     }
 

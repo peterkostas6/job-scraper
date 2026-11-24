@@ -14,6 +14,18 @@ import AppTour from "./AppTour";
 // on the matching site tab, so each tab keeps doing exactly what it does on the website.
 const SHEETS = ".alx-wrap, .acct-wrap, .mfs-wrap, .modal-overlay, .cl-modalBackdrop";
 
+// A light buzz on every tap of a button or link, a softer tick on switches and chips, and a
+// firmer one on the big coral buttons, like a native iPhone app. Only real taps (not the clicks
+// the native tab bar sends, which buzz on their own).
+function buzz(e) {
+  if (!e.isTrusted) return;
+  const el = e.target.closest?.('button, a[href], [role="switch"], [role="button"], input[type="checkbox"], input[type="radio"], label');
+  if (!el || el.disabled) return;
+  const style = el.matches('[role="switch"], [aria-pressed], input[type="checkbox"], input[type="radio"], label') ? "selection"
+    : el.matches(".ob-btn, .alx-save, .tour-next, .nav-upgrade") ? "medium" : "light";
+  nativeTabs.call("haptic", { style }).catch(() => {});
+}
+
 function NativeTabBridge() {
   useEffect(() => {
     if (!isApp()) return;
@@ -38,11 +50,12 @@ function NativeTabBridge() {
       ready = true;
       html.classList.add("native-tabs");
       off = nativeTabs.onTap((i) => document.querySelectorAll(".tabbar > *")[i]?.click());
+      document.addEventListener("click", buzz, true);
       sync();
     }).catch(() => {});
     const mo = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(sync); });
     mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
-    return () => { off(); mo.disconnect(); cancelAnimationFrame(raf); };
+    return () => { off(); mo.disconnect(); cancelAnimationFrame(raf); document.removeEventListener("click", buzz, true); };
   }, []);
   return null;
 }

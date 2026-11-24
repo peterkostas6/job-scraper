@@ -102,6 +102,7 @@ export async function GET(request) {
     prefs: { smsEnabled: !!phone, phoneNumber: phone },
     jobs,
     forceLocked: url.searchParams.get("locked") === "1",
+    paced: false, // a test text always goes out now (lib/sms-pacing.js)
   });
   return Response.json({ ...result, smsConfigured: !!sms });
 }

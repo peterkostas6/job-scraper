@@ -5,6 +5,7 @@ import { Resend } from "resend";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
+import { usersWithHeldJobs, heldJobs, clearHeld, smsSlot } from "@/lib/sms-pacing";
 
 export const dynamic = "force-dynamic";
 // The Postgres driver talks to Neon over HTTP. In production Next.js can serve a repeated,
@@ -101,8 +102,46 @@ export async function GET(request) {
       if (!dryRun) await sql`DELETE FROM notification_queue WHERE id = ANY(${sentIds})`;
     }
 
+    // 5. Held texts (lib/sms-pacing.js): jobs that matched while a number was at its text
+    //    limit or inside the gap between texts. Once the number has a free slot, they go out
+    //    together in one text.
+    let heldUsers = 0;
+    let heldSent = 0;
+    if (sms) {
+      for (const userId of await usersWithHeldJobs()) {
+        heldUsers++;
+        let clerkUser;
+        try {
+          clerkUser = await client.users.getUser(userId);
+        } catch (err) {
+          console.error(`Could not fetch Clerk user ${userId}:`, err.message);
+          continue;
+        }
+        const prefs = clerkUser.unsafeMetadata?.notifications || {};
+        // Texts turned off since the jobs were held: nothing to send.
+        if (!prefs.smsEnabled || !prefs.phoneNumber) {
+          if (!dryRun) await clearHeld(userId);
+          continue;
+        }
+        if (!(await smsSlot(prefs.phoneNumber)).allowed) continue;
+        const jobs = await heldJobs(userId);
+        if (jobs.length === 0) {
+          if (!dryRun) await clearHeld(userId);
+          continue;
+        }
+        if (dryRun) { heldSent++; continue; }
+        const sent = await sendUserNotification({
+          resend, sms, userId, prefs, jobs, smsOnly: true,
+          isFree: clerkUser.publicMetadata?.subscribed !== true, createdAt: clerkUser.createdAt,
+        });
+        if (sent.smsSent) { smsSent++; heldSent++; }
+      }
+    }
+
     return Response.json({
       message: dryRun ? "Dry run — nothing deleted or sent" : "Done",
+      heldUsers,
+      heldSent,
       dryRun,
       queuedRows: rows.length,
       emailsSent,

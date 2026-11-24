@@ -5,6 +5,7 @@
 // or skipping clears it. Each step highlights the real element (dimming everything else).
 import { useEffect, useLayoutEffect, useState } from "react";
 import { capture } from "@/lib/analytics";
+import { nativeTabs } from "@/lib/native";
 import { FIRM_LABEL } from "@/lib/firms";
 import Pete from "./onboarding/Pete";
 
@@ -28,6 +29,7 @@ export default function AppTour() {
     try { pending = localStorage.getItem(TOUR_KEY) === "pending"; } catch {}
     if (!pending) return;
     window.scrollTo(0, 0);
+    document.documentElement.classList.add("tour-on");
     setStep(0);
     capture("app_tour_started");
   }, []);
@@ -42,6 +44,14 @@ export default function AppTour() {
       if (!el) {
         if (++tries > 25) setStep((n) => n + 1);
         else timer = setTimeout(measure, 200);
+        return;
+      }
+      // In the app the tabs are Apple's native bar, drawn over the page: select the tab there and
+      // leave the whole bar lit (the dim stops at its top edge).
+      if (s.sel.startsWith(".tabbar") && document.documentElement.classList.contains("native-tabs")) {
+        nativeTabs.call("select", { index: [...el.parentElement.children].indexOf(el) }).catch(() => {});
+        const tabH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tabbar-h")) || 83;
+        setBox({ left: -4, top: window.innerHeight - tabH, width: window.innerWidth + 8, height: tabH + 4, radius: 0 });
         return;
       }
       const r = el.getBoundingClientRect();
@@ -60,6 +70,9 @@ export default function AppTour() {
 
   const done = (how) => {
     try { localStorage.removeItem(TOUR_KEY); } catch {}
+    document.documentElement.classList.remove("tour-on");
+    const on = [...(document.querySelector(".tabbar")?.children || [])].findIndex((t) => t.classList.contains("is-on"));
+    nativeTabs.call("select", { index: on }).catch(() => {});
     capture(how === "skip" ? "app_tour_skipped" : "app_tour_finished", { step });
     setStep(STEPS.length);
   };

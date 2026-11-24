@@ -103,3 +103,21 @@ export async function appleIdentityToken() {
     return response?.identityToken || null;
   } catch { return null; }
 }
+
+// ---- Native tab bar (ios-app/ios/App/App/NativeTabs.swift) ----
+// Called through Capacitor's bridge directly, so an older app build without the plugin just
+// rejects and the site keeps its own tab bar.
+const capBridge = () => (typeof window !== "undefined" ? window.Capacitor : null);
+export const nativeTabs = {
+  call(method, data = {}) {
+    const c = capBridge();
+    return c?.nativePromise ? c.nativePromise("NativeTabs", method, data) : Promise.reject(new Error("no bridge"));
+  },
+  // Tab taps from the native bar: cb(index), index in the same order as the site's .tabbar.
+  onTap(cb) {
+    const c = capBridge();
+    if (!c?.nativeCallback) return () => {};
+    const id = c.nativeCallback("NativeTabs", "addListener", { eventName: "tabTap" }, (data) => { if (data && typeof data.index === "number") cb(data.index); });
+    return () => { c.nativePromise?.("NativeTabs", "removeListener", { eventName: "tabTap", callbackId: id }).catch(() => {}); };
+  },
+};

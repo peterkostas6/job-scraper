@@ -7243,3 +7243,7 @@ footer a, .footer a { color: var(--pp-cream); }
   .tab-main > span:last-child { color: var(--pp-coral); }
   .tab-main.is-on .tab-main-dot { box-shadow: 0 0 0 2px var(--pp-cream), 0 6px 16px -6px rgba(255, 107, 91, 0.65); }
 }
+
+/* iPhone app with Apple's native tab bar (ios-app NativeTabs.swift): the site's bar stays in the
+   page (the native taps click it, the tour measures it) but is invisible. */
+.native-tabs .tabbar { visibility: hidden; pointer-events: none; }

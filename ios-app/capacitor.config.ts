@@ -23,6 +23,10 @@ const config: CapacitorConfig = {
       "billing.stripe.com",
     ],
   },
+  plugins: {
+    // Show job alerts as banners (with sound) even while the app is open.
+    PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
+  },
   ios: {
     contentInset: "never",
     // Lets the site tell it's running in the app (navigator.userAgent includes this).

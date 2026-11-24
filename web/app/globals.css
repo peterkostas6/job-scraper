@@ -686,7 +686,7 @@ nav {
 /* ---- APP LAYOUT ---- */
 .app-layout {
   display: flex;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 56px - var(--app-top, 0px));
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -706,8 +706,8 @@ nav {
   padding: var(--space-md) var(--space-xs) var(--space-lg);
   background: var(--white);
   position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
+  top: calc(56px + var(--app-top, 0px));
+  height: calc(100vh - 56px - var(--app-top, 0px));
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
@@ -2998,7 +2998,7 @@ footer {
   .mobile-top-bar {
     display: block;
     position: sticky;
-    top: 56px;
+    top: calc(56px + var(--app-top, 0px));
     z-index: 90;
     background: var(--white);
     border-bottom: 1px solid var(--border);
@@ -3391,7 +3391,7 @@ footer {
     flex-direction: column;
     align-items: stretch;
     position: absolute;
-    top: 56px;
+    top: calc(56px + var(--app-top, 0px));
     left: 0;
     right: 0;
     justify-self: stretch; /* the base rule centers it, which shrinks it to fit */
@@ -6667,8 +6667,8 @@ footer a, .footer a { color: var(--pp-cream); }
   .nav-center-open {
     /* nav has backdrop-filter, which makes it the containing block for fixed children,
        so the sheet's size is set from the screen, not with bottom: 0. */
-    position: fixed; top: 56px; left: 0; right: 0; bottom: auto; z-index: 60;
-    height: calc(100vh - 56px); height: calc(100dvh - 56px);
+    position: fixed; top: calc(56px + var(--app-top, 0px)); left: 0; right: 0; bottom: auto; z-index: 60;
+    height: calc(100vh - 56px - var(--app-top, 0px)); height: calc(100dvh - 56px - var(--app-top, 0px));
     display: flex; flex-direction: column; gap: 0;
     padding: 0.5rem 1.25rem max(1.25rem, env(safe-area-inset-bottom));
     background: var(--pp-navy); border-bottom: 0; overflow-y: auto; overscroll-behavior: contain;
@@ -7088,3 +7088,10 @@ footer a, .footer a { color: var(--pp-cream); }
 .sf-pills .firm-group-label { color: rgba(244, 237, 224, 0.75); }
 .sf-pills .firm-more { color: var(--pp-cream); }
 .sf-firm-search { background: rgba(244, 237, 224, 0.08); border-color: rgba(244, 237, 224, 0.22); color: var(--pp-cream); }
+
+/* ---- iPhone app (ios-app/, Capacitor) ----
+   The app shows the site full-screen, under the clock and notch. layout.js marks <html> with
+   .in-app there; the nav then pads itself below the status bar and everything pinned under the
+   nav (sidebar, phone menu) moves down by the same amount through --app-top. */
+.in-app { --app-top: env(safe-area-inset-top, 0px); }
+.in-app nav { padding-top: var(--app-top); }

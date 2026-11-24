@@ -1,0 +1,19 @@
+{
+  "name": "petes-postings-ios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native iPhone shell for petespostings.com (Capacitor). The app loads the live site.",
+  "scripts": {
+    "sync": "cap sync ios",
+    "sync:prod": "CAP_ENV=prod cap sync ios",
+    "open": "cap open ios"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.6.0",
+    "@capacitor/ios": "8.6.0"
+  }
+}

@@ -107,6 +107,13 @@ export default function RootLayout({ children }) {
     <ClerkProvider appearance={clerkAppearance} signUpForceRedirectUrl="/start?setup=1">
       <html lang="en">
         <head>
+          {/* Inside the iPhone app (ios-app/): mark <html> and let the page reach under the
+              status bar, before first paint, so the nav can pad itself below the clock. */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `if(/PetesPostingsApp/.test(navigator.userAgent)){document.documentElement.classList.add('in-app');var v=document.querySelector('meta[name=viewport]');if(v&&!/viewport-fit/.test(v.content))v.content+=', viewport-fit=cover';}`,
+            }}
+          />
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-4RWTGXJJQP"
             strategy="afterInteractive"

@@ -154,8 +154,10 @@ export default function OnboardingFlow() {
       if (!session) throw new Error("not complete");
       await setActive({ session });
       capture("app_apple_signin");
-    } catch {
-      setNote("Couldn’t sign in with Apple. Try email instead.");
+    } catch (err) {
+      const reason = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || err?.message || "unknown";
+      capture("app_apple_signin_failed", { reason, code: err?.errors?.[0]?.code || null });
+      setNote(`Couldn’t sign in with Apple (${reason}). Try email instead.`);
     }
     setBusy(false);
   }

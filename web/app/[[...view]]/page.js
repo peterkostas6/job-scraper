@@ -1331,6 +1331,8 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
 }
 
 // ---- MAIN ----
+const SAME_PAGE_PATHS = new Set(["/jobs", "/recent", "/saved", "/notifications"]);
+
 export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
   const clerk = useClerk();
@@ -1517,10 +1519,17 @@ export default function Home() {
         const f = pendingView.current;
         pendingView.current = null;
         const target = f.home ? "/" : f.about ? "/about" : f.recent ? "/recent" : f.notifications ? "/notifications" : f.saved ? "/saved" : "/jobs";
-        if (target !== pathname) router.push(target);
+        if (target !== pathname) goView(target);
       });
     }
     pendingView.current[key] = value;
+  }
+  // Jobs, Recent, Saved and Alerts are one page: switching between them only changes the address
+  // (history.pushState, which Next keeps in step with usePathname), so the page and its loaded
+  // jobs stay put instead of being rebuilt and re-downloaded on every switch.
+  function goView(target) {
+    if (SAME_PAGE_PATHS.has(target) && SAME_PAGE_PATHS.has(pathname)) window.history.pushState(null, "", target);
+    else router.push(target);
   }
   const setViewHome = (v) => queueView("home", v);
   const setViewAbout = (v) => queueView("about", v);
@@ -1626,7 +1635,8 @@ export default function Home() {
 
   // Fetch recent postings data when that view is opened
   useEffect(() => {
-    if (!viewNewPostings) return;
+    // Premium's Recent is the Jobs list (already loaded); only the locked preview needs this.
+    if (!viewNewPostings || (isSignedIn && isSubscribed)) return;
     setNewPostingsLoading(true);
     fetch("/api/jobs-new")
       .then((res) => res.json())
@@ -1635,7 +1645,7 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setNewPostingsLoading(false));
-  }, [viewNewPostings]);
+  }, [viewNewPostings, isSignedIn, isSubscribed]);
 
   // Show the active bank's jobs from the loaded list
   useEffect(() => {
@@ -2220,11 +2230,11 @@ export default function Home() {
           left, Account far right, the main action (alerts) raised in the middle. */}
       {/* Not on the landing page (/): that page keeps its own top bar and calls to action. */}
       {!viewHome && <div className="tabbar" role="navigation" aria-label="Main">
-        <Link href="/jobs" className={`tab${view === "browse" && !alertsPanelOpen ? " is-on" : ""}`} aria-current={view === "browse" && !alertsPanelOpen ? "page" : undefined}>
+        <Link href="/jobs" onClick={(e) => { e.preventDefault(); goView("/jobs"); }} className={`tab${view === "browse" && !alertsPanelOpen ? " is-on" : ""}`} aria-current={view === "browse" && !alertsPanelOpen ? "page" : undefined}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></svg>
           <span>Jobs</span>
         </Link>
-        <Link href="/recent" className={`tab${viewNewPostings ? " is-on" : ""}`} aria-current={viewNewPostings ? "page" : undefined}>
+        <Link href="/recent" onClick={(e) => { e.preventDefault(); goView("/recent"); }} className={`tab${viewNewPostings ? " is-on" : ""}`} aria-current={viewNewPostings ? "page" : undefined}>
           {isSignedIn && isSubscribed ? (
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           ) : (

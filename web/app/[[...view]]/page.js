@@ -2242,7 +2242,7 @@ export default function Home() {
           className={`tab${viewingSaved && !viewNotifications ? " is-on" : ""}`}
           onClick={() => {
             if (!isSignedIn) { askToSignUp("save"); return; }
-            setAlertsPanelOpen(false); setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
+            setAlertsPanelOpen(false); setViewNewPostings(false); setViewingSaved(true); setViewNotifications(false); setSearchQuery(""); setLocationFilter(""); setJobType("all");
           }}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>

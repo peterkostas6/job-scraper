@@ -7317,3 +7317,16 @@ footer a, .footer a { color: var(--pp-cream); }
   .in-app.tab-out .content { transform: none; }
   .in-app.tab-in .content { animation: none; }
 }
+
+/* ---- App: taps feel native ----
+   iPhones fire :hover on tap, so the row's hover colour and arrow wind-up flashed on every tap.
+   In the app a row just darkens while pressed, instantly, like an iOS list cell. */
+.in-app .job-row { transition: none; }
+.in-app .job-row:hover { background: transparent; }
+.in-app .job-row:hover .job-arrow { animation: none; }
+.in-app .job-row:active { background: #EADFCB; }
+
+/* Pop-ups (Request a company and the like) sit near the top in the app, so the keyboard opens
+   below the text box instead of covering it and making iOS shove the page around. */
+.in-app .modal-overlay { align-items: flex-start; padding-top: calc(env(safe-area-inset-top, 0px) + 3.5rem); }
+.in-app .modal-card { max-height: calc(100svh - env(safe-area-inset-top, 0px) - 5rem); overflow-y: auto; }

@@ -8,6 +8,28 @@ import { sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
+// GET: the signed-in user's own requests (newest first) and the firms most people have asked for.
+// The app works out which have been added by matching names against the firms we track.
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) return Response.json({ error: "Sign in first." }, { status: 401 });
+  try {
+    const mine = await sql`
+      SELECT MIN(company) AS company, MAX(created_at) AS at
+      FROM company_requests WHERE user_id = ${userId}
+      GROUP BY LOWER(company) ORDER BY at DESC LIMIT 30`;
+    const popular = await sql`
+      SELECT MIN(company) AS company, COUNT(DISTINCT user_id)::int AS people
+      FROM company_requests
+      GROUP BY LOWER(company) HAVING COUNT(DISTINCT user_id) >= 2
+      ORDER BY people DESC LIMIT 12`;
+    return Response.json({ mine: mine.rows, popular: popular.rows });
+  } catch (err) {
+    console.error("company request list failed:", err);
+    return Response.json({ mine: [], popular: [] });
+  }
+}
+
 export async function POST(request) {
   const { userId } = await auth();
   if (!userId) return Response.json({ error: "Sign in to request a company." }, { status: 401 });

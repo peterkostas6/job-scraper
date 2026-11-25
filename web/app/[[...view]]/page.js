@@ -22,6 +22,7 @@ import { isApp } from "@/lib/app-access";
 import { enablePush, pushPermission, openAppSettings } from "@/lib/native";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
+import RequestPage from "./RequestPage";
 import { FIRM_LABEL } from "@/lib/firms";
 
 const FREE_BANKS = new Set(Object.keys(ALL_FIRMS));
@@ -1346,7 +1347,7 @@ function NewPostingsView({ isSubscribed, isSignedIn, data, loading, onSetupAlert
 }
 
 // ---- MAIN ----
-const SAME_PAGE_PATHS = new Set(["/jobs", "/recent", "/saved", "/notifications"]);
+const SAME_PAGE_PATHS = new Set(["/jobs", "/recent", "/saved", "/notifications", "/request"]);
 
 export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
@@ -1520,9 +1521,11 @@ export default function Home() {
   // setView* functions keep the old call sites working by collecting the flags a handler
   // sets, then pushing the matching route once the handler finishes.
   const pathname = usePathname();
-  const VIEW_BY_PATH = { "/": "home", "/jobs": "browse", "/recent": "recent", "/saved": "saved", "/notifications": "notifications", "/about": "about" };
+  const VIEW_BY_PATH = { "/": "home", "/jobs": "browse", "/recent": "recent", "/saved": "saved", "/notifications": "notifications", "/about": "about", "/request": "request" };
   const routeView = VIEW_BY_PATH[pathname];
-  const view = routeView || "browse";
+  // /request is the app's Request tab; the website asks in a pop-up instead, so there it's Jobs.
+  const view = routeView === "request" && !inApp ? "browse" : routeView || "browse";
+  const viewRequest = view === "request";
   const viewHome = view === "home";
   const viewAbout = view === "about";
   const viewNewPostings = view === "recent";
@@ -2299,7 +2302,7 @@ export default function Home() {
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           {/* Phones with the tab bar: the page's name, centered (logo mark on the left). */}
-          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? (inApp ? "My Preferences" : "Alerts") : viewNewPostings ? "Recent" : viewingSaved ? "Saved" : "Jobs"}</span>}
+          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? (inApp ? "My Preferences" : "Alerts") : viewNewPostings ? "Recent" : viewRequest ? "Request" : viewingSaved ? "Saved" : "Jobs"}</span>}
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
             <Link
@@ -2416,10 +2419,16 @@ export default function Home() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           <span>Saved</span>
         </button>
+        {/* App: its own page (switches like Jobs and Saved). Website: a pop-up. */}
         <button
-          data-sheet
-          className={`tab${showCompanyRequest ? " is-on" : ""}`}
-          onClick={() => { capture("tabbar_request"); if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
+          data-sheet={inApp ? undefined : ""}
+          className={`tab${showCompanyRequest || viewRequest ? " is-on" : ""}`}
+          onClick={() => {
+            capture("tabbar_request");
+            if (!isSignedIn) { askToSignUp("request"); return; }
+            if (inApp) { setAlertsPanelOpen(false); goView("/request"); return; }
+            setCompanyRequestStatus(null); setShowCompanyRequest(true);
+          }}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/><path d="M12 8.5v4M10 10.5h4"/></svg>
           <span>Request</span>
@@ -2604,7 +2613,11 @@ export default function Home() {
         </div>
       )}
 
-      {!viewHome && !viewAbout && (!viewNewPostings || recentMode) && (
+      {viewRequest && (
+        <RequestPage counts={bankCounts} onOpenFirm={(key) => { setActiveBank(key); goView("/jobs"); }} />
+      )}
+
+      {!viewHome && !viewAbout && !viewRequest && (!viewNewPostings || recentMode) && (
         <div className="app-layout">
           {/* Mobile top bar — replaces sidebar on mobile (on /jobs the filter bar replaces it; on Alerts it isn't shown) */}
           <div className={`mobile-top-bar${!viewingSaved || viewNotifications ? " mobile-top-bar-replaced" : ""}`}>

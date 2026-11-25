@@ -1,8 +1,8 @@
 "use client";
 
 // The app's Request tab: search first. Firms we already track show as tracked (tap to see their
-// roles); anything else gets one Request button. Below: the firms most people have asked for, and
-// this person's own requests, marked Added once that firm shows up in the firm list.
+// roles); anything else gets one Request button. Below: the firms most people have asked for.
+// Their own past requests aren't listed; they're only used to show "Requested" on a repeat ask.
 import { useEffect, useMemo, useState } from "react";
 import { ALL_FIRMS } from "@/lib/firms";
 import { capture } from "@/lib/analytics";
@@ -15,11 +15,6 @@ const trackedFirm = (name) => {
   const q = norm(name);
   if (q.length < 2) return null;
   return FIRMS.find((f) => f.n === q || f.ns === q || f.n.startsWith(`${q} `) || q.startsWith(`${f.n} `) || q === f.n.split(" ")[0] && f.n.split(" ").length > 1 && q.length > 4) || null;
-};
-const when = (at) => {
-  const d = new Date(at);
-  const days = Math.floor((Date.now() - d.getTime()) / 864e5);
-  return days < 1 ? "Today" : days < 2 ? "Yesterday" : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
 export default function RequestPage({ counts, onOpenFirm }) {
@@ -59,7 +54,7 @@ export default function RequestPage({ counts, onOpenFirm }) {
     setSending("");
     if (!res?.ok) { setError(data?.error || "Couldn’t send your request. Try again."); return; }
     capture("bank_requested", { company, where: "app_request_tab" });
-    setMine((m) => [{ company, at: new Date().toISOString(), fresh: true }, ...(m || [])]);
+    setMine((m) => [{ company }, ...(m || [])]);
   }
 
   return (
@@ -106,30 +101,6 @@ export default function RequestPage({ counts, onOpenFirm }) {
         </section>
       )}
 
-      <section className="rq-sec">
-        <h2 className="rq-h">Your requests</h2>
-        {mine === null ? <p className="rq-empty">Loading…</p>
-          : mine.length === 0 ? <p className="rq-empty">Nothing yet. Search for a firm above.</p>
-          : (
-            <ul className="rq-mine">
-              {mine.map((r) => {
-                const firm = trackedFirm(r.company);
-                const inner = (
-                  <>
-                    <span className={`rq-dot${firm ? " is-added" : ""}`} aria-hidden="true" />
-                    <span className="rq-row-text"><strong>{firm ? firm.name : r.company}</strong><small>{firm ? "Added. Its roles are in Jobs" : r.fresh ? "Requested. We’ll add it if we can" : "Requested"}</small></span>
-                    <span className="rq-when">{when(r.at)}</span>
-                  </>
-                );
-                return (
-                  <li key={`${r.company}-${r.at}`} className={r.fresh ? "is-fresh" : ""}>
-                    {firm ? <button type="button" className="rq-mine-row" onClick={() => onOpenFirm(firm.key)}>{inner}</button> : <div className="rq-mine-row">{inner}</div>}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-      </section>
     </div>
   );
 }

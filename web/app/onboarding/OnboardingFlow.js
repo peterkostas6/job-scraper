@@ -154,7 +154,7 @@ export default function OnboardingFlow() {
       const attempt = await clerkSignIn.create({ strategy: "oauth_token_apple", token });
       if (attempt.status === "complete") session = attempt.createdSessionId;
       else if (attempt.firstFactorVerification?.status === "transferable") {
-        const created = await clerkSignUp.create({ transfer: true });
+        const created = await clerkSignUp.create({ transfer: true, unsafeMetadata: { signedUpInApp: true } });
         session = created.createdSessionId;
       }
       if (!session) throw new Error("not complete");
@@ -185,7 +185,7 @@ export default function OnboardingFlow() {
   function createAccount() {
     if (isSignedIn) { saveAndNext(); return; }
     capture("app_onboarding_signup_opened");
-    clerk.openSignUp({ forceRedirectUrl: "/onboarding?step=account", signInForceRedirectUrl: "/onboarding?step=account" });
+    clerk.openSignUp({ forceRedirectUrl: "/onboarding?step=account", signInForceRedirectUrl: "/onboarding?step=account", unsafeMetadata: { signedUpInApp: true } });
   }
 
   function finish() {

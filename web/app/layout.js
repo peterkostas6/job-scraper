@@ -116,21 +116,24 @@ export default function RootLayout({ children }) {
               __html: `if(/PetesPostingsApp/.test(navigator.userAgent)){var d=document.documentElement,f=function(){if(!d.classList.contains('in-app'))d.classList.add('in-app');document.querySelectorAll('meta[name=viewport]').forEach(function(v){if(!/viewport-fit/.test(v.content))v.content+=', viewport-fit=cover';});};f();var m=new MutationObserver(f);m.observe(d,{attributes:true,attributeFilter:['class']});m.observe(document.head,{childList:true,subtree:true,attributes:true,attributeFilter:['content']});}`,
             }}
           />
-          <Script
-            src="https://www.googletagmanager.com/gtag/js?id=G-4RWTGXJJQP"
-            strategy="afterInteractive"
-          />
+          {/* Google Analytics, Meta Pixel and Reddit Pixel: website only. In the iPhone app
+              (PetesPostingsApp user agent) they never load, since ad tracking in an app needs
+              Apple's "Allow tracking?" prompt. Their track helpers do nothing when not loaded. */}
           <Script id="ga-init" strategy="afterInteractive">
             {`
+if (!/PetesPostingsApp/.test(navigator.userAgent)) {
               window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
+              var ga=document.createElement('script');ga.async=true;ga.src='https://www.googletagmanager.com/gtag/js?id=G-4RWTGXJJQP';document.head.appendChild(ga);
+              var gtag = window.gtag = function(){dataLayer.push(arguments);};
               gtag('js', new Date());
               gtag('config', 'G-4RWTGXJJQP');
-            `}
+            }
+`}
           </Script>
           {/* Meta Pixel base code (records the first page view; later ones come from providers.js). */}
           <Script id="meta-pixel" strategy="afterInteractive">
             {`
+if (!/PetesPostingsApp/.test(navigator.userAgent)) {
               !function(f,b,e,v,n,t,s)
               {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
               n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -142,15 +145,18 @@ export default function RootLayout({ children }) {
               fbq('init', '${META_PIXEL_ID}');
               // Skipped on Pete's own browsers (lib/internal.js).
               if (!(function(){try{return /[?&]internal=on\\b/.test(location.search)||localStorage.getItem('pp-internal')==='1'}catch(e){return false}})()) fbq('track', 'PageView');
-            `}
+            }
+`}
           </Script>
           {/* Reddit Pixel base code (first page visit; later ones come from providers.js). */}
           <Script id="reddit-pixel" strategy="afterInteractive">
             {`
+if (!/PetesPostingsApp/.test(navigator.userAgent)) {
               !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js?pixel_id=${REDDIT_PIXEL_ID}",t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);
               rdt('init','${REDDIT_PIXEL_ID}');
               if (!(function(){try{return /[?&]internal=on\\b/.test(location.search)||localStorage.getItem('pp-internal')==='1'}catch(e){return false}})()) rdt('track', 'PageVisit');
-            `}
+            }
+`}
           </Script>
         </head>
         <body>

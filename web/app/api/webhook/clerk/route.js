@@ -123,9 +123,12 @@ export async function POST(req) {
       console.error("Failed to send new account notice:", err);
     }
 
-    // Server copy of the browser's CompleteRegistration (same event ID).
-    await sendMetaServerEvent({ eventName: "CompleteRegistration", eventId: `reg_${userData.id}`, email, externalId: userData.id });
-    await sendRedditServerEvent({ eventType: "SignUp", conversionId: `reg_${userData.id}`, email, externalId: userData.id });
+    // Server copy of the browser's CompleteRegistration (same event ID). Not for accounts made in
+    // the iPhone app: sharing those with ad networks would need Apple's tracking prompt.
+    if (!userData.unsafe_metadata?.signedUpInApp) {
+      await sendMetaServerEvent({ eventName: "CompleteRegistration", eventId: `reg_${userData.id}`, email, externalId: userData.id });
+      await sendRedditServerEvent({ eventType: "SignUp", conversionId: `reg_${userData.id}`, email, externalId: userData.id });
+    }
   }
 
   return Response.json({ received: true });

@@ -65,6 +65,49 @@ export function alertEmail({ jobs: allJobs, firstName, userId }) {
   return { subject, html, text };
 }
 
+// ---------- Saved roles (sent when someone taps "Email me these" on the Saved tab) ----------
+export function savedJobsEmail({ firstName, jobs, statuses = {} }) {
+  const n = jobs.length;
+  const grouped = {};
+  for (const job of jobs) (grouped[job.bank || "Other"] ||= []).push(job);
+  const banks = Object.keys(grouped);
+  const applied = (job) => Boolean(statuses[job.link]?.appliedAt);
+  const subject = `Your ${n} saved ${n === 1 ? "role" : "roles"}`;
+
+  let body = "";
+  for (const bank of banks) {
+    body += `<h2 style="margin:20px 0 4px;font-size:14px;line-height:20px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${C.muted};">${escapeHtml(bank)}</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">`;
+    for (const job of grouped[bank]) {
+      const level = jobLevel(job.title);
+      body += `
+  <tr>
+    <td style="padding:12px 0;border-top:1px solid ${C.hairline};">
+      <a href="${escapeHtml(job.link)}" style="font-size:16px;line-height:22px;font-weight:600;color:${C.navy};text-decoration:underline;text-decoration-color:${C.hairline};">${escapeHtml(job.title)}</a>
+      <div style="margin-top:4px;font-size:14px;line-height:20px;color:${C.muted};">${escapeHtml(job.location || "Location not listed")} &nbsp;&middot;&nbsp; <span style="font-weight:600;color:${level === "intern" ? C.amber : C.blue};">${LEVEL_LABEL[level]}</span>${applied(job) ? ` &nbsp;&middot;&nbsp; <span style="font-weight:600;color:#15803d;">Applied</span>` : ""}</div>
+    </td>
+  </tr>`;
+    }
+    body += `</table>`;
+  }
+
+  const footer = { reason: "You get this email because you asked for your saved roles in Pete&rsquo;s Postings." };
+  const html = layout({
+    title: subject,
+    preheader: jobs.slice(0, 2).map((j) => j.title).join(" · "),
+    heading: subject,
+    intro: `${firstName ? `Hi ${escapeHtml(firstName)}, ` : ""}here ${n === 1 ? "is the role" : "are the roles"} you saved. Each link opens the posting on the firm&rsquo;s site.`,
+    body,
+    footer,
+  });
+  const text = textVersion([
+    subject,
+    "",
+    ...banks.flatMap((bank) => [bank.toUpperCase(), ...grouped[bank].map((j) => `- ${j.title} (${j.location || "location not listed"})${applied(j) ? " - Applied" : ""}\n  ${j.link}`), ""]),
+  ], footer);
+  return { subject, html, text };
+}
+
 // ---------- Welcome (transactional, not promotional) ----------
 export function welcomeEmail({ firstName, bankCount = 20 }) {
   const subject = "Welcome to Pete's Postings";

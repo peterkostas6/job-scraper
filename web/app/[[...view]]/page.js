@@ -1396,6 +1396,8 @@ export default function Home() {
   const justSavedTimer = useRef(null);
   const [bookmarks, setBookmarks] = useState(new Set());
   const [savedJobs, setSavedJobs] = useState([]);
+  // Saved tab: "Email me these" (idle | sending | sent | error message).
+  const [savedEmailState, setSavedEmailState] = useState("idle");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
   // Browse analytics: one event per search (after typing pauses), filter change, and bank switch.
@@ -2783,7 +2785,21 @@ export default function Home() {
               <>
                 <div className="results-bar">
                   <span className="results-text">{savedJobs.length} saved {savedJobs.length === 1 ? "job" : "jobs"}</span>
+                  {savedJobs.length > 0 && (
+                    <button className={`saved-email${savedEmailState === "sent" ? " is-sent" : ""}`} disabled={savedEmailState === "sending"} onClick={async () => {
+                      setSavedEmailState("sending");
+                      const res = await fetch("/api/saved-email", { method: "POST" }).catch(() => null);
+                      const data = await res?.json().catch(() => ({}));
+                      capture("saved_emailed", { ok: Boolean(res?.ok), count: savedJobs.length });
+                      setSavedEmailState(res?.ok ? "sent" : data?.error || "Couldn’t send. Try again.");
+                      if (res?.ok) setTimeout(() => setSavedEmailState("idle"), 4000);
+                    }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{savedEmailState === "sent" ? <path d="M5 12l5 5L20 7"/> : <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>}</svg>
+                      {savedEmailState === "sending" ? "Sending…" : savedEmailState === "sent" ? "Sent to your email" : "Email me these"}
+                    </button>
+                  )}
                 </div>
+                {!["idle", "sending", "sent"].includes(savedEmailState) && <p className="saved-email-error" role="alert">{savedEmailState}</p>}
                 {savedJobs.length === 0 && (
                   <div className="empty-state">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

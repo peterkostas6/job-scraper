@@ -7417,3 +7417,18 @@ button.rq-row:active { background: #EADFCB; }
 .in-app .rq { transition: opacity 160ms ease, transform 160ms ease; }
 .in-app.tab-out .rq { opacity: 0; transform: translateY(4px); }
 @media (prefers-reduced-motion: reduce) { .in-app .rq { transition: none; } .in-app.tab-out .rq { transform: none; } }
+
+/* Saved tab: "Email me these" sits at the right of the saved count. */
+.results-bar:has(.saved-email) { display: flex !important; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.saved-email {
+  display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; padding: 0 0.95rem;
+  border: 1.5px solid rgba(20, 33, 61, 0.2); border-radius: 999px; background: #fff; color: var(--pp-navy, #14213D);
+  font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.saved-email:active { transform: scale(0.97); }
+.saved-email:disabled { opacity: 0.7; }
+.saved-email.is-sent { border-color: #15803d; color: #15803d; }
+.saved-email-error { margin: 0.25rem 0 0.75rem; font-size: 0.88rem; color: #b42318; }
+.in-app .saved-email { border-color: rgba(244, 237, 224, 0.35); background: transparent; color: var(--pp-cream, #F4EDE0); }
+.in-app .saved-email.is-sent { border-color: #3fae6a; color: #7ad39b; }
+.in-app .saved-email-error { color: #ffb4a8; }

@@ -2483,6 +2483,9 @@ export default function Home() {
               {!isSubscribed && !inApp && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}
               {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
               {isSignedIn && canManageSubscription(user) && <button onClick={openBillingPortal}>Manage subscription</button>}
+              {inApp && <Link href="/privacy">Privacy Policy</Link>}
+              {inApp && <Link href="/terms">Terms of Service</Link>}
+              {inApp && <a href="mailto:pete@petespostings.com" onClick={() => capture("contact_clicked", { where: "app_settings" })}>Contact</a>}
               {!inApp && <Link href="/about">About</Link>}
               {!inApp && <Link href="/">Home</Link>}
               {isSignedIn && <button className="acct-out" onClick={() => {

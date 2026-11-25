@@ -7432,3 +7432,15 @@ button.rq-row:active { background: #EADFCB; }
 .in-app .saved-email { border-color: rgba(244, 237, 224, 0.35); background: transparent; color: var(--pp-cream, #F4EDE0); }
 .in-app .saved-email.is-sent { border-color: #3fae6a; color: #7ad39b; }
 .in-app .saved-email-error { color: #ffb4a8; }
+
+/* App: no site footer (Privacy, Terms and Contact are in Settings), and the navy grid fills the
+   whole screen even on short pages like Request. */
+.in-app footer { display: none; }
+html.in-app, html.in-app body { min-height: 100%; }
+html.in-app body { min-height: 100svh; }
+/* App: Back button on Privacy / Terms. */
+.app-back {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 0.4rem;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.6rem) 1rem 0.6rem; border: 0; background: var(--pp-navy, #14213D);
+  color: var(--pp-cream, #F4EDE0); font: inherit; font-size: 1.02rem; font-weight: 600; cursor: pointer; width: 100%;
+}

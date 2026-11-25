@@ -1,3 +1,5 @@
+import AppBack from "@/app/AppBack";
+
 export const metadata = {
   title: "Terms of Service — Pete's Postings",
   description: "Terms of service for Pete's Postings.",
@@ -6,6 +8,8 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
+    <>
+    <AppBack />
     <div style={{ maxWidth: 720, width: "calc(100% - 32px)", margin: "32px auto 64px", padding: "40px 24px 56px", background: "var(--pp-cream)", borderRadius: 16, boxSizing: "border-box", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1e293b" }}>
       <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>Last updated: November 24, 2026</p>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Terms of Service</h1>
@@ -88,5 +92,6 @@ export default function TermsPage() {
         </p>
       </section>
     </div>
+    </>
   );
 }

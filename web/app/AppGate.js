@@ -2,7 +2,7 @@
 
 // The iPhone app's hard paywall: inside the app, anyone without a paid account is sent to the
 // onboarding (which ends at the paywall). Does nothing on the website.
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { isApp, hasAppAccess, APP_OPEN_PATHS, APP_WEB_ONLY_PATHS } from "@/lib/app-access";
@@ -95,7 +95,8 @@ function NativeTabBridge() {
 }
 
 // The app's launch screen: Pete hopping on navy for at least ~1.5 s and until nothing is still
-// loading (max 7 s), then the whole screen fades in. Rendered for everyone but only visible in
+// loading (max 7 s), then the whole screen fades in. It shows again on the way out of sign-in /
+// onboarding into the app (AppGate remounts it), so Jobs never appears half-loaded. Rendered for everyone but only visible in
 // the app (CSS keys on .in-app, set before first paint); the website removes it on mount.
 function AppSplash() {
   const [phase, setPhase] = useState("on"); // on -> out (fading) -> done
@@ -121,6 +122,13 @@ function AppSplash() {
 
 export default function AppGate() {
   const pathname = usePathname();
+  // Leaving onboarding (signed in, paid) for the app: run the loading screen again, before paint.
+  const [splashRun, setSplashRun] = useState(0);
+  const prevPath = useRef(pathname);
+  useLayoutEffect(() => {
+    if (isApp() && prevPath.current?.startsWith("/onboarding") && !pathname.startsWith("/onboarding")) setSplashRun((n) => n + 1);
+    prevPath.current = pathname;
+  }, [pathname]);
   const { isLoaded, user } = useUser();
 
   useEffect(() => {
@@ -141,7 +149,7 @@ export default function AppGate() {
   // The first-time tour (flag set at the end of onboarding) runs on the jobs screen.
   return (
     <>
-      <AppSplash />
+      <AppSplash key={splashRun} />
       <NativeTabBridge />
       {isLoaded && pathname === "/jobs" && <AppTour />}
     </>

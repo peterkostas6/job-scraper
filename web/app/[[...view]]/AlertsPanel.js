@@ -39,7 +39,7 @@ export default function AlertsPanel({
       <div className="alx">
         <header className="alx-head">
           <div>
-            <h2 className="alx-title">Alerts</h2>
+            <h2 className="alx-title">{isApp() ? "Preferences" : "Alerts"}</h2>
             <p className="alx-status">{status}</p>
           </div>
           <button className="alx-x" aria-label="Close alerts" onClick={onClose}>

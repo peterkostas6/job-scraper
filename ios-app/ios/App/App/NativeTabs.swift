@@ -35,7 +35,7 @@ class MainViewController: CAPBridgeViewController, UITabBarDelegate {
 
         let tabs: [(String, String, String)] = [
             ("Jobs", "briefcase", "briefcase.fill"),
-            ("Alerts", "bell", "bell.fill"),
+            ("Preferences", "slider.horizontal.3", "slider.horizontal.3"),
             ("Saved", "bookmark", "bookmark.fill"),
             ("Request", "building.2", "building.2.fill"),
             ("Settings", "gearshape", "gearshape.fill"),

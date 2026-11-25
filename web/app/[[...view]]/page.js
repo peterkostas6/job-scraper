@@ -69,6 +69,20 @@ function formatRelativeDate(effectiveTime, hasActualDate) {
 
 // "Sep 18" from the bank's posted date, or "Sep 18, 9:55 PM" when all we have is the
 // minute our cron first saw it. Banks publish a date, not a time, so the date alone is honest.
+// The app's Jobs list is split into these, newest first; each can be folded away.
+const TIME_SECTIONS = [["today", "Today"], ["yesterday", "Yesterday"], ["week", "This week"], ["month", "This month"], ["older", "Older than a month"]];
+const DAY = 864e5;
+function timeSection(job, todayStart) {
+  const t = postedAt(job);
+  if (t >= todayStart) return "today";
+  if (t >= todayStart - DAY) return "yesterday";
+  if (t >= todayStart - 6 * DAY) return "week";
+  if (t >= todayStart - 29 * DAY) return "month";
+  return "older";
+}
+// The Posted filter (app): how far back to look.
+const POSTED_OPTIONS = [["any", "Any time"], ["today", "Today"], ["week", "This week"], ["month", "This month"]];
+
 function formatPostedAt(job) {
   if (job.postedDate) {
     return new Date(job.postedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -1545,6 +1559,10 @@ export default function Home() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   // Phones: the /jobs filter panel (bank, type, city) that slides up from the bottom.
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [postedFilter, setPostedFilter] = useState("any");
+  // App Jobs list: which time sections are open, and how many rows each shows.
+  const [openSections, setOpenSections] = useState({ today: true, yesterday: true });
+  const [sectionShown, setSectionShown] = useState({});
   // Jakob's law: Escape closes the filter panel like every other sheet on the web.
   useEffect(() => {
     if (!filterSheetOpen) return;
@@ -1855,6 +1873,8 @@ export default function Home() {
   const okType = (job) => jobType === "all" || typeOf(job) === jobType;
   const okLocation = (job) => locationFilter === "" || (job.cities || []).includes(locationFilter);
   const okCategory = (job) => categoryFilter === "" || (job.category || "") === categoryFilter;
+  const todayStart = new Date().setHours(0, 0, 0, 0);
+  const okPosted = (job) => postedFilter === "any" || postedAt(job) >= todayStart - ({ today: 0, week: 6, month: 29 }[postedFilter] * DAY);
   // Browse shows the roles that match their saved preferences ("My preferences") until they
   // switch to "All roles". For anyone signed in who has saved preferences, alerts on or off.
   const hasAlertPrefs = Boolean(isSignedIn && savedNotifPrefs && (hasSavedPrefs || alertsOn));
@@ -1867,7 +1887,7 @@ export default function Home() {
   const recentMode = viewNewPostings && isSignedIn && isSubscribed;
   const okRecent = (job) => !recentMode || isLast48h(job);
   const searched = jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okPrefs(job) && okRecent(job));
-  const filteredJobs = searched.filter((job) => okType(job) && okLocation(job) && okCategory(job));
+  const filteredJobs = searched.filter((job) => okType(job) && okLocation(job) && okCategory(job) && okPosted(job));
   // Each dropdown counts the jobs left after the OTHER filters, so its numbers always add up to what you'd see.
   const locationOptions = rankCounts(searched.filter((j) => okType(j) && okCategory(j)).flatMap((j) => j.cities || []), MULTI_CITY);
   const typeCounts = Object.fromEntries(rankCounts(searched.filter((j) => okLocation(j) && okCategory(j)).map(typeOf)));
@@ -1879,7 +1899,7 @@ export default function Home() {
   // A new filter starts the list over at the first 100 rows.
   useEffect(() => { setShown(100); }, [activeBank, jobType, locationFilter, categoryFilter, searchQuery, showSavedOnly, browseMode, recentMode]);
   // Counts for the My preferences | All roles switch, after search and the dropdown filters.
-  const modeBase = hasAlertPrefs ? jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okType(job) && okLocation(job) && okCategory(job) && okRecent(job)) : [];
+  const modeBase = hasAlertPrefs ? jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okType(job) && okLocation(job) && okCategory(job) && okPosted(job) && okRecent(job)) : [];
   const mineCount = hasAlertPrefs ? modeBase.filter(matchesMine).length : 0;
   // The roles Browse leaves out without Pro, for the locked rows at the top of the list.
   const lockedRecent = (isSignedIn && isSubscribed) || inApp || showSavedOnly ? [] : allJobs
@@ -1989,6 +2009,73 @@ export default function Home() {
       </span>
     );
   };
+  // One row of the Jobs / Saved list. `fresh` (Today in the app) shows how long ago it posted.
+  const renderJobRow = (job, index, fresh) => (
+      <a
+        href={trackedLink(job.link)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="job-row"
+        key={job.link}
+        onClick={(e) => {
+          capture("job_opened", { view: viewingSaved ? "saved" : "browse", bank: job.bank || BANKS[job.bankKey]?.name, category: job.category, title: job.title, position: index + 1, signed_in: Boolean(isSignedIn) });
+          if (isSignedIn) patchJobStatus(job.link, { viewedAt: jobStatus[job.link]?.viewedAt || new Date().toISOString() });
+          // Signed out: a free account first (see SignUpGate).
+          if (isLoaded && !isSignedIn) { e.preventDefault(); askToSignUp("job", { title: job.title, link: job.link, bank: job.bank, bankKey: job.bankKey, location: job.location }); }
+        }}
+      >
+        <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
+        <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
+        <span className="job-title">{job.title}{rowTags(job)}</span>
+        <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
+        <span className="job-location">{job.location || "—"}</span>
+        {recentMode || fresh
+          ? <span className="job-posted job-posted-new tnum">{feedAge(job)}</span>
+          : <span className="job-posted tnum">{formatPostedAt(job)}</span>}
+        <div className="job-badges">
+          <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>
+            {LEVEL_LABEL[jobLevel(job.title)]}
+          </span>
+        </div>
+        {activeBank === "all" && <span className="new-bank-label">{job.bank}</span>}
+        <button className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}${justSaved === job.link ? " job-bookmark-pop" : ""}`} onClick={(e) => toggleBookmark(e, job)} aria-label={bookmarks.has(job.link) ? "Remove from saved" : "Save job"} aria-pressed={bookmarks.has(job.link)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+        <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+  );
+
+  // The filter sheet's Firm section (first on the website, last in the app).
+  const firmSection = (
+                <div className="mfs-sec">
+                  <div className="mfs-h-row">
+                    <p className="mfs-h">Firm</p>
+                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>See all {FIRM_COUNT}</button>}
+                  </div>
+                  {sheetAllBanks ? (
+                    <div className="mfs-firms">
+                      <button className={`mfs-bank mfs-chip${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All firms</button>
+                      <FirmPicker chipClass="mfs-bank mfs-chip" searchClass="firm-search mfs-search" counts={bankCounts} on={(k) => activeBank === k}
+                        onPick={(k) => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(k); }} />
+                    </div>
+                  ) : (
+                  <div className="mfs-banks mfs-row">
+                    <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All</button>
+                    {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
+                    {Object.keys(ALL_FIRMS).filter((k) => bankCounts[k] > 0).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)).slice(0, 6).map((key) => (
+                      <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
+                        <BankLogo bankKey={key} bank={ALL_FIRMS[key].name} size={18} />{ALL_FIRMS[key].shortName || ALL_FIRMS[key].name}
+                      </button>
+                    ))}
+                  </div>
+                  )}
+                </div>
+  );
+
   // The Alerts button that sits with the filters.
   const alertsButton = (cls) => (
     <button className={`${cls}${alertsPanelOpen ? " is-open" : ""}`} aria-expanded={alertsPanelOpen} onClick={() => (alertsPanelOpen ? setAlertsPanelOpen(false) : openAlerts())}>
@@ -2145,7 +2232,7 @@ export default function Home() {
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           {/* Phones with the tab bar: the page's name, centered (logo mark on the left). */}
-          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? "Alerts" : viewNewPostings ? "Recent" : viewingSaved ? "Saved" : "Jobs"}</span>}
+          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? (inApp ? "Preferences" : "Alerts") : viewNewPostings ? "Recent" : viewingSaved ? "Saved" : "Jobs"}</span>}
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
             <Link
@@ -2245,11 +2332,11 @@ export default function Home() {
           )}
           <span>Recent</span>
         </Link>}
-        <button data-sheet className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label="Alerts">
+        <button data-sheet className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label={inApp ? "Preferences" : "Alerts"}>
           <span className="tab-main-dot">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           </span>
-          <span>Alerts</span>
+          <span>{inApp ? "Preferences" : "Alerts"}</span>
         </button>
         <button
           className={`tab${viewingSaved && !viewNotifications ? " is-on" : ""}`}
@@ -2494,7 +2581,7 @@ export default function Home() {
               {/* One Filters button (count of active filters); everything is set in the filter sheet. */}
               <div className="mfb-chips" role="group" aria-label="Filters">
                 {(() => {
-                  const n = (activeBank !== "all") + (jobType !== "all") + Boolean(locationFilter) + Boolean(categoryFilter);
+                  const n = (activeBank !== "all") + (jobType !== "all") + Boolean(locationFilter) + Boolean(categoryFilter) + (postedFilter !== "any");
                   const open = () => setFilterSheetOpen(true);
                   return (
                     <>
@@ -2524,29 +2611,7 @@ export default function Home() {
                   <p className="mfs-title">Filters</p>
                   <button className="mfs-x" aria-label="Close filters" onClick={() => setFilterSheetOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                 </div>
-                <div className="mfs-sec">
-                  <div className="mfs-h-row">
-                    <p className="mfs-h">Firm</p>
-                    {!sheetAllBanks && <button className="mfs-more" onClick={() => setSheetAllBanks(true)}>See all {FIRM_COUNT}</button>}
-                  </div>
-                  {sheetAllBanks ? (
-                    <div className="mfs-firms">
-                      <button className={`mfs-bank mfs-chip${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All firms</button>
-                      <FirmPicker chipClass="mfs-bank mfs-chip" searchClass="firm-search mfs-search" counts={bankCounts} on={(k) => activeBank === k}
-                        onPick={(k) => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(k); }} />
-                    </div>
-                  ) : (
-                  <div className="mfs-banks mfs-row">
-                    <button className={`mfs-bank mfs-bank-all${activeBank === "all" ? " is-on" : ""}`} onClick={() => setActiveBank("all")}>All</button>
-                    {/* Hick's law + frequency of use: the banks with the most open roles come first, so the first 6 are the likeliest picks */}
-                    {Object.keys(ALL_FIRMS).filter((k) => bankCounts[k] > 0).sort((a, b) => (bankCounts[b] || 0) - (bankCounts[a] || 0)).slice(0, 6).map((key) => (
-                      <button key={key} className={`mfs-bank${activeBank === key ? " is-on" : ""}`} onClick={() => { setViewingSaved(false); setViewNotifications(false); setViewNewPostings(false); setActiveBank(key); }}>
-                        <BankLogo bankKey={key} bank={ALL_FIRMS[key].name} size={18} />{ALL_FIRMS[key].shortName || ALL_FIRMS[key].name}
-                      </button>
-                    ))}
-                  </div>
-                  )}
-                </div>
+                {!inApp && firmSection}
                 {availableCategories.length > 0 && (
                   <div className="mfs-sec">
                     <p className="mfs-h">Area</p>
@@ -2573,8 +2638,19 @@ export default function Home() {
                     {withSelected(locationOptions, locationFilter).map(([loc, n]) => <option key={loc} value={loc}>{loc} ({n})</option>)}
                   </select>
                 </div>
+                {inApp && (
+                  <div className="mfs-sec">
+                    <p className="mfs-h">Posted</p>
+                    <div className="mfs-banks mfs-row mfs-areas mfs-levels">
+                      {POSTED_OPTIONS.map(([key, label]) => (
+                        <button key={key} className={`mfs-bank mfs-bank-all${postedFilter === key ? " is-on" : ""}`} onClick={() => setPostedFilter(key)}>{label}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {inApp && firmSection}
                 <div className="mfs-foot">
-                  <button className="mfs-clear" onClick={() => { setActiveBank("all"); setJobType("all"); setLocationFilter(""); setCategoryFilter(""); setSearchQuery(""); }}>Clear</button>
+                  <button className="mfs-clear" onClick={() => { setActiveBank("all"); setJobType("all"); setLocationFilter(""); setCategoryFilter(""); setSearchQuery(""); setPostedFilter("any"); }}>Clear</button>
                   <button className="mfs-go" onClick={() => setFilterSheetOpen(false)}>
                     {isGatedBank ? "Show roles" : `Show ${displayJobs.length} ${displayJobs.length === 1 ? "role" : "roles"}`}
                   </button>
@@ -2668,7 +2744,7 @@ export default function Home() {
                     <div className={`filters${mobileFiltersOpen ? " filters-mobile-open" : ""}`}>
                       {/* Desktop: one Filters button (same panel as phones); the dropdowns below are hidden there. */}
                       {(() => {
-                        const n = (activeBank !== "all") + (jobType !== "all") + Boolean(locationFilter) + Boolean(categoryFilter);
+                        const n = (activeBank !== "all") + (jobType !== "all") + Boolean(locationFilter) + Boolean(categoryFilter) + (postedFilter !== "any");
                         return (
                           <button className={`dfb${n ? " is-on" : ""}`} onClick={() => setFilterSheetOpen(true)} aria-haspopup="dialog">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
@@ -2783,45 +2859,35 @@ export default function Home() {
                         ))}
                       </div>
                     )}
-                    {displayJobs.slice(0, shown).map((job, index) => (
-                      <a
-                        href={trackedLink(job.link)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="job-row"
-                        key={index}
-                        onClick={(e) => {
-                          capture("job_opened", { view: viewingSaved ? "saved" : "browse", bank: job.bank || BANKS[job.bankKey]?.name, category: job.category, title: job.title, position: index + 1, signed_in: Boolean(isSignedIn) });
-                          if (isSignedIn) patchJobStatus(job.link, { viewedAt: jobStatus[job.link]?.viewedAt || new Date().toISOString() });
-                          // Signed out: a free account first (see SignUpGate).
-                          if (isLoaded && !isSignedIn) { e.preventDefault(); askToSignUp("job", { title: job.title, link: job.link, bank: job.bank, bankKey: job.bankKey, location: job.location }); }
-                        }}
-                      >
-                        <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
-                        <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
-                        <span className="job-title">{job.title}{rowTags(job)}</span>
-                        <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
-                        <span className="job-location">{job.location || "—"}</span>
-                        {recentMode
-                          ? <span className="job-posted job-posted-new tnum">{feedAge(job)}</span>
-                          : <span className="job-posted tnum">{formatPostedAt(job)}</span>}
-                        <div className="job-badges">
-                          <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>
-                            {LEVEL_LABEL[jobLevel(job.title)]}
-                          </span>
-                        </div>
-                        {activeBank === "all" && <span className="new-bank-label">{job.bank}</span>}
-                        <button className={`job-bookmark ${bookmarks.has(job.link) ? "job-bookmark-active" : ""}${justSaved === job.link ? " job-bookmark-pop" : ""}`} onClick={(e) => toggleBookmark(e, job)} aria-label={bookmarks.has(job.link) ? "Remove from saved" : "Save job"} aria-pressed={bookmarks.has(job.link)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarks.has(job.link) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                          </svg>
-                        </button>
-                        <svg className="job-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                      </a>
-                    ))}
-                    {displayJobs.length > shown && <ShowMore onMore={() => setShown((n) => n + 100)} left={displayJobs.length - shown} />}
+                    {/* App: newest first, in time sections that fold away. Website: one list. */}
+                    {inApp && !viewingSaved ? (() => {
+                      const bySection = {};
+                      displayJobs.forEach((job) => { (bySection[timeSection(job, todayStart)] ||= []).push(job); });
+                      let offset = 0;
+                      return TIME_SECTIONS.map(([key, label]) => {
+                        const list = bySection[key] || [];
+                        const first = offset; offset += list.length;
+                        if (!list.length) return null;
+                        const open = Boolean(openSections[key]);
+                        const limit = sectionShown[key] || 50;
+                        return (
+                          <section key={key} className={`jsec${open ? " is-open" : ""}`} aria-label={label}>
+                            <button className="jsec-head" aria-expanded={open} onClick={() => { setOpenSections((o) => ({ ...o, [key]: !o[key] })); capture("jobs_section_toggled", { section: key, open: !open }); }}>
+                              <svg className="jsec-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                              <span className="jsec-label">{label}</span>
+                              <span className={`jsec-n tnum${key === "today" ? " is-new" : ""}`}>{list.length.toLocaleString()}{key === "today" ? " new" : ""}</span>
+                            </button>
+                            {open && list.slice(0, limit).map((job, i) => renderJobRow(job, first + i, key === "today"))}
+                            {open && list.length > limit && <ShowMore onMore={() => setSectionShown((m) => ({ ...m, [key]: limit + 100 }))} left={list.length - limit} />}
+                          </section>
+                        );
+                      });
+                    })() : (
+                      <>
+                        {displayJobs.slice(0, shown).map((job, index) => renderJobRow(job, index, false))}
+                        {displayJobs.length > shown && <ShowMore onMore={() => setShown((n) => n + 100)} left={displayJobs.length - shown} />}
+                      </>
+                    )}
                   </div>
                 )}
               </>

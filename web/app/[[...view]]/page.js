@@ -2354,10 +2354,11 @@ export default function Home() {
           </div>
           {/* Phones (pages with the tab bar): account top right, like every app's header. */}
           {/* Signed out: set up alerts (the sign-up path). Signed in but not paying: upgrade. */}
-          {!viewHome && isLoaded && !isSignedIn && (
+          {/* Never in the app: everyone there has an account and has paid (through Apple). */}
+          {!inApp && !viewHome && isLoaded && !isSignedIn && (
             <Link href="/start" className="nav-upgrade" onClick={() => capture("home_cta_clicked", { where: "nav_phone" })}>Set up alerts</Link>
           )}
-          {!viewHome && isLoaded && isSignedIn && !isSubscribed && (
+          {!inApp && !viewHome && isLoaded && isSignedIn && !isSubscribed && (
             <Link href="/pricing" className="nav-upgrade" onClick={() => capture("header_upgrade_clicked")}>Get Premium</Link>
           )}
           {!viewHome && (
@@ -2459,12 +2460,16 @@ export default function Home() {
               </button>
             )}
             <div className="acct-list">
-              {!isSubscribed && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}
+              {!isSubscribed && !inApp && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}
               {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
               {isSignedIn && canManageSubscription(user) && <button onClick={openBillingPortal}>Manage subscription</button>}
               {!inApp && <Link href="/about">About</Link>}
               {!inApp && <Link href="/">Home</Link>}
-              {isSignedIn && <button className="acct-out" onClick={() => clerk.signOut({ redirectUrl: "/jobs" })}>Sign out</button>}
+              {isSignedIn && <button className="acct-out" onClick={() => {
+                // App: back to the sign-in screen, not wherever onboarding was left (and no test unlock).
+                if (inApp) { try { localStorage.removeItem("pp-onboarding-v1"); localStorage.removeItem("pp_test_premium"); } catch {} }
+                clerk.signOut({ redirectUrl: inApp ? "/onboarding?step=signin" : "/jobs" });
+              }}>Sign out</button>}
               {isSignedIn && isApp() && <button className="acct-out" onClick={() => deleteAccount(clerk)}>Delete account</button>}
             </div>
           </div>

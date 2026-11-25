@@ -126,7 +126,12 @@ export default function AppGate() {
   useEffect(() => {
     if (!isLoaded || !isApp()) return;
     if (APP_OPEN_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
-    if (!hasAppAccess(user)) window.location.replace("/onboarding");
+    // Remember this phone has had an account, so signing out (or a lapsed session) lands on the
+    // sign-in screen rather than the new-user welcome.
+    if (user) { try { localStorage.setItem("pp_had_account", "1"); } catch {} }
+    let hadAccount = false;
+    try { hadAccount = localStorage.getItem("pp_had_account") === "1"; } catch {}
+    if (!hasAppAccess(user)) window.location.replace(!user && hadAccount ? "/onboarding?step=signin" : "/onboarding");
     else if (APP_WEB_ONLY_PATHS.includes(pathname)) window.location.replace("/jobs");
   }, [isLoaded, user, pathname]);
 

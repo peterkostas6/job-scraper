@@ -13,8 +13,10 @@ export const isTestHost = () => {
 const TEST_KEY = "pp_test_premium";
 export const unlockForTesting = () => { try { localStorage.setItem(TEST_KEY, "1"); } catch {} };
 
+// Nobody uses the app without an account: signed out always means locked, test unlock included.
 export function hasAppAccess(user) {
-  if (user?.publicMetadata?.subscribed === true) return true;
+  if (!user) return false;
+  if (user.publicMetadata?.subscribed === true) return true;
   if (!isTestHost()) return false;
   try { return localStorage.getItem(TEST_KEY) === "1"; } catch { return false; }
 }

@@ -21,7 +21,8 @@ import Pete from "./Pete";
 import { TOUR_KEY, TOUR_SEEN_KEY } from "@/app/AppTour";
 
 const STORAGE_KEY = "pp-onboarding-v1";
-const STEPS = ["welcome", "why", "firms", "level", "location", "match", "paywall", "account", "notify"];
+// "signin" is where the app lands after signing out: the welcome look, with Sign in first.
+const STEPS = ["signin", "welcome", "why", "firms", "level", "location", "match", "paywall", "account", "notify"];
 const PROGRESS = { firms: 25, level: 50, location: 75, match: 100 };
 // Every setup screen (and the paywall) has a back arrow so answers can be changed.
 const BACK = { why: "welcome", firms: "why", level: "firms", location: "level", match: "location", paywall: "match" };
@@ -93,6 +94,8 @@ export default function OnboardingFlow() {
   useEffect(() => {
     if (!restored || !isLoaded || !isSignedIn) return;
     if (step === "welcome" || step === "paywall") { if (paid) finish(); return; }
+    // Signed back in: a paying account goes to its jobs; one that isn't paying sees the paywall.
+    if (step === "signin") { if (paid) finish(); else go("paywall"); return; }
     if (step === "account") saveAndNext();
   }, [restored, isLoaded, isSignedIn, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -103,7 +106,7 @@ export default function OnboardingFlow() {
 
   function signIn() {
     capture("app_onboarding_signin_opened", { from: step });
-    const back = `/onboarding?step=${step === "welcome" ? "welcome" : "paywall"}`;
+    const back = `/onboarding?step=${step === "welcome" || step === "signin" ? step : "paywall"}`;
     clerk.openSignIn({ forceRedirectUrl: back, signUpForceRedirectUrl: back });
   }
 
@@ -196,7 +199,7 @@ export default function OnboardingFlow() {
 
   // Wait for the sign-in to load before showing anything: a returning member goes straight to
   // their jobs instead of seeing "Hi!" flash first.
-  if (!restored || !isLoaded || (isSignedIn && paid && (step === "welcome" || step === "paywall"))) {
+  if (!restored || !isLoaded || (isSignedIn && paid && (step === "welcome" || step === "paywall" || step === "signin"))) {
     return <div className="ob ob-navy ob-loading" role="status" aria-label="Loading"><span className="pete-hop" aria-hidden="true" /></div>;
   }
 
@@ -213,6 +216,20 @@ export default function OnboardingFlow() {
   );
   const ask = (text) => (
     <div className="ob-ask"><Pete size={60} /><p className="ob-bubble">{text}</p></div>
+  );
+
+  if (step === "signin") return (
+    <main key={step} className="ob ob-navy">
+      <div className="ob-brand"><img src="/logo-mark.svg" alt="" width="22" height="22" /> Pete&rsquo;s Postings</div>
+      <div className="ob-hero">
+        <p className="ob-say">Welcome back! Sign in to see your roles.</p>
+        <Pete size={170} wave />
+      </div>
+      <div className="ob-actions">
+        <button className="ob-btn" onClick={signIn}>Sign in</button>
+        <button className="ob-btn ob-btn-ghost" onClick={() => { capture("app_signin_new_here"); go("welcome"); }}>I&rsquo;m new here</button>
+      </div>
+    </main>
   );
 
   if (step === "welcome") return (

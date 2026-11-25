@@ -2099,10 +2099,12 @@ export default function Home() {
         <span className="job-index">{String(index + 1).padStart(2, "0")}</span>
         <BankLogo bankKey={job.bankKey} bank={job.bank} size={28} className="job-logo" />
         <span className="job-title">{job.title}{rowTags(job)}</span>
-        <span className="job-meta-mobile">{job.bank}{job.location ? ` \u00b7 ${job.location}` : ""}</span>
+        <span className="job-meta-mobile">{inApp
+          ? [job.bank, ((job.cities || [])[0] || cleanLocation(job.location)).split(",")[0], LEVEL_LABEL[jobLevel(job.title)]].filter(Boolean).join(" \u00b7 ")
+          : `${job.bank}${job.location ? ` \u00b7 ${job.location}` : ""}`}</span>
         <span className="job-location">{job.location || "—"}</span>
         {recentMode || fresh
-          ? <span className="job-posted job-posted-new tnum">{feedAge(job)}</span>
+          ? <span className="job-posted job-posted-new tnum">{inApp ? feedAge(job).replace(/ ago$/, "") : feedAge(job)}</span>
           : <span className="job-posted tnum">{formatPostedAt(job)}</span>}
         <div className="job-badges">
           <span className={`job-badge ${jobLevel(job.title) === "intern" ? "badge-intern" : "badge-analyst"}`}>
@@ -2313,7 +2315,7 @@ export default function Home() {
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           {/* Phones with the tab bar: the page's name, centered (logo mark on the left). */}
-          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? (inApp ? "My Preferences" : "Alerts") : viewNewPostings ? "Recent" : viewRequest ? "Request" : viewingSaved ? "Saved" : "Jobs"}</span>}
+          {!viewHome && !(inApp && view === "browse" && !alertsPanelOpen) && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? (inApp ? "My Preferences" : "Alerts") : viewNewPostings ? "Recent" : viewRequest ? "Request" : viewingSaved ? "Saved" : "Jobs"}</span>}
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
             <Link
@@ -2685,7 +2687,35 @@ export default function Home() {
             </div>
           </div>
           {/* Phones, /jobs: one filter bar that sums up bank · type · city and opens the filter panel */}
-          {!viewingSaved && (
+          {/* App Jobs header: big title with Filters, the My picks | All roles switch, one-line summary. */}
+          {inApp && !viewingSaved && (() => {
+            const n = (activeBank !== "all") + (jobType !== "all") + Boolean(locationFilter) + Boolean(categoryFilter) + (postedFilter !== "any");
+            const firms = savedNotifPrefs?.banks?.length ? `${savedNotifPrefs.banks.length} ${savedNotifPrefs.banks.length === 1 ? "firm" : "firms"}` : "all firms";
+            const where = (savedNotifPrefs?.location || "").trim() || "anywhere";
+            return (
+              <div className="aj">
+                <div className="aj-top">
+                  <h1 className="aj-title">Jobs</h1>
+                  <button className={`aj-filters${n ? " is-on" : ""}`} onClick={() => setFilterSheetOpen(true)} aria-haspopup="dialog">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                    Filters{n > 0 && <b> · {n}</b>}
+                  </button>
+                </div>
+                {hasAlertPrefs && !isGatedBank && (
+                  <div className="aj-seg" role="group" aria-label="Which roles to show">
+                    <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My picks</button>
+                    <button aria-pressed={browseMode === "all"} onClick={() => setBrowseMode("all")}>All roles</button>
+                  </div>
+                )}
+                <p className="aj-sum">
+                  {loading ? "Loading roles…"
+                    : usePrefs ? `${displayJobs.length.toLocaleString()} ${displayJobs.length === 1 ? "role matches" : "roles match"} your picks · ${firms}, ${where}`
+                    : `${displayJobs.length.toLocaleString()} open ${displayJobs.length === 1 ? "role" : "roles"}`}
+                </p>
+              </div>
+            );
+          })()}
+          {!viewingSaved && !inApp && (
             <div className="mfb">
               {/* One Filters button (count of active filters); everything is set in the filter sheet. */}
               <div className="mfb-chips" role="group" aria-label="Filters">
@@ -3004,7 +3034,7 @@ export default function Home() {
                         const first = offset; offset += list.length;
                         if (!list.length && key !== "today") return null;
                         const open = Boolean(opened[key]);
-                        const limit = sectionShown[key] || 50;
+                        const limit = sectionShown[key] || 8;
                         return (
                           <section key={key} className={`jsec${open ? " is-open" : ""}`} aria-label={label}>
                             <button className="jsec-head" aria-expanded={open} onClick={() => { setOpenSections({ ...opened, [key]: !open }); capture("jobs_section_toggled", { section: key, open: !open }); }}>
@@ -3014,7 +3044,9 @@ export default function Home() {
                             </button>
                             {open && !list.length && <p className="jsec-empty">{usePrefs ? "No roles matching your preferences posted today." : "No roles posted today yet."}</p>}
                             {open && list.slice(0, limit).map((job, i) => renderJobRow(job, first + i, key === "today"))}
-                            {open && list.length > limit && <ShowMore onMore={() => setSectionShown((m) => ({ ...m, [key]: limit + 100 }))} left={list.length - limit} />}
+                            {open && list.length > limit && (limit === 8
+                              ? <button className="jsec-all" onClick={() => setSectionShown((m) => ({ ...m, [key]: 100 }))}>{key === "older" ? `Show all ${list.length.toLocaleString()} older roles` : `Show all ${list.length.toLocaleString()} from ${label.toLowerCase()}`}</button>
+                              : <ShowMore onMore={() => setSectionShown((m) => ({ ...m, [key]: limit + 100 }))} left={list.length - limit} />)}
                           </section>
                         );
                       });

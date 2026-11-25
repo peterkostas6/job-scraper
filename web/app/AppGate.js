@@ -134,6 +134,8 @@ export default function AppGate() {
   useEffect(() => {
     if (!isLoaded || !isApp()) return;
     if (APP_OPEN_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
+    // Local design preview only (localhost + a flag set by hand): look at app screens signed out.
+    try { if (window.location.hostname === "localhost" && localStorage.getItem("pp_dev_preview") === "1") return; } catch {}
     // Remember this phone has had an account, so signing out (or a lapsed session) lands on the
     // sign-in screen rather than the new-user welcome.
     if (user) { try { localStorage.setItem("pp_had_account", "1"); } catch {} }

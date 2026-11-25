@@ -7339,3 +7339,6 @@ footer a, .footer a { color: var(--pp-cream); }
 .in-app .modal-close { top: calc(env(safe-area-inset-top, 0px) + 0.75rem); right: 1rem; width: 40px; height: 40px; }
 @keyframes app-page-in { from { transform: translateY(40px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .in-app .modal-card { animation: none; } }
+
+/* App: account lives in the Settings tab, not the header. */
+.in-app .nav-acct { display: none !important; }

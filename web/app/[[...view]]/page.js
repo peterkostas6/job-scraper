@@ -1531,6 +1531,8 @@ export default function Home() {
     if (SAME_PAGE_PATHS.has(target) && SAME_PAGE_PATHS.has(pathname)) window.history.pushState(null, "", target);
     else router.push(target);
   }
+  // The app has no Recent tab: Jobs already lists everything, newest first.
+  useEffect(() => { if (inApp && viewNewPostings) goView("/jobs"); }, [inApp, viewNewPostings]); // eslint-disable-line react-hooks/exhaustive-deps
   const setViewHome = (v) => queueView("home", v);
   const setViewAbout = (v) => queueView("about", v);
   const setViewNewPostings = (v) => queueView("recent", v);
@@ -1660,7 +1662,8 @@ export default function Home() {
     setShowSavedOnly(false);
 
     // Roles from the last 48 hours are what Pro unlocks (Recent Postings), so Browse leaves them out for everyone else.
-    const isPro = isSignedIn && isSubscribed;
+    // Everyone in the app has paid (hard paywall), so the app never holds the newest roles back.
+    const isPro = (isSignedIn && isSubscribed) || inApp;
     const bankJobs = (activeBank === "all"
       ? allJobs.filter((job) => FREE_BANKS.has(job.bankKey) || isPro)
       : allJobs.filter((job) => job.bankKey === activeBank)
@@ -1669,7 +1672,7 @@ export default function Home() {
 
     const cats = [...new Set(bankJobs.map((job) => job.category).filter(Boolean))].sort();
     setAvailableCategories(cats);
-  }, [activeBank, allJobs, isSignedIn, isSubscribed]);
+  }, [activeBank, allJobs, isSignedIn, isSubscribed, inApp]);
 
   function toggleBookmark(e, job) {
     e.preventDefault();
@@ -1872,14 +1875,14 @@ export default function Home() {
   const withSelected = (opts, sel) => (sel && !opts.some(([v]) => v === sel) ? [[sel, 0], ...opts] : opts);
 
   const displayJobs = showSavedOnly ? filteredJobs.filter((job) => bookmarks.has(job.link))
-    : recentMode ? [...filteredJobs].sort((a, b) => postedAt(b) - postedAt(a)) : filteredJobs;
+    : recentMode || inApp ? [...filteredJobs].sort((a, b) => postedAt(b) - postedAt(a)) : filteredJobs;
   // A new filter starts the list over at the first 100 rows.
   useEffect(() => { setShown(100); }, [activeBank, jobType, locationFilter, categoryFilter, searchQuery, showSavedOnly, browseMode, recentMode]);
   // Counts for the My preferences | All roles switch, after search and the dropdown filters.
   const modeBase = hasAlertPrefs ? jobs.filter((job) => (searchQuery === "" || matchesQuery(job, searchQuery)) && okType(job) && okLocation(job) && okCategory(job) && okRecent(job)) : [];
   const mineCount = hasAlertPrefs ? modeBase.filter(matchesMine).length : 0;
   // The roles Browse leaves out without Pro, for the locked rows at the top of the list.
-  const lockedRecent = (isSignedIn && isSubscribed) || showSavedOnly ? [] : allJobs
+  const lockedRecent = (isSignedIn && isSubscribed) || inApp || showSavedOnly ? [] : allJobs
     .filter((j) => isLast48h(j) && (activeBank === "all" || j.bankKey === activeBank))
     .sort((a, b) => postedAt(b) - postedAt(a));
   const savedCount = [...bookmarks].filter((link) => filteredJobs.some((job) => job.link === link)).length;
@@ -2234,15 +2237,15 @@ export default function Home() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></svg>
           <span>Jobs</span>
         </Link>
-        <Link href="/recent" onClick={(e) => { e.preventDefault(); goView("/recent"); }} className={`tab${viewNewPostings ? " is-on" : ""}`} aria-current={viewNewPostings ? "page" : undefined}>
+        {!inApp && <Link href="/recent" onClick={(e) => { e.preventDefault(); goView("/recent"); }} className={`tab${viewNewPostings ? " is-on" : ""}`} aria-current={viewNewPostings ? "page" : undefined}>
           {isSignedIn && isSubscribed ? (
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           ) : (
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
           )}
           <span>Recent</span>
-        </Link>
-        <button className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label="Alerts">
+        </Link>}
+        <button data-sheet className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label="Alerts">
           <span className="tab-main-dot">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           </span>
@@ -2259,12 +2262,17 @@ export default function Home() {
           <span>Saved</span>
         </button>
         <button
+          data-sheet
           className={`tab${showCompanyRequest ? " is-on" : ""}`}
           onClick={() => { capture("tabbar_request"); if (!isSignedIn) { askToSignUp("request"); return; } setCompanyRequestStatus(null); setShowCompanyRequest(true); }}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/><path d="M12 8.5v4M10 10.5h4"/></svg>
           <span>Request</span>
         </button>
+        {inApp && <button data-sheet className={`tab${accountOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_settings"); setAccountOpen(true); }}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>}
       </div>}
 
       {accountOpen && (

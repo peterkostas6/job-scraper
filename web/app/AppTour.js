@@ -1,7 +1,7 @@
 "use client";
 
 // First-time tour of the iPhone app, shown once on /jobs right after onboarding: Pete points out
-// the jobs list, Recent, Alerts, Saved and the account button. Onboarding sets the flag; finishing
+// the jobs list, Alerts, Saved and Settings. Onboarding sets the flag; finishing
 // clears it. It can't be skipped: while it's up, Next is the only thing that responds (the page
 // is covered and the native tab bar's taps are switched off).
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -14,11 +14,10 @@ export const TOUR_KEY = "pp_app_tour";
 export const TOUR_SEEN_KEY = "pp_app_tour_seen"; // set once finished or skipped: never again
 
 const STEPS = [
-  { sel: ".jobs-list-browse", title: "These are your jobs", body: `Every open role from ${FIRM_LABEL} firms, already filtered to what you picked. Tap Filters to change it.`, radius: 22, maxH: 0.42 },
-  { sel: '.tabbar a[href="/recent"]', title: "Fresh from the last 48 hours", body: "Recent shows every role posted in the last two days, newest first. Apply before everyone else does.", radius: 16 },
+  { sel: ".jobs-list-browse", title: "These are your jobs", body: `Every open role from ${FIRM_LABEL} firms, newest first and already filtered to what you picked. Tap Filters to change it.`, radius: 22, maxH: 0.42 },
   { sel: ".tabbar .tab-main", title: "Your notifications", body: "Tap here to change which firms, roles and cities I notify you about, or to pause notifications.", round: true },
-  { sel: ".tabbar > :nth-child(4)", title: "No more spreadsheets", body: "Tap the bookmark on any role to save it. Mark it Applied here and you’ll always know where you stand.", radius: 16 },
-  { sel: ".nav-acct", title: "Your account", body: "Add a profile photo, manage your subscription and change your settings up here. That’s the tour. Good luck out there!", round: true, happy: true },
+  { sel: ".tabbar > :nth-child(3)", title: "No more spreadsheets", body: "Tap the bookmark on any role to save it. Mark it Applied here and you’ll always know where you stand.", radius: 16 },
+  { sel: ".tabbar > :nth-child(5)", title: "Your account", body: "Add a profile photo, manage your subscription and change your settings here. That’s the tour. Good luck out there!", radius: 16, happy: true },
 ];
 const PAD = 6;
 

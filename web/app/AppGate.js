@@ -68,9 +68,9 @@ function NativeTabBridge() {
       off = nativeTabs.onTap((i) => {
         const tab = document.querySelectorAll(".tabbar > *")[i];
         if (!tab) return;
-        // Jobs, Recent, Saved switch the page: fade it out, switch, fade the new one in.
-        // Alerts (2) and Request (4) open sheets, which slide up on their own.
-        if (i === 2 || i === 4 || tab.classList.contains("is-on")) { tab.click(); return; }
+        // Jobs and Saved switch the page: fade it out, switch, fade the new one in.
+        // Alerts, Request and Settings open sheets (data-sheet), which slide up on their own.
+        if (tab.hasAttribute("data-sheet") || tab.classList.contains("is-on")) { tab.click(); return; }
         html.classList.remove("tab-in");
         html.classList.add("tab-out");
         setTimeout(() => {

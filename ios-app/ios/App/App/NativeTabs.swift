@@ -35,10 +35,10 @@ class MainViewController: CAPBridgeViewController, UITabBarDelegate {
 
         let tabs: [(String, String, String)] = [
             ("Jobs", "briefcase", "briefcase.fill"),
-            ("Recent", "bolt", "bolt.fill"),
             ("Alerts", "bell", "bell.fill"),
             ("Saved", "bookmark", "bookmark.fill"),
             ("Request", "building.2", "building.2.fill"),
+            ("Settings", "gearshape", "gearshape.fill"),
         ]
         tabBar.items = tabs.enumerated().map { i, t in
             UITabBarItem(title: t.0, image: UIImage(systemName: t.1), selectedImage: UIImage(systemName: t.2)).withTag(i)

@@ -7376,3 +7376,6 @@ footer a, .footer a { color: var(--pp-cream); }
 .mfs-saveprefs-text strong { display: block; font-size: 0.98rem; }
 .mfs-saveprefs-text small { display: block; margin-top: 2px; font-size: 0.8rem; line-height: 1.35; color: rgba(20, 33, 61, 0.72); }
 .mfs-go:disabled { opacity: 0.7; }
+
+/* Links on the navy onboarding screens (e.g. "I’m new here" on the sign-in screen). */
+.ob-navy .ob-link { color: var(--pp-cream, #F4EDE0); }

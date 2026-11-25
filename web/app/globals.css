@@ -7368,3 +7368,4 @@ footer a, .footer a { color: var(--pp-cream); }
 .acct-push-text small { display: block; margin-top: 2px; font-size: 0.82rem; color: rgba(20, 33, 61, 0.72); }
 .acct-push-pill { flex-shrink: 0; padding: 0.4rem 0.8rem; border-radius: 999px; background: var(--pp-coral, #FF6B5B); color: var(--pp-navy, #14213D); font-size: 0.85rem; font-weight: 800; }
 .acct-push.is-on .acct-push-pill { background: rgba(20, 33, 61, 0.08); color: #1f6b3a; }
+.jsec-empty { margin: 0; padding: 0.9rem 1rem; border-bottom: 1px solid rgba(20, 33, 61, 0.08); font-size: 0.92rem; color: rgba(20, 33, 61, 0.72); }

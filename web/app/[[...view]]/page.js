@@ -2905,11 +2905,12 @@ export default function Home() {
                       displayJobs.forEach((job) => { (bySection[timeSection(job, todayStart)] ||= []).push(job); });
                       let offset = 0;
                       const firstKey = TIME_SECTIONS.find(([k]) => bySection[k]?.length)?.[0];
-                      const opened = openSections ?? { [firstKey]: true };
+                      // Today always shows (with a note when it's empty) and starts open, plus the newest section with roles.
+                      const opened = openSections ?? { today: true, [firstKey]: true };
                       return TIME_SECTIONS.map(([key, label]) => {
                         const list = bySection[key] || [];
                         const first = offset; offset += list.length;
-                        if (!list.length) return null;
+                        if (!list.length && key !== "today") return null;
                         const open = Boolean(opened[key]);
                         const limit = sectionShown[key] || 50;
                         return (
@@ -2919,6 +2920,7 @@ export default function Home() {
                               <span className="jsec-label">{label}</span>
                               <span className={`jsec-n tnum${key === "today" ? " is-new" : ""}`}>{list.length.toLocaleString()}{key === "today" ? " new" : ""}</span>
                             </button>
+                            {open && !list.length && <p className="jsec-empty">{usePrefs ? "No roles matching your preferences posted today." : "No roles posted today yet."}</p>}
                             {open && list.slice(0, limit).map((job, i) => renderJobRow(job, first + i, key === "today"))}
                             {open && list.length > limit && <ShowMore onMore={() => setSectionShown((m) => ({ ...m, [key]: limit + 100 }))} left={list.length - limit} />}
                           </section>

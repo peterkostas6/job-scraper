@@ -358,6 +358,13 @@ export default function OnboardingFlow() {
           <button type="button" className="ob-link ob-link-quiet" disabled={busy} onClick={restore}>Restore purchases</button>
           <a href="/terms">Terms</a><a href="/privacy">Privacy</a>
         </p>
+        {/* dev.petespostings.com / localhost only (never the live site the App Store app uses):
+            skip Apple's purchase sheet, which needs a sandbox Apple account on a test install. */}
+        {isTestHost() && (
+          <button type="button" className="ob-link ob-link-quiet" onClick={() => { unlockForTesting(); if (isSignedIn) finish(); else go("account"); }}>
+            Skip payment (test build only)
+          </button>
+        )}
       </div>
     </main>
   );

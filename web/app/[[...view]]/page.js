@@ -2299,7 +2299,16 @@ export default function Home() {
     <>
       <nav>
         <div className="nav-inner">
-          <Link href="/" className="logo logo-link" aria-label="Pete's Postings home">
+          {/* App: the logo goes straight to Jobs on this page (the website's home isn't in the app,
+              and going through it reloaded the page). Already on Jobs: back to the top. */}
+          <Link href={inApp ? "/jobs" : "/"} className="logo logo-link" aria-label={inApp ? "Jobs" : "Pete's Postings home"}
+            onClick={(e) => {
+              if (!inApp) return;
+              e.preventDefault();
+              setAlertsPanelOpen(false);
+              if (pathname === "/jobs") window.scrollTo({ top: 0, behavior: "smooth" });
+              else { goView("/jobs"); window.scrollTo(0, 0); }
+            }}>
             <img src="/logo-mark.svg" alt="" className="logo-icon" width="24" height="24" />
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>

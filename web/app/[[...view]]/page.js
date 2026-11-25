@@ -2918,7 +2918,7 @@ export default function Home() {
                             <button className="jsec-head" aria-expanded={open} onClick={() => { setOpenSections({ ...opened, [key]: !open }); capture("jobs_section_toggled", { section: key, open: !open }); }}>
                               <svg className="jsec-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                               <span className="jsec-label">{label}</span>
-                              <span className={`jsec-n tnum${key === "today" ? " is-new" : ""}`}>{list.length.toLocaleString()}{key === "today" ? " new" : ""}</span>
+                              <span className={`jsec-n tnum${key === "today" && list.length ? " is-new" : ""}`}>{list.length.toLocaleString()}{key === "today" ? " new" : ""}</span>
                             </button>
                             {open && !list.length && <p className="jsec-empty">{usePrefs ? "No roles matching your preferences posted today." : "No roles posted today yet."}</p>}
                             {open && list.slice(0, limit).map((job, i) => renderJobRow(job, first + i, key === "today"))}

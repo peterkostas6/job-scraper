@@ -7355,3 +7355,16 @@ footer a, .footer a { color: var(--pp-cream); }
 .jsec-n { font-size: 0.8rem; font-weight: 700; color: #4a5468; }
 .jsec-n.is-new { color: var(--pp-coral-ink, #C8402F); }
 .jsec:first-of-type .jsec-head { border-top-left-radius: inherit; border-top-right-radius: inherit; }
+
+/* App Settings sheet: the Notifications shortcut (turns on iOS notifications, or opens iPhone Settings). */
+.acct-push {
+  width: 100%; display: flex; align-items: center; gap: 0.75rem; margin: 0.9rem 0 0.4rem; padding: 0.85rem 0.95rem;
+  border: 1.5px solid rgba(20, 33, 61, 0.14); border-radius: 16px; background: #fff; color: var(--pp-navy, #14213D);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.acct-push:disabled { opacity: 0.7; }
+.acct-push-text { flex: 1; min-width: 0; }
+.acct-push-text strong { display: block; font-size: 1.02rem; }
+.acct-push-text small { display: block; margin-top: 2px; font-size: 0.82rem; color: rgba(20, 33, 61, 0.72); }
+.acct-push-pill { flex-shrink: 0; padding: 0.4rem 0.8rem; border-radius: 999px; background: var(--pp-coral, #FF6B5B); color: var(--pp-navy, #14213D); font-size: 0.85rem; font-weight: 800; }
+.acct-push.is-on .acct-push-pill { background: rgba(20, 33, 61, 0.08); color: #1f6b3a; }

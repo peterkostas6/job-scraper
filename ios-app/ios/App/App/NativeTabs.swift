@@ -35,7 +35,7 @@ class MainViewController: CAPBridgeViewController, UITabBarDelegate {
 
         let tabs: [(String, String, String)] = [
             ("Jobs", "briefcase", "briefcase.fill"),
-            ("Preferences", "slider.horizontal.3", "slider.horizontal.3"),
+            ("My Preferences", "slider.horizontal.3", "slider.horizontal.3"),
             ("Saved", "bookmark", "bookmark.fill"),
             ("Request", "building.2", "building.2.fill"),
             ("Settings", "gearshape", "gearshape.fill"),
@@ -74,6 +74,7 @@ public class NativeTabsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "select", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "haptic", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setEnabled", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openSettings", returnType: CAPPluginReturnPromise),
     ]
     static weak var current: NativeTabsPlugin?
 
@@ -122,6 +123,17 @@ public class NativeTabsPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async {
             self.bar?.isUserInteractionEnabled = enabled
             call.resolve()
+        }
+    }
+
+    // Opens this app's page in iPhone Settings (its Notifications page where iOS allows it), the
+    // only way back in once someone has said no to notifications.
+    @objc func openSettings(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            var link = UIApplication.openSettingsURLString
+            if #available(iOS 16.0, *) { link = UIApplication.openNotificationSettingsURLString }
+            guard let url = URL(string: link) else { return call.resolve(["opened": false]) }
+            UIApplication.shared.open(url) { ok in call.resolve(["opened": ok]) }
         }
     }
 

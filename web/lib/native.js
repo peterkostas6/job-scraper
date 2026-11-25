@@ -79,6 +79,20 @@ export function enablePush() {
   });
 }
 
+// Whether iOS lets the app send notifications: "granted", "denied", "prompt" (never asked), or null
+// outside the app.
+export async function pushPermission() {
+  const Push = plugin("PushNotifications");
+  if (!Push) return null;
+  try { return (await Push.checkPermissions()).receive || null; } catch { return null; }
+}
+
+// Opens the app's notification settings in iPhone Settings (after someone has said no once, iOS
+// never asks again, so this is the only way to turn them on).
+export function openAppSettings() {
+  return nativeTabs.call("openSettings", {}).catch(() => null);
+}
+
 // Tapping a notification opens the role it's about (the push carries a /j/ link).
 export function onPushTap(open) {
   const Push = plugin("PushNotifications");

@@ -19,6 +19,7 @@ import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { trialFor } from "@/lib/alert-trial-days";
 import { openBillingPortal, canManageSubscription, deleteAccount } from "@/lib/billing";
 import { isApp } from "@/lib/app-access";
+import { enablePush, pushPermission, openAppSettings } from "@/lib/native";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
 import { FIRM_LABEL } from "@/lib/firms";
@@ -1382,6 +1383,9 @@ export default function Home() {
   const [allJobs, setAllJobs] = useState([]);
   // Pull-to-refresh (phones) bumps this; the job loaders below re-run when it changes.
   const [accountOpen, setAccountOpen] = useState(false);
+  // App Settings sheet: iOS notification permission ("granted" | "denied" | "prompt"), and a busy flag.
+  const [pushPerm, setPushPerm] = useState(null);
+  const [pushBusy, setPushBusy] = useState(false);
   useNavMenuLock(accountOpen, () => setAccountOpen(false));
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2010,6 +2014,31 @@ export default function Home() {
       </span>
     );
   };
+  // Settings sheet (app): keep the notifications row in step with iPhone Settings, including after
+  // someone comes back from turning them on there.
+  useEffect(() => {
+    if (!inApp || !accountOpen) return;
+    const check = () => pushPermission().then(setPushPerm);
+    check();
+    document.addEventListener("visibilitychange", check);
+    return () => document.removeEventListener("visibilitychange", check);
+  }, [inApp, accountOpen]);
+  const pushOn = pushPerm === "granted" && Boolean(savedNotifPrefs?.pushEnabled);
+  async function turnOnPush() {
+    capture("settings_push_tapped", { perm: pushPerm, on: pushOn });
+    // Already on, or iOS said no before (it won't ask twice): iPhone Settings is the place.
+    if (pushOn || pushPerm === "denied") { openAppSettings(); return; }
+    setPushBusy(true);
+    const ok = await enablePush();
+    setPushPerm(await pushPermission());
+    if (ok) {
+      const next = { ...(savedNotifPrefs || notifPrefs), pushEnabled: true };
+      const res = await fetch("/api/notifications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) }).catch(() => null);
+      if (res?.ok) { setNotifPrefs((p) => ({ ...p, pushEnabled: true })); setSavedNotifPrefs(next); setHasSavedPrefs(true); }
+    }
+    setPushBusy(false);
+  }
+
   // One row of the Jobs / Saved list. `fresh` (Today in the app) shows how long ago it posted.
   const renderJobRow = (job, index, fresh) => (
       <a
@@ -2233,7 +2262,7 @@ export default function Home() {
             <span className="logo-text">Pete&rsquo;s Postings</span>
           </Link>
           {/* Phones with the tab bar: the page's name, centered (logo mark on the left). */}
-          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? (inApp ? "Preferences" : "Alerts") : viewNewPostings ? "Recent" : viewingSaved ? "Saved" : "Jobs"}</span>}
+          {!viewHome && <span className="nav-title" aria-hidden="true">{alertsPanelOpen ? (inApp ? "My Preferences" : "Alerts") : viewNewPostings ? "Recent" : viewingSaved ? "Saved" : "Jobs"}</span>}
           <div className={`nav-center${navMenuOpen ? " nav-center-open" : ""}`} onClick={() => setNavMenuOpen(false)}>
             <Link href="/jobs" className={`nav-link${view === "browse" ? " nav-link-active" : ""}`}>Browse Jobs</Link>
             <Link
@@ -2333,11 +2362,11 @@ export default function Home() {
           )}
           <span>Recent</span>
         </Link>}
-        <button data-sheet className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label={inApp ? "Preferences" : "Alerts"}>
+        <button data-sheet className={`tab tab-main${alertsPanelOpen ? " is-on" : ""}`} onClick={() => { capture("tabbar_alerts"); openAlerts(); }} aria-label={inApp ? "My Preferences" : "Alerts"}>
           <span className="tab-main-dot">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           </span>
-          <span>{inApp ? "Preferences" : "Alerts"}</span>
+          <span>{inApp ? "My Preferences" : "Alerts"}</span>
         </button>
         <button
           className={`tab${viewingSaved && !viewNotifications ? " is-on" : ""}`}
@@ -2366,7 +2395,7 @@ export default function Home() {
       {accountOpen && (
         <div className="acct-wrap" role="dialog" aria-modal="true" aria-label="Account">
           <button className="acct-shade" aria-label="Close" onClick={() => setAccountOpen(false)} />
-          <div className="acct" onClick={(e) => { if (e.target.closest("a, button")) setAccountOpen(false); }}>
+          <div className="acct" onClick={(e) => { if (e.target.closest("a, button") && !e.target.closest("[data-keep-open]")) setAccountOpen(false); }}>
             <span className="acct-grip" aria-hidden="true" />
             {isSignedIn ? (
               <div className="acct-head">
@@ -2381,6 +2410,16 @@ export default function Home() {
                 <button className="acct-primary" onClick={() => clerk.openSignIn({})}>Sign in</button>
                 <button className="acct-secondary" onClick={() => clerk.openSignUp({ forceRedirectUrl: "/start?setup=1" })}>Create account</button>
               </div>
+            )}
+            {inApp && isSignedIn && pushPerm !== null && (
+              <button className={`acct-push${pushOn ? " is-on" : ""}`} data-keep-open onClick={turnOnPush} disabled={pushBusy}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                <span className="acct-push-text">
+                  <strong>Notifications</strong>
+                  <small>{pushBusy ? "Asking your iPhone…" : pushOn ? "On. Manage in iPhone Settings" : pushPerm === "denied" ? "Off. Tap to turn on in iPhone Settings" : "Off. Tap to turn on"}</small>
+                </span>
+                <span className="acct-push-pill">{pushOn ? "On" : "Turn on"}</span>
+              </button>
             )}
             <div className="acct-list">
               {!isSubscribed && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}

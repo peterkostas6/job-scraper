@@ -7379,3 +7379,6 @@ footer a, .footer a { color: var(--pp-cream); }
 
 /* Links on the navy onboarding screens (e.g. "I’m new here" on the sign-in screen). */
 .ob-navy .ob-link { color: var(--pp-cream, #F4EDE0); }
+
+/* App: the "saved" message sits above the native tab bar, not under it. */
+.in-app .pp-toast { bottom: calc(var(--tabbar-h, 83px) + 14px); }

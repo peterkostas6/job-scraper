@@ -41,7 +41,9 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    await saveAlertPrefs({ userId, body, origin: new URL(request.url).origin });
+    // From the iPhone app (its user agent): no confirmation email, the app shows the change itself.
+    const quiet = /PetesPostingsApp/.test(request.headers.get("user-agent") || "");
+    await saveAlertPrefs({ userId, body, origin: new URL(request.url).origin, quiet });
 
     return Response.json({ success: true });
   } catch (err) {

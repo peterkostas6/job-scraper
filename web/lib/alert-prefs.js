@@ -17,7 +17,8 @@ export function welcomeText(firstName) {
   return `Hey${firstName ? ` ${firstName}` : ""}! This is Pete from Pete's Postings. You'll get a text within minutes when a role matching your alerts is posted. Reply STOP to opt out. petespostings.com`;
 }
 
-export async function saveAlertPrefs({ userId, body, origin }) {
+// quiet: saved from the iPhone app, where the change is visible right there, so no confirmation email.
+export async function saveAlertPrefs({ userId, body, origin, quiet = false }) {
   const { enabled, banks, categories, jobType } = body;
   const levels = levelsFromPrefs(body);
 
@@ -85,7 +86,7 @@ export async function saveAlertPrefs({ userId, body, origin }) {
 
   // Send preferences confirmation email. Preferences saved with every alert off (the setup's
   // "Don't alert me") send nothing the first time; the held welcome email still goes out.
-  if (email && !(isFirstSetup && !enabled && !smsEnabled)) {
+  if (email && !quiet && !(isFirstSetup && !enabled && !smsEnabled)) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const prefs = {

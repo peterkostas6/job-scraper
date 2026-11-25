@@ -11,8 +11,6 @@ export const FIRM_TYPES = [
   { key: "asset", label: "Asset managers" },
   { key: "pe", label: "Private equity & credit" },
   { key: "exchange", label: "Exchanges & market data" },
-  { key: "insurance", label: "Insurance" },
-  { key: "fintech", label: "Fintech & payments" },
 ];
 
 export const ALL_FIRMS = {

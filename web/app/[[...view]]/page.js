@@ -1563,7 +1563,11 @@ export default function Home() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   // Phones: the /jobs filter panel (bank, type, city) that slides up from the bottom.
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  useEffect(() => { if (filterSheetOpen) setSaveFiltersToPrefs(false); }, [filterSheetOpen]);
   const [postedFilter, setPostedFilter] = useState("any");
+  // App filter sheet: "Save to my preferences" (off each time the sheet opens) and its save status.
+  const [saveFiltersToPrefs, setSaveFiltersToPrefs] = useState(false);
+  const [filtersSaving, setFiltersSaving] = useState(false);
   // App Jobs list: which time sections are open, and how many rows each shows.
   // null = the default: only the newest section that has roles is open (Today, else the next one).
   const [openSections, setOpenSections] = useState(null);
@@ -2037,6 +2041,39 @@ export default function Home() {
       if (res?.ok) { setNotifPrefs((p) => ({ ...p, pushEnabled: true })); setSavedNotifPrefs(next); setHasSavedPrefs(true); }
     }
     setPushBusy(false);
+  }
+
+  // Filter sheet (app): the firm, area, level and city picked become their saved preferences, which
+  // drive their notifications and the My preferences list. "All" saves as no limit. Posted isn't a
+  // preference, so it stays a filter.
+  const filtersAsPrefs = () => ({
+    banks: activeBank === "all" ? [] : [activeBank],
+    categories: categoryFilter ? [categoryFilter] : [],
+    levels: jobType === "all" ? LEVELS.map((l) => l.key) : [jobType],
+    location: locationFilter ? locationFilter.split(",")[0].trim() : "",
+  });
+  const filtersSummary = () => [
+    activeBank === "all" ? "All firms" : ALL_FIRMS[activeBank]?.shortName || ALL_FIRMS[activeBank]?.name || activeBank,
+    categoryFilter || "All areas",
+    jobType === "all" ? "All levels" : LEVEL_LABEL[jobType],
+    locationFilter ? locationFilter.split(",")[0].trim() : "Anywhere",
+  ].join(" \u00b7 ");
+  async function applyFilterSheet() {
+    if (!(inApp && isSignedIn && saveFiltersToPrefs)) { setFilterSheetOpen(false); return; }
+    setFiltersSaving(true);
+    const next = { ...(savedNotifPrefs || notifPrefs), ...filtersAsPrefs() };
+    const res = await fetch("/api/notifications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) }).catch(() => null);
+    setFiltersSaving(false);
+    if (!res?.ok) { alert("Couldn’t save your preferences. Check your connection and try again."); return; }
+    capture("filters_saved_as_prefs", next);
+    setSavedNotifPrefs(next);
+    setNotifPrefs((p) => ({ ...p, ...next }));
+    setHasSavedPrefs(true);
+    // The list now comes from the saved preferences, so the one-off filters are cleared.
+    setActiveBank("all"); setJobType("all"); setLocationFilter(""); setCategoryFilter("");
+    setBrowseMode("mine");
+    setSavedToast(true);
+    setFilterSheetOpen(false);
   }
 
   // One row of the Jobs / Saved list. `fresh` (Today in the app) shows how long ago it posted.
@@ -2689,10 +2726,19 @@ export default function Home() {
                   </div>
                 )}
                 {inApp && firmSection}
+                {inApp && isSignedIn && (
+                  <label className="mfs-saveprefs">
+                    <span className="mfs-saveprefs-text">
+                      <strong>Save to my preferences</strong>
+                      <small>{saveFiltersToPrefs ? `Your notifications and My preferences will use: ${filtersSummary()}` : "Your notifications and the My preferences list use these too"}</small>
+                    </span>
+                    <button type="button" className={`alx-switch${saveFiltersToPrefs ? " is-on" : ""}`} role="switch" aria-checked={saveFiltersToPrefs} aria-label="Save to my preferences" onClick={() => setSaveFiltersToPrefs((v) => !v)}><span /></button>
+                  </label>
+                )}
                 <div className="mfs-foot">
                   <button className="mfs-clear" onClick={() => { setActiveBank("all"); setJobType("all"); setLocationFilter(""); setCategoryFilter(""); setSearchQuery(""); setPostedFilter("any"); }}>Clear</button>
-                  <button className="mfs-go" onClick={() => setFilterSheetOpen(false)}>
-                    {isGatedBank ? "Show roles" : `Show ${displayJobs.length} ${displayJobs.length === 1 ? "role" : "roles"}`}
+                  <button className="mfs-go" onClick={applyFilterSheet} disabled={filtersSaving}>
+                    {filtersSaving ? "Saving…" : inApp && isSignedIn && saveFiltersToPrefs ? "Save and show roles" : isGatedBank ? "Show roles" : `Show ${displayJobs.length} ${displayJobs.length === 1 ? "role" : "roles"}`}
                   </button>
                 </div>
               </div>
@@ -3039,7 +3085,7 @@ export default function Home() {
       {savedToast && (
         <div className="pp-toast" role="status" aria-live="polite">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
-          Your alert settings are saved
+          {inApp ? "Your preferences are saved" : "Your alert settings are saved"}
           <button className="pp-toast-close" onClick={() => setSavedToast(false)} aria-label="Dismiss">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>

@@ -1561,7 +1561,8 @@ export default function Home() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [postedFilter, setPostedFilter] = useState("any");
   // App Jobs list: which time sections are open, and how many rows each shows.
-  const [openSections, setOpenSections] = useState({ today: true, yesterday: true });
+  // null = the default: only the newest section that has roles is open (Today, else the next one).
+  const [openSections, setOpenSections] = useState(null);
   const [sectionShown, setSectionShown] = useState({});
   // Jakob's law: Escape closes the filter panel like every other sheet on the web.
   useEffect(() => {
@@ -2864,15 +2865,17 @@ export default function Home() {
                       const bySection = {};
                       displayJobs.forEach((job) => { (bySection[timeSection(job, todayStart)] ||= []).push(job); });
                       let offset = 0;
+                      const firstKey = TIME_SECTIONS.find(([k]) => bySection[k]?.length)?.[0];
+                      const opened = openSections ?? { [firstKey]: true };
                       return TIME_SECTIONS.map(([key, label]) => {
                         const list = bySection[key] || [];
                         const first = offset; offset += list.length;
                         if (!list.length) return null;
-                        const open = Boolean(openSections[key]);
+                        const open = Boolean(opened[key]);
                         const limit = sectionShown[key] || 50;
                         return (
                           <section key={key} className={`jsec${open ? " is-open" : ""}`} aria-label={label}>
-                            <button className="jsec-head" aria-expanded={open} onClick={() => { setOpenSections((o) => ({ ...o, [key]: !o[key] })); capture("jobs_section_toggled", { section: key, open: !open }); }}>
+                            <button className="jsec-head" aria-expanded={open} onClick={() => { setOpenSections({ ...opened, [key]: !open }); capture("jobs_section_toggled", { section: key, open: !open }); }}>
                               <svg className="jsec-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                               <span className="jsec-label">{label}</span>
                               <span className={`jsec-n tnum${key === "today" ? " is-new" : ""}`}>{list.length.toLocaleString()}{key === "today" ? " new" : ""}</span>

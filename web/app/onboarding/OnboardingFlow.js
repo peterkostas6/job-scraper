@@ -399,13 +399,13 @@ export default function OnboardingFlow() {
           <h1 className="ob-h1">Early applicants land <span className="ob-hl">2.3x</span> more interviews</h1>
           <div className="ob-bars" role="img" aria-label="Applying in the first few hours: 2.3 times the interviews of applying 2 days later">
             <div className="ob-bar-col"><b className="tnum">2.3x</b><span className="ob-bar ob-bar-win" /><small>First few hours</small></div>
-            <div className="ob-bar-col"><b className="tnum">1x</b><span className="ob-bar ob-bar-late" /><small>2 days later</small></div>
+            <div className="ob-bar-col"><span className="ob-bar ob-bar-late" /><small>2 days later</small></div>
           </div>
           <p className="ob-sub">Apply in the first few hours after a role goes live and you&rsquo;ll land 2.3x more interviews than if you wait 2 days.</p>
         </div>
         <div className="ob-ask"><Pete size={60} /><p className="ob-bubble">That&rsquo;s why I tell you the second a job goes live.</p></div>
       </div>
-      <div className="ob-actions"><button className="ob-btn" onClick={() => go("paywall")}>Show me how</button></div>
+      <div className="ob-actions"><button className="ob-btn" onClick={() => go("paywall")}>Let&rsquo;s go</button></div>
     </main>
   );
 

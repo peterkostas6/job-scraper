@@ -413,7 +413,7 @@ export default function OnboardingFlow() {
     <main key={step} className="ob ob-cream">
       {bar}
       <div className="ob-mid">
-      <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Our users land 2.3x more interviews</h1></div>
+      <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Land more interviews</h1></div>
       <p className="ob-pay-proof">Apply before your competition. Here&rsquo;s how:</p>
       <ul className="ob-checks">
         <li><Check />Tracked directly from bank career sites, not from a third party</li>

@@ -12,7 +12,7 @@ import { purchasesReady, getPremiumPackage, buyPremium, restorePremium, linkPurc
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { capture } from "@/lib/analytics";
-import { matchesAlertPrefs } from "@/lib/alert-options";
+import { matchesAlertPrefs, AREAS } from "@/lib/alert-options";
 import { LEVELS, DEFAULT_ALERT_LEVELS } from "@/lib/levels";
 import { FIRM_LABEL, ALL_FIRMS } from "@/lib/firms";
 import { PLANS } from "@/lib/plans";
@@ -24,16 +24,17 @@ import { TOUR_KEY, TOUR_SEEN_KEY } from "@/app/AppTour";
 const STORAGE_KEY = "pp-onboarding-v1";
 // "signin" is where a phone that has been signed in before lands (a lapsed session, or a
 // website member who signed out): restore the subscription, or sign in for website members.
-const STEPS = ["signin", "welcome", "why", "firms", "level", "location", "match", "paywall", "notify"];
+const STEPS = ["signin", "welcome", "why", "level", "location", "area", "firms", "match", "paywall", "notify"];
 const TEST_MEMBER_KEY = "pp_test_member"; // dev "Skip payment": this phone's stand-in purchase id
-const PROGRESS = { firms: 25, level: 50, location: 75, match: 100 };
+const PROGRESS = { level: 20, location: 40, area: 60, firms: 80, match: 100 };
 // Every setup screen (and the paywall) has a back arrow so answers can be changed.
-const BACK = { why: "welcome", firms: "why", level: "firms", location: "level", match: "location", paywall: "match" };
+const BACK = { why: "welcome", level: "why", location: "level", area: "location", firms: "area", match: "firms", paywall: "match" };
 // Alert settings keep one location; CITY_ALIASES in lib/alert-options.js knows each of these.
 const CITIES = ["New York", "Charlotte", "Dallas", "Chicago", "San Francisco", "Boston", "Los Angeles", "Washington"];
 const price = PLANS.monthly.price.toFixed(2);
 
-const toPrefs = (a) => ({ banks: a.banks, categories: [], jobType: "all", levels: a.levels, location: a.city });
+const areaCategories = (keys = []) => AREAS.filter((x) => keys.includes(x.key)).flatMap((x) => x.categories);
+const toPrefs = (a) => ({ banks: a.banks, categories: areaCategories(a.areas), jobType: "all", levels: a.levels, location: a.city });
 const postedAt = (j) => Date.parse(j.postedDate) || j.detectedAt || 0;
 const ago = (t) => {
   const m = Math.max(1, Math.round((Date.now() - t) / 60000));
@@ -50,7 +51,7 @@ export default function OnboardingFlow() {
   const { signIn: clerkSignIn, setActive } = useSignIn();
   const [step, setStep] = useState("welcome");
   const [pkg, setPkg] = useState(null); // Apple's Premium package (price in the local currency)
-  const [answers, setAnswers] = useState({ banks: [], levels: DEFAULT_ALERT_LEVELS, city: "" });
+  const [answers, setAnswers] = useState({ banks: [], levels: DEFAULT_ALERT_LEVELS, city: "", areas: [] });
   const [restored, setRestored] = useState(false);
   const [jobs, setJobs] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -60,7 +61,7 @@ export default function OnboardingFlow() {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (saved?.answers) setAnswers(saved.answers);
+      if (saved?.answers) setAnswers({ areas: [], ...saved.answers });
       const fromUrl = new URL(window.location.href).searchParams.get("step");
       const s = STEPS.includes(fromUrl) ? fromUrl : saved?.step;
       if (STEPS.includes(s)) setStep(s);
@@ -104,6 +105,7 @@ export default function OnboardingFlow() {
   const set = (patch) => setAnswers((a) => ({ ...a, ...patch }));
   const toggleBank = (k) => set({ banks: answers.banks.includes(k) ? answers.banks.filter((x) => x !== k) : [...answers.banks, k] });
   const toggleLevel = (k) => set({ levels: answers.levels.includes(k) ? answers.levels.filter((x) => x !== k) : [...answers.levels, k] });
+  const toggleArea = (k) => set({ areas: answers.areas.includes(k) ? answers.areas.filter((x) => x !== k) : [...answers.areas, k] });
 
   function signIn() {
     capture("app_onboarding_signin_opened", { from: step });
@@ -253,7 +255,6 @@ export default function OnboardingFlow() {
       </div>
       <div className="ob-actions">
         <button className="ob-btn" onClick={() => go("why")}>Get started</button>
-        <button className="ob-btn ob-btn-ghost" onClick={() => go("signin")}>I already subscribe</button>
       </div>
     </main>
   );
@@ -272,20 +273,40 @@ export default function OnboardingFlow() {
           <div><strong>Be first to know</strong><span>Get notified the moment we pick up a new posting, before other job platforms.</span></div></li>
       </ul>
       </div>
-      <div className="ob-actions"><button className="ob-btn" onClick={() => go("firms")}>Set me up</button></div>
+      <div className="ob-actions"><button className="ob-btn" onClick={() => go("level")}>Set me up</button></div>
     </main>
   );
 
   if (step === "firms") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("Which firms are you after?")}
+      {ask("Last one. Which firms are you after?")}
       <button type="button" className="ob-tile ob-tile-big" aria-pressed={answers.banks.length === 0} onClick={() => set({ banks: [] })}>
         <span>All {FIRM_LABEL} firms</span>{answers.banks.length === 0 && <Check />}
       </button>
       <p className="ob-label">Or pick your targets</p>
       <FirmPicker chipClass="ob-chip" searchClass="ob-search" on={(k) => answers.banks.includes(k)} onPick={toggleBank} />
-      <div className="ob-actions ob-sticky"><button className="ob-btn" onClick={() => go("level")}>Continue</button></div>
+      <div className="ob-actions ob-sticky"><button className="ob-btn" onClick={() => go("match")}>Continue</button></div>
+    </main>
+  );
+
+  if (step === "area") return (
+    <main key={step} className="ob ob-cream">
+      {bar}
+      {ask("What type of role? Pick as many as you like.")}
+      <button type="button" className="ob-tile ob-tile-big" aria-pressed={answers.areas.length === 0} onClick={() => set({ areas: [] })}>
+        <span>Any type of role</span>{answers.areas.length === 0 && <Check />}
+      </button>
+      <p className="ob-label">Or pick yours</p>
+      <div className="ob-stack">
+        {AREAS.map((x) => (
+          <button key={x.key} type="button" className="ob-tile" aria-pressed={answers.areas.includes(x.key)} onClick={() => toggleArea(x.key)}>
+            <span className="ob-tile-text"><strong>{x.label}</strong></span>
+            {answers.areas.includes(x.key) && <Check />}
+          </button>
+        ))}
+      </div>
+      <div className="ob-actions"><button className="ob-btn" onClick={() => go("firms")}>Continue</button></div>
     </main>
   );
 
@@ -311,13 +332,13 @@ export default function OnboardingFlow() {
   if (step === "location") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("Last one. Where do you want to work?")}
+      {ask("Where do you want to work?")}
       <div className="ob-chips">
         {["", ...CITIES].map((c) => (
           <button key={c || "any"} type="button" className="ob-chip ob-chip-big" aria-pressed={answers.city === c} onClick={() => set({ city: c })}>{c || "Anywhere"}</button>
         ))}
       </div>
-      <div className="ob-actions"><button className="ob-btn" onClick={() => go("match")}>Continue</button></div>
+      <div className="ob-actions"><button className="ob-btn" onClick={() => go("area")}>Continue</button></div>
     </main>
   );
 
@@ -353,11 +374,12 @@ export default function OnboardingFlow() {
     <main key={step} className="ob ob-cream">
       {bar}
       <div className="ob-mid">
-      <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Unlock {matches?.length ? `your ${matches.length.toLocaleString()} roles` : "every role"}</h1></div>
+      <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Apply before your competition</h1></div>
+      <p className="ob-sub ob-sub-dark ob-pay-sub">See the roles that went live today.</p>
+      <p className="ob-pay-proof">Our users land 2.3x more interviews. Here&rsquo;s how:</p>
       <ul className="ob-checks">
-        <li><Check />Instant notifications from {FIRM_LABEL} firms</li>
-        <li><Check />Every role from the last 48 hours</li>
-        <li><Check />Save jobs and track applications</li>
+        <li><Check />Tracked directly from bank career sites, not from a third party</li>
+        <li><Check />Push notifications the second roles go live</li>
       </ul>
       <div className="ob-plan"><span><strong>Premium</strong><small>Billed monthly</small></span><b className="tnum">${price}<small>/mo</small></b></div>
       </div>

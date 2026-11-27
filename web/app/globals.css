@@ -7174,6 +7174,8 @@ footer a, .footer a { color: var(--pp-cream); }
 
 .ob-pay-head { display: flex; align-items: center; gap: 0.9rem; }
 .ob-pay-head .ob-h1 { margin: 0; flex: 1; font-size: 2.1rem; }
+.ob-pay-sub { max-width: none; margin: 0.75rem 0 0; }
+.ob-pay-proof { margin: 1.5rem 0 0; font-size: 1.1rem; font-weight: 800; color: var(--pp-navy); }
 .ob-checks { list-style: none; margin: 1.75rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; --ob-check-ink: var(--pp-cream); }
 .ob-checks li { display: flex; align-items: center; gap: 0.75rem; font-size: 1.05rem; font-weight: 600; }
 .ob-checks svg { flex: none; color: var(--pp-navy); }

@@ -7144,6 +7144,7 @@ footer a, .footer a { color: var(--pp-cream); }
 
 .ob-ask { display: flex; align-items: flex-end; gap: 0.75rem; margin: 1.5rem 0 1.25rem; }
 .ob-mid > .ob-ask { margin-top: 0; }
+.ob-mid > .ob-center + .ob-ask { margin-top: 1.75rem; }
 .ob-ask svg { flex: none; }
 .ob-bubble { flex: 1; margin: 0; padding: 0.9rem 1rem; border: 2px solid var(--ob-line); border-radius: 18px 18px 18px 4px; background: #fff; color: var(--pp-navy); font-size: 1.2rem; font-weight: 700; line-height: 1.3; }
 

@@ -70,7 +70,9 @@ export async function POST(req) {
     const firstName = userData.first_name || "";
     await captureServer(userData.id, "signed_up", { $set: { email, signed_up_at: new Date(userData.created_at || Date.now()).toISOString() } });
 
-    if (!email) return Response.json({ received: true });
+    // App-only members (made by app/api/app/session when they subscribe in the iPhone app) have
+    // no inbox: no welcome email, and no ad-network reports.
+    if (!email || userData.public_metadata?.appOnly) return Response.json({ received: true });
 
     // Check if email domain qualifies for free student Pro access
     const domain = email.split("@")[1] || "";

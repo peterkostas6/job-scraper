@@ -2,12 +2,13 @@
 
 // The iPhone app's first launch, one screen at a time (Duolingo style): Pete says hi, what
 // changes for you, three questions (firms, level, location), how many live roles match, then
-// the hard paywall, saving the account, and turning on alerts. Answers are kept on the phone
-// until there is an account to save them to, in the same shape as the website's alert settings.
+// the hard paywall and turning on alerts. There's no account to make: paying (or restoring a
+// purchase) signs them in to an app-only account tied to the purchase (app/api/app/session).
+// Answers are kept on the phone until then, in the same shape as the website's alert settings.
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useClerk, useUser, useSignIn, useSignUp } from "@clerk/nextjs";
-import { purchasesReady, getPremiumPackage, buyPremium, restorePremium, linkPurchaseToAccount, enablePush, appleSignInReady, appleIdentityToken } from "@/lib/native";
+import { useClerk, useUser, useSignIn } from "@clerk/nextjs";
+import { purchasesReady, getPremiumPackage, buyPremium, restorePremium, linkPurchaseToAccount, purchasesAppUserId, enablePush } from "@/lib/native";
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { capture } from "@/lib/analytics";
@@ -21,8 +22,10 @@ import Pete from "./Pete";
 import { TOUR_KEY, TOUR_SEEN_KEY } from "@/app/AppTour";
 
 const STORAGE_KEY = "pp-onboarding-v1";
-// "signin" is where the app lands after signing out: the welcome look, with Sign in first.
-const STEPS = ["signin", "welcome", "why", "firms", "level", "location", "match", "paywall", "account", "notify"];
+// "signin" is where a phone that has been signed in before lands (a lapsed session, or a
+// website member who signed out): restore the subscription, or sign in for website members.
+const STEPS = ["signin", "welcome", "why", "firms", "level", "location", "match", "paywall", "notify"];
+const TEST_MEMBER_KEY = "pp_test_member"; // dev "Skip payment": this phone's stand-in purchase id
 const PROGRESS = { firms: 25, level: 50, location: 75, match: 100 };
 // Every setup screen (and the paywall) has a back arrow so answers can be changed.
 const BACK = { why: "welcome", firms: "why", level: "firms", location: "level", match: "location", paywall: "match" };
@@ -45,7 +48,6 @@ export default function OnboardingFlow() {
   const clerk = useClerk();
   const router = useRouter();
   const { signIn: clerkSignIn, setActive } = useSignIn();
-  const { signUp: clerkSignUp } = useSignUp();
   const [step, setStep] = useState("welcome");
   const [pkg, setPkg] = useState(null); // Apple's Premium package (price in the local currency)
   const [answers, setAnswers] = useState({ banks: [], levels: DEFAULT_ALERT_LEVELS, city: "" });
@@ -96,7 +98,6 @@ export default function OnboardingFlow() {
     if (step === "welcome" || step === "paywall") { if (paid) finish(); return; }
     // Signed back in: a paying account goes to its jobs; one that isn't paying sees the paywall.
     if (step === "signin") { if (paid) finish(); else go("paywall"); return; }
-    if (step === "account") saveAndNext();
   }, [restored, isLoaded, isSignedIn, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = (s) => { setNote(""); setStep(s); window.scrollTo(0, 0); };
@@ -117,75 +118,84 @@ export default function OnboardingFlow() {
     await user.reload().catch(() => {});
   }
 
-  async function subscribe() {
-    capture("app_subscribe_tapped");
-    if (purchasesReady() && pkg) {
-      setBusy(true);
-      try {
-        const ok = await buyPremium(pkg, user?.id);
-        if (ok) { capture("app_subscribed"); go("account"); }
-      } catch {
-        setNote("The purchase didn’t go through. Try again.");
-      }
-      setBusy(false);
-      return;
-    }
-    if (isTestHost()) { unlockForTesting(); go("account"); return; }
-    setNote("Subscriptions open when the app launches on the App Store.");
-  }
-
-  async function restore() {
-    if (!purchasesReady()) { setNote(isSignedIn ? "No purchases to restore." : "Sign in to restore a purchase."); return; }
-    setBusy(true);
-    const ok = await restorePremium(user?.id).catch(() => false);
-    setBusy(false);
-    if (!ok) { setNote("No Premium purchase found for this Apple ID."); return; }
-    if (isSignedIn) { await attachPurchase(); finish(); } else go("account");
-  }
-
-  // Sign in with Apple: Apple's Face ID sheet gives a signed token Clerk checks. A new Apple ID
-  // comes back "transferable" from sign-in and becomes a new account.
-  async function appleSignIn() {
-    const token = await appleIdentityToken();
-    if (!token) return;
-    setBusy(true);
-    try {
-      let session;
-      const attempt = await clerkSignIn.create({ strategy: "oauth_token_apple", token });
-      if (attempt.status === "complete") session = attempt.createdSessionId;
-      else if (attempt.firstFactorVerification?.status === "transferable") {
-        const created = await clerkSignUp.create({ transfer: true, unsafeMetadata: { signedUpInApp: true } });
-        session = created.createdSessionId;
-      }
-      if (!session) throw new Error("not complete");
-      await setActive({ session });
-      capture("app_apple_signin");
-    } catch (err) {
-      const reason = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || err?.message || "unknown";
-      capture("app_apple_signin_failed", { reason, code: err?.errors?.[0]?.code || null });
-      setNote(`Couldn’t sign in with Apple (${reason}). Try email instead.`);
-    }
-    setBusy(false);
-  }
-
-  async function saveAndNext() {
-    if (busy) return;
-    setBusy(true);
-    await attachPurchase();
-    // Alerts stay off until notifications are on; the answers still power "My preferences".
+  // The onboarding answers become their alert preferences (alerts stay off until notifications
+  // are on; the answers still power "My Preferences").
+  async function savePrefs() {
     await fetch("/api/notifications", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ enabled: false, ...toPrefs(answers), smsEnabled: false, smsConsent: false, phoneNumber: "" }),
     }).catch(() => {});
-    setBusy(false);
-    go("notify");
   }
 
-  function createAccount() {
-    if (isSignedIn) { saveAndNext(); return; }
-    capture("app_onboarding_signup_opened");
-    clerk.openSignUp({ forceRedirectUrl: "/onboarding?step=account", signInForceRedirectUrl: "/onboarding?step=account", unsafeMetadata: { signedUpInApp: true } });
+  // Paid or restored, with no account: the server checks the purchase and hands back a one-time
+  // sign-in token for the app-only account tied to it (made now if it's new). fromSurvey: they
+  // just answered the questions, so those become their preferences even on an older account.
+  async function enterApp({ test = false, fromSurvey = true } = {}) {
+    let rcId = null;
+    if (test) {
+      try { rcId = localStorage.getItem(TEST_MEMBER_KEY); } catch {}
+      if (!rcId) { rcId = `test:${crypto.randomUUID()}`; try { localStorage.setItem(TEST_MEMBER_KEY, rcId); } catch {} }
+    } else rcId = await purchasesAppUserId();
+    if (!rcId) throw new Error("no purchase id");
+    const res = await fetch("/api/app/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rcId, test }) }).catch(() => null);
+    const data = await res?.json().catch(() => ({}));
+    if (!res?.ok || !data?.token) throw new Error(data?.error || "no session");
+    const fresh = data.created || fromSurvey;
+    // Move on before the session lands, so the "already paid" check doesn't skip notifications.
+    if (fresh) go("notify");
+    const attempt = await clerkSignIn.create({ strategy: "ticket", ticket: data.token });
+    await setActive({ session: attempt.createdSessionId });
+    capture(data.created ? "app_member_created" : "app_member_signed_in", { test });
+    // RevenueCat now files this phone's purchase under the account, so renewals and
+    // cancellations reach it (lib/app-store.js, the RevenueCat webhook).
+    if (!test) await linkPurchaseToAccount(data.userId).catch(() => {});
+    if (fresh) await savePrefs(); else finish();
+  }
+
+  async function subscribe() {
+    capture("app_subscribe_tapped");
+    if (purchasesReady() && pkg) {
+      setBusy(true);
+      let ok = false;
+      try { ok = await buyPremium(pkg, user?.id); } catch { setNote("The purchase didn’t go through. Try again."); }
+      if (ok) {
+        capture("app_subscribed");
+        try {
+          // A website account signed in here keeps using that account; everyone else gets in with none.
+          if (isSignedIn) { await attachPurchase(); go("notify"); await savePrefs(); } else await enterApp();
+        } catch {
+          setNote("You’re subscribed, but the app couldn’t open. Tap Restore purchases.");
+        }
+      }
+      setBusy(false);
+      return;
+    }
+    if (isTestHost()) { await skipPayment(); return; }
+    setNote("Subscriptions open when the app launches on the App Store.");
+  }
+
+  // dev.petespostings.com / localhost only: in without Apple's purchase sheet.
+  async function skipPayment() {
+    unlockForTesting();
+    if (isSignedIn) { go("notify"); await savePrefs(); return; }
+    setBusy(true);
+    try { await enterApp({ test: true }); } catch (err) { setNote(`Test sign-in failed (${err?.message || "unknown"}).`); }
+    setBusy(false);
+  }
+
+  async function restore() {
+    if (!purchasesReady()) { setNote("Restoring works in the App Store version of the app."); return; }
+    setBusy(true);
+    const ok = await restorePremium(user?.id).catch(() => false);
+    if (!ok) { setBusy(false); setNote("No Premium subscription found for this Apple ID."); return; }
+    capture("app_restored");
+    try {
+      if (isSignedIn) { await attachPurchase(); finish(); } else await enterApp({ fromSurvey: step === "paywall" });
+    } catch {
+      setNote("We found your subscription but couldn’t open the app. Try again.");
+    }
+    setBusy(false);
   }
 
   function finish() {
@@ -222,17 +232,12 @@ export default function OnboardingFlow() {
     <main key={step} className="ob ob-navy">
       <div className="ob-brand"><img src="/logo-mark.svg" alt="" width="22" height="22" /> Pete&rsquo;s Postings</div>
       <div className="ob-hero">
-        <p className="ob-say">Welcome back! Sign in to see your roles.</p>
+        <p className="ob-say">Welcome back! Restore your subscription to pick up where you left off.</p>
         <Pete size={170} wave />
       </div>
       <div className="ob-actions">
-        {appleSignInReady() && (
-          <button className="ob-btn ob-btn-apple" disabled={busy} onClick={appleSignIn}>
-            <svg width="18" height="22" viewBox="0 0 384 512" aria-hidden="true"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" /></svg>
-            Sign in with Apple
-          </button>
-        )}
-        <button className={`ob-btn${appleSignInReady() ? " ob-btn-ghost" : ""}`} disabled={busy} onClick={signIn}>{appleSignInReady() ? "Sign in with email" : "Sign in"}</button>
+        <button className="ob-btn" disabled={busy} onClick={restore}>{busy ? "Checking…" : "Restore my subscription"}</button>
+        <button className="ob-btn ob-btn-ghost" disabled={busy} onClick={signIn}>I pay on the website</button>
         {note && <p className="ob-note" role="status">{note}</p>}
         <button type="button" className="ob-link" onClick={() => { capture("app_signin_new_here"); go("welcome"); }}>I&rsquo;m new here</button>
       </div>
@@ -248,7 +253,7 @@ export default function OnboardingFlow() {
       </div>
       <div className="ob-actions">
         <button className="ob-btn" onClick={() => go("why")}>Get started</button>
-        <button className="ob-btn ob-btn-ghost" onClick={signIn}>I already have an account</button>
+        <button className="ob-btn ob-btn-ghost" onClick={() => go("signin")}>I already subscribe</button>
       </div>
     </main>
   );
@@ -368,31 +373,10 @@ export default function OnboardingFlow() {
         {/* dev.petespostings.com / localhost only (never the live site the App Store app uses):
             skip Apple's purchase sheet, which needs a sandbox Apple account on a test install. */}
         {isTestHost() && (
-          <button type="button" className="ob-link ob-link-quiet" onClick={() => { unlockForTesting(); if (isSignedIn) finish(); else go("account"); }}>
+          <button type="button" className="ob-link ob-link-quiet" disabled={busy} onClick={skipPayment}>
             Skip payment (test build only)
           </button>
         )}
-      </div>
-    </main>
-  );
-
-  if (step === "account") return (
-    <main key={step} className="ob ob-cream">
-      <div className="ob-center ob-center-top">
-        <Pete size={96} mood="happy" />
-        <h1 className="ob-h1">You&rsquo;re in!<br />Save your account</h1>
-        <p className="ob-sub ob-sub-dark">So your subscription and picks follow you to a new phone.</p>
-      </div>
-      <div className="ob-actions">
-        {!isSignedIn && appleSignInReady() && (
-          <button className="ob-btn ob-btn-apple" disabled={busy} onClick={appleSignIn}>
-            <svg width="18" height="22" viewBox="0 0 384 512" aria-hidden="true"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" /></svg>
-            Sign in with Apple
-          </button>
-        )}
-        <button className={`ob-btn${!isSignedIn && appleSignInReady() ? " ob-btn-light" : ""}`} disabled={busy} onClick={createAccount}>{busy ? "Saving…" : isSignedIn ? "Continue" : "Continue with email"}</button>
-        {note && <p className="ob-note" role="status">{note}</p>}
-        <p className="ob-fine">Email sign-in sends you a 6-digit code. No passwords.</p>
       </div>
     </main>
   );
@@ -401,7 +385,7 @@ export default function OnboardingFlow() {
   return (
     <main key={step} className="ob ob-navy">
       <div className="ob-center ob-center-top">
-        <h1 className="ob-h1">The second a role posts,<br />you&rsquo;ll know</h1>
+        <h1 className="ob-h1">You&rsquo;re in! The second a role posts, you&rsquo;ll know</h1>
         <p className="ob-sub">Turn on notifications so you hear about new roles before other job platforms do.</p>
       </div>
       <div className="ob-push" aria-hidden="true">
@@ -416,7 +400,7 @@ export default function OnboardingFlow() {
           capture(on ? "app_notifications_on" : "app_notifications_declined");
           finish();
         }}>Turn on alerts</button>
-        <button className="ob-btn ob-btn-text" onClick={finish}>Not now</button>
+        <button className="ob-btn ob-btn-text" disabled={busy} onClick={finish}>Not now</button>
       </div>
     </main>
   );

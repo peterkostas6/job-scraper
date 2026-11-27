@@ -12,6 +12,7 @@ import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { layout, sendEmail, BRAND } from "@/lib/email";
 import { BANKS, BANK_NAMES } from "@/lib/banks";
 import { ALL_FIRMS, registryBatch } from "@/lib/firms";
+import { contactEmail } from "@/lib/app-user";
 
 export const dynamic = "force-dynamic";
 // The Postgres driver talks to Neon over HTTP. In production Next.js can serve a repeated,
@@ -403,7 +404,7 @@ export async function GET(request) {
           resend,
           sms,
           userId: user.id,
-          email: user.emailAddresses?.[0]?.emailAddress,
+          email: contactEmail(user),
           firstName: user.firstName || "",
           prefs,
           jobs: matchingJobs,

@@ -10,6 +10,7 @@ import { Resend } from "resend";
 import { captureServer } from "@/lib/posthog-server";
 import { levelsFromPrefs, LEVEL_LABEL, LEVEL_KEYS } from "@/lib/levels";
 import { FIRM_LABEL } from "@/lib/firms";
+import { contactEmail } from "@/lib/app-user";
 
 
 // The first text someone gets when they turn texts on (sent with the contact card).
@@ -63,7 +64,7 @@ export async function saveAlertPrefs({ userId, body, origin, quiet = false }) {
     },
   });
 
-  const email = user.emailAddresses?.[0]?.emailAddress;
+  const email = contactEmail(user);
   const firstName = user.firstName || "";
 
   // Settings as properties on the person too, so you can filter users by what they track.

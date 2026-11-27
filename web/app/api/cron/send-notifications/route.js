@@ -6,6 +6,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "@vercel/postgres";
 import { sendUserNotification, smsConfig } from "@/lib/notif-send";
 import { usersWithHeldJobs, heldJobs, clearHeld, smsSlot } from "@/lib/sms-pacing";
+import { contactEmail } from "@/lib/app-user";
 
 export const dynamic = "force-dynamic";
 // The Postgres driver talks to Neon over HTTP. In production Next.js can serve a repeated,
@@ -73,7 +74,7 @@ export async function GET(request) {
           continue;
         }
 
-        const email = clerkUser.emailAddresses[0]?.emailAddress;
+        const email = contactEmail(clerkUser);
         const firstName = clerkUser.firstName || "";
         const prefs = clerkUser.unsafeMetadata?.notifications || {};
 

@@ -7419,6 +7419,7 @@ button.rq-row:active { background: #EADFCB; }
 @media (prefers-reduced-motion: reduce) { .in-app .rq { transition: none; } .in-app.tab-out .rq { transform: none; } }
 
 /* Saved tab: "Email me these" sits at the right of the saved count. */
+.saved-email-to { display: block; width: calc(100% - 2rem); box-sizing: border-box; margin: 0 1rem 0.75rem; min-height: 46px; padding: 0 0.9rem; border: 2px solid #E2D8C4; border-radius: 12px; background: #fff; color: var(--pp-navy, #14213D); font: inherit; font-size: 16px; }
 .results-bar:has(.saved-email) { display: flex !important; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .saved-email {
   display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; padding: 0 0.95rem;

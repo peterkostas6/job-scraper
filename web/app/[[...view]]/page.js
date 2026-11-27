@@ -19,6 +19,7 @@ import { PLANS, PLAN_KEYS, planPrice } from "@/lib/plans";
 import { trialFor } from "@/lib/alert-trial-days";
 import { openBillingPortal, canManageSubscription, deleteAccount } from "@/lib/billing";
 import { isApp } from "@/lib/app-access";
+import { isAppOnly } from "@/lib/app-user";
 import { enablePush, pushPermission, openAppSettings } from "@/lib/native";
 import StartFlow from "@/app/start/StartFlow";
 import AlertsPanel from "./AlertsPanel";
@@ -1398,6 +1399,9 @@ export default function Home() {
   const [savedJobs, setSavedJobs] = useState([]);
   // Saved tab: "Email me these" (idle | sending | sent | error message).
   const [savedEmailState, setSavedEmailState] = useState("idle");
+  // App-only members have no email on file: "Email me these" asks where to send them.
+  const appOnly = isAppOnly(user);
+  const [savedEmailTo, setSavedEmailTo] = useState(null); // null = not asking; string = the typed address
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
   // Browse analytics: one event per search (after typing pauses), filter change, and bank switch.
@@ -2461,8 +2465,8 @@ export default function Home() {
               <div className="acct-head">
                 {user?.imageUrl && <img src={user.imageUrl} alt="" />}
                 <div>
-                  <strong>{user?.fullName || user?.primaryEmailAddress?.emailAddress}</strong>
-                  <span>{isSubscribed ? "Premium" : "Free account"}</span>
+                  <strong>{appOnly ? "Premium member" : user?.fullName || user?.primaryEmailAddress?.emailAddress}</strong>
+                  <span>{appOnly ? "Subscribed with your Apple ID" : isSubscribed ? "Premium" : "Free account"}</span>
                 </div>
               </div>
             ) : (
@@ -2483,19 +2487,19 @@ export default function Home() {
             )}
             <div className="acct-list">
               {!isSubscribed && !inApp && <Link href="/pricing" className="acct-upgrade" onClick={() => capture("account_upgrade_clicked")}>Get Premium <span>${PLANS.monthly.price}/mo</span></Link>}
-              {isSignedIn && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
+              {isSignedIn && !appOnly && <button onClick={() => clerk.openUserProfile()}>Account settings</button>}
               {isSignedIn && canManageSubscription(user) && <button onClick={openBillingPortal}>Manage subscription</button>}
               {inApp && <Link href="/privacy">Privacy Policy</Link>}
               {inApp && <Link href="/terms">Terms of Service</Link>}
               {inApp && <a href="mailto:pete@petespostings.com" onClick={() => capture("contact_clicked", { where: "app_settings" })}>Contact</a>}
               {!inApp && <Link href="/about">About</Link>}
               {!inApp && <Link href="/">Home</Link>}
-              {isSignedIn && <button className="acct-out" onClick={() => {
+              {isSignedIn && !appOnly && <button className="acct-out" onClick={() => {
                 // App: back to the sign-in screen, not wherever onboarding was left (and no test unlock).
                 if (inApp) { try { localStorage.removeItem("pp-onboarding-v1"); localStorage.removeItem("pp_test_premium"); } catch {} }
                 clerk.signOut({ redirectUrl: inApp ? "/onboarding?step=signin" : "/jobs" });
               }}>Sign out</button>}
-              {isSignedIn && isApp() && <button className="acct-out" onClick={() => deleteAccount(clerk)}>Delete account</button>}
+              {isSignedIn && isApp() && <button className="acct-out" onClick={() => deleteAccount(clerk)}>{appOnly ? "Delete my data" : "Delete account"}</button>}
             </div>
           </div>
         </div>
@@ -2829,18 +2833,24 @@ export default function Home() {
                   <span className="results-text">{savedJobs.length} saved {savedJobs.length === 1 ? "job" : "jobs"}</span>
                   {savedJobs.length > 0 && (
                     <button className={`saved-email${savedEmailState === "sent" ? " is-sent" : ""}`} disabled={savedEmailState === "sending"} onClick={async () => {
+                      if (appOnly && savedEmailTo === null) { setSavedEmailTo(""); return; }
+                      if (appOnly && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(savedEmailTo.trim())) { setSavedEmailState("Enter an email address to send them to."); return; }
                       setSavedEmailState("sending");
-                      const res = await fetch("/api/saved-email", { method: "POST" }).catch(() => null);
+                      const res = await fetch("/api/saved-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(appOnly ? { email: savedEmailTo.trim() } : {}) }).catch(() => null);
                       const data = await res?.json().catch(() => ({}));
                       capture("saved_emailed", { ok: Boolean(res?.ok), count: savedJobs.length });
                       setSavedEmailState(res?.ok ? "sent" : data?.error || "Couldn’t send. Try again.");
-                      if (res?.ok) setTimeout(() => setSavedEmailState("idle"), 4000);
+                      if (res?.ok) { setSavedEmailTo(null); setTimeout(() => setSavedEmailState("idle"), 4000); }
                     }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{savedEmailState === "sent" ? <path d="M5 12l5 5L20 7"/> : <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>}</svg>
-                      {savedEmailState === "sending" ? "Sending…" : savedEmailState === "sent" ? "Sent to your email" : "Email me these"}
+                      {savedEmailState === "sending" ? "Sending…" : savedEmailState === "sent" ? "Sent to your email" : appOnly && savedEmailTo !== null ? "Send" : "Email me these"}
                     </button>
                   )}
                 </div>
+                {appOnly && savedEmailTo !== null && savedEmailState !== "sent" && (
+                  <input className="saved-email-to" type="email" inputMode="email" autoComplete="email" autoCapitalize="off" autoFocus placeholder="Your email address" aria-label="Email to send your saved roles to"
+                    value={savedEmailTo} onChange={(e) => { setSavedEmailTo(e.target.value); if (!["idle", "sending", "sent"].includes(savedEmailState)) setSavedEmailState("idle"); }} />
+                )}
                 {!["idle", "sending", "sent"].includes(savedEmailState) && <p className="saved-email-error" role="alert">{savedEmailState}</p>}
                 {savedJobs.length === 0 && (
                   <div className="empty-state">

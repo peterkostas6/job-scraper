@@ -51,6 +51,13 @@ export async function restorePremium(userId) {
   return isActive(customerInfo);
 }
 
+// RevenueCat's id for whoever is on this phone (anonymous until linked to an account).
+export async function purchasesAppUserId() {
+  const P = await purchases();
+  if (!P) return null;
+  return (await P.getAppUserID().catch(() => null))?.appUserID || null;
+}
+
 // After sign-in: attach this phone's purchase to the account, then have the server record it.
 export async function linkPurchaseToAccount(userId) {
   if (!(await purchases(userId))) return null;

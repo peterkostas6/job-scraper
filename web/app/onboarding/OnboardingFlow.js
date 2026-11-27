@@ -401,7 +401,6 @@ export default function OnboardingFlow() {
             <div className="ob-bar-col"><b className="tnum">2.3x</b><span className="ob-bar ob-bar-win" /><small>First few hours</small></div>
             <div className="ob-bar-col"><span className="ob-bar ob-bar-late" /><small>2 days later</small></div>
           </div>
-          <p className="ob-sub">Apply in the first few hours after a role goes live and you&rsquo;ll land 2.3x more interviews than if you wait 2 days.</p>
         </div>
         <div className="ob-ask"><Pete size={60} /><p className="ob-bubble">That&rsquo;s why I tell you the second a job goes live.</p></div>
       </div>

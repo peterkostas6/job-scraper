@@ -31,7 +31,7 @@ const PROGRESS = { area: 20, level: 40, location: 60, firms: 80, match: 100 };
 const BACK = { area: "welcome", level: "area", location: "level", firms: "location", match: "firms", paywall: "match" };
 // answers.city holds the picked cities as one string ("Chicago; New York"), the shape alert
 // settings save; blank means anywhere.
-const WELCOME = "Hi! I\u2019m Pete, your agent who checks finance career pages for you. I even notify you based on what you\u2019re looking for!";
+const WELCOME = "Hi! I\u2019m Pete, your agent who checks career pages for you. I\u2019ll notify you the second one pops up!";
 const TYPE_MS = 26;
 const price = PLANS.monthly.price.toFixed(2);
 
@@ -347,7 +347,7 @@ export default function OnboardingFlow() {
   if (step === "location") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("Where do you want to work? Pick as many as you like.")}
+      {ask("Where do you want to work?")}
       <div className="ob-chips">
         <button type="button" className="ob-chip ob-chip-big" aria-pressed={!answers.city} onClick={() => set({ city: "" })}>Anywhere</button>
         {ALL_CITIES.map((c) => (

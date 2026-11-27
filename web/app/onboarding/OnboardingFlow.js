@@ -31,7 +31,7 @@ const PROGRESS = { area: 20, level: 40, location: 60, firms: 80, match: 100 };
 const BACK = { area: "welcome", level: "area", location: "level", firms: "location", match: "firms", paywall: "match" };
 // answers.city holds the picked cities as one string ("Chicago; New York"), the shape alert
 // settings save; blank means anywhere.
-const WELCOME = "Hi! I\u2019m Pete, your agent who constantly reads finance firms\u2019 career pages to keep you on top of new roles. I even notify you based on your preferences!";
+const WELCOME = "Hi! I\u2019m Pete, your agent who checks finance career pages for you. I even notify you based on what you\u2019re looking for!";
 const TYPE_MS = 26;
 const price = PLANS.monthly.price.toFixed(2);
 
@@ -102,11 +102,22 @@ export default function OnboardingFlow() {
     if (!showWelcome) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTyped(WELCOME.length); return; }
     setTyped(0);
-    let id;
-    const wait = setTimeout(() => {
-      id = setInterval(() => setTyped((n) => { if (n + 1 >= WELCOME.length) clearInterval(id); return n + 1; }), TYPE_MS);
-    }, 400);
-    return () => { clearTimeout(wait); clearInterval(id); };
+    let id, wait, gone = false;
+    // Start only once everything has loaded: the page, its fonts, and the app's loading screen
+    // (Pete hopping) has cleared, so nobody misses the first words.
+    const loaded = document.readyState === "complete" ? Promise.resolve() : new Promise((r) => window.addEventListener("load", r, { once: true }));
+    const splashGone = () => new Promise((r) => {
+      const t0 = Date.now();
+      const check = () => (!document.querySelector(".app-splash") || Date.now() - t0 > 8000 ? r() : setTimeout(check, 100));
+      check();
+    });
+    loaded.then(() => document.fonts?.ready).then(splashGone).then(() => {
+      if (gone) return;
+      wait = setTimeout(() => {
+        id = setInterval(() => setTyped((n) => { if (n + 1 >= WELCOME.length) clearInterval(id); return n + 1; }), TYPE_MS);
+      }, 350);
+    });
+    return () => { gone = true; clearTimeout(wait); clearInterval(id); };
   }, [showWelcome]);
 
   // Back from the sign-in box: a paying account goes straight in; otherwise carry on.
@@ -297,7 +308,7 @@ export default function OnboardingFlow() {
   if (step === "area") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("What type of role are you looking for? Pick as many as you like.")}
+      {ask("What type of role are you looking for?")}
       <button type="button" className="ob-tile ob-tile-big" aria-pressed={answers.areas.length === 0} onClick={() => set({ areas: [] })}>
         <span>Any type of role</span>{answers.areas.length === 0 && <Check />}
       </button>
@@ -317,7 +328,7 @@ export default function OnboardingFlow() {
   if (step === "level") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("What level? Pick as many as you like.")}
+      {ask("What level?")}
       <div className="ob-stack">
         {LEVELS.map((l) => (
           <button key={l.key} type="button" className="ob-tile" aria-pressed={answers.levels.includes(l.key)} onClick={() => toggleLevel(l.key)}>
@@ -356,9 +367,10 @@ export default function OnboardingFlow() {
       <main key={step} className="ob ob-navy">
         {bar}
         <div className="ob-center">
-          <Pete size={100} mood="happy" />
+          <span className="ob-bounce"><Pete size={100} mood="happy" /></span>
+          <h1 className="ob-h1">WooHoo! I&rsquo;ve found</h1>
           <p className="ob-count tnum">{matches ? matches.length.toLocaleString() : "…"}</p>
-          <h1 className="ob-h1">{matches?.length === 1 ? "role matches" : "roles match"} you<br />right now</h1>
+          <h1 className="ob-h1">{matches?.length === 1 ? "role that matches" : "roles that match"}</h1>
           <p className="ob-sub">{levels} · {cities} · {firms}</p>
         </div>
         {matches?.length > 0 && (
@@ -381,9 +393,8 @@ export default function OnboardingFlow() {
     <main key={step} className="ob ob-cream">
       {bar}
       <div className="ob-mid">
-      <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Apply before your competition</h1></div>
-      <p className="ob-sub ob-sub-dark ob-pay-sub">See the roles that went live today.</p>
-      <p className="ob-pay-proof">Our users land 2.3x more interviews. Here&rsquo;s how:</p>
+      <div className="ob-pay-head"><Pete size={76} mood="lock" /><h1 className="ob-h1">Our users land 2.3x more interviews</h1></div>
+      <p className="ob-pay-proof">Apply before your competition. Here&rsquo;s how:</p>
       <ul className="ob-checks">
         <li><Check />Tracked directly from bank career sites, not from a third party</li>
         <li><Check />Push notifications the second roles go live</li>

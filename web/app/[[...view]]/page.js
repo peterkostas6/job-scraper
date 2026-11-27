@@ -2707,7 +2707,7 @@ export default function Home() {
                 </div>
                 {hasAlertPrefs && !isGatedBank && (
                   <div className="aj-seg" role="group" aria-label="Which roles to show">
-                    <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My picks</button>
+                    <button aria-pressed={browseMode === "mine"} onClick={() => setBrowseMode("mine")}>My roles</button>
                     <button aria-pressed={browseMode === "all"} onClick={() => setBrowseMode("all")}>All roles</button>
                   </div>
                 )}

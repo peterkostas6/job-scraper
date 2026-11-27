@@ -14,16 +14,18 @@ export const TOUR_KEY = "pp_app_tour";
 export const TOUR_SEEN_KEY = "pp_app_tour_seen"; // set once finished or skipped: never again
 
 const STEPS = [
-  { sel: ".jobs-list-browse", title: "These are your jobs", body: `Every open role from ${FIRM_LABEL} firms, newest first and already filtered to what you picked. Tap Filters to change it.`, radius: 22, maxH: 0.42 },
-  { sel: ".tabbar .tab-main", title: "Your notifications", body: "Tap here to change which firms, roles and cities I notify you about, or to pause notifications.", round: true },
-  { sel: ".tabbar > :nth-child(3)", title: "No more spreadsheets", body: "Tap the bookmark on any role to save it. Mark it Applied here and you’ll always know where you stand.", radius: 16 },
-  { sel: ".tabbar > :nth-child(5)", title: "Your account", body: "Add a profile photo, manage your subscription and change your settings here. That’s the tour. Good luck out there!", radius: 16, happy: true },
+  { sel: ".jobs-list-browse", title: "Your jobs", body: "The newest roles, matched to your picks.", radius: 22, maxH: 0.42 },
+  { sel: ".tabbar .tab-main", title: "Your preferences", body: "Change what I notify you about.", round: true },
+  { sel: ".tabbar > :nth-child(3)", title: "Saved roles", body: "Save roles and mark them Applied.", radius: 16 },
+  { sel: ".tabbar > :nth-child(5)", title: "Your account", body: "Settings and subscription. Good luck!", radius: 16, happy: true },
 ];
 const PAD = 6;
+const TYPE_MS = 28; // one letter every 28ms: types like someone at a keyboard, not a slideshow
 
 export default function AppTour() {
   const [step, setStep] = useState(-1);
   const [box, setBox] = useState(null);
+  const [typed, setTyped] = useState(0); // letters of this step's title + body shown so far
 
   useEffect(() => {
     let pending = false;
@@ -70,6 +72,16 @@ export default function AppTour() {
     return () => { clearTimeout(timer); window.removeEventListener("resize", measure); };
   }, [step]);
 
+  // Type this step's words out letter by letter (all at once for people who turn off motion).
+  useEffect(() => {
+    if (step < 0 || step >= STEPS.length || !box) return;
+    const total = STEPS[step].title.length + STEPS[step].body.length;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTyped(total); return; }
+    setTyped(0);
+    const id = setInterval(() => setTyped((n) => { if (n + 1 >= total) clearInterval(id); return n + 1; }), TYPE_MS);
+    return () => clearInterval(id);
+  }, [step, !!box]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const done = () => {
     try { localStorage.removeItem(TOUR_KEY); localStorage.setItem(TOUR_SEEN_KEY, "1"); } catch {}
     document.documentElement.classList.remove("tour-on");
@@ -83,6 +95,14 @@ export default function AppTour() {
   if (step < 0 || step >= STEPS.length || !box) return null;
   const s = STEPS[step];
   const last = step === STEPS.length - 1;
+  const total = s.title.length + s.body.length;
+  const typing = typed < total;
+  // Typed letters show; the rest stay invisible so the bubble is full size from the start.
+  const part = (text, from) => {
+    const n = Math.max(0, Math.min(text.length, typed - from));
+    const caret = typed >= from && typed < from + text.length;
+    return <><span aria-hidden="true">{text.slice(0, n)}</span>{caret && <span className="tour-caret" aria-hidden="true" />}<span aria-hidden="true" className="tour-rest">{text.slice(n)}</span></>;
+  };
   // The bubble goes below a target in the top half of the screen, above one in the bottom half.
   const below = box.top + box.height / 2 < window.innerHeight / 2;
   const bubblePos = below ? { top: box.top + box.height + 18 } : { bottom: window.innerHeight - box.top + 18 };
@@ -95,14 +115,15 @@ export default function AppTour() {
         <div className={`tour-say${below ? " tour-say-down" : ""}`}>
           <Pete size={56} mood={s.happy ? "happy" : "smile"} />
           <div className="tour-bubble">
-            <strong>{s.title}</strong>
-            <p>{s.body}</p>
+            <span className="sr-only">{s.title}. {s.body}</span>
+            <strong>{part(s.title, 0)}</strong>
+            <p>{part(s.body, s.title.length)}</p>
           </div>
         </div>
         <div className="tour-foot">
           <span className="tour-skip-space" />
           <span className="tour-dots" aria-hidden="true">{STEPS.map((_, i) => <span key={i} className={i === step ? "is-on" : ""} />)}</span>
-          <button type="button" className="tour-next" onClick={() => (last ? done() : setStep(step + 1))}>{last ? "Let’s go" : "Next"}</button>
+          <button type="button" className="tour-next" onClick={() => (typing ? setTyped(total) : last ? done() : (setTyped(0), setStep(step + 1)))}>{last ? "Let’s go" : "Next"}</button>
         </div>
       </div>
     </div>

@@ -7206,6 +7206,9 @@ footer a, .footer a { color: var(--pp-cream); }
 .tour-say-down .tour-bubble { border-radius: 4px 18px 18px 18px; }
 .tour-bubble strong { display: block; font-size: 1.1rem; font-weight: 800; }
 .tour-bubble p { margin: 4px 0 0; font-size: 0.95rem; line-height: 1.4; color: #3B4763; }
+.tour-rest { visibility: hidden; }
+.tour-caret { display: inline-block; width: 2px; height: 1em; margin-left: 1px; vertical-align: -0.12em; background: var(--pp-coral); animation: tour-caret 0.8s steps(1) infinite; }
+@keyframes tour-caret { 50% { opacity: 0; } }
 .tour-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
 .tour-skip-space { width: 70px; }
 .tour-dots { display: flex; gap: 6px; }

@@ -20,7 +20,8 @@ const STEPS = [
   { sel: ".tabbar > :nth-child(5)", title: "Your account", body: "Settings and subscription. Good luck!", radius: 16, happy: true },
 ];
 const PAD = 6;
-const TYPE_MS = 28; // one letter every 28ms: types like someone at a keyboard, not a slideshow
+const TYPE_MS = 34; // one letter every 34ms: types like someone at a keyboard, not a slideshow
+const TYPE_DELAY = 650; // let the bubble pop in (and the jobs screen settle) before typing starts
 
 export default function AppTour() {
   const [step, setStep] = useState(-1);
@@ -55,7 +56,9 @@ export default function AppTour() {
       if (s.sel.startsWith(".tabbar") && document.documentElement.classList.contains("native-tabs")) {
         nativeTabs.call("select", { index: [...el.parentElement.children].indexOf(el) }).catch(() => {});
         const tabH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tabbar-h")) || 83;
-        setBox({ left: -4, top: window.innerHeight - tabH, width: window.innerWidth + 8, height: tabH + 4, radius: 0 });
+        const tabs = el.parentElement.children.length;
+        const aim = ([...el.parentElement.children].indexOf(el) + 0.5) * (window.innerWidth / tabs);
+        setBox({ left: -4, top: window.innerHeight - tabH, width: window.innerWidth + 8, height: tabH + 4, radius: 0, aim });
         return;
       }
       const r = el.getBoundingClientRect();
@@ -78,8 +81,11 @@ export default function AppTour() {
     const total = STEPS[step].title.length + STEPS[step].body.length;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTyped(total); return; }
     setTyped(0);
-    const id = setInterval(() => setTyped((n) => { if (n + 1 >= total) clearInterval(id); return n + 1; }), TYPE_MS);
-    return () => clearInterval(id);
+    let id;
+    const wait = setTimeout(() => {
+      id = setInterval(() => setTyped((n) => { if (n + 1 >= total) clearInterval(id); return n + 1; }), TYPE_MS);
+    }, TYPE_DELAY);
+    return () => { clearTimeout(wait); clearInterval(id); };
   }, [step, !!box]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const done = () => {
@@ -105,15 +111,20 @@ export default function AppTour() {
   };
   // The bubble goes below a target in the top half of the screen, above one in the bottom half.
   const below = box.top + box.height / 2 < window.innerHeight / 2;
-  const bubblePos = below ? { top: box.top + box.height + 18 } : { bottom: window.innerHeight - box.top + 18 };
+  const bubblePos = below ? { top: box.top + box.height + 30 } : { bottom: window.innerHeight - box.top + 30 };
+  // The arrow sits on the bubble's edge facing the target, lined up with the target's middle
+  // (the card spans the screen with 16px sides; keep the arrow off its rounded corners).
+  const aimX = box.aim ?? box.left + box.width / 2;
+  const arrowLeft = Math.max(28, Math.min(window.innerWidth - 60, aimX - 16)) - 16;
 
   return (
     <div className="tour" role="dialog" aria-modal="true" aria-label={`App tour, step ${step + 1} of ${STEPS.length}`}>
       <div className="tour-catch" />
-      <div className="tour-spot" style={{ left: box.left, top: box.top, width: box.width, height: box.height, borderRadius: box.radius }} />
-      <div className="tour-card" style={bubblePos}>
+      <div className="tour-spot tour-pulse" style={{ left: box.left, top: box.top, width: box.width, height: box.height, borderRadius: box.radius }} />
+      <div key={step} className="tour-card" style={bubblePos}>
+        <span className={`tour-arrow ${below ? "tour-arrow-up" : "tour-arrow-down"}`} style={{ left: arrowLeft }} aria-hidden="true" />
         <div className={`tour-say${below ? " tour-say-down" : ""}`}>
-          <Pete size={56} mood={s.happy ? "happy" : "smile"} />
+          <span className={`tour-pete${typing ? " is-talking" : ""}`}><Pete size={56} mood={s.happy ? "happy" : "smile"} /></span>
           <div className="tour-bubble">
             <span className="sr-only">{s.title}. {s.body}</span>
             <strong>{part(s.title, 0)}</strong>

@@ -24,14 +24,14 @@ import { TOUR_KEY, TOUR_SEEN_KEY } from "@/app/AppTour";
 const STORAGE_KEY = "pp-onboarding-v1";
 // "signin" is where a phone that has been signed in before lands (a lapsed session, or a
 // website member who signed out): restore the subscription, or sign in for website members.
-const STEPS = ["signin", "welcome", "area", "level", "location", "firms", "match", "paywall", "notify"];
+const STEPS = ["signin", "welcome", "area", "level", "location", "firms", "match", "timing", "paywall", "notify"];
 const TEST_MEMBER_KEY = "pp_test_member"; // dev "Skip payment": this phone's stand-in purchase id
 const PROGRESS = { area: 20, level: 40, location: 60, firms: 80, match: 100 };
 // Every setup screen (and the paywall) has a back arrow so answers can be changed.
-const BACK = { area: "welcome", level: "area", location: "level", firms: "location", match: "firms", paywall: "match" };
+const BACK = { area: "welcome", level: "area", location: "level", firms: "location", match: "firms", timing: "match", paywall: "timing" };
 // answers.city holds the picked cities as one string ("Chicago; New York"), the shape alert
 // settings save; blank means anywhere.
-const WELCOME = "Hi! I\u2019m Pete, your agent who checks career pages for you. I\u2019ll notify you the second one pops up!";
+const WELCOME = "Hi! I\u2019m Pete, your agent who checks career pages for you. I\u2019ll notify you the second jobs go live!";
 const TYPE_MS = 26;
 const price = PLANS.monthly.price.toFixed(2);
 
@@ -384,10 +384,30 @@ export default function OnboardingFlow() {
             ))}
           </ul>
         )}
-        <div className="ob-actions"><button className="ob-btn" onClick={() => go("paywall")}>See my roles</button></div>
+        <div className="ob-actions"><button className="ob-btn" onClick={() => go("timing")}>See my roles</button></div>
       </main>
     );
   }
+
+  // Why speed matters, between the match count and the paywall.
+  if (step === "timing") return (
+    <main key={step} className="ob ob-navy">
+      {bar}
+      <div className="ob-mid">
+        <div className="ob-center">
+          <p className="ob-kicker">Timing is everything</p>
+          <h1 className="ob-h1">Early applicants land <span className="ob-hl">2.3x</span> more interviews</h1>
+          <div className="ob-bars" role="img" aria-label="Applying in the first few hours: 2.3 times the interviews of applying 2 days later">
+            <div className="ob-bar-col"><b className="tnum">2.3x</b><span className="ob-bar ob-bar-win" /><small>First few hours</small></div>
+            <div className="ob-bar-col"><b className="tnum">1x</b><span className="ob-bar ob-bar-late" /><small>2 days later</small></div>
+          </div>
+          <p className="ob-sub">Apply in the first few hours after a role goes live and you&rsquo;ll land 2.3x more interviews than if you wait 2 days.</p>
+        </div>
+        <div className="ob-ask"><Pete size={60} /><p className="ob-bubble">That&rsquo;s why I tell you the second a job goes live.</p></div>
+      </div>
+      <div className="ob-actions"><button className="ob-btn" onClick={() => go("paywall")}>Show me how</button></div>
+    </main>
+  );
 
   if (step === "paywall") return (
     <main key={step} className="ob ob-cream">

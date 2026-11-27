@@ -7449,7 +7449,7 @@ button.rq-row:active { background: #EADFCB; }
 
 /* App: no site footer (Privacy, Terms and Contact are in Settings), and the navy grid fills the
    whole screen even on short pages like Request. */
-.in-app footer { display: none; }
+.in-app footer:not(.alx-foot) { display: none; } /* site footers only; the Preferences Save bar is a footer too */
 html.in-app, html.in-app body { min-height: 100%; }
 html.in-app body { min-height: 100svh; }
 /* App: Back button on Privacy / Terms. */

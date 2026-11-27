@@ -56,6 +56,9 @@ function NativeTabBridge() {
       const vis = Boolean(bar) && !document.querySelector(SHEETS);
       if (vis !== last.vis) {
         last.vis = vis;
+        // Tapping a sheet's tab (Preferences, Settings) lights it up on the bar; once the sheet
+        // closes, light the page's own tab (Jobs or Saved) again.
+        last.idx = null;
         nativeTabs.call("setVisible", { visible: vis }).then((r) => { if (vis && r?.height) html.style.setProperty("--tabbar-h", `${r.height}px`); }).catch(() => {});
       }
       if (!vis || html.classList.contains("tour-on")) return;

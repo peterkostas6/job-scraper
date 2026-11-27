@@ -24,11 +24,11 @@ import { TOUR_KEY, TOUR_SEEN_KEY } from "@/app/AppTour";
 const STORAGE_KEY = "pp-onboarding-v1";
 // "signin" is where a phone that has been signed in before lands (a lapsed session, or a
 // website member who signed out): restore the subscription, or sign in for website members.
-const STEPS = ["signin", "welcome", "why", "level", "location", "area", "firms", "match", "paywall", "notify"];
+const STEPS = ["signin", "welcome", "level", "location", "area", "firms", "match", "paywall", "notify"];
 const TEST_MEMBER_KEY = "pp_test_member"; // dev "Skip payment": this phone's stand-in purchase id
 const PROGRESS = { level: 20, location: 40, area: 60, firms: 80, match: 100 };
 // Every setup screen (and the paywall) has a back arrow so answers can be changed.
-const BACK = { why: "welcome", level: "why", location: "level", area: "location", firms: "area", match: "firms", paywall: "match" };
+const BACK = { level: "welcome", location: "level", area: "location", firms: "area", match: "firms", paywall: "match" };
 // Alert settings keep one location; CITY_ALIASES in lib/alert-options.js knows each of these.
 const CITIES = ["New York", "Charlotte", "Dallas", "Chicago", "San Francisco", "Boston", "Los Angeles", "Washington"];
 const price = PLANS.monthly.price.toFixed(2);
@@ -254,26 +254,8 @@ export default function OnboardingFlow() {
         <Pete size={170} wave />
       </div>
       <div className="ob-actions">
-        <button className="ob-btn" onClick={() => go("why")}>Get started</button>
+        <button className="ob-btn" onClick={() => go("level")}>Get started</button>
       </div>
-    </main>
-  );
-
-  if (step === "why") return (
-    <main key={step} className="ob ob-navy">
-      {bar}
-      <div className="ob-mid">
-      <div className="ob-ask ob-ask-dark"><Pete size={60} /><p className="ob-bubble">Here&rsquo;s what changes for you.</p></div>
-      <ul className="ob-why">
-        <li><span className="ob-why-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4M7 8h4M7 11h7" /></svg></span>
-          <div><strong>No more switching between career pages</strong><span>{FIRM_LABEL} firms&rsquo; openings, all in one feed.</span></div></li>
-        <li><span className="ob-why-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18" /><path d="M4 20L20 4" strokeWidth="2.6" /></svg></span>
-          <div><strong>No more spreadsheets</strong><span>Save roles and track what you&rsquo;ve applied to right here.</span></div></li>
-        <li><span className="ob-why-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg></span>
-          <div><strong>Be first to know</strong><span>Get notified the moment we pick up a new posting, before other job platforms.</span></div></li>
-      </ul>
-      </div>
-      <div className="ob-actions"><button className="ob-btn" onClick={() => go("level")}>Set me up</button></div>
     </main>
   );
 

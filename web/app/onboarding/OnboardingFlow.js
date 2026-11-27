@@ -12,7 +12,7 @@ import { purchasesReady, getPremiumPackage, buyPremium, restorePremium, linkPurc
 import BankLogo from "@/lib/bank-logo";
 import { decodeEntities } from "@/lib/text";
 import { capture } from "@/lib/analytics";
-import { matchesAlertPrefs, AREAS } from "@/lib/alert-options";
+import { matchesAlertPrefs, AREAS, ALL_CITIES, splitCities, joinCities } from "@/lib/alert-options";
 import { LEVELS, DEFAULT_ALERT_LEVELS } from "@/lib/levels";
 import { FIRM_LABEL, ALL_FIRMS } from "@/lib/firms";
 import { PLANS } from "@/lib/plans";
@@ -24,13 +24,15 @@ import { TOUR_KEY, TOUR_SEEN_KEY } from "@/app/AppTour";
 const STORAGE_KEY = "pp-onboarding-v1";
 // "signin" is where a phone that has been signed in before lands (a lapsed session, or a
 // website member who signed out): restore the subscription, or sign in for website members.
-const STEPS = ["signin", "welcome", "level", "location", "area", "firms", "match", "paywall", "notify"];
+const STEPS = ["signin", "welcome", "area", "level", "location", "firms", "match", "paywall", "notify"];
 const TEST_MEMBER_KEY = "pp_test_member"; // dev "Skip payment": this phone's stand-in purchase id
-const PROGRESS = { level: 20, location: 40, area: 60, firms: 80, match: 100 };
+const PROGRESS = { area: 20, level: 40, location: 60, firms: 80, match: 100 };
 // Every setup screen (and the paywall) has a back arrow so answers can be changed.
-const BACK = { level: "welcome", location: "level", area: "location", firms: "area", match: "firms", paywall: "match" };
-// Alert settings keep one location; CITY_ALIASES in lib/alert-options.js knows each of these.
-const CITIES = ["New York", "Charlotte", "Dallas", "Chicago", "San Francisco", "Boston", "Los Angeles", "Washington"];
+const BACK = { area: "welcome", level: "area", location: "level", firms: "location", match: "firms", paywall: "match" };
+// answers.city holds the picked cities as one string ("Chicago; New York"), the shape alert
+// settings save; blank means anywhere.
+const WELCOME = "Hi! I\u2019m Pete, your agent who constantly reads finance firms\u2019 career pages to keep you on top of new roles. I even notify you based on your preferences!";
+const TYPE_MS = 26;
 const price = PLANS.monthly.price.toFixed(2);
 
 const areaCategories = (keys = []) => AREAS.filter((x) => keys.includes(x.key)).flatMap((x) => x.categories);
@@ -56,6 +58,7 @@ export default function OnboardingFlow() {
   const [jobs, setJobs] = useState(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [typed, setTyped] = useState(0); // letters of the welcome shown so far
 
   // Pick up where they left off (also after coming back from the sign-in box).
   useEffect(() => {
@@ -93,6 +96,19 @@ export default function OnboardingFlow() {
 
   const paid = isLoaded && hasAppAccess(user);
 
+  // Pete types his hello out letter by letter (all at once for people who turn off motion).
+  const showWelcome = restored && isLoaded && step === "welcome";
+  useEffect(() => {
+    if (!showWelcome) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTyped(WELCOME.length); return; }
+    setTyped(0);
+    let id;
+    const wait = setTimeout(() => {
+      id = setInterval(() => setTyped((n) => { if (n + 1 >= WELCOME.length) clearInterval(id); return n + 1; }), TYPE_MS);
+    }, 400);
+    return () => { clearTimeout(wait); clearInterval(id); };
+  }, [showWelcome]);
+
   // Back from the sign-in box: a paying account goes straight in; otherwise carry on.
   useEffect(() => {
     if (!restored || !isLoaded || !isSignedIn) return;
@@ -105,6 +121,7 @@ export default function OnboardingFlow() {
   const set = (patch) => setAnswers((a) => ({ ...a, ...patch }));
   const toggleBank = (k) => set({ banks: answers.banks.includes(k) ? answers.banks.filter((x) => x !== k) : [...answers.banks, k] });
   const toggleLevel = (k) => set({ levels: answers.levels.includes(k) ? answers.levels.filter((x) => x !== k) : [...answers.levels, k] });
+  const toggleCity = (c) => { const now = splitCities(answers.city); set({ city: joinCities(now.includes(c) ? now.filter((x) => x !== c) : [...now, c]) }); };
   const toggleArea = (k) => set({ areas: answers.areas.includes(k) ? answers.areas.filter((x) => x !== k) : [...answers.areas, k] });
 
   function signIn() {
@@ -250,11 +267,16 @@ export default function OnboardingFlow() {
     <main key={step} className="ob ob-navy">
       <div className="ob-brand"><img src="/logo-mark.svg" alt="" width="22" height="22" /> Pete&rsquo;s Postings</div>
       <div className="ob-hero">
-        <p className="ob-say">Hi! I&rsquo;m Pete. I&rsquo;ll notify you the second a firm posts a role you want.</p>
+        <p className="ob-say ob-say-long">
+          <span className="sr-only">{WELCOME}</span>
+          <span aria-hidden="true">{WELCOME.slice(0, typed)}</span>
+          {typed < WELCOME.length && <span className="tour-caret" aria-hidden="true" />}
+          <span aria-hidden="true" className="tour-rest">{WELCOME.slice(typed)}</span>
+        </p>
         <Pete size={170} wave />
       </div>
       <div className="ob-actions">
-        <button className="ob-btn" onClick={() => go("level")}>Get started</button>
+        <button className="ob-btn" onClick={() => go("area")}>Get started</button>
       </div>
     </main>
   );
@@ -262,7 +284,7 @@ export default function OnboardingFlow() {
   if (step === "firms") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("Last one. Which firms are you after?")}
+      {ask("Last one. Which firms should I notify you about?")}
       <button type="button" className="ob-tile ob-tile-big" aria-pressed={answers.banks.length === 0} onClick={() => set({ banks: [] })}>
         <span>All {FIRM_LABEL} firms</span>{answers.banks.length === 0 && <Check />}
       </button>
@@ -275,7 +297,7 @@ export default function OnboardingFlow() {
   if (step === "area") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("What type of role? Pick as many as you like.")}
+      {ask("What type of role are you looking for? Pick as many as you like.")}
       <button type="button" className="ob-tile ob-tile-big" aria-pressed={answers.areas.length === 0} onClick={() => set({ areas: [] })}>
         <span>Any type of role</span>{answers.areas.length === 0 && <Check />}
       </button>
@@ -288,14 +310,14 @@ export default function OnboardingFlow() {
           </button>
         ))}
       </div>
-      <div className="ob-actions"><button className="ob-btn" onClick={() => go("firms")}>Continue</button></div>
+      <div className="ob-actions"><button className="ob-btn" onClick={() => go("level")}>Continue</button></div>
     </main>
   );
 
   if (step === "level") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("What kind of role? Pick as many as you like.")}
+      {ask("What level? Pick as many as you like.")}
       <div className="ob-stack">
         {LEVELS.map((l) => (
           <button key={l.key} type="button" className="ob-tile" aria-pressed={answers.levels.includes(l.key)} onClick={() => toggleLevel(l.key)}>
@@ -314,18 +336,21 @@ export default function OnboardingFlow() {
   if (step === "location") return (
     <main key={step} className="ob ob-cream">
       {bar}
-      {ask("Where do you want to work?")}
+      {ask("Where do you want to work? Pick as many as you like.")}
       <div className="ob-chips">
-        {["", ...CITIES].map((c) => (
-          <button key={c || "any"} type="button" className="ob-chip ob-chip-big" aria-pressed={answers.city === c} onClick={() => set({ city: c })}>{c || "Anywhere"}</button>
+        <button type="button" className="ob-chip ob-chip-big" aria-pressed={!answers.city} onClick={() => set({ city: "" })}>Anywhere</button>
+        {ALL_CITIES.map((c) => (
+          <button key={c} type="button" className="ob-chip ob-chip-big" aria-pressed={splitCities(answers.city).includes(c)} onClick={() => toggleCity(c)}>{c}</button>
         ))}
       </div>
-      <div className="ob-actions"><button className="ob-btn" onClick={() => go("area")}>Continue</button></div>
+      <div className="ob-actions ob-sticky"><button className="ob-btn" onClick={() => go("firms")}>Continue</button></div>
     </main>
   );
 
   if (step === "match") {
     const levels = answers.levels.map((k) => LEVELS.find((l) => l.key === k)?.label).join(" + ");
+    const picked = splitCities(answers.city);
+    const cities = picked.length === 0 ? "Anywhere" : picked.length <= 2 ? picked.join(" + ") : `${picked.length} cities`;
     const firms = answers.banks.length === 0 ? "all firms" : answers.banks.length === 1 ? ALL_FIRMS[answers.banks[0]]?.name : `${answers.banks.length} firms`;
     return (
       <main key={step} className="ob ob-navy">
@@ -334,7 +359,7 @@ export default function OnboardingFlow() {
           <Pete size={100} mood="happy" />
           <p className="ob-count tnum">{matches ? matches.length.toLocaleString() : "…"}</p>
           <h1 className="ob-h1">{matches?.length === 1 ? "role matches" : "roles match"} you<br />right now</h1>
-          <p className="ob-sub">{levels} · {answers.city || "Anywhere"} · {firms}</p>
+          <p className="ob-sub">{levels} · {cities} · {firms}</p>
         </div>
         {matches?.length > 0 && (
           <ul className="ob-preview" aria-label="Your newest matches, locked">

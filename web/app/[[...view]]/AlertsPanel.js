@@ -7,7 +7,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { isApp } from "@/lib/app-access";
 import { enablePush } from "@/lib/native";
-import { AREAS, CITIES } from "@/lib/alert-options";
+import { AREAS, CITIES, ALL_CITIES, splitCities, joinCities } from "@/lib/alert-options";
 import { LEVELS, levelsFromPrefs } from "@/lib/levels";
 import { FIRM_LABEL } from "@/lib/firms";
 import FirmPicker from "@/app/FirmPicker";
@@ -26,7 +26,12 @@ export default function AlertsPanel({
   const inApp = isApp();
   const [pushAsk, setPushAsk] = useState("");
   const on = Boolean(saved && (saved.enabled || saved.smsEnabled || saved.pushEnabled));
-  const city = (prefs?.location || "").trim();
+  // Several cities can be picked ("Chicago; New York"); the app offers every city with roles.
+  const chipCities = isApp() ? ALL_CITIES : CITIES;
+  const picked = splitCities(prefs?.location);
+  const isChip = (c) => chipCities.some((x) => x.toLowerCase() === c.toLowerCase());
+  const typedCities = picked.filter((c) => !isChip(c));
+  const toggleCity = (c) => onChange({ location: joinCities(picked.some((x) => x.toLowerCase() === c.toLowerCase()) ? picked.filter((x) => x.toLowerCase() !== c.toLowerCase()) : [...picked, c]) });
   const showBanks = pickBanks || (prefs?.banks || []).length > 0;
   const savedPhone = saved?.smsEnabled && saved?.phoneNumber && !editingPhone;
   const status = on
@@ -97,14 +102,14 @@ export default function AlertsPanel({
                 <div className="alx-field">
                   <p className="alx-label">City</p>
                   <div className="alx-chips">
-                    <button className="alx-chip" aria-pressed={!city} onClick={() => onChange({ location: "" })}>Anywhere</button>
-                    {CITIES.map((c) => (
-                      <button key={c} className="alx-chip" aria-pressed={city.toLowerCase() === c.toLowerCase()} onClick={() => onChange({ location: c })}>{c}</button>
+                    <button className="alx-chip" aria-pressed={picked.length === 0} onClick={() => onChange({ location: "" })}>Anywhere</button>
+                    {chipCities.map((c) => (
+                      <button key={c} className="alx-chip" aria-pressed={picked.some((x) => x.toLowerCase() === c.toLowerCase())} onClick={() => toggleCity(c)}>{c}</button>
                     ))}
                   </div>
                   <input className="alx-input" type="text" aria-label="Another city" placeholder="Or type another city"
-                    value={CITIES.some((c) => c.toLowerCase() === city.toLowerCase()) ? "" : city}
-                    onChange={(e) => onChange({ location: e.target.value })} />
+                    value={joinCities(typedCities)}
+                    onChange={(e) => onChange({ location: joinCities([...picked.filter(isChip), ...(e.target.value.trim() ? [e.target.value] : [])]) })} />
                 </div>
               </section>
 

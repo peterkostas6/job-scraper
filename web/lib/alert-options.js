@@ -19,6 +19,19 @@ export const AREAS = [
 ];
 
 export const CITIES = ["New York", "Charlotte", "Dallas", "Chicago", "San Francisco"];
+// Every city with a good number of live roles (about 50+ in Nov 2026), A to Z. The app offers all
+// of them; the website keeps the short list above. Dallas covers Plano and Irving.
+export const ALL_CITIES = [
+  "Atlanta", "Austin", "Baltimore", "Boston", "Buffalo", "Charlotte", "Chicago", "Cincinnati",
+  "Columbus", "Dallas", "Denver", "Greenwich", "Houston", "Jacksonville", "Jersey City",
+  "Los Angeles", "Malvern", "McLean", "Minneapolis", "New York", "Newark", "Pittsburgh", "Quincy",
+  "Saint Petersburg", "Salt Lake City", "San Antonio", "San Diego", "San Francisco", "Tampa",
+  "Washington", "Westlake", "Wilmington",
+];
+
+// Someone can pick several cities; they're saved as one string, "Chicago; New York".
+export const splitCities = (location) => (location || "").split(";").map((c) => c.trim()).filter(Boolean);
+export const joinCities = (cities) => cities.join("; ");
 
 export function isInternship(title) {
   const t = title.toLowerCase();
@@ -39,8 +52,10 @@ const CITY_ALIASES = [
   { typed: ["london"], job: ["london"] },
 ];
 
-// True when a job's location fits the city someone typed (blank = anywhere).
+// True when a job's location fits the city someone typed, or any of several (blank = anywhere).
 export function locationMatches(jobLocation, typed) {
+  const cities = splitCities(typed);
+  if (cities.length > 1) return cities.some((c) => locationMatches(jobLocation, c));
   const want = (typed || "").trim().toLowerCase();
   if (!want) return true;
   const loc = (jobLocation || "").toLowerCase();

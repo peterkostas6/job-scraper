@@ -50,7 +50,7 @@ export async function saveAlertPrefs({ userId, body, origin, quiet = false }) {
         categories: Array.isArray(categories) ? categories : [],
         jobType: jobType || "all",
         levels,
-        location: typeof body.location === "string" ? body.location.trim().slice(0, 60) : "",
+        location: typeof body.location === "string" ? body.location.trim().slice(0, 400) : "",
         smsEnabled,
         phoneNumber: phoneNumber || "",
         smsConsent,
@@ -76,7 +76,7 @@ export async function saveAlertPrefs({ userId, body, origin, quiet = false }) {
     levels,
     banks: Array.isArray(banks) && banks.length ? banks : ["all"],
     categories: Array.isArray(categories) && categories.length ? categories : ["all"],
-    city: typeof body.location === "string" && body.location.trim() ? body.location.trim().slice(0, 60) : "anywhere",
+    city: typeof body.location === "string" && body.location.trim() ? body.location.trim().slice(0, 400) : "anywhere",
   };
   await captureServer(userId, isFirstSetup ? "alerts_set_up" : "alert_settings_changed", {
     ...alertProps,
@@ -98,7 +98,7 @@ export async function saveAlertPrefs({ userId, body, origin, quiet = false }) {
         bankNames: (Array.isArray(banks) ? banks : []).map((k) => BANK_NAMES[k] || k),
         categories: Array.isArray(categories) ? categories : [],
         jobTypeLabel: levels.length === LEVEL_KEYS.length ? "All levels" : levels.map((k) => LEVEL_LABEL[k]).join(", "),
-        city: typeof body.location === "string" ? body.location.trim().slice(0, 60) : "",
+        city: typeof body.location === "string" ? body.location.trim().slice(0, 400) : "",
         userId,
       };
       // First setup while the sign-up welcome is still held: cancel it and send one email that

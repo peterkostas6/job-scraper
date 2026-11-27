@@ -402,10 +402,9 @@ export default function OnboardingFlow() {
       <div className="ob-plan"><span><strong>Premium</strong><small>Billed monthly</small></span><b className="tnum">${price}<small>/mo</small></b></div>
       </div>
       <div className="ob-actions">
-        <button className="ob-btn" disabled={busy} onClick={subscribe}>Subscribe</button>
+        <button className="ob-btn" disabled={busy} onClick={subscribe}>Beat the competition</button>
         {note && <p className="ob-note" role="status">{note}</p>}
         <p className="ob-fine">{pkg?.product?.priceString || `$${price}`}/month, charged to your Apple ID. Renews monthly until you cancel in Settings.</p>
-        <button type="button" className="ob-link" onClick={signIn}>Already pay on the website? Sign in</button>
         <p className="ob-legal">
           <button type="button" className="ob-link ob-link-quiet" disabled={busy} onClick={restore}>Restore purchases</button>
           <a href="/terms">Terms</a><a href="/privacy">Privacy</a>
